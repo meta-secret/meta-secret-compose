@@ -11,5 +11,10 @@ build/
 .externalNativeBuild
 .cxx
 
-# Ignoring the persistant lockfile until kotlin.js vulnerabilities are fixed
-# yarn.lock # but absent yarn.lock leads to inconsistent builds on CI, so let's keep it
+/.idea
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
