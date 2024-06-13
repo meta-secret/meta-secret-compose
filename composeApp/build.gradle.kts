@@ -64,9 +64,10 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
 
+            /// KOIN
             implementation(project.dependencies.platform("io.insert-koin:koin-bom:3.5.1"))
-            implementation("io.insert-koin:koin-core")
-            implementation("io.insert-koin:koin-compose")
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -109,6 +110,10 @@ android {
     dependencies {
         debugImplementation(compose.uiTooling)
     }
+}
+dependencies {
+    implementation(libs.androidx.glance.preview)
+    implementation(libs.androidx.runtime.android)
 }
 
 compose.desktop {
