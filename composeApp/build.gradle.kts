@@ -29,6 +29,11 @@ kotlin {
     }
     
     sourceSets {
+        dependencies {
+            debugImplementation(compose.uiTooling)
+            implementation(platform("io.insert-koin:koin-bom:3.6.0-wasm-alpha2"))
+            implementation("io.insert-koin:koin-core")
+        }
         
         androidMain.dependencies {
             implementation(compose.preview)
