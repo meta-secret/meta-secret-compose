@@ -29,7 +29,11 @@ kotlin {
     }
     
     sourceSets {
-        
+        dependencies {
+            debugImplementation(compose.uiTooling)
+            implementation(platform("io.insert-koin:koin-bom:3.6.0-wasm-alpha2"))
+            implementation("io.insert-koin:koin-core")
+        }
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -38,6 +42,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material)
+            implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
