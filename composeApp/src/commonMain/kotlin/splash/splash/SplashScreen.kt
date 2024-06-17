@@ -1,16 +1,19 @@
-package scenes.splashscreen
+package splash.splash
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import kotlinproject.composeapp.generated.resources.Res
+import kotlinproject.composeapp.generated.resources.compose_multiplatform
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
 import scenes.splash.SplashScreenViewModel
 
 @Composable
@@ -36,14 +39,20 @@ fun SplashScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Blue),
-        contentAlignment = Alignment.Center
-    ) {
+        ) {
         Text(
             text = "MetaSecret",
             color = Color.White,
             fontSize = 24.sp,
             textAlign = TextAlign.Center
         )
+
+            // Background image
+        Image(
+                painterResource(Res.drawable.compose_multiplatform),
+                contentDescription = "Background Image",
+        )
+
     }
 }
+
