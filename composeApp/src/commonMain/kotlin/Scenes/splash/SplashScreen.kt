@@ -1,7 +1,9 @@
 package scenes.splash
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -18,6 +20,7 @@ import kotlinproject.composeapp.generated.resources.text
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 
+
 @Composable
 fun SplashScreen() {
     val viewModel = SplashScreenViewModel()
@@ -33,40 +36,45 @@ fun SplashScreen() {
                 }
             }
             else -> {
-                // Route to onboarding
+
             }
         }
     }
-
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(Res.drawable.background_main),
-            contentDescription = "background_image",
-            modifier = Modifier
-                .fillMaxSize()
-        )
-        Image(
-            painter = painterResource(Res.drawable.background_logo),
-            contentDescription = "background_logo",
-            modifier = Modifier
-                .size(213.dp)
-        )
-        Image(
-            painter = painterResource(Res.drawable.logo),
-            contentDescription = "logo",
-            modifier = Modifier
-                .size(115.dp)
-        )
-        Image(
-            painter = painterResource(Res.drawable.text),
-            contentDescription = "logo",
-            modifier = Modifier
-                .size(height = 23.dp, width = 184.dp)
-                .offset(y = 100.dp)
-        )
-    }
+           Image(
+               painter = painterResource(Res.drawable.background_main),
+               contentDescription = "",
+               modifier = Modifier
+                   .fillMaxSize()
+           )
+           Image(
+               painter = painterResource(Res.drawable.background_logo),
+               contentDescription = "",
+               modifier = Modifier
+                   .size(213.dp)
+           )
+       }
+    Column (
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+           Image(
+               painter = painterResource(Res.drawable.logo),
+               contentDescription = "",
+               modifier = Modifier
+                   .size(115.dp)
+           )
+           Image(
+               painter = painterResource(Res.drawable.text),
+               contentDescription = "",
+               modifier = Modifier
+                   .size(height = 23.dp, width = 184.dp)
+                   .offset(y = 25.dp)
+           )
+       }
 }
 
