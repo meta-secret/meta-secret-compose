@@ -5,12 +5,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.background_logo
@@ -41,18 +43,20 @@ fun SplashScreen() {
         }
     }
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
     ) {
            Image(
                painter = painterResource(Res.drawable.background_main),
-               contentDescription = "",
+               contentDescription = null,
                modifier = Modifier
-                   .fillMaxSize()
+                   .fillMaxSize(),
+               contentScale = ContentScale.FillBounds
+
            )
            Image(
                painter = painterResource(Res.drawable.background_logo),
-               contentDescription = "",
+               contentDescription = null,
                modifier = Modifier
                    .size(213.dp)
            )
@@ -64,13 +68,13 @@ fun SplashScreen() {
     ) {
            Image(
                painter = painterResource(Res.drawable.logo),
-               contentDescription = "",
+               contentDescription = null,
                modifier = Modifier
                    .size(115.dp)
            )
            Image(
                painter = painterResource(Res.drawable.text),
-               contentDescription = "",
+               contentDescription = null,
                modifier = Modifier
                    .size(height = 23.dp, width = 184.dp)
                    .offset(y = 25.dp)
