@@ -52,7 +52,6 @@ fun SplashScreen() {
                modifier = Modifier
                    .fillMaxSize(),
                contentScale = ContentScale.FillBounds
-
            )
            Image(
                painter = painterResource(Res.drawable.background_logo),
