@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.background_main
 import org.jetbrains.compose.resources.painterResource
@@ -23,7 +24,8 @@ import org.jetbrains.compose.resources.painterResource
                 painter = painterResource(Res.drawable.background_main),
                 contentDescription = "background_image",
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxSize(),
+                contentScale = ContentScale.FillBounds
             )
 
         }
