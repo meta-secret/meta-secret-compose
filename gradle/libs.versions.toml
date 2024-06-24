@@ -14,7 +14,7 @@ compose-plugin = "1.6.10"
 junit = "4.13.2"
 kotlin = "2.0.0"
 uiAndroid = "1.6.8"
-uiDesktop = "1.6.8"
+uiGraphicsAndroid = "1.6.8"
 
 [libraries]
 koin-core = { module = "io.insert-koin:koin-core" }
@@ -29,7 +29,7 @@ androidx-material = { group = "com.google.android.material", name = "material", 
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "androidx-constraintlayout" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroid" }
-androidx-ui-desktop = { group = "androidx.compose.ui", name = "ui-desktop", version.ref = "uiDesktop" }
+androidx-ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
