@@ -1,4 +1,4 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -33,10 +33,13 @@ kotlin {
             debugImplementation(compose.uiTooling)
             implementation(platform("io.insert-koin:koin-bom:3.6.0-wasm-alpha2"))
             implementation(libs.koin.core)
+            implementation(compose.components.resources)
+
         }
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -84,10 +87,11 @@ android {
     }
     dependencies {
         debugImplementation(compose.uiTooling)
+        runtimeOnly("androidx.compose.ui:ui:1.6.7")
     }
 }
 dependencies {
     implementation(libs.androidx.ui.android)
-    implementation(libs.androidx.ui.desktop)
+    implementation(libs.androidx.ui.graphics.android)
 }
 
