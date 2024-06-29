@@ -13,6 +13,7 @@ import scenes.splash.SplashScreen
 @Preview
 fun App() {
     MaterialTheme {
+
         var showContent by remember { mutableStateOf(false) }
         SplashScreen()
     }
