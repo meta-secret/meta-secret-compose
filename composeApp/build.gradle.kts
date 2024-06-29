@@ -93,5 +93,6 @@ android {
 dependencies {
     implementation(libs.androidx.ui.android)
     implementation(libs.androidx.ui.graphics.android)
+    implementation(libs.androidx.core)
 }
 
