@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name = "gotSecrets">Do you have any important information?</string>
+    <string name = "splitIt">Split it between your devices</string>
+    <string name = "secureSafe">All passwords and private information will be stored only on you devices and safely protected by RSA and AES encryption standards</string>
+    <string name = "devices">The more devices you have the better</string>
+    <string name = "next"> Continue </string>
+    <string name = "skip"> Skip </string>
+    <string name = "empty"> </string>
+</resources>

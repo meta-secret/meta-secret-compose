@@ -2,19 +2,20 @@
 
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.transitions.SlideTransition
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import scenes.splash.SplashScreen
+import Scenes.splash.SplashScreen
+
 
 @Composable
+
 @Preview
 fun App() {
     MaterialTheme {
-
-        var showContent by remember { mutableStateOf(false) }
-        SplashScreen()
+//        var showContent by remember { mutableStateOf(false) }
+        Navigator(SplashScreen()){ navigator ->
+            SlideTransition(navigator)
+        }
     }
 }
