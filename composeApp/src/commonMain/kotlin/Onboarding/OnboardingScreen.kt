@@ -3,6 +3,7 @@ package Onboarding
 import Scenes.splash.SplashScreen
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,9 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
@@ -23,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -42,7 +44,7 @@ import org.jetbrains.compose.resources.stringResource
 class OnboardingScreen : Screen {
     @Composable
     @OptIn(ExperimentalFoundationApi::class)
-    override fun Content () {
+    override fun Content() {
         //val viewModel = OnboardingViewModel()
         val navigator = LocalNavigator.currentOrThrow
 
@@ -58,36 +60,45 @@ class OnboardingScreen : Screen {
         HorizontalPager(state = pagerState) { position ->
             PagerScreen(onBoardingPage = pages[position])
         }
-        Row(
+        Box(
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(top = 24.dp)
-                .height(40.dp) // Adjusted height to fit contents
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
         ) {
+
+            Row(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .height(40.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                repeat(pagerState.pageCount) { iteration ->
+                    val color = if (pagerState.currentPage == iteration) Color.LightGray else Color.DarkGray
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(color)
+                            .size(8.dp)
+                    )
+                }
+            }
+
             Text(
                 modifier = Modifier
-                    .width(100.dp),
+                    .align(Alignment.CenterStart)
+                    .padding(start = 16.dp),
                 fontSize = 15.sp,
                 color = Color(0xFF90BDFF),
-                text = "${pagerState.currentPage + 1} / ${pages.count()}", // Display current page and total pages
-                textAlign = TextAlign.Start
+                text = "${pagerState.currentPage + 1} / ${pages.count()}"
             )
-//            HorizontalPagerIndicator(
-//                pagerState = pagerState,
-//                modifier = Modifier
-//                    .padding(horizontal = 8.dp) // Space around the indicator
-//                    .height(8.dp)
-//                    .width(120.dp), // Adjust width as needed
-//                activeColor = Color.Blue,
-//                inactiveColor = Color.Gray
-//            )
+
             Button(
                 modifier = Modifier
-                    .width(88.dp),
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 16.dp),
                 onClick = {
-                    //navigator.push(SignInScreen())
+                    // navigator.push(SignInScreen())
                 },
                 colors = ButtonDefaults.buttonColors(
                     Color.Transparent,
@@ -102,8 +113,7 @@ class OnboardingScreen : Screen {
                 )
             }
         }
-
-            Column(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .offset(y = 750.dp),
@@ -122,9 +132,7 @@ class OnboardingScreen : Screen {
 //                       viewModel.saveOnBoardingState(completed = true, context)
 //                       navController.popBackStack()
                             navigator.push(SplashScreen())
-                        } else {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
+                        } else pagerState.animateScrollToPage(pagerState.currentPage + 1)
                     }
                 }
             )
@@ -135,9 +143,7 @@ class OnboardingScreen : Screen {
     }
 }
 
-
-
-    @Composable
+@Composable
     fun PagerScreen(onBoardingPage: OnBoardingPage) {
         Box(
             modifier = Modifier.fillMaxSize()

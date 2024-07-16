@@ -3,7 +3,7 @@ package scenes.splash
 class SplashScreenViewModel () {
 
     fun readOnboardingKey(): Boolean {
-        return true
+        return false //tmp
     }
 
     fun checkAuth(): Boolean {
