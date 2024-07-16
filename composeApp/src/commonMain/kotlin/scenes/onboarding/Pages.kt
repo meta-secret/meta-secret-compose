@@ -1,5 +1,4 @@
-package Onboarding
-
+package scenes.onboarding
 
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.background_main
