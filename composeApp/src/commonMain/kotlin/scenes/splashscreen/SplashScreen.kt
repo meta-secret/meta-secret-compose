@@ -1,6 +1,5 @@
-package Scenes.splash
+package scenes.splashscreen
 
-import Onboarding.OnboardingScreen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,7 +22,7 @@ import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.text
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
-import scenes.splash.SplashScreenViewModel
+import scenes.onboarding.OnboardingScreen
 
 class SplashScreen : Screen {
     @Composable
@@ -33,13 +32,14 @@ class SplashScreen : Screen {
         LaunchedEffect(Unit) {
             delay(3000)
             when {
-                viewModel.readOnboardingKey() -> {
-                    if (viewModel.checkAuth()) {
+                viewModel.isOnboardingComplete() -> {
+                    if (viewModel.checkAuth() == true) {
                         // Route to main screen
                     } else {
                         // Route to Sign up
                     }
                 }
+
                 else -> {
                     navigator?.push(OnboardingScreen())
                 }
@@ -49,13 +49,13 @@ class SplashScreen : Screen {
             modifier = Modifier
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
-            ) {
+        ) {
             Image(
                 painter = painterResource(Res.drawable.background_main),
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize(),
-                    contentScale = ContentScale.FillBounds
+                contentScale = ContentScale.FillBounds
 
             )
             Image(
@@ -63,7 +63,7 @@ class SplashScreen : Screen {
                 contentDescription = null,
                 modifier = Modifier
                     .size(380.dp)
-                    .offset(y = (-20).dp)
+                    .offset(y = (-15).dp)
             )
         }
         Column(

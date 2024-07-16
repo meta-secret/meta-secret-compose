@@ -97,6 +97,7 @@ android {
 dependencies {
     implementation(libs.androidx.annotation.jvm)
     implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.androidx.lifecycle.livedata.core.ktx)
 }
 
 
