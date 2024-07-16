@@ -7,5 +7,9 @@
     <string name = "next"> Далее </string>
     <string name = "skip"> Пропустить </string>
     <string name = "empty"> </string>
-
+    <string name = "forward">Вперед</string>
+    <string name = "scan">Сканировать QR код</string>
+    <string name = "placeholder">Выберите уникальный никнэйм</string>
+    <string name = "advice">Выберите уникальный никнейм - который вы будете использовать в дальнейшем на других устройствах или войдите по QR коду</string>
+    <string name = "start">Начать работу</string>
 </resources>

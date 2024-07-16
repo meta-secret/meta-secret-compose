@@ -108,7 +108,6 @@ class OnboardingScreen : Screen {
                 ),
                 elevation = null
             ) {
-
                 Text(
                     text = "Skip",
                     fontSize = 15.sp,
@@ -140,7 +139,7 @@ class OnboardingScreen : Screen {
                 }
             )
             {
-                Text(text = stringResource(Res.string.next), fontSize = 20.sp)
+                Text(text = stringResource(Res.string.next), fontSize = 16.sp)
             }
         }
     }
