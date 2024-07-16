@@ -32,7 +32,6 @@ class SplashScreen : Screen {
         val navigator = LocalNavigator.current
         LaunchedEffect(Unit) {
             delay(3000)
-            navigator?.push(OnboardingScreen())
             when {
                 viewModel.readOnboardingKey() -> {
                     if (viewModel.checkAuth()) {
@@ -41,17 +40,16 @@ class SplashScreen : Screen {
                         // Route to Sign up
                     }
                 }
-
                 else -> {
-
+                    navigator?.push(OnboardingScreen())
                 }
             }
         }
         Box(
             modifier = Modifier
                 .fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
+            contentAlignment = Alignment.Center
+            ) {
             Image(
                 painter = painterResource(Res.drawable.background_main),
                 contentDescription = null,
@@ -65,7 +63,7 @@ class SplashScreen : Screen {
                 contentDescription = null,
                 modifier = Modifier
                     .size(380.dp)
-                    .offset(y = (-25).dp)
+                    .offset(y = (-20).dp)
             )
         }
         Column(
