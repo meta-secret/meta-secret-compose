@@ -1,4 +1,5 @@
-package Scenes.onboarding
+package scenes.onboarding
+
 
 class OnboardingViewModel {
 
