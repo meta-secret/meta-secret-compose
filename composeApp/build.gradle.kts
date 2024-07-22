@@ -29,17 +29,11 @@ kotlin {
     }
     
     sourceSets {
-        dependencies {
-            debugImplementation(compose.uiTooling)
-            implementation(platform("io.insert-koin:koin-bom:3.6.0-wasm-alpha2"))
-            implementation(libs.koin.core)
-            implementation(compose.components.resources)
-
-        }
-        androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
-
+            androidMain.dependencies {
+                implementation(compose.preview)
+                implementation(libs.androidx.activity.compose)
+                implementation(libs.androidx.ui.android)
+                implementation(libs.androidx.ui.graphics.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -49,6 +43,17 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(libs.androidx.core)
+            runtimeOnly(libs.androidx.ui)
+            implementation(project.dependencies.platform("io.insert-koin:koin-bom:3.6.0-wasm-alpha2"))
+            implementation(libs.koin.core)
+            implementation(compose.components.resources)
+            implementation(libs.voyager.navigator)
+            implementation(libs.voyager.tabNavigator)
+            implementation(libs.voyager.transitions)
+            implementation(libs.accompanist.pager)
+            implementation(libs.accompanist.pager.indicators)
+
         }
     }
 }
@@ -87,11 +92,12 @@ android {
     }
     dependencies {
         debugImplementation(compose.uiTooling)
-        runtimeOnly("androidx.compose.ui:ui:1.6.7")
     }
 }
 dependencies {
-    implementation(libs.androidx.ui.android)
-    implementation(libs.androidx.ui.graphics.android)
+    implementation(libs.androidx.annotation.jvm)
+    implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.androidx.lifecycle.livedata.core.ktx)
 }
+
 

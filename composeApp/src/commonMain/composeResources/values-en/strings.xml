@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name = "gotSecrets">Do you have any important information?</string>
+    <string name = "splitIt">Split it between your devices</string>
+    <string name = "secureSafe">All passwords and private information will be stored only on you devices and safely protected by RSA and AES encryption standards</string>
+    <string name = "devices">The more devices you have the better</string>
+    <string name = "next"> Continue </string>
+    <string name = "skip"> Skip </string>
+    <string name = "empty"> </string>
+    <string name = "forward">Forward</string>
+    <string name = "scan">Scan QR-Код</string>
+    <string name = "placeholder">Choose unique nickname</string>
+    <string name = "advice">Choose unique nickname - the one you will be using in the future on other devices or log in using the QR code</string>
+    <string name = "start">Let's start</string>
+</resources>
