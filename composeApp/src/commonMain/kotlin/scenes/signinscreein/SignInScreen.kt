@@ -7,9 +7,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,7 +19,6 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,7 +55,6 @@ import org.jetbrains.compose.resources.stringResource
 class SignInScreen : Screen {
     @Composable
     override fun Content() {
-        //val viewModel = SignInScreenViewModel()
         val navigator = LocalNavigator.current
         var text by remember { mutableStateOf("") }
         var isFocused by remember { mutableStateOf(false) }
@@ -76,46 +75,56 @@ class SignInScreen : Screen {
                     .fillMaxSize(),
                 contentScale = ContentScale.FillBounds
             )
+
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(y = 77.dp)
+                    .fillMaxWidth()
+                    .padding(top = 60.dp),
+                contentAlignment = Alignment.Center
             ) {
-
                 Image(
                     painter = painterResource(Res.drawable.background_logo),
                     contentDescription = null,
                     modifier = Modifier
                         .size(200.dp)
-                        .align(Alignment.Center)
-                        .offset(y = (-70).dp)
                 )
-
                 Image(
                     painter = painterResource(Res.drawable.logo),
                     contentDescription = null,
                     modifier = Modifier
                         .size(70.dp)
                         .align(Alignment.Center)
-                        .offset(y = (-70).dp)
                 )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .align(Alignment.TopCenter)
+                    .padding(top = 100.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Button(
                     modifier = Modifier
-                        .size(343.dp, 48.dp)
-                        .offset(y = 70.dp)
-                        .align(Alignment.BottomEnd),
+                        .fillMaxWidth()
+                        .height(48.dp),
                     colors = ButtonDefaults.buttonColors(
                         Color.Transparent,
                         contentColor = Color.White
                     ),
-                    border = BorderStroke(1.dp, color = Color.White.copy(alpha = 0.3f)),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
                     shape = RoundedCornerShape(8.dp),
                     elevation = null,
-                    onClick = {}
-                )
-                {
+                    onClick = {
+                    }
+                ) {
                     Text(text = stringResource(Res.string.scan), fontSize = 16.sp)
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
                 TextField(
                     value = text,
                     onValueChange = { newText -> text = newText },
@@ -127,77 +136,67 @@ class SignInScreen : Screen {
                         )
                     },
                     modifier = Modifier
-                        .size(width = 343.dp, height = 52.dp)
-                        .offset(y = 135.dp)
-                        .align(Alignment.BottomEnd)
+                        .fillMaxWidth()
+                        .height(52.dp)
                         .border(
                             width = 2.dp,
                             color = if (isFocused) Color(0xFF3C8AFF) else Color.Transparent,
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(8.dp)
                         )
                         .focusRequester(focusRequester)
                         .onFocusChanged { focusState ->
                             isFocused = focusState.isFocused
                         },
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = Color.White.copy(alpha = 0.05f),
-                        textColor = Color.White
-                    ),
                     keyboardOptions = KeyboardOptions.Default.copy(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Done
                     ),
-                    textStyle = TextStyle(fontSize = 16.sp)
+                    textStyle = TextStyle(fontSize = 16.sp, color = Color.White)
                 )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 Button(
                     modifier = Modifier
-                        .size(343.dp, 48.dp)
-                        .offset(y = 220.dp)
-                        .align(Alignment.BottomEnd),
+                        .fillMaxWidth()
+                        .height(48.dp),
                     colors = ButtonDefaults.buttonColors(
                         Color(0xFF0368FF),
                         contentColor = Color.White
                     ),
                     onClick = {
-//                    coroutineScope.launch {
-//                        if (pagerState.currentPage + 1 >= pages.count()) {
-//                            //viewModel.saveOnBoardingState(completed = true, context)
-//                            navigator.push(SignInScreen())
-//                        } else pagerState.animateScrollToPage(pagerState.currentPage + 1)
-//                    }
                     }
-                )
-                {
+                ) {
                     Text(text = stringResource(Res.string.forward), fontSize = 16.sp)
                 }
             }
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .offset(y = 160.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
-        ) {
-            Text(
-                text = stringResource(Res.string.start),
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
+
+            Column(
                 modifier = Modifier
-                    .padding(bottom = 8.dp)
                     .fillMaxWidth()
-            )
-            Text(
-                text = stringResource(Res.string.advice),
-                color = Color.White,
-                fontSize = 15.sp,
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .fillMaxWidth()
-            )
+                    .padding(horizontal = 16.dp)
+                    .align(Alignment.TopCenter)
+                    .padding(top = 230.dp),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = stringResource(Res.string.start),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .fillMaxWidth()
+                )
+                Text(
+                    text = stringResource(Res.string.advice),
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
         }
     }
 }
-
