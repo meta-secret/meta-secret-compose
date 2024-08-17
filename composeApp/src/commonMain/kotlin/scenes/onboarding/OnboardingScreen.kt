@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -44,7 +45,6 @@ class OnboardingScreen : Screen {
     @Composable
     @OptIn(ExperimentalFoundationApi::class)
     override fun Content() {
-        //val viewModel = OnboardingViewModel()
         val navigator = LocalNavigator.currentOrThrow
 
         val pages = listOf(
@@ -58,88 +58,95 @@ class OnboardingScreen : Screen {
         })
 
         val coroutineScope = rememberCoroutineScope()
-        HorizontalPager(state = pagerState) { position ->
-            PagerScreen(onBoardingPage = pages[position])
-        }
 
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp)
+                .fillMaxSize()
         ) {
+            HorizontalPager(state = pagerState) { position ->
+                PagerScreen(onBoardingPage = pages[position])
+            }
 
-            Row(
+            Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .height(40.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .align(Alignment.TopCenter)
+                    .padding(top = 24.dp)
+                    .fillMaxWidth()
             ) {
-                repeat(pagerState.pageCount) { iteration ->
-                    val color =
-                        if (pagerState.currentPage == iteration) Color.LightGray else Color.DarkGray
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(color)
-                            .size(8.dp)
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .height(40.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    repeat(pagerState.pageCount) { iteration ->
+                        val color =
+                            if (pagerState.currentPage == iteration) Color.LightGray else Color.DarkGray
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(color)
+                                .size(8.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 16.dp),
+                    fontSize = 15.sp,
+                    color = Color(0xFF90BDFF),
+                    text = "${pagerState.currentPage + 1} / ${pages.count()}"
+                )
+
+                Button(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 16.dp),
+                    onClick = {
+                        navigator.push(SignInScreen())
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        Color.Transparent
+                    ),
+                    elevation = null
+                ) {
+                    Text(
+                        text = "Skip",
+                        fontSize = 15.sp,
+                        color = Color(0xFF90BDFF),
+                        textAlign = TextAlign.Center
                     )
                 }
             }
 
-            Text(
+            Column(
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 16.dp),
-                fontSize = 15.sp,
-                color = Color(0xFF90BDFF),
-                text = "${pagerState.currentPage + 1} / ${pages.count()}"
-            )
-
-            Button(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 16.dp),
-                onClick = {
-                    navigator.push(SignInScreen())
-                },
-                colors = ButtonDefaults.buttonColors(
-                    Color.Transparent,
-                ),
-                elevation = null
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 20.dp)
+                    .fillMaxWidth()
             ) {
-                Text(
-                    text = "Skip",
-                    fontSize = 15.sp,
-                    color = Color(0xFF90BDFF),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .offset(y = 750.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Button(
-                modifier = Modifier
-                    .size(343.dp, 48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    Color(0xFF0368FF),
-                    contentColor = Color.White
-                ),
-                onClick = {
-                    coroutineScope.launch {
-                        if (pagerState.currentPage + 1 >= pages.count()) {
-                            //viewModel.saveOnBoardingState(completed = true, context)
-                            navigator.push(SignInScreen())
-                        } else pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                Button(
+                    modifier = Modifier
+                        .requiredHeight(48.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 15.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        Color(0xFF0368FF),
+                        contentColor = Color.White
+                    ),
+                    onClick = {
+                        coroutineScope.launch {
+                            if (pagerState.currentPage + 1 >= pages.count()) {
+                                //viewModel.saveOnBoardingState(completed = true, context)
+                                navigator.push(SignInScreen())
+                            } else pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                        }
                     }
+                ) {
+                    Text(text = stringResource(Res.string.next), fontSize = 16.sp)
                 }
-            )
-            {
-                Text(text = stringResource(Res.string.next), fontSize = 16.sp)
             }
         }
     }
@@ -154,7 +161,7 @@ fun PagerScreen(onBoardingPage: OnBoardingPage) {
         Image(
             painter = painterResource(onBoardingPage.image),
             contentDescription = "background_image",
-            contentScale = ContentScale.Crop,
+            contentScale = ContentScale.FillBounds,
             modifier = Modifier.fillMaxSize()
         )
 
