@@ -53,7 +53,6 @@ kotlin {
             implementation(libs.voyager.transitions)
             implementation(libs.accompanist.pager)
             implementation(libs.accompanist.pager.indicators)
-
         }
     }
 }
