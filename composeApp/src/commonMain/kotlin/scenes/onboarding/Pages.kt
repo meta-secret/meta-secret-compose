@@ -1,8 +1,8 @@
 package scenes.onboarding
 
 import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.background_main
 import kotlinproject.composeapp.generated.resources.empty
+import kotlinproject.composeapp.generated.resources.executioner
 import kotlinproject.composeapp.generated.resources.gotSecrets
 import kotlinproject.composeapp.generated.resources.secureSafe
 import kotlinproject.composeapp.generated.resources.splitIt
@@ -15,22 +15,22 @@ sealed class OnBoardingPage(
     val subTitle: StringResource,
     val description: StringResource
 ) {
-    object First: OnBoardingPage(
-        image = Res.drawable.background_main,
+    data object First: OnBoardingPage(
+        image = Res.drawable.executioner,
         title = Res.string.gotSecrets,
         subTitle = Res.string.splitIt,
         description = Res.string.secureSafe
     )
 
-    object Second: OnBoardingPage(
-        image = Res.drawable.background_main,
+    data object Second: OnBoardingPage(
+        image = Res.drawable.executioner,
         title = Res.string.empty,
         subTitle = Res.string.splitIt,
         description = Res.string.secureSafe
     )
 
-    object Third: OnBoardingPage(
-        image = Res.drawable.background_main,
+    data object Third: OnBoardingPage(
+        image = Res.drawable.executioner,
         title = Res.string.empty,
         subTitle = Res.string.splitIt,
         description = Res.string.secureSafe

@@ -29,13 +29,17 @@ kotlin {
     }
     
     sourceSets {
-            androidMain.dependencies {
-                implementation(compose.preview)
-                implementation(libs.androidx.activity.compose)
-                implementation(libs.androidx.ui.android)
-                implementation(libs.androidx.ui.graphics.android)
+        androidMain.dependencies {
+            implementation(compose.preview)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.ui.android)
+            implementation(libs.androidx.ui.graphics.android)
+            implementation(libs.accompanist.pager)
+            implementation(libs.accompanist.pager.indicators)
         }
+
         commonMain.dependencies {
+            runtimeOnly(libs.androidx.ui)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material)
@@ -44,15 +48,13 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.core)
-            runtimeOnly(libs.androidx.ui)
             implementation(project.dependencies.platform("io.insert-koin:koin-bom:3.6.0-wasm-alpha2"))
             implementation(libs.koin.core)
-            implementation(compose.components.resources)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.composeVM)
             implementation(libs.voyager.navigator)
             implementation(libs.voyager.tabNavigator)
             implementation(libs.voyager.transitions)
-            implementation(libs.accompanist.pager)
-            implementation(libs.accompanist.pager.indicators)
         }
     }
 }
@@ -93,6 +95,7 @@ android {
         debugImplementation(compose.uiTooling)
     }
 }
+
 dependencies {
     implementation(libs.androidx.annotation.jvm)
     implementation(libs.androidx.foundation.layout.android)
