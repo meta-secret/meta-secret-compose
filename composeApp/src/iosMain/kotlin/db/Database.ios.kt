@@ -1,0 +1,21 @@
+package db
+
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import platform.Foundation.NSHomeDirectory
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+
+fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
+    val dbFilePath = NSHomeDirectory() + "/my_room.db"
+    return Room.databaseBuilder<AppDatabase>(
+        name = dbFilePath,
+        factory =  { AppDatabase::class.instantiateImpl() }
+    ).setDriver(BundledSQLiteDriver())
+        .setQueryCoroutineContext(Dispatchers.IO)
+}
+
+fun getDatabase(): AppDatabase {
+    return getDatabaseBuilder().build()
+}

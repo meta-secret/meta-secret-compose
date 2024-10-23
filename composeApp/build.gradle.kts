@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.room)
+    alias(libs.plugins.ksp)
 }
 
 kotlin {
@@ -36,6 +38,7 @@ kotlin {
             implementation(libs.androidx.ui.graphics.android)
             implementation(libs.accompanist.pager)
             implementation(libs.accompanist.pager.indicators)
+            implementation(libs.koin.android)
         }
 
         commonMain.dependencies {
@@ -55,6 +58,9 @@ kotlin {
             implementation(libs.voyager.navigator)
             implementation(libs.voyager.tabNavigator)
             implementation(libs.voyager.transitions)
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.sqlite.bundled)
+            implementation(libs.sqlite)
         }
     }
 }
@@ -100,6 +106,12 @@ dependencies {
     implementation(libs.androidx.annotation.jvm)
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.lifecycle.livedata.core.ktx)
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    add("kspIosX64", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
 }
 
-
+room {
+    schemaDirectory("$projectDir/schemas")
+}

@@ -5,28 +5,30 @@ android-compileSdk = "34"
 android-minSdk = "24"
 android-targetSdk = "34"
 androidx-activityCompose = "1.9.0"
+annotationJvm = "1.8.0"
 compose-plugin = "1.6.10"
+core = "1.13.1"
+foundationLayoutAndroid = "1.6.8"
 kotlin = "2.0.0"
+ksp = "2.0.20-1.0.24"
+lifecycleLivedataCoreKtx = "2.8.3"
+room = "2.7.0-alpha10"
+sqlite = "2.5.0-alpha01"
 ui = "1.6.8"
 uiAndroid = "1.6.8"
 uiGraphicsAndroid = "1.6.8"
-core = "1.13.1"
 voyager = "1.1.0-beta02"
-annotationJvm = "1.8.0"
-foundationLayoutAndroid = "1.6.8"
-lifecycleLivedataCoreKtx = "2.8.3"
 
-#koin
-koin = "4.0.0-RC1"
-
-#precompose
-precompose = "1.5.0"
+#DI
+koin = "4.0.0"
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+room = { id = "androidx.room", version.ref = "room" }
 
 [libraries]
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPager" }
@@ -37,6 +39,13 @@ androidx-ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 koin-composeVM = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
+
+#db
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
+sqlite = { module = "androidx.sqlite:sqlite", version.ref = "sqlite" }
 
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroid" }
