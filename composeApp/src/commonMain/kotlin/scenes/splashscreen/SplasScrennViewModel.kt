@@ -6,13 +6,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import repo.TaskRepository
 
-class SplashScreenViewModel() : ViewModel() {
+class SplashScreenViewModel(
+    private val taskRepository: TaskRepository
+) : ViewModel() {
     private val _navigationEvent = MutableStateFlow<SplashNavigationEvent>(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
 
     fun onAppear() {
         viewModelScope.launch {
+            loadData()
             delay(3000)
 
             when {
@@ -26,6 +30,14 @@ class SplashScreenViewModel() : ViewModel() {
                 else -> {
                     _navigationEvent.value = SplashNavigationEvent.NavigateToOnboarding
                 }
+            }
+        }
+    }
+
+    private fun loadData() {
+        viewModelScope.launch {
+            taskRepository.loadTodos().collect { todoList ->
+                println(todoList)
             }
         }
     }
