@@ -28,6 +28,7 @@ import kotlinproject.composeapp.generated.resources.text
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import scenes.onboarding.OnboardingScreen
+import scenes.signinscreein.SignInScreen
 
 class SplashScreen : Screen {
     @Composable
@@ -52,7 +53,7 @@ class SplashScreen : Screen {
             }
 
             SplashNavigationEvent.NavigateToSignUp -> {
-                // TODO: Move to sign in screen
+                navigator?.push(SignInScreen())
             }
 
             SplashNavigationEvent.NavigateToOnboarding -> {

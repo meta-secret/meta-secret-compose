@@ -3,13 +3,15 @@ package di
 import org.koin.dsl.module
 import scenes.onboarding.OnboardingViewModel
 import scenes.splashscreen.SplashScreenViewModel
+import storage.KeyValueStorage
+import storage.KeyValueStorageImpl
 
 val appModule = module {
     single {
 
     }
-//    single{ YouTubeServiceImpl() }
-//    single { YoutubeDatabase(DriverFactory().createDriver()) }
-    factory { SplashScreenViewModel() }
-    factory { OnboardingViewModel() }
+    single<KeyValueStorage> { KeyValueStorageImpl() }
+
+    factory { SplashScreenViewModel(get()) }
+    factory { OnboardingViewModel(get()) }
 }

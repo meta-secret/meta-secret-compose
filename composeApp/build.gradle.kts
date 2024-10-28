@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    kotlin("plugin.serialization") version "1.8.10"
 }
 
 kotlin {
@@ -55,6 +56,13 @@ kotlin {
             implementation(libs.voyager.navigator)
             implementation(libs.voyager.tabNavigator)
             implementation(libs.voyager.transitions)
+
+            // Settings sharable
+            implementation(libs.multiplatform.settings)
+            implementation(libs.serialization.json)
+            implementation(libs.multiplatform.settings.serialization)
+            implementation(libs.coroutines.core)
+            implementation(libs.settings.coroutine)
         }
     }
 }
