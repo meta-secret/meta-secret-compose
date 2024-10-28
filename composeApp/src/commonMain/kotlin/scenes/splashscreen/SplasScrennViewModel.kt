@@ -6,9 +6,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import storage.KeyValueStorage
+import storage.KeyValueStorageImpl
 
-class SplashScreenViewModel() : ViewModel() {
-    private val _navigationEvent = MutableStateFlow<SplashNavigationEvent>(SplashNavigationEvent.Idle)
+class SplashScreenViewModel(
+    private val keyValueStorage: KeyValueStorage
+) : ViewModel() {
+    private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
 
     fun onAppear() {
@@ -30,12 +34,12 @@ class SplashScreenViewModel() : ViewModel() {
         }
     }
 
-    fun isOnboardingComplete(): Boolean {
-        return false //temporary
+    private fun isOnboardingComplete(): Boolean {
+        return keyValueStorage.isOnboardingCompleted
     }
 
-    fun checkAuth(): Boolean {
-        return false
+    private fun checkAuth(): Boolean {
+        return keyValueStorage.isSignInCompleted
     }
 }
 

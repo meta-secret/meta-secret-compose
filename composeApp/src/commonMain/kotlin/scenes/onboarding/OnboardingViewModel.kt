@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import storage.KeyValueStorage
 
 
-class OnboardingViewModel : ViewModel() {
+class OnboardingViewModel(
+    private val keyValueStorage: KeyValueStorage
+) : ViewModel() {
     val pages = listOf(
         OnBoardingPage.First,
         OnBoardingPage.Second,
@@ -16,7 +19,8 @@ class OnboardingViewModel : ViewModel() {
     private val _currentPage = MutableStateFlow(0)
     val currentPage: StateFlow<Int> = _currentPage
 
-    fun skipOnboarding() {
+    fun completeOnboarding() {
+        keyValueStorage.isOnboardingCompleted = true
         _currentPage.update { -1 }
     }
 }

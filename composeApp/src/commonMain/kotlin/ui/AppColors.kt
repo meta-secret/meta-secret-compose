@@ -3,10 +3,15 @@ import androidx.compose.ui.graphics.Color
 object AppColors {
     //White
     val White = Color(0xFFFFFFFF)
-    val White75 = Color(0xBFFFFFFF)
-    val White50 = Color(0xBFFFFFFF)
+    val White75 = Color(0xFFFFFFFF).copy(alpha = 0.75f)
+    val White50 = Color(0xFFFFFFFF).copy(alpha = 0.5f)
+    val White5 = Color(0xFFFFFFFF).copy(alpha = 0.05f)
 
     //Blue
     val ActionLink = Color(0xFF90BDFF)
+    val ActionMain = Color(0xFF0368FF)
+    val ActionPremium = Color(0xFF3C8AFF)
 
+    //Red
+    val RedError = Color(0xFFFF0952)
 }
