@@ -54,7 +54,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
-import scenes.splashscreen.SplashScreenViewModel
+import scenes.mainscreen.MainScreen
 
 class SignInScreen : Screen {
     @Composable
@@ -233,11 +233,11 @@ class SignInScreen : Screen {
                     enabled = text.isNotEmpty(),
                     onClick = {
                         isError = viewModel.isNameError(text)
+                        navigator?.push(MainScreen())
                     }
                 ) {
                     Text(text = stringResource(Res.string.forward), fontSize = 16.sp)
                 }
-
             }
         }
     }
