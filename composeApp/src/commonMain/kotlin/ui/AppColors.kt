@@ -1,6 +1,7 @@
 import androidx.compose.ui.graphics.Color
 
 object AppColors {
+
     //White
     val White = Color(0xFFFFFFFF)
     val White75 = Color(0xFFFFFFFF).copy(alpha = 0.75f)
@@ -14,4 +15,8 @@ object AppColors {
 
     //Red
     val RedError = Color(0xFFFF0952)
+
+    //Black
+    val TabBar = Color(0xFF232324)
+
 }

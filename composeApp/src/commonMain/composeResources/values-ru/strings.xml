@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name = "gotSecrets">Есть очень важные секреты?</string>
+    <string name = "splitIt">Поделите их между своими устройствами</string>
+    <string name = "secureSafe">Все пароли и секретная информация хранятся только на ваших устройствах и надежно защищены по стандартам шифрования RSA и AES</string>
+    <string name = "devices">Чем больше устройств тем лучше</string>
+    <string name = "next"> Далее </string>
+    <string name = "skip"> Пропустить </string>
+    <string name = "empty"> </string>
+    <string name = "forward">Вперед</string>
+    <string name = "scan">Сканировать QR-код</string>
+    <string name = "placeholder">Выберите уникальный никнэйм</string>
+    <string name = "advice">Выберите уникальный никнейм - который вы будете использовать в дальнейшем на других устройствах или войдите по QR коду</string>
+    <string name = "start">Начать работу</string>
+    <string name = "nicknameError">Данный никнейм уже занят. Попробуйте другой</string>>
+    <string name = "secrets">Секреты</string>
+    <string name = "devicesList">Устройства</string>
+    <string name = "profile">Профиль</string>
+    <string name = "noSecrets">У вас пока нет добавленных секретов. \nДобавьте первый секрет</string>
+    <string name = "noSecretsHeader">Нет секретов</string>
+</resources>
