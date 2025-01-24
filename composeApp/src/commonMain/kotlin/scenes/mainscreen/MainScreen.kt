@@ -31,9 +31,11 @@ import sharedData.getScreenWidth
 class MainScreen : Screen {
     @Composable
     override fun Content() {
+        //val viewModel: MainScreenViewModel = koinViewModel()
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         var selectedTabIndex by remember { mutableStateOf(0) }
         val tabSize = getScreenWidth() / tabs.size
+
 
         TabNavigator(tabs[selectedTabIndex]) {
             val tabNavigator = LocalTabNavigator.current

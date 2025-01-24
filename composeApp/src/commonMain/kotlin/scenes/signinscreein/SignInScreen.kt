@@ -20,6 +20,8 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,6 +72,14 @@ class SignInScreen : Screen {
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
+        val signInStatus by viewModel.signInStatus.collectAsState()
+
+
+        LaunchedEffect(signInStatus) {
+            if (signInStatus == -1) {
+                navigator?.push(MainScreen())
+            }
+        }
 
         Box(
             modifier = Modifier
@@ -233,7 +243,10 @@ class SignInScreen : Screen {
                     enabled = text.isNotEmpty(),
                     onClick = {
                         isError = viewModel.isNameError(text)
-                        navigator?.push(MainScreen())
+                        if (isError) {
+                            navigator?.push(MainScreen())
+                            //viewModel.completeSignIn()
+                        }
                     }
                 ) {
                     Text(text = stringResource(Res.string.forward), fontSize = 16.sp)
