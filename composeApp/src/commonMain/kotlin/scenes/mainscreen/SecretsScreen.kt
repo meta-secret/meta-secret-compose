@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Text
@@ -28,6 +29,7 @@ import kotlinproject.composeapp.generated.resources.noSecretsHeader
 import kotlinproject.composeapp.generated.resources.secrets
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import sharedData.getScreenHeight
 
 class SecretsScreen : Screen {
     @Composable
@@ -50,7 +52,8 @@ class SecretsScreen : Screen {
             Text(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(top = 50.dp, start = 16.dp),
+                    .padding(top = 50.dp, start = 16.dp)
+                    .height((getScreenHeight() * 0.1133).dp),
                 text = stringResource(Res.string.secrets),
                 color = AppColors.White,
                 fontWeight = FontWeight.Bold,

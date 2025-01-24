@@ -18,5 +18,4 @@ object AppColors {
 
     //Black
     val TabBar = Color(0xFF232324)
-
 }

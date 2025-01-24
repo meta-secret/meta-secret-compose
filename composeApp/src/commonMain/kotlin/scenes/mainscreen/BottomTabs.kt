@@ -16,10 +16,10 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 
-object SecretsTab : Tab{
+object SecretsTab : Tab {
     @Composable
     override fun Content() {
-       Navigator(SecretsScreen()){ navigator ->
+        Navigator(SecretsScreen()){ navigator ->
            SlideTransition(navigator)
        }
     }
@@ -79,3 +79,4 @@ object ProfileTab : Tab{
             )
         }
 }
+
