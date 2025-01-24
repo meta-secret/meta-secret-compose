@@ -27,8 +27,10 @@ import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.text
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import scenes.mainscreen.MainScreen
 import scenes.onboarding.OnboardingScreen
 import scenes.signinscreein.SignInScreen
+import sharedData.getScreenHeight
 
 class SplashScreen : Screen {
     @Composable
@@ -49,7 +51,7 @@ class SplashScreen : Screen {
 
         when (navigationEvent) {
             SplashNavigationEvent.NavigateToMain -> {
-                // TODO: Move to main screen
+                navigator?.push(MainScreen())
             }
 
             SplashNavigationEvent.NavigateToSignUp -> {
@@ -115,7 +117,7 @@ class SplashScreen : Screen {
                             modifier = Modifier
                                 .offset(y = 40.dp)
                                 .fillMaxWidth()
-                                .height(23.dp), // TODO: Need to find a way to remove hardcode
+                                .height((getScreenHeight() * 0.02833).dp),
                             contentScale = ContentScale.Fit
                         )
                     }
