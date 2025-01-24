@@ -4,6 +4,7 @@ import AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -16,16 +17,16 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.executioner
 import kotlinproject.composeapp.generated.resources.profile
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import sharedData.getScreenHeight
 
 class ProfileScreen : Screen {
     @Composable
     override fun Content() {
         val backgroundMain = painterResource(Res.drawable.background_main)
-        val logo = painterResource(Res.drawable.executioner)
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -42,7 +43,8 @@ class ProfileScreen : Screen {
             Text(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(top = 50.dp, start = 16.dp),
+                    .padding(top = 50.dp, start = 16.dp)
+                    .height((getScreenHeight() * 0.1133).dp),
                 text = stringResource(Res.string.profile),
                 color = AppColors.White,
                 fontWeight = FontWeight.Bold,

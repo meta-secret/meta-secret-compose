@@ -69,7 +69,7 @@ kotlin {
 
 android {
     namespace = "metasecret.project.com"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk = 35
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
@@ -108,6 +108,10 @@ dependencies {
     implementation(libs.androidx.annotation.jvm)
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.lifecycle.livedata.core.ktx)
+    implementation(libs.material)
+    implementation(libs.androidx.glance)
+    implementation(libs.ui.android)
+    implementation (libs.androidx.material)
 }
 
 
