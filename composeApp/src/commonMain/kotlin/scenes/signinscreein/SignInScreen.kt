@@ -243,9 +243,9 @@ class SignInScreen : Screen {
                     enabled = text.isNotEmpty(),
                     onClick = {
                         isError = viewModel.isNameError(text)
-                        if (isError) {
+                        if (!isError) {
                             navigator?.push(MainScreen())
-                            //viewModel.completeSignIn()
+                            viewModel.completeSignIn()
                         }
                     }
                 ) {
