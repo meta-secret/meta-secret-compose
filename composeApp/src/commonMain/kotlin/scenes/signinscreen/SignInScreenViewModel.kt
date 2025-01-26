@@ -18,8 +18,10 @@ class SignInScreenViewModel(
 
     fun completeSignIn(state: Boolean) {
         keyValueStorage.isSignInCompleted = state
-        if (!state) {
-            keyValueStorage.isOnboardingCompleted = state
-        }
+// Returns to Onboarding
+
+//        if (!state) {
+//            keyValueStorage.isOnboardingCompleted = state
+//        }
     }
 }
