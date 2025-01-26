@@ -1,4 +1,4 @@
-package scenes.signinscreein
+package scenes.signinscreen
 
 import AppColors
 import androidx.compose.foundation.BorderStroke
@@ -54,7 +54,6 @@ import kotlinproject.composeapp.generated.resources.scan
 import kotlinproject.composeapp.generated.resources.start
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import scenes.mainscreen.MainScreen
 
@@ -72,11 +71,11 @@ class SignInScreen : Screen {
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
-        val signInStatus by viewModel.signInStatus.collectAsState()
+        val isSignedIn by viewModel.signInStatus.collectAsState()
 
 
-        LaunchedEffect(signInStatus) {
-            if (signInStatus == -1) {
+        LaunchedEffect(isSignedIn) {
+            if (isSignedIn) {
                 navigator?.push(MainScreen())
             }
         }
@@ -245,7 +244,7 @@ class SignInScreen : Screen {
                         isError = viewModel.isNameError(text)
                         if (!isError) {
                             navigator?.push(MainScreen())
-                            viewModel.completeSignIn()
+                            viewModel.completeSignIn(true)
                         }
                     }
                 ) {
@@ -256,8 +255,3 @@ class SignInScreen : Screen {
     }
 }
 
-@Composable
-@Preview()
-fun SignInScreenPreview() {
-    SignInScreen().Content()
-}

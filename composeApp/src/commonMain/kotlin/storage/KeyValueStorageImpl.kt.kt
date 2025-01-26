@@ -19,6 +19,12 @@ class KeyValueStorageImpl : KeyValueStorage {
             settings[StorageKeys.SIGNIN_INFO.key] = value
         }
 
+//    override var isSignedOut: Boolean
+//        get() = settings.getBoolean(StorageKeys.SIGNOUT_INFO.key, defaultValue = true)
+//        set(value) {
+//            settings[StorageKeys.SIGNOUT_INFO.key] = value
+//        }
+
     // #2 - store/retrive custom types
 //    override var loginInfo: LoginInfo?
 //        get() = settings.decodeValueOrNull(LoginInfo.serializer(), StorageKeys.LOGIN_INFO.key)

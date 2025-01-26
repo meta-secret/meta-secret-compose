@@ -3,6 +3,7 @@ package storage
 interface KeyValueStorage {
     var isOnboardingCompleted: Boolean
     var isSignInCompleted: Boolean
+//    var isSignedOut: Boolean
 //    var signInInfo: LoginInfo?
 //    val observableToken: Flow<String>
 
@@ -15,6 +16,7 @@ interface KeyValueStorage {
 enum class StorageKeys {
     ONBOARDING_INFO,
     SIGNIN_INFO;
+//    SIGNOUT_INFO;
 
     val key get() = this.name
 }

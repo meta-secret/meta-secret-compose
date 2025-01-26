@@ -2,7 +2,7 @@ package di
 
 import org.koin.dsl.module
 import scenes.onboarding.OnboardingViewModel
-import scenes.signinscreein.SignInScreenViewModel
+import scenes.signinscreen.SignInScreenViewModel
 import scenes.splashscreen.SplashScreenViewModel
 import storage.KeyValueStorage
 import storage.KeyValueStorageImpl

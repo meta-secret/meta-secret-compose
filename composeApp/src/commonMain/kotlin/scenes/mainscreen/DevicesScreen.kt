@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +22,8 @@ import kotlinproject.composeapp.generated.resources.devicesList
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sharedData.getScreenHeight
+import ui.ElementsSizing.headerHeightMultiplier
+import ui.ElementsSizing.headerWidthMultiplier
 
 
 class DevicesScreen : Screen {
@@ -45,7 +48,8 @@ class DevicesScreen : Screen {
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(top = 50.dp, start = 16.dp)
-                    .height((getScreenHeight() * 0.1133).dp),
+                    .height((getScreenHeight() * headerHeightMultiplier).dp)
+                    .width((getScreenHeight() * headerWidthMultiplier).dp),
                 text = stringResource(Res.string.devicesList),
                 color = AppColors.White,
                 fontWeight = FontWeight.Bold,

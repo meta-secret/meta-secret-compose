@@ -1,9 +1,8 @@
-package scenes.signinscreein
+package scenes.signinscreen
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
 import storage.KeyValueStorage
 
 class SignInScreenViewModel(
@@ -15,11 +14,12 @@ class SignInScreenViewModel(
     }
 
 
-    private val signInState = MutableStateFlow(0)
-    val signInStatus: StateFlow<Int> = signInState
+    val signInStatus: StateFlow<Boolean> =  MutableStateFlow(false)
 
-    fun completeSignIn() {
-        keyValueStorage.isSignInCompleted = true
-        signInState.update {-1}
+    fun completeSignIn(state: Boolean) {
+        keyValueStorage.isSignInCompleted = state
+        if (!state) {
+            keyValueStorage.isOnboardingCompleted = state
+        }
     }
 }

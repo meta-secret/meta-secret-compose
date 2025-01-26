@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,12 +31,14 @@ import kotlinproject.composeapp.generated.resources.secrets
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sharedData.getScreenHeight
+import ui.ElementsSizing.executionerSizeMultiplier
+import ui.ElementsSizing.headerHeightMultiplier
+import ui.ElementsSizing.headerWidthMultiplier
 
 class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val backgroundMain = painterResource(Res.drawable.background_main)
-        val logo = painterResource(Res.drawable.executioner)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -53,7 +56,8 @@ class SecretsScreen : Screen {
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(top = 50.dp, start = 16.dp)
-                    .height((getScreenHeight() * 0.1133).dp),
+                    .height((getScreenHeight() * headerHeightMultiplier).dp)
+                    .width((getScreenHeight() * headerWidthMultiplier).dp),
                 text = stringResource(Res.string.secrets),
                 color = AppColors.White,
                 fontWeight = FontWeight.Bold,
@@ -76,10 +80,10 @@ class SecretsScreen : Screen {
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = logo,
+                        painter = painterResource(Res.drawable.executioner),
                         contentDescription = null,
                         modifier = Modifier
-                            .size(220.dp)
+                            .size((getScreenHeight() * executionerSizeMultiplier).dp)
                             .align(Alignment.Center),
                         contentScale = ContentScale.Fit
                     )

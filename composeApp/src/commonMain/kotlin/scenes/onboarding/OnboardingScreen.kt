@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import scenes.signinscreein.SignInScreen
+import scenes.signinscreen.SignInScreen
 
 class OnboardingScreen : Screen {
     @Composable

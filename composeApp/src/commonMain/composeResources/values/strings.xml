@@ -12,10 +12,13 @@
     <string name = "placeholder">Choose unique nickname</string>
     <string name = "advice">Choose unique nickname - the one you will be using in the future on other devices or log in using the QR code</string>
     <string name = "start">Let's start</string>
-    <string name = "nicknameError">Nickname is already taken. Choose another one</string>>
+    <string name = "nicknameError">Nickname is already taken. Choose another one</string>
     <string name = "secrets">Secrets</string>
     <string name = "devicesList">Devices</string>
     <string name = "profile">Profile</string>
-    <string name = "noSecrets">You haven't add any secrets yet.\nAdd your first one.</string>
+    <string name = "noSecrets">You haven't added any secrets yet. \nAdd your first one.</string>
     <string name = "noSecretsHeader">No secrets</string>
+    <string name = "poweredBy">Powered by Slavic incorporated</string>
+    <string name = "signOut">Sign out</string>
+    <string name = "version">Version</string>
 </resources>

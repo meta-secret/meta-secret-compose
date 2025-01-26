@@ -27,6 +27,7 @@ import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import sharedData.getScreenHeight
 import sharedData.getScreenWidth
+import ui.ElementsSizing.tabHeightMultiplier
 
 class MainScreen : Screen {
     @Composable
@@ -58,7 +59,7 @@ class MainScreen : Screen {
                         )
                         BottomNavigation(
                             modifier = Modifier
-                                .height((getScreenHeight() * 0.084/*TabBAr to Screen ratio*/).dp),
+                                .height((getScreenHeight() * tabHeightMultiplier).dp),
                         ) {
                             tabs.forEachIndexed { index, tab ->
                                 BottomNavigationItem(

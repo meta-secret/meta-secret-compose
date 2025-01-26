@@ -72,15 +72,20 @@ android {
     compileSdk = 35
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+//    sourceSets["main"].res.srcDirs("src/androidMain/composeResources")
+   sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+ //   sourceSets["main"].res.srcDirs("src/commonMain/resources")
+
 
     defaultConfig {
         applicationId = "metasecret.project.com"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
+
+        buildConfigField("String", "APP_VERSION", "\"${versionName}\"")
+
     }
     packaging {
         resources {
@@ -98,6 +103,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     dependencies {
         debugImplementation(compose.uiTooling)

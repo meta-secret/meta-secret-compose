@@ -5,15 +5,8 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import cafe.adriel.voyager.transitions.SlideTransition
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.devicesList
-import kotlinproject.composeapp.generated.resources.devices_logo
-import kotlinproject.composeapp.generated.resources.profile
-import kotlinproject.composeapp.generated.resources.profile_logo
-import kotlinproject.composeapp.generated.resources.secrets
-import kotlinproject.composeapp.generated.resources.secrets_logo
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import kotlinproject.composeapp.generated.resources.*
+import org.jetbrains.compose.resources.*
 
 
 object SecretsTab : Tab {
