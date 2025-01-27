@@ -19,6 +19,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.poweredBy
@@ -28,7 +31,6 @@ import kotlinproject.composeapp.generated.resources.version
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import scenes.signinscreen.SignInScreenViewModel
 import sharedData.getAppVersion
 import ui.CommonBackground
 
@@ -36,7 +38,9 @@ class ProfileScreen : Screen {
 
     @Composable
     override fun Content() {
-        val signInScreenViewModel: SignInScreenViewModel = koinViewModel()
+        val viewModel: ProfileScreenViewModel = koinViewModel()
+        val navigator = LocalNavigator.currentOrThrow
+        val tabNavigator = LocalTabNavigator.current
         CommonBackground(Res.string.profile)
 
         Box(
@@ -62,7 +66,8 @@ class ProfileScreen : Screen {
                         disabledContentColor = AppColors.White.copy(alpha = 0.5f)
                     ),
                     onClick = {
-                        signInScreenViewModel.completeSignIn(false)
+                        viewModel.completeSignIn(false)
+                        navigator.popUntilRoot()
                     }
                 ) {
                     Text(text = stringResource(Res.string.signOut), fontSize = 16.sp)
@@ -82,3 +87,5 @@ class ProfileScreen : Screen {
         }
     }
 }
+
+
