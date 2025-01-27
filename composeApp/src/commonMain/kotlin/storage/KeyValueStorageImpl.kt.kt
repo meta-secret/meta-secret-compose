@@ -1,7 +1,12 @@
 package storage
 
+import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.Settings
+import com.russhwolf.settings.serialization.decodeValueOrNull
+import com.russhwolf.settings.serialization.encodeValue
 import com.russhwolf.settings.set
+import kotlinx.serialization.ExperimentalSerializationApi
+
 
 class KeyValueStorageImpl : KeyValueStorage {
     private val settings: Settings by lazy { Settings() }
@@ -19,22 +24,18 @@ class KeyValueStorageImpl : KeyValueStorage {
             settings[StorageKeys.SIGNIN_INFO.key] = value
         }
 
-//    override var isSignedOut: Boolean
-//        get() = settings.getBoolean(StorageKeys.SIGNOUT_INFO.key, defaultValue = true)
-//        set(value) {
-//            settings[StorageKeys.SIGNOUT_INFO.key] = value
-//        }
-
     // #2 - store/retrive custom types
-//    override var loginInfo: LoginInfo?
-//        get() = settings.decodeValueOrNull(LoginInfo.serializer(), StorageKeys.LOGIN_INFO.key)
-//        set(value) {
-//            if (value != null) {
-//                settings.encodeValue(LoginInfo.serializer(), StorageKeys.LOGIN_INFO.key, value)
-//            } else {
-//                settings.remove(StorageKeys.TOKEN.key)
-//            }
-//        }
+    @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
+    override var signInInfo: LoginInfo?
+        get() = settings.decodeValueOrNull(LoginInfo.serializer(), StorageKeys.LOGIN_INFO.key)
+        set(value) {
+            if (value != null) {
+                settings.encodeValue(LoginInfo.serializer(), StorageKeys.LOGIN_INFO.key, value)
+           }
+        //            else {
+        //              settings.remove(StorageKeys.TOKEN.key)
+        //            }
+        }
 
     // #3 - listen to token value changes
 //    override val observableToken: Flow<String>

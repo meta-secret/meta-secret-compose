@@ -20,14 +20,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
-import sharedData.getScreenHeight
+import kotlinproject.composeapp.generated.resources.Res
+import kotlinproject.composeapp.generated.resources.manrope_regular
+import org.jetbrains.compose.resources.Font
 import sharedData.getScreenWidth
-import ui.ElementsSizing.tabHeightMultiplier
 
 class MainScreen : Screen {
     @Composable
@@ -59,7 +61,7 @@ class MainScreen : Screen {
                         )
                         BottomNavigation(
                             modifier = Modifier
-                                .height((getScreenHeight() * tabHeightMultiplier).dp),
+                                .height(68.dp),
                         ) {
                             tabs.forEachIndexed { index, tab ->
                                 BottomNavigationItem(
@@ -83,7 +85,8 @@ class MainScreen : Screen {
                                     label = {
                                         Text(
                                             text = tab.options.title,
-                                            color = AppColors.White75
+                                            color = AppColors.White75,
+                                            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
                                         )
                                     }
                                 )

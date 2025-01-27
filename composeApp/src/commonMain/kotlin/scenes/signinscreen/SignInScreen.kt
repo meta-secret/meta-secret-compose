@@ -245,6 +245,7 @@ class SignInScreen : Screen {
                         if (!isError) {
                             navigator?.push(MainScreen())
                             viewModel.completeSignIn(true)
+                            viewModel.saveUser(text)
                         }
                     }
                 ) {

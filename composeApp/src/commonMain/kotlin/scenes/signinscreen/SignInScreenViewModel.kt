@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import storage.KeyValueStorage
+import storage.LoginInfo
 
 class SignInScreenViewModel(
     private val keyValueStorage: KeyValueStorage
@@ -18,10 +19,15 @@ class SignInScreenViewModel(
 
     fun completeSignIn(state: Boolean) {
         keyValueStorage.isSignInCompleted = state
+    }
+
+    fun saveUser(inputText: String) {
+        keyValueStorage.signInInfo = LoginInfo(username = inputText, password = "12345")
+    }
+
 // Returns to Onboarding
 
 //        if (!state) {
 //            keyValueStorage.isOnboardingCompleted = state
 //        }
-    }
 }

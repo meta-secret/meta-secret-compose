@@ -7,6 +7,9 @@ import cafe.adriel.voyager.navigator.tab.TabOptions
 import cafe.adriel.voyager.transitions.SlideTransition
 import kotlinproject.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.*
+import scenes.devicesscreen.DevicesScreen
+import scenes.profilescreen.ProfileScreen
+import scenes.secretsscreen.SecretsScreen
 
 
 object SecretsTab : Tab {

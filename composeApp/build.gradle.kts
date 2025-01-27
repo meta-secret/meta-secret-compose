@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
-    kotlin("plugin.serialization") version "1.8.10"
+    kotlin("plugin.serialization") version "2.0.20"
 }
 
 kotlin {
@@ -63,6 +63,7 @@ kotlin {
             implementation(libs.multiplatform.settings.serialization)
             implementation(libs.coroutines.core)
             implementation(libs.settings.coroutine)
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
         }
     }
 }
@@ -72,9 +73,8 @@ android {
     compileSdk = 35
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-//    sourceSets["main"].res.srcDirs("src/androidMain/composeResources")
-   sourceSets["main"].resources.srcDirs("src/commonMain/resources")
- //   sourceSets["main"].res.srcDirs("src/commonMain/resources")
+    sourceSets["main"].resources.srcDirs("src/commonMain/composeResources")
+    sourceSets["main"].res.srcDirs("src/androidMain/res")
 
 
     defaultConfig {
