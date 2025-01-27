@@ -2,9 +2,7 @@
     android:viewportWidth="375"
     android:viewportHeight="812"
     android:width="375dp"
-    android:height="812dp"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://schemas.android.com/apk/res/android ">
+    android:height="812dp">
   <group>
     <clip-path android:pathData="M0 0H375V812H0V0Z" />
     <path

@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import storage.KeyValueStorage
-import storage.KeyValueStorageImpl
 
 class SplashScreenViewModel(
     private val keyValueStorage: KeyValueStorage
