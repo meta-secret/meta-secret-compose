@@ -10,4 +10,7 @@ class ProfileScreenViewModel(
     fun completeSignIn(state: Boolean) {
         keyValueStorage.isSignInCompleted = state
     }
+    fun getNickName() {
+        keyValueStorage.signInInfo?.username
+    }
 }

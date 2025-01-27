@@ -23,7 +23,9 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import kotlinproject.composeapp.generated.resources.Res
+import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
+import kotlinproject.composeapp.generated.resources.nickname
 import kotlinproject.composeapp.generated.resources.poweredBy
 import kotlinproject.composeapp.generated.resources.profile
 import kotlinproject.composeapp.generated.resources.signOut
@@ -47,6 +49,23 @@ class ProfileScreen : Screen {
             modifier = Modifier
                 .fillMaxSize()
         ) {
+            Column(
+                modifier = Modifier
+                    .padding(top = 100.dp, start = 16.dp)
+            ) {
+                Text(
+                    text = stringResource(Res.string.nickname),
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                    color = AppColors.White75
+                )
+                Text(
+                    text = viewModel.getNickName().toString(),
+                    fontSize = 24.sp,
+                    fontFamily = FontFamily(Font(Res.font.manrope_bold)),
+                    color = AppColors.White
+                )
+            }
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
