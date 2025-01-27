@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
-    kotlin("plugin.serialization") version "1.8.10"
+    kotlin("plugin.serialization") version "2.0.20"
 }
 
 kotlin {
@@ -63,24 +63,29 @@ kotlin {
             implementation(libs.multiplatform.settings.serialization)
             implementation(libs.coroutines.core)
             implementation(libs.settings.coroutine)
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
         }
     }
 }
 
 android {
     namespace = "metasecret.project.com"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    compileSdk = 35
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+    sourceSets["main"].resources.srcDirs("src/commonMain/composeResources")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+
 
     defaultConfig {
         applicationId = "metasecret.project.com"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
+
+        buildConfigField("String", "APP_VERSION", "\"${versionName}\"")
+
     }
     packaging {
         resources {
@@ -98,6 +103,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     dependencies {
         debugImplementation(compose.uiTooling)
@@ -108,6 +114,10 @@ dependencies {
     implementation(libs.androidx.annotation.jvm)
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.lifecycle.livedata.core.ktx)
+    implementation(libs.material)
+    implementation(libs.androidx.glance)
+    implementation(libs.ui.android)
+    implementation (libs.androidx.material)
 }
 
 

@@ -1,18 +1,8 @@
 package scenes.splashscreen
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -20,15 +10,13 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.background_logo
-import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.logo
-import kotlinproject.composeapp.generated.resources.text
+import kotlinproject.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import scenes.mainscreen.MainScreen
 import scenes.onboarding.OnboardingScreen
-import scenes.signinscreein.SignInScreen
+import scenes.signinscreen.SignInScreen
+import sharedData.getScreenHeight
 
 class SplashScreen : Screen {
     @Composable
@@ -49,7 +37,7 @@ class SplashScreen : Screen {
 
         when (navigationEvent) {
             SplashNavigationEvent.NavigateToMain -> {
-                // TODO: Move to main screen
+                navigator?.push(MainScreen())
             }
 
             SplashNavigationEvent.NavigateToSignUp -> {
@@ -115,7 +103,7 @@ class SplashScreen : Screen {
                             modifier = Modifier
                                 .offset(y = 40.dp)
                                 .fillMaxWidth()
-                                .height(23.dp), // TODO: Need to find a way to remove hardcode
+                                .height((getScreenHeight() * 0.02833).dp),
                             contentScale = ContentScale.Fit
                         )
                     }

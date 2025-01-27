@@ -1,12 +1,12 @@
-package scenes.signinscreein
+package scenes.mainscreen
 
 import androidx.lifecycle.ViewModel
 import storage.KeyValueStorage
 
-class SignInScreenViewModel(
+class MainScreenViewModel(
     private val keyValueStorage: KeyValueStorage
 ) : ViewModel() {
-    fun isNameError(string: String): Boolean {
-        return string == "Dima"
+    fun clean() {
+        keyValueStorage.cleanStorage()
     }
 }
