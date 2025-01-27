@@ -24,10 +24,4 @@ class SignInScreenViewModel(
     fun saveUser(inputText: String) {
         keyValueStorage.signInInfo = LoginInfo(username = inputText, password = "12345")
     }
-
-// Returns to Onboarding
-
-//        if (!state) {
-//            keyValueStorage.isOnboardingCompleted = state
-//        }
 }
