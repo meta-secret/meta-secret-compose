@@ -23,7 +23,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.devicesList
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.nickname
@@ -46,6 +45,12 @@ class ProfileScreen : Screen {
     override fun Content() {
         val viewModel: ProfileScreenViewModel = koinViewModel()
         val navigator = LocalNavigator.currentOrThrow
+        val secrets = stringResource(Res.string.secrets)
+        val secretsCount = viewModel.getSecretsCount().toString()
+        val devices = stringResource(Res.string.secrets)
+        val devicesCount = viewModel.getSecretsCount().toString()
+        val nickname = stringResource(Res.string.nickname)
+        val nicknameField = viewModel.getNickName().toString()
         CommonBackground(Res.string.profile)
 
         Box(
@@ -57,18 +62,7 @@ class ProfileScreen : Screen {
                     modifier = Modifier
                         .padding(top = 100.dp, start = 16.dp)
                 ) {
-                    Text(
-                        text = stringResource(Res.string.nickname),
-                        color = AppColors.White75,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular))
-                    )
-                    Text(
-                        text = viewModel.getNickName().toString(),
-                        color = AppColors.White,
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-                        textAlign = TextAlign.Center
-                    )
+                    ProfileTextCell(nickname, nicknameField)
                 }
                 Box(
                     modifier = Modifier
@@ -92,35 +86,12 @@ class ProfileScreen : Screen {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = stringResource(Res.string.secrets),
-                                color = AppColors.White75,
-                                fontFamily = FontFamily(Font(Res.font.manrope_regular))
-                            )
-                            Text(
-                                text = "12",
-                                color = AppColors.White,
-                                fontSize = 24.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-                                textAlign = TextAlign.Center
-                            )
+                            ProfileTextCell(secrets, secretsCount)
                         }
-
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = stringResource(Res.string.devicesList),
-                                color = AppColors.White75,
-                                fontFamily = FontFamily(Font(Res.font.manrope_regular))
-                            )
-                            Text(
-                                text = "2",
-                                color = AppColors.White,
-                                fontSize = 24.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-                                textAlign = TextAlign.Center
-                            )
+                            ProfileTextCell(devices, devicesCount)
                         }
                     }
                     DrawLine(16f, 359f, 112f, 112f, false)
@@ -168,4 +139,19 @@ class ProfileScreen : Screen {
     }
 }
 
-
+@Composable
+fun ProfileTextCell(header: String, content: String) {
+    Text(
+        text = header,
+        color = AppColors.White75,
+        fontSize = 15.sp,
+        fontFamily = FontFamily(Font(Res.font.manrope_regular))
+    )
+    Text(
+        text = content,
+        color = AppColors.White,
+        fontSize = 24.sp,
+        fontFamily = FontFamily(Font(Res.font.manrope_bold)),
+        textAlign = TextAlign.Center
+    )
+}
