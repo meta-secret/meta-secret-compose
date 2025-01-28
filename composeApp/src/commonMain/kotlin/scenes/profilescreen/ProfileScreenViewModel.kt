@@ -14,9 +14,11 @@ class ProfileScreenViewModel(
         return keyValueStorage.signInInfo?.username
     }
     fun getSecretsCount(): Int {
-        TODO("Not yet implemented")
+        //TODO("Not yet implemented")
+        return 12
     }
     fun getDevicesCount(): Int {
-        TODO("Not yet implemented")
+        //TODO("Not yet implemented")
+        return 2
     }
 }

@@ -60,7 +60,7 @@ class ProfileScreen : Screen {
             Column {
                 Column(
                     modifier = Modifier
-                        .padding(top = 100.dp, start = 16.dp)
+                        .padding(top = 100.dp, start = 16.dp, end = 16.dp)
                 ) {
                     ProfileTextCell(nickname, nicknameField)
                 }
