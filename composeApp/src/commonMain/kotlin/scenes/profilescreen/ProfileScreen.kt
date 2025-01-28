@@ -48,7 +48,7 @@ class ProfileScreen : Screen {
         val secrets = stringResource(Res.string.secrets)
         val secretsCount = viewModel.getSecretsCount().toString()
         val devices = stringResource(Res.string.secrets)
-        val devicesCount = viewModel.getSecretsCount().toString()
+        val devicesCount = viewModel.getDevicesCount().toString()
         val nickname = stringResource(Res.string.nickname)
         val nicknameField = viewModel.getNickName().toString()
         CommonBackground(Res.string.profile)
