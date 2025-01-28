@@ -163,7 +163,7 @@ class SignInScreen : Screen {
                         shape = RoundedCornerShape(8.dp),
                         elevation = null,
                         onClick = {
-                            //TODO: Navigate to screen
+                           //TODO
                         }
                     ) {
                         Text(text = stringResource(Res.string.scan), fontSize = 16.sp)
