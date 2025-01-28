@@ -8,7 +8,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 
 
-
 @RequiresApi(Build.VERSION_CODES.R)
 @Composable
 actual fun getScreenWidth(): Int {
@@ -18,7 +17,6 @@ actual fun getScreenWidth(): Int {
     return (windowMetrics.bounds.width() / density).toInt()
 }
 
-
 @RequiresApi(Build.VERSION_CODES.R)
 @Composable
 actual fun getScreenHeight(): Int {
@@ -26,4 +24,18 @@ actual fun getScreenHeight(): Int {
     val windowMetrics = context.getSystemService(WindowManager::class.java).currentWindowMetrics
     val density = LocalDensity.current.density
     return (windowMetrics.bounds.height() / density).toInt()
+}
+
+@RequiresApi(Build.VERSION_CODES.R)
+@Composable
+actual fun getScreenWidthPx(): Int {
+    val context = LocalContext.current
+    val windowMetrics = context.getSystemService(WindowManager::class.java).currentWindowMetrics
+    return windowMetrics.bounds.width()
+}
+
+@Composable
+actual fun getScreenHeightPx(): Int {
+    val context = LocalContext.current
+    return context.resources.displayMetrics.heightPixels
 }
