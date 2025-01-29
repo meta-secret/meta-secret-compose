@@ -126,8 +126,8 @@ fun ProfileBody() {
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                FooterTextCell((stringResource(Res.string.version) + " " + getAppVersion()), 16)
-                FooterTextCell(stringResource(Res.string.poweredBy), 0)
+                TextCell((stringResource(Res.string.version) + " " + getAppVersion()), 16)
+                TextCell(stringResource(Res.string.poweredBy), 0)
             }
         }
     }
@@ -169,7 +169,7 @@ fun ProfileTextCell(header: String, content: String, alignment: Alignment.Horizo
 }
 
 @Composable
-fun FooterTextCell(content: String, padding: Int) {
+fun TextCell(content: String, padding: Int) {
     Text(
         text = content,
         fontSize = 15.sp,

@@ -1,6 +1,7 @@
 package di
 
 import org.koin.dsl.module
+import scenes.devicesscreen.DevicesScreenViewModel
 import scenes.onboarding.OnboardingViewModel
 import scenes.profilescreen.ProfileScreenViewModel
 import scenes.signinscreen.SignInScreenViewModel
@@ -17,5 +18,8 @@ val appModule = module {
     factory { OnboardingViewModel(get()) }
     factory { SignInScreenViewModel(get()) }
     factory { ProfileScreenViewModel(get()) }
+    factory { DevicesScreenViewModel(get()) }
+   // factory { SecretsScreenViewModel(get()) }
+
 
 }
