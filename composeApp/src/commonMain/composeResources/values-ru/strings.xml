@@ -14,6 +14,7 @@
     <string name = "start">Начать работу</string>
     <string name = "nicknameError">Данный никнейм уже занят. Попробуйте другой</string>>
     <string name = "secrets">Секреты</string>
+    <string name = "secret">секрет</string>
     <string name = "devicesList">Устройства</string>
     <string name = "profile">Профиль</string>
     <string name = "noSecrets">У вас пока нет добавленных секретов. \nДобавьте первый секрет</string>
@@ -22,4 +23,7 @@
     <string name = "signOut">Выход</string>
     <string name = "version">Версия</string>
     <string name = "nickname">Никнэйм</string>
+    <string name = "addDevice"> +Добавить</string>
+    <string name = "lackOfDevice">Не хватает уcтройств, чтобы ваши секреты были в безопастности</string>
+
 </resources>

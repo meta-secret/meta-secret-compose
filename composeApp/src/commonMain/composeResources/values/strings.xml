@@ -14,6 +14,7 @@
     <string name = "start">Let's start</string>
     <string name = "nicknameError">Nickname is already taken. Choose another one</string>
     <string name = "secrets">Secrets</string>
+    <string name = "secret">secret</string>
     <string name = "devicesList">Devices</string>
     <string name = "profile">Profile</string>
     <string name = "noSecrets">You haven't added any secrets yet. \nAdd your first one.</string>
@@ -22,4 +23,7 @@
     <string name = "signOut">Sign out</string>
     <string name = "version">Version</string>
     <string name = "nickname">Nickname</string>
+    <string name = "addDevice"> +Add</string>
+    <string name = "lackOfDevice">You haven't added enough devices to keep your secrets safe</string>
+
 </resources>
