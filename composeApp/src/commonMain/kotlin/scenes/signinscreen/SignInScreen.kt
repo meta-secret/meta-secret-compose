@@ -243,9 +243,9 @@ class SignInScreen : Screen {
                     onClick = {
                         isError = viewModel.isNameError(text)
                         if (!isError) {
-                            navigator?.push(MainScreen())
                             viewModel.completeSignIn(true)
                             viewModel.saveUser(text)
+                            navigator?.replace(MainScreen())
                         }
                     }
                 ) {

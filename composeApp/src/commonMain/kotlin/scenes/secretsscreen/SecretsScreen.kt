@@ -38,7 +38,7 @@ class SecretsScreen : Screen {
     override fun Content() {
         val executionerSizeMultiplier = 220/*Figma's logo size*/ / 812F /*Figma's layout height*/
 
-        CommonBackground(Res.string.secrets)
+        CommonBackground(Res.string.secrets){ print() }
 
             Box(
                 modifier = Modifier
@@ -88,6 +88,11 @@ class SecretsScreen : Screen {
             }
         }
     }
+
+@Composable
+fun print(){
+    androidx.compose.material3.Text("gfe")
+}
 
 
 

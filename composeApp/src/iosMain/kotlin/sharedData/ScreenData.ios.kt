@@ -11,13 +11,3 @@ actual fun getScreenWidth(): Int {
 actual fun getScreenHeight(): Int {
     TODO("Not yet implemented")
 }
-
-@Composable
-actual fun getScreenWidthPx(): Int {
-    TODO("Not yet implemented")
-}
-
-@Composable
-actual fun getScreenHeightPx(): Int {
-    TODO("Not yet implemented")
-}
