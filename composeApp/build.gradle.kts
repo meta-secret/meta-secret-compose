@@ -118,6 +118,7 @@ dependencies {
     implementation(libs.androidx.glance)
     implementation(libs.ui.android)
     implementation (libs.androidx.material)
+    implementation(libs.androidx.activity.ktx)
 }
 
 

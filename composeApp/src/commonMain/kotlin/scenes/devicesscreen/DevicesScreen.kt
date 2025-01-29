@@ -1,5 +1,6 @@
 package scenes.devicesscreen
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
@@ -10,7 +11,10 @@ import ui.CommonBackground
 class DevicesScreen : Screen {
     @Composable
     override fun Content() {
-        CommonBackground(Res.string.devicesList)
+        CommonBackground(Res.string.devicesList){print()}
     }
 }
-
+@Composable
+fun print(){
+    Text("gfe")
+}

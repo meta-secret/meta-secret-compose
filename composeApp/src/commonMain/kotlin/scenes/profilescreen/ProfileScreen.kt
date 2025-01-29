@@ -1,13 +1,17 @@
 package scenes.profilescreen
 
 import AppColors
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
@@ -21,11 +25,14 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import kotlinproject.composeapp.generated.resources.Res
+import kotlinproject.composeapp.generated.resources.devicesList
+import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
+import kotlinproject.composeapp.generated.resources.nickname
 import kotlinproject.composeapp.generated.resources.poweredBy
 import kotlinproject.composeapp.generated.resources.profile
+import kotlinproject.composeapp.generated.resources.secrets
 import kotlinproject.composeapp.generated.resources.signOut
 import kotlinproject.composeapp.generated.resources.version
 import org.jetbrains.compose.resources.Font
@@ -34,58 +41,142 @@ import org.koin.compose.viewmodel.koinViewModel
 import sharedData.getAppVersion
 import ui.CommonBackground
 
-class ProfileScreen : Screen {
 
+class ProfileScreen : Screen {
     @Composable
     override fun Content() {
-        val viewModel: ProfileScreenViewModel = koinViewModel()
-        val navigator = LocalNavigator.currentOrThrow
-        val tabNavigator = LocalTabNavigator.current
-        CommonBackground(Res.string.profile)
+        CommonBackground(Res.string.profile) {
+            ProfileBody()
+        }
+    }
+}
 
-        Box(
+@Composable
+fun ProfileBody() {
+    val viewModel: ProfileScreenViewModel = koinViewModel()
+    val navigator = LocalNavigator.currentOrThrow
+    val secrets = stringResource(Res.string.secrets)
+    val secretsCount = viewModel.getSecretsCount().toString()
+    val devices = stringResource(Res.string.devicesList)
+    val devicesCount = viewModel.getDevicesCount().toString()
+    val nickname = stringResource(Res.string.nickname)
+    val nicknameField = viewModel.getNickName().toString()
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        Column(
             modifier = Modifier
+                .padding(vertical = 15.dp)
                 .fillMaxSize()
         ) {
+            ProfileTextCell(nickname, nicknameField, Alignment.Start)
+            DrawBoxLine(15)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 30.dp)
+                    .height(92.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally)
+            ) {
+                ProfileTextCell(secrets, secretsCount, Alignment.CenterHorizontally)
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 20.dp)
+                        .fillMaxHeight()
+                        .background(color = AppColors.White10)
+                        .width(1.dp)
+                )
+                ProfileTextCell(devices, devicesCount, Alignment.CenterHorizontally)
+            }
+            DrawBoxLine(0)
+        }
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 90.dp),
+        ) {
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .align(Alignment.CenterHorizontally),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = AppColors.RedError,
+                    contentColor = AppColors.White,
+                    disabledBackgroundColor = AppColors.RedError.copy(alpha = 0.5f),
+                    disabledContentColor = AppColors.White.copy(alpha = 0.5f)
+                ),
+                onClick = {
+                    viewModel.completeSignIn(false)
+                    navigator.popUntilRoot()
+                }
+            ) {
+                Text(
+                    text = stringResource(Res.string.signOut),
+                    modifier = Modifier
+                        .height(22.dp),
+                    fontSize = 16.sp
+                )
+            }
             Column(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 100.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .align(Alignment.CenterHorizontally)
-                        .padding(horizontal = 16.dp),
-                    colors = ButtonDefaults . buttonColors (
-                        backgroundColor = AppColors.RedError,
-                        contentColor = AppColors.White,
-                        disabledBackgroundColor = AppColors.RedError.copy(alpha = 0.5f),
-                        disabledContentColor = AppColors.White.copy(alpha = 0.5f)
-                    ),
-                    onClick = {
-                        viewModel.completeSignIn(false)
-                        navigator.popUntilRoot()
-                    }
-                ) {
-                    Text(text = stringResource(Res.string.signOut), fontSize = 16.sp)
-                }
-                Text(
-                    text = stringResource(Res.string.version)
-                            + " " + getAppVersion()
-                            + "\n" + stringResource(Res.string.poweredBy),
-                    fontSize = 15.sp,
-                    fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                    color = AppColors.White75,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally),
-                            textAlign = TextAlign.Center
-                )
+                FooterTextCell((stringResource(Res.string.version) + " " + getAppVersion()), 16)
+                FooterTextCell(stringResource(Res.string.poweredBy), 0)
             }
         }
     }
 }
 
+@Composable
+fun DrawBoxLine(padding: Int) {
+    Box(
+        modifier = Modifier
+            .padding(top = padding.dp)
+            .fillMaxWidth()
+            .background(color = AppColors.White10)
+            .height(1.dp)
+    )
+}
 
+@Composable
+fun ProfileTextCell(header: String, content: String, alignment: Alignment.Horizontal) {
+
+    Column(horizontalAlignment = alignment) {
+        Text(
+            modifier = Modifier
+                .height(22.dp),
+            text = header,
+            color = AppColors.White75,
+            fontSize = 15.sp,
+            fontFamily = FontFamily(Font(Res.font.manrope_regular))
+        )
+        Text(
+            modifier = Modifier
+                .height(32.dp),
+            text = content,
+            color = AppColors.White,
+            fontSize = 24.sp,
+            fontFamily = FontFamily(Font(Res.font.manrope_bold)),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun FooterTextCell(content: String, padding: Int) {
+    Text(
+        text = content,
+        fontSize = 15.sp,
+        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+        color = AppColors.White75,
+        modifier = Modifier
+            .padding(top = padding.dp)
+            .height(22.dp)
+    )
+}
