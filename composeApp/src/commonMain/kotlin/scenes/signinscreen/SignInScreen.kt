@@ -163,7 +163,7 @@ class SignInScreen : Screen {
                         shape = RoundedCornerShape(8.dp),
                         elevation = null,
                         onClick = {
-                            //TODO: Navigate to screen
+                           //TODO
                         }
                     ) {
                         Text(text = stringResource(Res.string.scan), fontSize = 16.sp)
@@ -243,9 +243,9 @@ class SignInScreen : Screen {
                     onClick = {
                         isError = viewModel.isNameError(text)
                         if (!isError) {
-                            navigator?.push(MainScreen())
                             viewModel.completeSignIn(true)
                             viewModel.saveUser(text)
+                            navigator?.replace(MainScreen())
                         }
                     }
                 ) {

@@ -3,6 +3,7 @@ package ui
 import AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
@@ -22,7 +23,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun CommonBackground(text: StringResource) {
+fun CommonBackground(text: StringResource, screenContent: @Composable () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -34,15 +35,18 @@ fun CommonBackground(text: StringResource) {
                 .fillMaxSize(),
             contentScale = ContentScale.FillBounds
         )
-
-        Text(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 50.dp, start = 16.dp),
-            text = stringResource(text),
-            color = AppColors.White,
-            fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-            fontSize = 32.sp,
-        )
+        Column {
+            Text(
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(top = 50.dp, start = 16.dp),
+                text = stringResource(text),
+                color = AppColors.White,
+                fontFamily = FontFamily(Font(Res.font.manrope_bold)),
+                fontSize = 32.sp,
+            )
+            screenContent()
+        }
     }
 }
+

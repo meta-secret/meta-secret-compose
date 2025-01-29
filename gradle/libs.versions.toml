@@ -24,6 +24,7 @@ voyager = "1.1.0-beta03"
 material = "1.12.0"
 glance = "1.1.1"
 uiAndroidVersion = "1.7.6"
+activityKtx = "1.10.0"
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -63,3 +64,4 @@ androidx-lifecycle-livedata-core-ktx = { group = "androidx.lifecycle", name = "l
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-glance = { group = "androidx.glance", name = "glance", version.ref = "glance" }
 ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroidVersion" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
