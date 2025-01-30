@@ -8,11 +8,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import storage.KeyValueStorage
+import storage.KeyValueStorageImpl
+
 
 class MainActivity : ComponentActivity() {
+
+    private val keyValueStorage: KeyValueStorage by lazy { KeyValueStorageImpl() }
+
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        keyValueStorage.resetKeyValueStorage()
+
 
         //Background extension through the status bar
         window.statusBarColor = android.graphics.Color.TRANSPARENT

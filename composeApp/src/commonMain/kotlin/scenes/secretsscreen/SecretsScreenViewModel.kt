@@ -1,4 +1,4 @@
-package scenes.devicesscreen
+package scenes.secretsscreen
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -6,9 +6,8 @@ import sharedData.DeviceRepository
 import sharedData.WarningStateHolder
 import storage.KeyValueStorage
 
-class DevicesScreenViewModel(
+class SecretsScreenViewModel(
     private val keyValueStorage: KeyValueStorage
-
 
 ) : ViewModel() {
     val data = DeviceRepository.devices.size
@@ -25,10 +24,6 @@ class DevicesScreenViewModel(
     fun addDevice(): Boolean {
         //TODO("Not yet implemented")
         return true
-    }
-
-    fun getDevice(index: Int): DeviceRepository.Device {
-        return DeviceRepository.devices[index]
     }
 
     fun getSecretsCount(): Int {
