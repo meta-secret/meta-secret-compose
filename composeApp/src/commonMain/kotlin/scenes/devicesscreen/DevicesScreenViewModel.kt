@@ -3,6 +3,7 @@ package scenes.devicesscreen
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.StateFlow
 import sharedData.DeviceRepository
+import sharedData.SecretRepository
 import sharedData.WarningStateHolder
 import storage.KeyValueStorage
 
@@ -11,12 +12,9 @@ class DevicesScreenViewModel(
 
 
 ) : ViewModel() {
-    val data = DeviceRepository.devices.size
+    val dataDevices = DeviceRepository.devices.size
+    val dataSecrets = SecretRepository.secrets.size
     val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
-
-    fun setVisibility() {
-        WarningStateHolder.setVisibility(false)
-    }
 
     fun getNickName(): String? {
         return keyValueStorage.signInInfo?.username
