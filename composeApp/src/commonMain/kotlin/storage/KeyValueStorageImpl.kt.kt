@@ -37,10 +37,10 @@ class KeyValueStorageImpl : KeyValueStorage {
         set(value) {
             if (value != null) {
                 settings.encodeValue(LoginInfo.serializer(), StorageKeys.LOGIN_INFO.key, value)
-           }
-        //            else {
-        //              settings.remove(StorageKeys.TOKEN.key)
-        //            }
+            }
+            //            else {
+            //              settings.remove(StorageKeys.TOKEN.key)
+            //            }
         }
 
     // #3 - listen to token value changes
@@ -51,8 +51,9 @@ class KeyValueStorageImpl : KeyValueStorage {
     override fun cleanStorage() {
         settings.clear()
     }
+
     override fun resetKeyValueStorage() {
-    settings[StorageKeys.WARNING_INFO.key] = true
+        settings[StorageKeys.WARNING_INFO.key] = true
     }
 
 }
