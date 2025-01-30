@@ -52,7 +52,6 @@ class DevicesScreen : Screen {
         CommonBackground(Res.string.devicesList) {
             warningContent(
                 viewModel = viewModel,
-                setVisibility = { viewModel.setVisibility() },
                 getDevicesCount = viewModel.data,
                 addDevice = { viewModel.addDevice() },
                 isVisible = isVisible,
