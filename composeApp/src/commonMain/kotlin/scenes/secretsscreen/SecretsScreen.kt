@@ -48,7 +48,6 @@ class SecretsScreen : Screen {
         CommonBackground(Res.string.secrets) {
             warningContent(
                 viewModel = viewModel,
-                setVisibility = { viewModel.setVisibility() },
                 getDevicesCount = viewModel.data,
                 addDevice = { viewModel.addDevice() },
                 isVisible = isVisible
