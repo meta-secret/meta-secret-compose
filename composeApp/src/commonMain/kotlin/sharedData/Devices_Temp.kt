@@ -9,7 +9,8 @@ object DeviceRepository {
     private val mutableDeviceList: MutableList<Device> by lazy {
         mutableListOf(
             Device(getDeviceMake(),"d"),// getNickName().toString()),
-            Device(getDeviceMake(), "f")// getNickName().toString())
+//            Device(getDeviceMake(),"a"),// getNickName().toString()),
+//            Device(getDeviceMake(), "f")// getNickName().toString())
         )
     }
 

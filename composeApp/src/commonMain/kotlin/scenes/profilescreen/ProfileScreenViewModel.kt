@@ -1,7 +1,8 @@
 package scenes.profilescreen
 
 import androidx.lifecycle.ViewModel
-import sharedData.Repository
+import sharedData.DeviceRepository
+import sharedData.SecretRepository
 import storage.KeyValueStorage
 
 class ProfileScreenViewModel(
@@ -15,11 +16,11 @@ class ProfileScreenViewModel(
         return keyValueStorage.signInInfo?.username
     }
     fun getSecretsCount(): Int {
-        val result = Repository(keyValueStorage).secrets.size
+        val result = SecretRepository.secrets.size
         return result
     }
     fun getDevicesCount(): Int {
-        val result = Repository(keyValueStorage).devices.size
+        val result = DeviceRepository.devices.size
         return result
     }
 }
