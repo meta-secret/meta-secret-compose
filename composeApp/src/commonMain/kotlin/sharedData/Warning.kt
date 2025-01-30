@@ -49,7 +49,6 @@ object WarningStateHolder {
 @Composable
 internal inline fun <reified T : ViewModel> warningContent(
     viewModel: T,
-    crossinline setVisibility: (T) -> Unit,
     crossinline addDevice: (T) -> Boolean,
     getDevicesCount: Int,
     isVisible: Boolean
