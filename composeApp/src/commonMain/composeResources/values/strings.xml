@@ -24,6 +24,7 @@
     <string name = "version">Version</string>
     <string name = "nickname">Nickname</string>
     <string name = "addDevice"> +Add</string>
-    <string name = "lackOfDevice">You haven't added enough devices to keep your secrets safe</string>
+    <string name = "lackOfDevices_start">You need to add </string>
+    <string name = "lackOfDevices_end"> device(s) to keep your secrets safe</string>
 
 </resources>
