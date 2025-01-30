@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -30,69 +32,79 @@ import kotlinproject.composeapp.generated.resources.secrets
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 import sharedData.getScreenHeight
+import sharedData.warningContent
 import ui.CommonBackground
 
 class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val executionerSizeMultiplier = 220/*Figma's logo size*/ / 812F /*Figma's layout height*/
+        val viewModel: SecretsScreenViewModel = koinViewModel()
+        val isVisible by viewModel.isWarningVisible.collectAsState()
 
-        CommonBackground(Res.string.secrets){ print() }
 
-            Box(
+        CommonBackground(Res.string.secrets) {
+            warningContent(
+                viewModel = viewModel,
+                setVisibility = { viewModel.setVisibility() },
+                getDevicesCount = viewModel.data,
+                addDevice = { viewModel.addDevice() },
+                isVisible = isVisible
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .align(Alignment.Center)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Column(
+                Box(
                     modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                        .fillMaxWidth()
+                        .padding(horizontal = 75.dp)
+                        .aspectRatio(1f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
+                    Image(
+                        painter = painterResource(Res.drawable.executioner),
+                        contentDescription = null,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 75.dp)
-                            .aspectRatio(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(Res.drawable.executioner),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size((getScreenHeight() * executionerSizeMultiplier).dp)
-                                .align(Alignment.Center),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                    Text(
-                        text = stringResource(Res.string.noSecretsHeader),
-                        color = AppColors.White,
-                        fontSize = 22.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
-                        modifier = Modifier
-                            .padding(top = 14.dp)
-                    )
-                    Text(
-                        text = stringResource(Res.string.noSecrets),
-                        color = AppColors.White75,
-                        textAlign = TextAlign.Center,
-                        fontSize = 15.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                        modifier = Modifier
-                            .padding(vertical = 7.dp)
+                            .size((getScreenHeight() * executionerSizeMultiplier).dp)
+                            .align(Alignment.Center),
+                        contentScale = ContentScale.Fit
                     )
                 }
+                Text(
+                    text = stringResource(Res.string.noSecretsHeader),
+                    color = AppColors.White,
+                    fontSize = 22.sp,
+                    fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                    modifier = Modifier
+                        .padding(top = 14.dp)
+                )
+                Text(
+                    text = stringResource(Res.string.noSecrets),
+                    color = AppColors.White75,
+                    textAlign = TextAlign.Center,
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                    modifier = Modifier
+                        .padding(vertical = 7.dp)
+                )
             }
         }
     }
-
-@Composable
-fun print(){
-    androidx.compose.material3.Text("gfe")
 }
+
+
 
 
 

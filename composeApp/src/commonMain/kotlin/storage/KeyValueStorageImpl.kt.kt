@@ -24,6 +24,12 @@ class KeyValueStorageImpl : KeyValueStorage {
             settings[StorageKeys.SIGNIN_INFO.key] = value
         }
 
+    override var isWarningVisible: Boolean
+        get() = settings.getBoolean(StorageKeys.WARNING_INFO.key, defaultValue = true)
+        set(value) {
+            settings[StorageKeys.WARNING_INFO.key] = value
+        }
+
     // #2 - store/retrive custom types
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override var signInInfo: LoginInfo?
@@ -45,4 +51,8 @@ class KeyValueStorageImpl : KeyValueStorage {
     override fun cleanStorage() {
         settings.clear()
     }
+    override fun resetKeyValueStorage() {
+    settings[StorageKeys.WARNING_INFO.key] = true
+    }
+
 }
