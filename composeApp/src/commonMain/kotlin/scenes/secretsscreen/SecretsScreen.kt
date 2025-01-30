@@ -53,51 +53,52 @@ class SecretsScreen : Screen {
                 isVisible = isVisible
             )
         }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            Column(
+        if (viewModel.dataSecrets < 1) {
+            Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .fillMaxSize()
             ) {
-                Box(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 75.dp)
-                        .aspectRatio(1f),
-                    contentAlignment = Alignment.Center
+                        .align(Alignment.Center)
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Image(
-                        painter = painterResource(Res.drawable.executioner),
-                        contentDescription = null,
+                    Box(
                         modifier = Modifier
-                            .size((getScreenHeight() * executionerSizeMultiplier).dp)
-                            .align(Alignment.Center),
-                        contentScale = ContentScale.Fit
+                            .fillMaxWidth()
+                            .padding(horizontal = 75.dp)
+                            .aspectRatio(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(Res.drawable.executioner),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size((getScreenHeight() * executionerSizeMultiplier).dp)
+                                .align(Alignment.Center),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                    Text(
+                        text = stringResource(Res.string.noSecretsHeader),
+                        color = AppColors.White,
+                        fontSize = 22.sp,
+                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        modifier = Modifier
+                            .padding(top = 14.dp)
+                    )
+                    Text(
+                        text = stringResource(Res.string.noSecrets),
+                        color = AppColors.White75,
+                        textAlign = TextAlign.Center,
+                        fontSize = 15.sp,
+                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        modifier = Modifier
+                            .padding(vertical = 7.dp)
                     )
                 }
-                Text(
-                    text = stringResource(Res.string.noSecretsHeader),
-                    color = AppColors.White,
-                    fontSize = 22.sp,
-                    fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
-                    modifier = Modifier
-                        .padding(top = 14.dp)
-                )
-                Text(
-                    text = stringResource(Res.string.noSecrets),
-                    color = AppColors.White75,
-                    textAlign = TextAlign.Center,
-                    fontSize = 15.sp,
-                    fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                    modifier = Modifier
-                        .padding(vertical = 7.dp)
-                )
             }
         }
     }
