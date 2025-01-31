@@ -14,7 +14,6 @@ class DeviceRepository (private val keyValueStorage: KeyValueStorage) {
         mutableListOf(
             Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
             Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
-//          Device(getDeviceMake(), "f")// getNickName().toString())
         )
     }
 }
