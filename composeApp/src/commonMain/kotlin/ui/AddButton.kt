@@ -1,4 +1,4 @@
-package sharedData
+package ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addbutton
 import org.jetbrains.compose.resources.painterResource
+import sharedData.getScreenWidth
 
 
 @Composable

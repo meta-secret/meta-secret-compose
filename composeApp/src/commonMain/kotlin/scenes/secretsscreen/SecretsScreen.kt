@@ -1,6 +1,6 @@
 package scenes.secretsscreen
 
-import AppColors
+import sharedData.AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,27 +34,27 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import sharedData.Addbutton
 import sharedData.getScreenHeight
-import sharedData.secretBubbleContent
-import sharedData.warningContent
+import ui.Addbutton
 import ui.CommonBackground
+import ui.secretBubbleContent
+import ui.warningContent
 
 class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val executionerSizeMultiplier = 220/*Figma's logo size*/ / 812F /*Figma's layout height*/
         val viewModel: SecretsScreenViewModel = koinViewModel()
-        val isVisible by viewModel.isWarningVisible.collectAsState()
 
 
         CommonBackground(Res.string.secretsHeader) {
             warningContent(
-                viewModel = viewModel,
-                getDevicesCount = viewModel.sizeDevices,
-                addDevice = { viewModel.addDevice() },
-                isVisible = isVisible
+                text = viewModel.getWarningText(),
+                action = {},
+                closeAction = {},
+                isVisible = viewModel.isWarningVisible
             )
+
             LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()

@@ -1,6 +1,6 @@
 package ui
 
-import AppColors
+import sharedData.AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
