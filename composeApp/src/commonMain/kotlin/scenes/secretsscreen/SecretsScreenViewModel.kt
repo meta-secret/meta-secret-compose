@@ -11,8 +11,8 @@ class SecretsScreenViewModel(
     private val keyValueStorage: KeyValueStorage
 
 ) : ViewModel() {
-    val dataDevices = DeviceRepository.devices.size
-    val dataSecrets = SecretRepository.secrets.size
+    val sizeDevices = DeviceRepository(keyValueStorage).devices.size
+    val sizeSecrets = SecretRepository(keyValueStorage).secrets.size
 
     val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
 

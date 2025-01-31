@@ -28,7 +28,10 @@ import kotlinproject.composeapp.generated.resources.arrow
 import kotlinproject.composeapp.generated.resources.devices
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
+import kotlinproject.composeapp.generated.resources.no
 import kotlinproject.composeapp.generated.resources.secret
+import kotlinproject.composeapp.generated.resources.secrets_4
+import kotlinproject.composeapp.generated.resources.secrets_5
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -39,6 +42,16 @@ internal inline fun <reified T : ViewModel> bubbleContent(
     getSecretsCount: Int,
     getDevice: (T) -> DeviceRepository.Device
     ) {
+
+    var secretText = stringResource(Res.string.secret)
+    var secretCounter = getSecretsCount.toString()
+    if (getSecretsCount < 1) {
+        secretCounter = stringResource(Res.string.no)
+        secretText = stringResource(Res.string.secrets_5)
+    } else if (1 < getSecretsCount && getSecretsCount <= 4)
+        secretText = stringResource(Res.string.secrets_4)
+        else if (getSecretsCount > 4)
+            secretText = stringResource(Res.string.secrets_5)
 
     Box(
         modifier = Modifier
@@ -77,7 +90,7 @@ internal inline fun <reified T : ViewModel> bubbleContent(
                     )
                 )
                 Text(
-                    text = getSecretsCount.toString() + " " + stringResource(Res.string.secret),
+                    text = secretCounter + " " + secretText,
                     style = TextStyle(
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(Res.font.manrope_regular)),
