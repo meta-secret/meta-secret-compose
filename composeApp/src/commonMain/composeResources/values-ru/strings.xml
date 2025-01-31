@@ -19,6 +19,9 @@
     <string name = "secrets_4">секрета</string>
     <string name = "secrets_5">секретов</string>
     <string name = "devicesList">Устройства</string>
+    <string name = "device">устройство</string>
+    <string name = "devices_4">устройства</string>
+    <string name = "devices_5">устройств</string>
     <string name = "profile">Профиль</string>
     <string name = "noSecrets">У вас пока нет добавленных секретов. \nДобавьте первый секрет</string>
     <string name = "noSecretsHeader">Нет секретов</string>
@@ -29,4 +32,7 @@
     <string name = "addDevice"> +Добавить</string>
     <string name = "lackOfDevices_start">Не хватает </string>
     <string name = "lackOfDevices_end"> уcтройств(а), чтобы ваши секреты были в безопасности</string>
+    <string name = "level_1">Низкая</string>
+    <string name = "level_2">Сильная</string>
+    <string name = "level_3">Максимум</string>
 </resources>
