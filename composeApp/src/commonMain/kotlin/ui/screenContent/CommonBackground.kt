@@ -1,5 +1,6 @@
-package ui.screenContent
+package ui
 
+import sharedData.AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,6 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import sharedData.AppColors
 
 @Composable
 fun CommonBackground(text: StringResource, screenContent: @Composable () -> Unit) {
@@ -39,7 +39,7 @@ fun CommonBackground(text: StringResource, screenContent: @Composable () -> Unit
             Text(
                 modifier = Modifier
                     .align(Alignment.Start)
-                    .padding(top = 50.dp, bottom = 30.dp, start = 16.dp),
+                    .padding(top = 50.dp, start = 16.dp),
                 text = stringResource(text),
                 color = AppColors.White,
                 fontFamily = FontFamily(Font(Res.font.manrope_bold)),
@@ -49,3 +49,4 @@ fun CommonBackground(text: StringResource, screenContent: @Composable () -> Unit
         }
     }
 }
+
