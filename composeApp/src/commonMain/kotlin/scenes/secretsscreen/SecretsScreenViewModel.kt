@@ -24,9 +24,8 @@ class SecretsScreenViewModel(
         //TODO("Not yet implemented")
         return true
     }
-
-    fun getSecretsCount(): Int {
-        //TODO("Not yet implemented")
-        return 1
+    fun getSecret(index: Int): SecretRepository.Secret {
+        val secret = SecretRepository(keyValueStorage).secrets[index]
+        return secret
     }
 }

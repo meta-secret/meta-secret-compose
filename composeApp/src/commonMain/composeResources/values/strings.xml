@@ -19,6 +19,9 @@
     <string name = "secrets_4">secrets</string>
     <string name = "secrets_5">secrets</string>
     <string name = "devicesList">Devices</string>
+    <string name = "device">device</string>
+    <string name = "devices_4">devices</string>
+    <string name = "devices_5">devices</string>
     <string name = "profile">Profile</string>
     <string name = "noSecrets">You haven't added any secrets yet. \nAdd your first one.</string>
     <string name = "noSecretsHeader">No secrets</string>
@@ -29,5 +32,8 @@
     <string name = "addDevice"> +Add</string>
     <string name = "lackOfDevices_start">You need to add </string>
     <string name = "lackOfDevices_end"> device(s) to keep your secrets safe</string>
+    <string name = "level_1">Weak</string>
+    <string name = "level_2">Normal</string>
+    <string name = "level_3">Strong</string>
 
 </resources>

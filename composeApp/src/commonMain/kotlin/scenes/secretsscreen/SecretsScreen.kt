@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -33,7 +34,9 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import sharedData.Addbutton
 import sharedData.getScreenHeight
+import sharedData.secretBubbleContent
 import sharedData.warningContent
 import ui.CommonBackground
 
@@ -52,7 +55,21 @@ class SecretsScreen : Screen {
                 addDevice = { viewModel.addDevice() },
                 isVisible = isVisible
             )
+            LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 80.dp)
+                    ) {
+                items(viewModel.sizeSecrets) { index ->
+                    secretBubbleContent(
+                        viewModel = viewModel,
+                        getDevicesCount = viewModel.sizeDevices,
+                        getSecret = {viewModel.getSecret(index)},
+                        )
+                }
+            }
         }
+        Addbutton()
         if (viewModel.sizeSecrets < 1) {
             Box(
                 modifier = Modifier
