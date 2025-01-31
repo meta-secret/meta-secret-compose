@@ -1,6 +1,5 @@
-package sharedData
+package ui
 
-import AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,6 +34,9 @@ import kotlinproject.composeapp.generated.resources.secrets_5
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import sharedData.AppColors
+import sharedData.DeviceRepository
+import sharedData.getDeviceId
 
 @Composable
 internal inline fun <reified T : ViewModel> deviceBubbleContent(

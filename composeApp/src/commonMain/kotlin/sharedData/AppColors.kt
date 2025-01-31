@@ -1,3 +1,5 @@
+package sharedData
+
 import androidx.compose.ui.graphics.Color
 
 object AppColors {
