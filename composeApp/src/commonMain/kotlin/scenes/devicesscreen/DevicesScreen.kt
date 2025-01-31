@@ -12,7 +12,8 @@ import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.devicesList
 import org.koin.compose.viewmodel.koinViewModel
-import sharedData.bubbleContent
+import sharedData.Addbutton
+import sharedData.deviceBubbleContent
 import sharedData.warningContent
 import ui.CommonBackground
 
@@ -36,14 +37,15 @@ class DevicesScreen : Screen {
                     .padding(bottom = 80.dp)
             ) {
                 items(viewModel.sizeDevices) { index ->
-                    bubbleContent(
+                    deviceBubbleContent(
                         viewModel = viewModel,
-                        getSecretsCount = viewModel.sizeSecrets,
-                        getDevice = {viewModel.getDevice(index)}
+                        getDevicesOrSecretsCount = viewModel.sizeSecrets,
+                        getDevice = { viewModel.getDevice(index) },
                     )
                 }
             }
         }
+        Addbutton()
     }
 }
 

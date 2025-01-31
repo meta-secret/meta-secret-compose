@@ -37,20 +37,20 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal inline fun <reified T : ViewModel> bubbleContent(
+internal inline fun <reified T : ViewModel> deviceBubbleContent(
     viewModel: T,
-    getSecretsCount: Int,
+    getDevicesOrSecretsCount: Int,
     getDevice: (T) -> DeviceRepository.Device
     ) {
 
     var secretText = stringResource(Res.string.secret)
-    var secretCounter = getSecretsCount.toString()
-    if (getSecretsCount < 1) {
+    var secretCounter = getDevicesOrSecretsCount.toString()
+    if (getDevicesOrSecretsCount < 1) {
         secretCounter = stringResource(Res.string.no)
         secretText = stringResource(Res.string.secrets_5)
-    } else if (1 < getSecretsCount && getSecretsCount <= 4)
+    } else if (1 < getDevicesOrSecretsCount && getDevicesOrSecretsCount <= 4)
         secretText = stringResource(Res.string.secrets_4)
-        else if (getSecretsCount > 4)
+        else if (getDevicesOrSecretsCount > 4)
             secretText = stringResource(Res.string.secrets_5)
 
     Box(
