@@ -32,7 +32,7 @@ import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.nickname
 import kotlinproject.composeapp.generated.resources.poweredBy
 import kotlinproject.composeapp.generated.resources.profile
-import kotlinproject.composeapp.generated.resources.secrets
+import kotlinproject.composeapp.generated.resources.secretsHeader
 import kotlinproject.composeapp.generated.resources.signOut
 import kotlinproject.composeapp.generated.resources.version
 import org.jetbrains.compose.resources.Font
@@ -55,7 +55,7 @@ class ProfileScreen : Screen {
 fun ProfileBody() {
     val viewModel: ProfileScreenViewModel = koinViewModel()
     val navigator = LocalNavigator.currentOrThrow
-    val secrets = stringResource(Res.string.secrets)
+    val secrets = stringResource(Res.string.secretsHeader)
     val secretsCount = viewModel.getSecretsCount().toString()
     val devices = stringResource(Res.string.devicesList)
     val devicesCount = viewModel.getDevicesCount().toString()
