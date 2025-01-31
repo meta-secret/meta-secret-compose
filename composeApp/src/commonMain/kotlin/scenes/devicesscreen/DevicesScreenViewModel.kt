@@ -9,11 +9,9 @@ import storage.KeyValueStorage
 
 class DevicesScreenViewModel(
     private val keyValueStorage: KeyValueStorage
-
-
 ) : ViewModel() {
-    val dataDevices = DeviceRepository.devices.size
-    val dataSecrets = SecretRepository.secrets.size
+    val sizeDevices = DeviceRepository(keyValueStorage).devices.size
+    val sizeSecrets = SecretRepository(keyValueStorage).secrets.size
     val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
 
     fun getNickName(): String? {
@@ -26,7 +24,8 @@ class DevicesScreenViewModel(
     }
 
     fun getDevice(index: Int): DeviceRepository.Device {
-        return DeviceRepository.devices[index]
+        val device = DeviceRepository(keyValueStorage).devices[index]
+        return device
     }
 
     fun getSecretsCount(): Int {

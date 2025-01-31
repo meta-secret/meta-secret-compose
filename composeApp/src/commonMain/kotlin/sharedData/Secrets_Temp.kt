@@ -1,19 +1,19 @@
 package sharedData
 
+import storage.KeyValueStorage
 
 
-object SecretRepository {
+class SecretRepository(private val keyValueStorage: KeyValueStorage) {
 
-    data class Secret(val SecretName: String, val Password: String)
+    data class Secret(
+        val secretName: String,
+        val password: String
+    )
 
     private val mutableSecretsList: MutableList<Secret> by lazy {
         mutableListOf(
-            Secret("Secret","123456"),// getNickName().toString()),
+            Secret("getSecret()", "getPassword")
         )
     }
     val secrets: List<Secret> get() = mutableSecretsList
 }
-
-
-//mutableDeviceList.add(Secret(TODO, TODO))
-//mutableDeviceList.removeAt(0)

@@ -1,26 +1,20 @@
 package sharedData
 
+import storage.KeyValueStorage
 
-
-object DeviceRepository {
-
-    data class Device(val deviceMake: String, val name: String)
-
-    private val mutableDeviceList: MutableList<Device> by lazy {
-        mutableListOf(
-            Device(getDeviceMake(),"d"),// getNickName().toString()),
-//            Device(getDeviceMake(),"a"),// getNickName().toString()),
-//            Device(getDeviceMake(), "f")// getNickName().toString())
-        )
-    }
+class DeviceRepository (private val keyValueStorage: KeyValueStorage) {
+    data class Device(
+        val deviceMake: String,
+        val name: String
+    )
 
     val devices: List<Device> get() = mutableDeviceList
 
-//    private fun getNickName(): String? {
-//        return keyValueStorage.signInInfo?.username
-//    }
+    private val mutableDeviceList: MutableList<Device> by lazy {
+        mutableListOf(
+            Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
+            Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
+//          Device(getDeviceMake(), "f")// getNickName().toString())
+        )
+    }
 }
-
-
-//mutableDeviceList.add(Device(getDeviceMake(), getNickName()))
-//mutableDeviceList.removeAt(0)
