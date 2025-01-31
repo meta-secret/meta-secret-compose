@@ -13,7 +13,6 @@ class DeviceRepository (private val keyValueStorage: KeyValueStorage) {
     private val mutableDeviceList: MutableList<Device> by lazy {
         mutableListOf(
             Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
-            Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
         )
     }
 }
