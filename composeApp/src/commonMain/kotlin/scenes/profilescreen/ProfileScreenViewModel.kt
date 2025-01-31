@@ -16,11 +16,11 @@ class ProfileScreenViewModel(
         return keyValueStorage.signInInfo?.username
     }
     fun getSecretsCount(): Int {
-        val result = SecretRepository.secrets.size
+        val result = SecretRepository(keyValueStorage).secrets.size
         return result
     }
     fun getDevicesCount(): Int {
-        val result = DeviceRepository.devices.size
+        val result = DeviceRepository(keyValueStorage).devices.size
         return result
     }
 }

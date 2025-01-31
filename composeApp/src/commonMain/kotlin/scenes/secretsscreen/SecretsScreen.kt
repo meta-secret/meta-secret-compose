@@ -28,7 +28,7 @@ import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.noSecrets
 import kotlinproject.composeapp.generated.resources.noSecretsHeader
-import kotlinproject.composeapp.generated.resources.secrets
+import kotlinproject.composeapp.generated.resources.secretsHeader
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -45,15 +45,15 @@ class SecretsScreen : Screen {
         val isVisible by viewModel.isWarningVisible.collectAsState()
 
 
-        CommonBackground(Res.string.secrets) {
+        CommonBackground(Res.string.secretsHeader) {
             warningContent(
                 viewModel = viewModel,
-                getDevicesCount = viewModel.dataDevices,
+                getDevicesCount = viewModel.sizeDevices,
                 addDevice = { viewModel.addDevice() },
                 isVisible = isVisible
             )
         }
-        if (viewModel.dataSecrets < 1) {
+        if (viewModel.sizeSecrets < 1) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

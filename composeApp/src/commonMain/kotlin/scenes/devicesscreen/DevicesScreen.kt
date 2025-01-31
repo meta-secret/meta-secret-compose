@@ -26,7 +26,7 @@ class DevicesScreen : Screen {
         CommonBackground(Res.string.devicesList) {
             warningContent(
                 viewModel = viewModel,
-                getDevicesCount = viewModel.dataDevices,
+                getDevicesCount = viewModel.sizeDevices,
                 addDevice = { viewModel.addDevice() },
                 isVisible = isVisible,
             )
@@ -35,10 +35,10 @@ class DevicesScreen : Screen {
                     .fillMaxSize()
                     .padding(bottom = 80.dp)
             ) {
-                items(viewModel.dataDevices) { index ->
+                items(viewModel.sizeDevices) { index ->
                     bubbleContent(
                         viewModel = viewModel,
-                        getSecretsCount = viewModel.dataSecrets,
+                        getSecretsCount = viewModel.sizeSecrets,
                         getDevice = {viewModel.getDevice(index)}
                     )
                 }
