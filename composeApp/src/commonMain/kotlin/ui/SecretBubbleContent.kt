@@ -1,6 +1,5 @@
 package ui
 
-import sharedData.AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,6 +38,8 @@ import kotlinproject.composeapp.generated.resources.shield_l3
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import sharedData.AppColors
+import sharedData.SecretRepository
 
 @Composable
 internal inline fun <reified T : ViewModel> secretBubbleContent(
