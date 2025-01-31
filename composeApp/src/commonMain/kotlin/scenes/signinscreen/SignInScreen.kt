@@ -1,6 +1,6 @@
 package scenes.signinscreen
 
-import AppColors
+import sharedData.AppColors
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border

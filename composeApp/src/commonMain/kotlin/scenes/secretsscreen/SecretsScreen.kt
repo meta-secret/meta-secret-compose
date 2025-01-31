@@ -1,6 +1,6 @@
 package scenes.secretsscreen
 
-import AppColors
+import sharedData.AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
