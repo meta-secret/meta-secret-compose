@@ -12,7 +12,7 @@ import kotlinproject.composeapp.generated.resources.devicesList
 import org.koin.compose.viewmodel.koinViewModel
 import ui.Addbutton
 import ui.CommonBackground
-import ui.deviceBubbleContent
+import ui.ContentSell
 import ui.warningContent
 
 
@@ -34,11 +34,12 @@ class DevicesScreen : Screen {
                     .fillMaxSize()
                     .padding(bottom = 80.dp)
             ) {
-                items(viewModel.sizeDevices) { index ->
-                    deviceBubbleContent(
-                        viewModel = viewModel,
-                        getDevicesOrSecretsCount = viewModel.sizeSecrets,
-                        getDevice = { viewModel.getDevice(index) },
+                items(viewModel.devicesSize) { index ->
+                    ContentSell(
+                        {},
+                        screenId = "Devices",
+                        getBubbleData = viewModel.data(),
+                        index = index
                     )
                 }
             }
