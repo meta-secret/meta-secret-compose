@@ -1,6 +1,5 @@
 package scenes.secretsscreen
 
-import sharedData.AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,8 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -34,10 +31,11 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import sharedData.AppColors
 import sharedData.getScreenHeight
 import ui.Addbutton
 import ui.CommonBackground
-import ui.secretBubbleContent
+import ui.ContentSell
 import ui.warningContent
 
 class SecretsScreen : Screen {
@@ -51,7 +49,7 @@ class SecretsScreen : Screen {
             warningContent(
                 text = viewModel.getWarningText(),
                 action = {},
-                closeAction = {},
+                closeAction = {viewModel.closeWarning()},
                 isVisible = viewModel.isWarningVisible
             )
 
@@ -60,17 +58,18 @@ class SecretsScreen : Screen {
                         .fillMaxSize()
                         .padding(bottom = 80.dp)
                     ) {
-                items(viewModel.sizeSecrets) { index ->
-                    secretBubbleContent(
-                        viewModel = viewModel,
-                        getDevicesCount = viewModel.sizeDevices,
-                        getSecret = {viewModel.getSecret(index)},
-                        )
+                items(viewModel.secretsSize) { index ->
+                    ContentSell(
+                       {},
+                        screenId = "Secrets",
+                        getBubbleData = viewModel.data(),
+                        index = index
+                    )
                 }
             }
         }
         Addbutton()
-        if (viewModel.sizeSecrets < 1) {
+        if (viewModel.secretsSize < 1) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

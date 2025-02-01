@@ -14,7 +14,6 @@
     <string name = "start">Начать работу</string>
     <string name = "nicknameError">Данный никнейм уже занят. Попробуйте другой</string>>
     <string name = "secretsHeader">Секреты</string>
-    <string name = "no">Нет</string>
     <string name = "secret">секрет</string>
     <string name = "secrets_4">секрета</string>
     <string name = "secrets_5">секретов</string>
