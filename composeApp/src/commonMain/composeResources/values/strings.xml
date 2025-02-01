@@ -14,7 +14,6 @@
     <string name = "start">Let's start</string>
     <string name = "nicknameError">Nickname is already taken. Choose another one</string>
     <string name = "secretsHeader">Secrets</string>
-    <string name = "no">No</string>
     <string name = "secret">secret</string>
     <string name = "secrets_4">secrets</string>
     <string name = "secrets_5">secrets</string>

@@ -10,46 +10,38 @@ import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addDevice
 import kotlinproject.composeapp.generated.resources.lackOfDevices_end
 import kotlinproject.composeapp.generated.resources.lackOfDevices_start
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
-import sharedData.DeviceRepository
-import sharedData.SecretRepository
+import sharedData.Repository
 import storage.KeyValueStorage
+import ui.WarningStateHolder
 
 class DevicesScreenViewModel(
     private val keyValueStorage: KeyValueStorage
-) : ViewModel() {
-    val sizeDevices = DeviceRepository(keyValueStorage).devices.size
-    val sizeSecrets = SecretRepository(keyValueStorage).secrets.size
-    var isWarningVisible: Boolean = sizeDevices < 3
+): ViewModel() {
+    val devicesSize = data().devices.size
+    val secretsSize = data().secrets.size
 
-    fun getNickName(): String? {
-        return keyValueStorage.signInInfo?.username
+    val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
+
+    fun closeWarning() {
+        WarningStateHolder.setVisibility(false)
     }
-
     fun addDevice() {
         //TODO("Not yet implemented")
     }
 
-    fun closeWarning() {
-        isWarningVisible = false
-    }
-
-    fun getDevice(index: Int): DeviceRepository.Device {
-        val device = DeviceRepository(keyValueStorage).devices[index]
+    fun data (): Repository {
+        val device = Repository(keyValueStorage)
         return device
-    }
-
-    fun getSecretsCount(): Int {
-        //TODO("Not yet implemented")
-        return 1
     }
 
     @Composable
     fun getWarningText(): AnnotatedString {
         return buildAnnotatedString {
             append(stringResource(Res.string.lackOfDevices_start))
-            append((3 - sizeDevices).toString())
+            append((3 - devicesSize).toString())
             append(stringResource(Res.string.lackOfDevices_end))
             pushStringAnnotation(tag = "addDevice", annotation = "")
             withStyle(style = SpanStyle(color = AppColors.ActionLink)) {
@@ -58,4 +50,7 @@ class DevicesScreenViewModel(
             pop()
         }
     }
+
+
+
 }
