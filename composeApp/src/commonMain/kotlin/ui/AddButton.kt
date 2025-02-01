@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addbutton
 import org.jetbrains.compose.resources.painterResource
-import sharedData.getScreenWidth
 
 
 @Composable
@@ -22,7 +21,7 @@ fun Addbutton() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 100.dp, end = (getScreenWidth()/6-imgSize/2).dp),
+            .padding(bottom = 113.dp, end = 45.dp),
         Alignment.BottomEnd
     ) {
         Image(

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -25,6 +27,8 @@ import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.warning
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import sharedData.AppColors
@@ -34,9 +38,11 @@ fun warningContent(
     text: AnnotatedString,
     action: () -> Unit,
     closeAction: () -> Unit,
-    isVisible: Boolean
+    isVisible: StateFlow<Boolean>
 ) {
-    if (!isVisible) return
+    val visibility by isVisible.collectAsState()
+
+    if (!visibility) return
 
     Box(
         modifier = Modifier
