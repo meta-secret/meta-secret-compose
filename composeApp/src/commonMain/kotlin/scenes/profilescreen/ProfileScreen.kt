@@ -1,6 +1,5 @@
 package scenes.profilescreen
 
-import sharedData.AppColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +37,7 @@ import kotlinproject.composeapp.generated.resources.version
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import sharedData.AppColors
 import sharedData.getAppVersion
 import ui.CommonBackground
 

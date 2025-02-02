@@ -27,12 +27,13 @@ class SecretsScreenViewModel(
     fun closeWarning() {
         WarningStateHolder.setVisibility(false)
     }
+
     fun addDevice(): Boolean {
         //TODO("Not yet implemented")
         return true
     }
 
-    fun data (): Repository {
+    fun data(): Repository {
         val device = Repository(keyValueStorage)
         return device
     }

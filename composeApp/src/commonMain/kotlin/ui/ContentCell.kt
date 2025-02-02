@@ -115,8 +115,7 @@ fun ContentSell(
                         modifier = Modifier.align(Alignment.CenterEnd)
                             .clickable { action() /* OpenBubble*/ })
                 }
-            }
-            else {
+            } else {
                 val deviceText = textOnValue(
                     devicesSize,
                     stringResource(Res.string.device),
