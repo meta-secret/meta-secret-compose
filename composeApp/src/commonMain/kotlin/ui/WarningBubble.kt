@@ -27,7 +27,6 @@ import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.warning
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
@@ -72,7 +71,7 @@ fun warningContent(
                     color = AppColors.White75
                 ),
                 onClick = { offset ->
-                    text.getStringAnnotations("addDevice", offset, offset)
+                    text.getStringAnnotations("addText", offset, offset)
                         .firstOrNull()
                         ?.let {
                             action()
