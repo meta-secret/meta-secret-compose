@@ -15,8 +15,10 @@
     <string name = "nicknameError">Nickname is already taken. Choose another one</string>
     <string name = "secretsHeader">Secrets</string>
     <string name = "secret">secret</string>
+    <string name = "secretCapital">Secret</string>
     <string name = "secrets_4">secrets</string>
     <string name = "secrets_5">secrets</string>
+    <string name = "secretName">Secret name</string>
     <string name = "devicesList">Devices</string>
     <string name = "device">device</string>
     <string name = "devices_4">devices</string>
@@ -28,7 +30,12 @@
     <string name = "signOut">Sign out</string>
     <string name = "version">Version</string>
     <string name = "nickname">Nickname</string>
-    <string name = "addDevice"> +Add</string>
+    <string name = "addText"> +Add</string>
+    <string name = "addDevice">Adding device</string>
+    <string name = "addDeviceAdvice">For maximum safety of your passwords you should add at least 3 devices</string>
+    <string name = "addSecret">Adding secret</string>
+    <string name = "lackOfDevices">Not having enough devices?</string>
+    <string name = "useMetaSecret">MetaSecret Cloud Device - you can use our cloud as a device</string>
     <string name = "lackOfDevices_start">You need to add </string>
     <string name = "lackOfDevices_end"> device(s) to keep your secrets safe</string>
     <string name = "level_1">Weak</string>
