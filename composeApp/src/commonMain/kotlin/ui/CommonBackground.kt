@@ -1,5 +1,6 @@
 package ui
 
+import sharedData.AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,6 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import sharedData.AppColors
 
 @Composable
 fun CommonBackground(text: StringResource, screenContent: @Composable () -> Unit) {
