@@ -7,7 +7,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.ViewModel
 import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.addText
+import kotlinproject.composeapp.generated.resources.addDevice
 import kotlinproject.composeapp.generated.resources.lackOfDevices_end
 import kotlinproject.composeapp.generated.resources.lackOfDevices_start
 import kotlinx.coroutines.flow.StateFlow
@@ -45,7 +45,7 @@ class DevicesScreenViewModel(
             append(stringResource(Res.string.lackOfDevices_end))
             pushStringAnnotation(tag = "addDevice", annotation = "")
             withStyle(style = SpanStyle(color = AppColors.ActionLink)) {
-                append(stringResource(Res.string.addText))
+                append(stringResource(Res.string.addDevice))
             }
             pop()
         }

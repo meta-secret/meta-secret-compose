@@ -7,5 +7,3 @@ expect fun getScreenWidth(): Int
 
 @Composable
 expect fun getScreenHeight(): Int
-
-

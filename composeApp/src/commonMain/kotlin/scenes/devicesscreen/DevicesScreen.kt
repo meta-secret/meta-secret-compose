@@ -8,9 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.addDevice
 import kotlinproject.composeapp.generated.resources.devicesList
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import ui.Addbutton
 import ui.CommonBackground
@@ -22,7 +20,6 @@ class DevicesScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: DevicesScreenViewModel = koinViewModel()
-        val popUpHeader = stringResource(Res.string.addDevice)
 
         CommonBackground(Res.string.devicesList) {
             warningContent(
@@ -47,6 +44,7 @@ class DevicesScreen : Screen {
                 }
             }
         }
-        Addbutton(popUpHeader, 510)
+        Addbutton()
     }
 }
+
