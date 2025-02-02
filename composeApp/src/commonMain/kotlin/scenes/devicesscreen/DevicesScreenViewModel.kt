@@ -19,7 +19,7 @@ import ui.WarningStateHolder
 
 class DevicesScreenViewModel(
     private val keyValueStorage: KeyValueStorage
-): ViewModel() {
+) : ViewModel() {
     val devicesSize = data().devices.size
     val secretsSize = data().secrets.size
 
@@ -28,11 +28,12 @@ class DevicesScreenViewModel(
     fun closeWarning() {
         WarningStateHolder.setVisibility(false)
     }
+
     fun addDevice() {
         //TODO("Not yet implemented")
     }
 
-    fun data (): Repository {
+    fun data(): Repository {
         val device = Repository(keyValueStorage)
         return device
     }
@@ -50,7 +51,6 @@ class DevicesScreenViewModel(
             pop()
         }
     }
-
 
 
 }

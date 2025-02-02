@@ -49,18 +49,18 @@ class SecretsScreen : Screen {
             warningContent(
                 text = viewModel.getWarningText(),
                 action = {},
-                closeAction = {viewModel.closeWarning()},
+                closeAction = { viewModel.closeWarning() },
                 isVisible = viewModel.isWarningVisible
             )
 
             LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 80.dp)
-                    ) {
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 80.dp)
+            ) {
                 items(viewModel.secretsSize) { index ->
                     ContentSell(
-                       {},
+                        {},
                         screenId = "Secrets",
                         getBubbleData = viewModel.data(),
                         index = index
