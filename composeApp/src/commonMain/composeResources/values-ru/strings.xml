@@ -15,8 +15,10 @@
     <string name = "nicknameError">Данный никнейм уже занят. Попробуйте другой</string>>
     <string name = "secretsHeader">Секреты</string>
     <string name = "secret">секрет</string>
+    <string name = "secretCapital">Секрет</string>
     <string name = "secrets_4">секрета</string>
     <string name = "secrets_5">секретов</string>
+    <string name = "secretName">Название секрета</string>
     <string name = "devicesList">Устройства</string>
     <string name = "device">устройство</string>
     <string name = "devices_4">устройства</string>
@@ -28,7 +30,12 @@
     <string name = "signOut">Выход</string>
     <string name = "version">Версия</string>
     <string name = "nickname">Никнэйм</string>
-    <string name = "addDevice"> +Добавить</string>
+    <string name = "addText"> +Добавить</string>
+    <string name = "addDevice">Добавить устройство</string>
+    <string name = "addDeviceAdvice">Для стабильной безопасности ваших паролей вам нужно иметь более 3x устройств</string>
+    <string name = "addSecret">Добавить секрет</string>
+    <string name = "lackOfDevices">Не хватает устройств?</string>
+    <string name = "useMetaSecret">MetaSecret Cloud Device - используйте наше облако как одно из устройств </string>
     <string name = "lackOfDevices_start">Не хватает </string>
     <string name = "lackOfDevices_end"> уcтройств(а), чтобы ваши секреты были в безопасности</string>
     <string name = "level_1">Низкая</string>
