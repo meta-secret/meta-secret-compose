@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
+import kotlinproject.composeapp.generated.resources.addSecret
 import kotlinproject.composeapp.generated.resources.executioner
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
@@ -43,6 +44,7 @@ class SecretsScreen : Screen {
     override fun Content() {
         val executionerSizeMultiplier = 220/*Figma's logo size*/ / 812F /*Figma's layout height*/
         val viewModel: SecretsScreenViewModel = koinViewModel()
+        val popUpHeader = stringResource(Res.string.addSecret)
 
 
         CommonBackground(Res.string.secretsHeader) {
@@ -68,7 +70,7 @@ class SecretsScreen : Screen {
                 }
             }
         }
-        Addbutton()
+        Addbutton(popUpHeader, 294)
         if (viewModel.secretsSize < 1) {
             Box(
                 modifier = Modifier
@@ -119,8 +121,6 @@ class SecretsScreen : Screen {
         }
     }
 }
-
-
 
 
 
