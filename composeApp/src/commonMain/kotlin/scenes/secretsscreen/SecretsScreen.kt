@@ -1,5 +1,9 @@
 package scenes.secretsscreen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -21,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.addSecret
 import kotlinproject.composeapp.generated.resources.executioner
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
@@ -35,9 +40,11 @@ import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
 import sharedData.enums.ScreenId
 import sharedData.getScreenHeight
-import ui.Addbutton
+import ui.AddButton
 import ui.CommonBackground
 import ui.ContentCell
+import ui.SecretsStateHolder
+import ui.popUpSecret
 import ui.warningContent
 
 class SecretsScreen : Screen {
@@ -45,7 +52,7 @@ class SecretsScreen : Screen {
     override fun Content() {
         val executionerSizeMultiplier = 220/*Figma's logo size*/ / 812F /*Figma's layout height*/
         val viewModel: SecretsScreenViewModel = koinViewModel()
-        val popUpHeader = stringResource(Res.string.addSecret)
+        val visibility by SecretsStateHolder.isDialogVisible.collectAsState()
 
 
         CommonBackground(Res.string.secretsHeader) {
@@ -71,7 +78,22 @@ class SecretsScreen : Screen {
                 }
             }
         }
-        Addbutton(popUpHeader, 294)
+        AddButton {
+            SecretsStateHolder.setVisibility(true)
+        }
+        AnimatedVisibility(
+            visible = visibility,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(durationMillis = 1500)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(durationMillis = 1000)
+            )
+        ) {
+            popUpSecret()
+        }
         if (viewModel.secretsSize < 1) {
             Box(
                 modifier = Modifier
