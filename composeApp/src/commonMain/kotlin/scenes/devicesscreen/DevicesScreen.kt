@@ -12,9 +12,10 @@ import kotlinproject.composeapp.generated.resources.addDevice
 import kotlinproject.composeapp.generated.resources.devicesList
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import sharedData.enums.ScreenId
 import ui.Addbutton
 import ui.CommonBackground
-import ui.ContentSell
+import ui.ContentCell
 import ui.warningContent
 
 
@@ -38,9 +39,9 @@ class DevicesScreen : Screen {
                     .padding(bottom = 80.dp)
             ) {
                 items(viewModel.devicesSize) { index ->
-                    ContentSell(
+                    ContentCell(
                         {},
-                        screenId = "Devices",
+                        screenType = ScreenId.Devices,
                         getBubbleData = viewModel.data(),
                         index = index
                     )

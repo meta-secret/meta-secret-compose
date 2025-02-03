@@ -33,10 +33,11 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
+import sharedData.enums.ScreenId
 import sharedData.getScreenHeight
 import ui.Addbutton
 import ui.CommonBackground
-import ui.ContentSell
+import ui.ContentCell
 import ui.warningContent
 
 class SecretsScreen : Screen {
@@ -61,9 +62,9 @@ class SecretsScreen : Screen {
                     .padding(bottom = 80.dp)
             ) {
                 items(viewModel.secretsSize) { index ->
-                    ContentSell(
+                    ContentCell(
                         {},
-                        screenId = "Secrets",
+                        screenType = ScreenId.Secrets,
                         getBubbleData = viewModel.data(),
                         index = index
                     )
