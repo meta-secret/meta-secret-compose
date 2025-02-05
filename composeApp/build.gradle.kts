@@ -120,7 +120,7 @@ dependencies {
     implementation(libs.ui.android)
     implementation (libs.androidx.material)
     implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.runtime.android)
+    runtimeOnly (libs.androidx.runtime)
 }
 
 
