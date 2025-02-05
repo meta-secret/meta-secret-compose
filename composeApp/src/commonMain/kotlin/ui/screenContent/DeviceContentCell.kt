@@ -1,4 +1,4 @@
-package ui
+package ui.screenContent
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable

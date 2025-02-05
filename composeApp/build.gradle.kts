@@ -24,7 +24,7 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "ComposeApp"
+            baseName = "Metasecret"
             isStatic = true
         }
     }
@@ -58,6 +58,7 @@ kotlin {
             implementation(libs.voyager.transitions)
 
             // Settings sharable
+            api(libs.koin.core)
             implementation(libs.multiplatform.settings)
             implementation(libs.serialization.json)
             implementation(libs.multiplatform.settings.serialization)
@@ -119,6 +120,7 @@ dependencies {
     implementation(libs.ui.android)
     implementation (libs.androidx.material)
     implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.runtime.android)
 }
 
 
