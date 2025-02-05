@@ -7,9 +7,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.IconButton
@@ -24,12 +25,20 @@ import kotlinproject.composeapp.generated.resources.close_blue
 import org.jetbrains.compose.resources.painterResource
 import sharedData.AppColors
 import sharedData.actualHeightFactor
+import sharedData.enums.NotificationType
 
 @Composable
 fun InAppNotification(
     message: String,
+    notificationType: NotificationType,
     onDismiss: () -> Unit
 ) {
+
+    val color = when (notificationType) {
+        NotificationType.Red -> AppColors.RedError
+        NotificationType.Blue -> AppColors.ActionMain
+    }
+
     AnimatedVisibility(
         visible = true,
         enter = fadeIn(),
@@ -42,8 +51,8 @@ fun InAppNotification(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height((actualHeightFactor() * 48).dp)
-                    .background(AppColors.ActionMain, RoundedCornerShape(10.dp))
+                    .heightIn(min = (actualHeightFactor() * 48).dp, max = 200.dp)
+                    .background(color, RoundedCornerShape(10.dp))
             ) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -53,11 +62,13 @@ fun InAppNotification(
                     verticalAlignment = Alignment.CenterVertically
 
                 ) {
-                    Text(
-                        text = message,
-                        color = Color.White,
-                        modifier = Modifier
-                    )
+                    Column {
+                        Text(
+                            text = message,
+                            color = Color.White,
+                            modifier = Modifier
+                        )
+                    }
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier
