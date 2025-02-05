@@ -27,26 +27,27 @@ import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.warning
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import sharedData.AppColors
-import ui.WarningStateHolder.isWarningVisible
 
 @Composable
 fun warningContent(
     text: AnnotatedString,
     action: () -> Unit,
     closeAction: () -> Unit,
-    devicesCount: Int
+    isVisible: StateFlow<Boolean>
 ) {
-    val isWarningVisible by isWarningVisible.collectAsState()
+    val visibility by isVisible.collectAsState()
 
-    if (!isWarningVisible || devicesCount >= 3) return
+    if (!visibility) return
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .padding(bottom = 14.dp)
+            .padding(top = 16.dp)
             .background(AppColors.White5, RoundedCornerShape(10.dp))
             .height(92.dp)
     ) {

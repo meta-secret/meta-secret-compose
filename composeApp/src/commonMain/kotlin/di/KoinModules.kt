@@ -12,8 +12,7 @@ import storage.KeyValueStorage
 import storage.KeyValueStorageImpl
 
 val appModule = module {
-    single {
-    }
+    single {}
     single<KeyValueStorage> { KeyValueStorageImpl() }
     single<Repository> { Repository(get()) }
 

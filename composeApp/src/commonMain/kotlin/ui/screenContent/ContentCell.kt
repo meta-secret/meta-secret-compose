@@ -14,9 +14,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import sharedData.AppColors
+import sharedData.Repository
+import sharedData.enums.ScreenId
 
 @Composable
-fun ContentCell (showContent: @Composable () -> Unit) {
+fun ContentCell(
+    action: () -> Unit,
+    screenType: ScreenId,
+    getBubbleData: Repository,
+    index: Int
+) {
+
+    val secretsSize = getBubbleData.secrets.size
+    val devicesSize = getBubbleData.devices.size
 
     Box(
         modifier = Modifier.fillMaxWidth().padding(16.dp)
@@ -27,7 +37,10 @@ fun ContentCell (showContent: @Composable () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            showContent()
+            when (screenType) {
+                ScreenId.Devices -> DeviceContent(secretsSize, getBubbleData, index, action)
+                ScreenId.Secrets -> SecretsContent(devicesSize, getBubbleData, index, action)
+            }
         }
     }
 }

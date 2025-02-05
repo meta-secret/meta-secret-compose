@@ -3,12 +3,12 @@ package sharedData
 import androidx.compose.runtime.Composable
 
 @Composable
-actual fun actualWidthFactor(): Float {
+actual fun actualWidthFactor(): Int {
     TODO("Not yet implemented")
 }
 
 @Composable
-actual fun actualHeightFactor(): Float {
+actual fun actualHeightFactor(): Int {
     TODO("Not yet implemented")
 }
 
@@ -21,3 +21,5 @@ actual fun getScreenWidth(): Int {
 actual fun getScreenHeight(): Int {
     TODO("Not yet implemented")
 }
+
+

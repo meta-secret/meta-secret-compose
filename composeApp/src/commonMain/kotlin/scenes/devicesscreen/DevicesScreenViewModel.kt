@@ -15,18 +15,36 @@ import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
 import sharedData.Repository
 import storage.KeyValueStorage
+import ui.DevicesDialogStateHolder
+import ui.DevicesMainDialogStateHolder
 import ui.WarningStateHolder
 
 class DevicesScreenViewModel(
     private val keyValueStorage: KeyValueStorage
 ) : ViewModel() {
     val devicesSize = data().devices.size
-    val secretsSize = data().secrets.size
-
+    val isDeviceDialogVisible: StateFlow<Boolean> = DevicesDialogStateHolder.isDialogVisible
+    val isDeviceMainDialogVisible: StateFlow<Boolean> = DevicesMainDialogStateHolder.isDialogVisible
     val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
 
     fun closeWarning() {
         WarningStateHolder.setVisibility(false)
+    }
+
+    fun closeDialog() {
+        DevicesDialogStateHolder.setVisibility(false)
+    }
+
+    fun openDialog() {
+        DevicesDialogStateHolder.setVisibility(true)
+    }
+
+    fun closeMainDialog() {
+        DevicesMainDialogStateHolder.setVisibility(false)
+    }
+
+    fun openMainDialog() {
+        DevicesMainDialogStateHolder.setVisibility(true)
     }
 
     fun addDevice() {
@@ -51,6 +69,4 @@ class DevicesScreenViewModel(
             pop()
         }
     }
-
-
 }
