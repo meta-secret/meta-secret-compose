@@ -1,6 +1,5 @@
 package scenes.profilescreen
 
-import AppColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,12 +31,13 @@ import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.nickname
 import kotlinproject.composeapp.generated.resources.poweredBy
 import kotlinproject.composeapp.generated.resources.profile
-import kotlinproject.composeapp.generated.resources.secrets
+import kotlinproject.composeapp.generated.resources.secretsHeader
 import kotlinproject.composeapp.generated.resources.signOut
 import kotlinproject.composeapp.generated.resources.version
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import sharedData.AppColors
 import sharedData.getAppVersion
 import ui.CommonBackground
 
@@ -55,7 +55,7 @@ class ProfileScreen : Screen {
 fun ProfileBody() {
     val viewModel: ProfileScreenViewModel = koinViewModel()
     val navigator = LocalNavigator.currentOrThrow
-    val secrets = stringResource(Res.string.secrets)
+    val secrets = stringResource(Res.string.secretsHeader)
     val secretsCount = viewModel.getSecretsCount().toString()
     val devices = stringResource(Res.string.devicesList)
     val devicesCount = viewModel.getDevicesCount().toString()
@@ -126,8 +126,8 @@ fun ProfileBody() {
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                FooterTextCell((stringResource(Res.string.version) + " " + getAppVersion()), 16)
-                FooterTextCell(stringResource(Res.string.poweredBy), 0)
+                TextCell((stringResource(Res.string.version) + " " + getAppVersion()), 16)
+                TextCell(stringResource(Res.string.poweredBy), 0)
             }
         }
     }
@@ -169,7 +169,7 @@ fun ProfileTextCell(header: String, content: String, alignment: Alignment.Horizo
 }
 
 @Composable
-fun FooterTextCell(content: String, padding: Int) {
+fun TextCell(content: String, padding: Int) {
     Text(
         text = content,
         fontSize = 15.sp,

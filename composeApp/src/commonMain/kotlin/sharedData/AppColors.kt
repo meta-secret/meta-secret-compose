@@ -1,3 +1,5 @@
+package sharedData
+
 import androidx.compose.ui.graphics.Color
 
 object AppColors {
@@ -6,6 +8,7 @@ object AppColors {
     val White = Color(0xFFFFFFFF)
     val White75 = Color(0xFFFFFFFF).copy(alpha = 0.75f)
     val White50 = Color(0xFFFFFFFF).copy(alpha = 0.5f)
+    val White30 = Color(0xFFFFFFFF).copy(alpha = 0.3f)
     val White10 = Color(0xFFFFFFFF).copy(alpha = 0.10f)
     val White5 = Color(0xFFFFFFFF).copy(alpha = 0.05f)
 
@@ -19,4 +22,5 @@ object AppColors {
 
     //Black
     val TabBar = Color(0xFF232324)
+    val PopUp = Color(0xFF262638)
 }

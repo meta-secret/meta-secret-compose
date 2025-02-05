@@ -10,7 +10,7 @@ import kotlinproject.composeapp.generated.resources.devicesList
 import kotlinproject.composeapp.generated.resources.devices_logo
 import kotlinproject.composeapp.generated.resources.profile
 import kotlinproject.composeapp.generated.resources.profile_logo
-import kotlinproject.composeapp.generated.resources.secrets
+import kotlinproject.composeapp.generated.resources.secretsHeader
 import kotlinproject.composeapp.generated.resources.secrets_logo
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -31,7 +31,7 @@ object SecretsTab : Tab {
         @Composable
         get() {
             val icon = painterResource(Res.drawable.secrets_logo)
-            val title = stringResource(Res.string.secrets)
+            val title = stringResource(Res.string.secretsHeader)
             val index: UShort = 0U
 
 

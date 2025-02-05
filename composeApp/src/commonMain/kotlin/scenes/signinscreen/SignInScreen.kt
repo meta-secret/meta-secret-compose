@@ -1,6 +1,5 @@
 package scenes.signinscreen
 
-import AppColors
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -56,6 +55,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import scenes.mainscreen.MainScreen
+import sharedData.AppColors
 
 class SignInScreen : Screen {
     @Composable

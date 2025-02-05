@@ -1,6 +1,5 @@
 package scenes.onboarding
 
-import AppColors
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,6 +46,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import scenes.signinscreen.SignInScreen
+import sharedData.AppColors
 
 class OnboardingScreen : Screen {
     @Composable

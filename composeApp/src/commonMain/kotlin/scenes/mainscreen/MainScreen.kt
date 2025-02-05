@@ -1,6 +1,5 @@
 package scenes.mainscreen
 
-import AppColors
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -29,6 +28,7 @@ import cafe.adriel.voyager.navigator.tab.TabNavigator
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import org.jetbrains.compose.resources.Font
+import sharedData.AppColors
 import sharedData.getScreenWidth
 
 class MainScreen : Screen {

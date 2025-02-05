@@ -1,6 +1,5 @@
 package scenes.secretsscreen
 
-import AppColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,25 +21,58 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
+import kotlinproject.composeapp.generated.resources.addSecret
 import kotlinproject.composeapp.generated.resources.executioner
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.noSecrets
 import kotlinproject.composeapp.generated.resources.noSecretsHeader
-import kotlinproject.composeapp.generated.resources.secrets
+import kotlinproject.composeapp.generated.resources.secretsHeader
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import sharedData.AppColors
+import sharedData.enums.ScreenId
 import sharedData.getScreenHeight
+import ui.Addbutton
 import ui.CommonBackground
+import ui.ContentCell
+import ui.warningContent
 
 class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val executionerSizeMultiplier = 220/*Figma's logo size*/ / 812F /*Figma's layout height*/
+        val viewModel: SecretsScreenViewModel = koinViewModel()
+        val popUpHeader = stringResource(Res.string.addSecret)
 
-        CommonBackground(Res.string.secrets){ print() }
 
+        CommonBackground(Res.string.secretsHeader) {
+            warningContent(
+                text = viewModel.getWarningText(),
+                action = {},
+                closeAction = { viewModel.closeWarning() },
+                isVisible = viewModel.isWarningVisible
+            )
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 80.dp)
+            ) {
+                items(viewModel.secretsSize) { index ->
+                    ContentCell(
+                        {},
+                        screenType = ScreenId.Secrets,
+                        getBubbleData = viewModel.data(),
+                        index = index
+                    )
+                }
+            }
+        }
+        Addbutton(popUpHeader, 294)
+        if (viewModel.secretsSize < 1) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -88,10 +121,6 @@ class SecretsScreen : Screen {
             }
         }
     }
-
-@Composable
-fun print(){
-    androidx.compose.material3.Text("gfe")
 }
 
 
