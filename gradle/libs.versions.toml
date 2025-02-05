@@ -5,27 +5,27 @@ android-compileSdk = "34"
 android-minSdk = "24"
 android-targetSdk = "34"
 androidx-activityCompose = "1.10.0"
-androidxMaterial = "1.7.6"
-androidxUiAndroid = "1.8.0-alpha08"
+androidxMaterial = "1.7.7"
+androidxUiAndroid = "1.8.0-beta01"
 annotationJvm = "1.9.1"
 compose-plugin = "1.6.10"
 core = "1.15.0"
 coroutinesVersion = "1.8.0"
-foundationLayoutAndroid = "1.7.6"
+foundationLayoutAndroid = "1.7.7"
 koin = "4.0.0"
 kotlin = "2.0.20"
 lifecycleLivedataCoreKtx = "2.8.7"
 multiplatformSettings = "1.0.0"
+runtime = "1.7.7"
 serialization = "1.6.0"
-ui = "1.7.6"
-uiAndroid = "1.7.6"
-uiGraphicsAndroid = "1.7.6"
+ui = "1.7.7"
+uiAndroid = "1.7.7"
+uiGraphicsAndroid = "1.7.7"
 voyager = "1.1.0-beta03"
 material = "1.12.0"
 glance = "1.1.1"
-uiAndroidVersion = "1.7.6"
+uiAndroidVersion = "1.7.7"
 activityKtx = "1.10.0"
-runtimeAndroid = "1.7.7"
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -37,6 +37,7 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanistPager" }
 accompanist-pager-indicators = { module = "com.google.accompanist:accompanist-pager-indicators", version.ref = "accompanistPager" }
 androidx-material = { module = "androidx.compose.material:material", version.ref = "androidxMaterial" }
+androidx-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "runtime" }
 androidx-ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
 
 #koin
@@ -44,7 +45,6 @@ androidx-ui-android-v180alpha08 = { module = "androidx.compose.ui:ui-android", v
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 koin-composeVM = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
-
 
 #share settings
 multiplatform-settings = {module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings"}
@@ -67,4 +67,3 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-glance = { group = "androidx.glance", name = "glance", version.ref = "glance" }
 ui-android = { group = "androidx.compose.ui", name = "ui-android", version.ref = "uiAndroidVersion" }
 androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
-androidx-runtime-android = { group = "androidx.compose.runtime", name = "runtime-android", version.ref = "runtimeAndroid" }
