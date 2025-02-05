@@ -33,31 +33,37 @@ import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.noSecrets
 import kotlinproject.composeapp.generated.resources.noSecretsHeader
-import kotlinproject.composeapp.generated.resources.secretHasBeenAdded
+import kotlinproject.composeapp.generated.resources.secretAdded
+import kotlinproject.composeapp.generated.resources.secretNotAdded
 import kotlinproject.composeapp.generated.resources.secretsHeader
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
+import sharedData.enums.NotificationType
 import sharedData.enums.ScreenId
 import sharedData.getScreenHeight
 import ui.AddButton
-import ui.screenContent.CommonBackground
-import ui.screenContent.ContentCell
-import ui.notifications.InAppNotification
 import ui.NotificationStateHolder
 import ui.SecretsDialogStateHolder
 import ui.dialogs.popUpSecret
+import ui.notifications.InAppNotification
 import ui.notifications.warningContent
+import ui.screenContent.CommonBackground
+import ui.screenContent.ContentCell
 
 class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val executionerSizeMultiplier = 220/*Figma's logo size*/ / 812F /*Figma's layout height*/
         val viewModel: SecretsScreenViewModel = koinViewModel()
+
         val visibility by SecretsDialogStateHolder.isDialogVisible.collectAsState()
         val notificationVisibility by NotificationStateHolder.isNotificationVisible.collectAsState()
+
+        val error = stringResource(Res.string.secretNotAdded)
+        val success = stringResource(Res.string.secretAdded)
 
 
         CommonBackground(Res.string.secretsHeader) {
@@ -85,7 +91,8 @@ class SecretsScreen : Screen {
         }
         if (notificationVisibility) {
             InAppNotification(
-                stringResource(Res.string.secretHasBeenAdded),
+                success,
+                NotificationType.Blue,
                 { viewModel.hideNotification() }
             )
             LaunchedEffect(Unit) {

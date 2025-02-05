@@ -34,7 +34,8 @@
     <string name = "addDevice">Adding device</string>
     <string name = "addDeviceAdvice">For maximum safety of your passwords you should add at least 3 devices</string>
     <string name = "addSecret">Adding secret</string>
-    <string name = "secretHasBeenAdded">A secret successfully added</string>
+    <string name = "secretAdded">A secret successfully added</string>
+    <string name = "secretNotAdded">We were unable to add secret due to reasons</string>
     <string name = "lackOfDevices">Not having enough devices?</string>
     <string name = "useMetaSecret">MetaSecret Cloud Device - you can use our cloud as a device</string>
     <string name = "lackOfDevices_start">You need to add </string>
