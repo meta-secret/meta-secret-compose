@@ -24,6 +24,12 @@ class KeyValueStorageImpl : KeyValueStorage {
             settings[StorageKeys.SIGNIN_INFO.key] = value
         }
 
+    override var isWarningVisible: Boolean
+        get() = settings.getBoolean(StorageKeys.WARNING_INFO.key, defaultValue = true)
+        set(value) {
+            settings[StorageKeys.WARNING_INFO.key] = value
+        }
+
     // #2 - store/retrive custom types
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override var signInInfo: LoginInfo?
@@ -31,10 +37,10 @@ class KeyValueStorageImpl : KeyValueStorage {
         set(value) {
             if (value != null) {
                 settings.encodeValue(LoginInfo.serializer(), StorageKeys.LOGIN_INFO.key, value)
-           }
-        //            else {
-        //              settings.remove(StorageKeys.TOKEN.key)
-        //            }
+            }
+            //            else {
+            //              settings.remove(StorageKeys.TOKEN.key)
+            //            }
         }
 
     // #3 - listen to token value changes
@@ -45,4 +51,9 @@ class KeyValueStorageImpl : KeyValueStorage {
     override fun cleanStorage() {
         settings.clear()
     }
+
+    override fun resetKeyValueStorage() {
+        settings[StorageKeys.WARNING_INFO.key] = true
+    }
+
 }
