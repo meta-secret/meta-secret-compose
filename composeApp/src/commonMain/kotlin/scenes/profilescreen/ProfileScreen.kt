@@ -39,7 +39,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
 import sharedData.getAppVersion
-import ui.CommonBackground
+import ui.screenContent.CommonBackground
 
 
 class ProfileScreen : Screen {

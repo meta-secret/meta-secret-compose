@@ -1,5 +1,9 @@
-package ui
+package ui.dialogs
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,12 +18,14 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,15 +55,33 @@ import kotlinproject.composeapp.generated.resources.secretName
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import scenes.secretsscreen.SecretsScreenViewModel
 import sharedData.AppColors
+import sharedData.actualHeightFactor
 
 @Composable
 fun popUpSecret() {
     var textName by remember { mutableStateOf("") }
     var textSecret by remember { mutableStateOf("") }
+
     val density = LocalDensity.current
     val imeHeight = WindowInsets.ime.getBottom(density)
 
+    val viewModel: SecretsScreenViewModel = koinViewModel()
+    val visibility by viewModel.isSecretDialogVisible.collectAsState()
+
+    AnimatedVisibility(
+        visible = visibility,
+        enter = slideInVertically(
+            initialOffsetY = { it },
+            animationSpec = tween(durationMillis = 1500)
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = { it },
+            animationSpec = tween(durationMillis = 1000)
+        )
+    ) {
     Dialog(
         onDismissRequest = {},
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -65,13 +89,13 @@ fun popUpSecret() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable { SecretsStateHolder.setVisibility(false) }
+                .clickable { viewModel.closeSecretDialog() }
                 .padding(bottom = with(density) { imeHeight.toDp() }),
             contentAlignment = Alignment.BottomCenter
         ) {
             Box(
                 modifier = Modifier
-                    .height(294.dp)
+                    .height((actualHeightFactor() * 294).dp)
                     .fillMaxWidth()
                     .background(AppColors.PopUp, RoundedCornerShape(10.dp))
                     .padding(horizontal = 16.dp)
@@ -87,7 +111,7 @@ fun popUpSecret() {
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
-                            .clickable { SecretsStateHolder.setVisibility(false) }
+                            .clickable { viewModel.closeSecretDialog() }
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -122,7 +146,9 @@ fun popUpSecret() {
                         ),
                         enabled = (textName.isNotEmpty() && textSecret.isNotEmpty()),
                         onClick = {
-                            //isError = SignInScreenViewModel.isNameError(text)
+                            //adding secret
+                            viewModel.showNotification()
+                            viewModel.closeSecretDialog()
                         }
                     ) {
                         Text(text = stringResource(Res.string.addSecret), fontSize = 16.sp)
@@ -131,6 +157,7 @@ fun popUpSecret() {
             }
         }
     }
+}
 }
 
 
@@ -193,4 +220,14 @@ fun textInput(
             unfocusedIndicatorColor = Color.Transparent,
         )
     )
+}
+
+@Composable
+fun alert() {
+    AlertDialog(
+        onDismissRequest = {},
+        confirmButton = {},
+        title = {},
+        text = {},
+        dismissButton = {})
 }

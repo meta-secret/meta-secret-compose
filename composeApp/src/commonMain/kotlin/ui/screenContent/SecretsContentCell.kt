@@ -1,4 +1,4 @@
-package ui
+package ui.screenContent
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +35,7 @@ import sharedData.Repository
 import sharedData.enums.DevicesQuantity
 
 @Composable
-fun SecretsContent(devicesSize: Int, getBubbleData: Repository, index: Int, action:() -> Unit ) {
+fun SecretsContent(devicesSize: Int, getBubbleData: Repository, index: Int, action: () -> Unit) {
     val deviceText = textOnValue(
         devicesSize,
         stringResource(Res.string.device),

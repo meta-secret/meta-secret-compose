@@ -1,4 +1,4 @@
-package ui
+package ui.screenContent
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -38,8 +38,8 @@ fun ContentCell(
             verticalAlignment = Alignment.CenterVertically
         ) {
             when (screenType) {
-             ScreenId.Devices ->  DeviceContent(secretsSize, getBubbleData, index, action)
-             ScreenId.Secrets ->  SecretsContent(devicesSize, getBubbleData, index, action)
+                ScreenId.Devices -> DeviceContent(secretsSize, getBubbleData, index, action)
+                ScreenId.Secrets -> SecretsContent(devicesSize, getBubbleData, index, action)
             }
         }
     }

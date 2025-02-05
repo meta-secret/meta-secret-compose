@@ -9,17 +9,32 @@ object WarningStateHolder {
     }
 }
 
-object SecretsStateHolder {
+object SecretsDialogStateHolder {
     val isDialogVisible = MutableStateFlow(false)
     fun setVisibility(state: Boolean) {
         isDialogVisible.value = state
     }
 }
 
-object DevicesStateHolder {
+object DevicesDialogStateHolder {
     val isDialogVisible = MutableStateFlow(false)
     fun setVisibility(state: Boolean) {
         isDialogVisible.value = state
     }
 }
+
+object DevicesMainDialogStateHolder {
+    val isDialogVisible = MutableStateFlow(false)
+    fun setVisibility(state: Boolean) {
+        isDialogVisible.value = state
+    }
+}
+
+object NotificationStateHolder {
+    val isNotificationVisible = MutableStateFlow(false)
+    fun setVisibility(state: Boolean) {
+        isNotificationVisible.value = state
+    }
+}
+
 

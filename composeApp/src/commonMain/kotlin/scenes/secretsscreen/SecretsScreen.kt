@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.noSecrets
 import kotlinproject.composeapp.generated.resources.noSecretsHeader
+import kotlinproject.composeapp.generated.resources.secretHasBeenAdded
 import kotlinproject.composeapp.generated.resources.secretsHeader
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
@@ -41,18 +43,21 @@ import sharedData.AppColors
 import sharedData.enums.ScreenId
 import sharedData.getScreenHeight
 import ui.AddButton
-import ui.CommonBackground
-import ui.ContentCell
-import ui.SecretsStateHolder
-import ui.popUpSecret
-import ui.warningContent
+import ui.screenContent.CommonBackground
+import ui.screenContent.ContentCell
+import ui.notifications.InAppNotification
+import ui.NotificationStateHolder
+import ui.SecretsDialogStateHolder
+import ui.dialogs.popUpSecret
+import ui.notifications.warningContent
 
 class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val executionerSizeMultiplier = 220/*Figma's logo size*/ / 812F /*Figma's layout height*/
         val viewModel: SecretsScreenViewModel = koinViewModel()
-        val visibility by SecretsStateHolder.isDialogVisible.collectAsState()
+        val visibility by SecretsDialogStateHolder.isDialogVisible.collectAsState()
+        val notificationVisibility by NotificationStateHolder.isNotificationVisible.collectAsState()
 
 
         CommonBackground(Res.string.secretsHeader) {
@@ -78,8 +83,18 @@ class SecretsScreen : Screen {
                 }
             }
         }
+        if (notificationVisibility) {
+            InAppNotification(
+                stringResource(Res.string.secretHasBeenAdded),
+                { viewModel.hideNotification() }
+            )
+            LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(2000)
+                viewModel.hideNotification()
+            }
+        }
         AddButton {
-            SecretsStateHolder.setVisibility(true)
+            viewModel.showSecretDialog()
         }
         AnimatedVisibility(
             visible = visibility,
@@ -92,7 +107,7 @@ class SecretsScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            popUpSecret()
+            popUpSecret()   // Is appropriate place for a function call?
         }
         if (viewModel.secretsSize < 1) {
             Box(
