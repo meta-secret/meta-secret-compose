@@ -22,10 +22,11 @@ import ui.WarningStateHolder
 class SecretsScreenViewModel(
     private val keyValueStorage: KeyValueStorage,
 ) : ViewModel() {
+    val secretsSize = data().secrets.size
+    val devicesSize = data().devices.size
     val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
     val isSecretDialogVisible: StateFlow<Boolean> = SecretsDialogStateHolder.isDialogVisible
     val isNotificationVisible: StateFlow<Boolean> = NotificationStateHolder.isNotificationVisible
-    val secretsSize = data().secrets.size
 
     fun closeWarning() {
         WarningStateHolder.setVisibility(false)
@@ -47,9 +48,10 @@ class SecretsScreenViewModel(
         SecretsDialogStateHolder.setVisibility(false)
     }
 
-    fun addDevice(): Boolean {
-        //TODO("Not yet implemented")
-        return true
+    fun addSecret() {
+//        val repository = Repository(keyValueStorage)
+//        val newSecret = Repository.Secret(secretName = "Name", password = "Password")
+//        repository.addSecret(newSecret)
     }
 
     fun data(): Repository {
