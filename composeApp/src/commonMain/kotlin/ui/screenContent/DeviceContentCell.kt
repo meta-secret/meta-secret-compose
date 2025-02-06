@@ -29,10 +29,10 @@ import sharedData.Repository
 import sharedData.getDeviceId
 
 @Composable
-fun DeviceContent (secretsSize: Int, getBubbleData: Repository, index: Int, action:() -> Unit ) {
+fun DeviceContent (getBubbleData: Repository, index: Int, action:() -> Unit ) {
 
         val secretText = textOnValue(
-            secretsSize,
+            getBubbleData.secrets.size,
             stringResource(Res.string.secret),
             stringResource(Res.string.secrets_4),
             stringResource(Res.string.secrets_5)

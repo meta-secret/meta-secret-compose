@@ -20,12 +20,16 @@ class Repository(private val keyValueStorage: KeyValueStorage) {
     private val mutableDeviceList: MutableList<Device> by lazy {
         mutableListOf(
             Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
+            Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
+            Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
         )
     }
 
     private val mutableSecretsList: MutableList<Secret> by lazy {
         mutableListOf(
-            Secret("Random Secret Name", "getPassword"),
+            Secret("Random", "getPassword"),
+            Secret("Secret", "getPassword"),
+            Secret("Name", "getPassword"),
         )
     }
 }
