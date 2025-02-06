@@ -28,7 +28,8 @@ class DevicesScreen : Screen {
                 text = viewModel.getWarningText(),
                 action = { viewModel.addDevice() },
                 closeAction = { viewModel.closeWarning() },
-                isVisible = viewModel.isWarningVisible
+                isVisible = viewModel.isWarningVisible,
+                viewModel.devicesSize
             )
 
             LazyColumn(

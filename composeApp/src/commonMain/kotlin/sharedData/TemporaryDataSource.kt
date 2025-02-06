@@ -32,4 +32,12 @@ class Repository(private val keyValueStorage: KeyValueStorage) {
             Secret("Name", "getPassword"),
         )
     }
+
+    fun addDevice(device: Device) {
+        mutableDeviceList.add(device)
+    }
+
+    fun addSecret(secret: Secret) {
+        mutableSecretsList.add(secret)
+    }
 }

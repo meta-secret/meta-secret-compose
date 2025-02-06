@@ -37,11 +37,12 @@ fun warningContent(
     text: AnnotatedString,
     action: () -> Unit,
     closeAction: () -> Unit,
-    isVisible: StateFlow<Boolean>
+    isVisible: StateFlow<Boolean>,
+    devicesAmount: Int
 ) {
     val visibility by isVisible.collectAsState()
 
-    if (!visibility) return
+    if (!visibility || devicesAmount >= 3) return
 
     Box(
         modifier = Modifier
