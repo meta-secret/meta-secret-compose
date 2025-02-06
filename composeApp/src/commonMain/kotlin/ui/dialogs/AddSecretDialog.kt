@@ -146,7 +146,7 @@ fun popUpSecret() {
                         ),
                         enabled = (textName.isNotEmpty() && textSecret.isNotEmpty()),
                         onClick = {
-                            //adding secret
+                            viewModel.addSecret()
                             viewModel.showNotification()
                             viewModel.closeSecretDialog()
                         }

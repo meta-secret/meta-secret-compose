@@ -23,7 +23,6 @@ class DevicesScreenViewModel(
     private val keyValueStorage: KeyValueStorage
 ) : ViewModel() {
     val devicesSize = data().devices.size
-    val secretsSize = data().secrets.size
     val isDeviceDialogVisible: StateFlow<Boolean> = DevicesDialogStateHolder.isDialogVisible
     val isDeviceMainDialogVisible: StateFlow<Boolean> = DevicesMainDialogStateHolder.isDialogVisible
     val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible

@@ -71,7 +71,8 @@ class SecretsScreen : Screen {
                 text = viewModel.getWarningText(),
                 action = {},
                 closeAction = { viewModel.closeWarning() },
-                isVisible = viewModel.isWarningVisible
+                isVisible = viewModel.isWarningVisible,
+                viewModel.devicesSize
             )
 
             LazyColumn(
