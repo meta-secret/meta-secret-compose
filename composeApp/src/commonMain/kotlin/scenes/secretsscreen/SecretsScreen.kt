@@ -42,7 +42,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
 import sharedData.enums.NotificationType
-import sharedData.enums.ScreenId
 import sharedData.getScreenHeight
 import ui.AddButton
 import ui.NotificationStateHolder
@@ -52,6 +51,7 @@ import ui.notifications.InAppNotification
 import ui.notifications.warningContent
 import ui.screenContent.CommonBackground
 import ui.screenContent.ContentCell
+import ui.screenContent.SecretsContent
 
 class SecretsScreen : Screen {
     @Composable
@@ -80,12 +80,7 @@ class SecretsScreen : Screen {
                     .padding(bottom = 80.dp)
             ) {
                 items(viewModel.secretsSize) { index ->
-                    ContentCell(
-                        {},
-                        screenType = ScreenId.Secrets,
-                        getBubbleData = viewModel.data(),
-                        index = index
-                    )
+                    ContentCell { SecretsContent(viewModel.data(), index)}
                 }
             }
         }

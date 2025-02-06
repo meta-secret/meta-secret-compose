@@ -35,9 +35,9 @@ import sharedData.Repository
 import sharedData.enums.DevicesQuantity
 
 @Composable
-fun SecretsContent(devicesSize: Int, getBubbleData: Repository, index: Int, action: () -> Unit) {
+fun SecretsContent(getBubbleData: Repository, index: Int) {
     val deviceText = textOnValue(
-        devicesSize,
+        getBubbleData.devices.size,
         stringResource(Res.string.device),
         stringResource(Res.string.devices_4),
         stringResource(Res.string.devices_5)
@@ -45,7 +45,7 @@ fun SecretsContent(devicesSize: Int, getBubbleData: Repository, index: Int, acti
     var protectionLevelShield = painterResource(Res.drawable.shield_l3)
     var protectionLevelText = stringResource(Res.string.level_3)
 
-    when (devicesSize) {
+    when (getBubbleData.devices.size) {
         DevicesQuantity.OneDevice.amount -> {
             protectionLevelShield = painterResource(Res.drawable.shield_l1);
             protectionLevelText = stringResource(Res.string.level_1)
