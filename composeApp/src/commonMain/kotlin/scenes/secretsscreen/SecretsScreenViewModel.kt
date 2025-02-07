@@ -15,22 +15,43 @@ import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
 import sharedData.Repository
 import storage.KeyValueStorage
+import ui.NotificationStateHolder
+import ui.SecretsDialogStateHolder
 import ui.WarningStateHolder
 
 class SecretsScreenViewModel(
     private val keyValueStorage: KeyValueStorage,
 ) : ViewModel() {
-    val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
-
     val secretsSize = data().secrets.size
+    val devicesSize = data().devices.size
+    val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
+    val isSecretDialogVisible: StateFlow<Boolean> = SecretsDialogStateHolder.isDialogVisible
+    val isNotificationVisible: StateFlow<Boolean> = NotificationStateHolder.isNotificationVisible
 
     fun closeWarning() {
         WarningStateHolder.setVisibility(false)
     }
 
-    fun addDevice(): Boolean {
-        //TODO("Not yet implemented")
-        return true
+    fun showNotification() {
+        NotificationStateHolder.setVisibility(true)
+    }
+
+    fun hideNotification() {
+        NotificationStateHolder.setVisibility(false)
+    }
+
+    fun showSecretDialog() {
+        SecretsDialogStateHolder.setVisibility(true)
+    }
+
+    fun closeSecretDialog() {
+        SecretsDialogStateHolder.setVisibility(false)
+    }
+
+    fun addSecret() {
+//        val repository = Repository(keyValueStorage)
+//        val newSecret = Repository.Secret(secretName = "Name", password = "Password")
+//        repository.addSecret(newSecret)
     }
 
     fun data(): Repository {
