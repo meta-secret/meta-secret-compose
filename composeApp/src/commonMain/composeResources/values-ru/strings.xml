@@ -34,6 +34,8 @@
     <string name = "addDevice">Добавить устройство</string>
     <string name = "addDeviceAdvice">Для стабильной безопасности ваших паролей вам нужно иметь более 3x устройств</string>
     <string name = "addSecret">Добавить секрет</string>
+    <string name = "secretAdded">Секрет успешно добавлен</string>
+    <string name = "secretNotAdded">Мы не смогли добавить секрет по каким-то причинам</string>
     <string name = "lackOfDevices">Не хватает устройств?</string>
     <string name = "useMetaSecret">MetaSecret Cloud Device - используйте наше облако как одно из устройств </string>
     <string name = "lackOfDevices_start">Не хватает </string>
@@ -41,4 +43,6 @@
     <string name = "level_1">Низкая</string>
     <string name = "level_2">Сильная</string>
     <string name = "level_3">Максимум</string>
+    <string name = "downloadMetasecret">Скачайте приложение MetaSecret на новом устройстве</string>
+    <string name = "orUseQR">Или воспользуйтесь QR кодом</string>
 </resources>
