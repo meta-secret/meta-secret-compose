@@ -19,7 +19,7 @@ import sharedData.AppColors
 fun ContentCell (showContent: @Composable () -> Unit) {
 
     Box(
-        modifier = Modifier.fillMaxWidth().padding(16.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
             .background(AppColors.White5, RoundedCornerShape(10.dp)).height(92.dp)
     ) {
         Row(

@@ -46,6 +46,7 @@ import sharedData.getScreenHeight
 import ui.AddButton
 import ui.NotificationStateHolder
 import ui.SecretsDialogStateHolder
+import ui.WarningStateHolder
 import ui.dialogs.popUpSecret
 import ui.notifications.InAppNotification
 import ui.notifications.warningContent
@@ -70,18 +71,18 @@ class SecretsScreen : Screen {
             warningContent(
                 text = viewModel.getWarningText(),
                 action = {},
-                closeAction = { viewModel.closeWarning() },
+                closeAction = { WarningStateHolder.setVisibility(false) },
                 isVisible = viewModel.isWarningVisible,
                 viewModel.devicesSize
             )
 
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 80.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 items(viewModel.secretsSize) { index ->
-                    ContentCell { SecretsContent(viewModel.data(), index)}
+                    ContentCell { SecretsContent(viewModel.data(), index) }
                 }
             }
         }
@@ -89,15 +90,15 @@ class SecretsScreen : Screen {
             InAppNotification(
                 success,
                 NotificationType.Blue,
-                { viewModel.hideNotification() }
+                { NotificationStateHolder.setVisibility(false) }
             )
             LaunchedEffect(Unit) {
                 kotlinx.coroutines.delay(2000)
-                viewModel.hideNotification()
+                NotificationStateHolder.setVisibility(false)
             }
         }
         AddButton {
-            viewModel.showSecretDialog()
+            SecretsDialogStateHolder.setVisibility(true)
         }
         AnimatedVisibility(
             visible = visibility,

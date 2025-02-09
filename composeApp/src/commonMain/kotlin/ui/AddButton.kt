@@ -20,7 +20,7 @@ fun AddButton(action: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 113.dp, end = 45.dp),
+            .padding(bottom = 92.dp, end = 24.dp),
         Alignment.BottomEnd
     ) {
         Image(

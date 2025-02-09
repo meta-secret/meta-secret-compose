@@ -1,7 +1,7 @@
 package scenes.devicesscreen
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -9,8 +9,11 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.devicesList
+import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
 import ui.AddButton
+import ui.DevicesDialogStateHolder
+import ui.WarningStateHolder
 import ui.dialogs.popUpDevice
 import ui.notifications.warningContent
 import ui.screenContent.CommonBackground
@@ -22,28 +25,30 @@ class DevicesScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: DevicesScreenViewModel = koinViewModel()
+        val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
+
 
         CommonBackground(Res.string.devicesList) {
             warningContent(
                 text = viewModel.getWarningText(),
                 action = { viewModel.addDevice() },
-                closeAction = { viewModel.closeWarning() },
-                isVisible = viewModel.isWarningVisible,
+                closeAction = { WarningStateHolder.setVisibility(false) },
+                isVisible = isWarningVisible,
                 viewModel.devicesSize
             )
 
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 80.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 items(viewModel.devicesSize) { index ->
-                    ContentCell{DeviceContent(viewModel.data(), index) {} }
+                    ContentCell { DeviceContent(viewModel.data(), index) {} }
                 }
             }
         }
         AddButton {
-            viewModel.openDialog()
+            DevicesDialogStateHolder.setVisibility(true)
         }
         popUpDevice() // Is appropriate place for a function call?
     }
