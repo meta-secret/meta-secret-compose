@@ -1,9 +1,5 @@
 package scenes.secretsscreen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,8 +37,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
+import sharedData.actualHeightFactor
 import sharedData.enums.NotificationType
-import sharedData.getScreenHeight
 import ui.AddButton
 import ui.NotificationStateHolder
 import ui.SecretsDialogStateHolder
@@ -57,22 +53,19 @@ import ui.screenContent.SecretsContent
 class SecretsScreen : Screen {
     @Composable
     override fun Content() {
-        val executionerSizeMultiplier = 220/*Figma's logo size*/ / 812F /*Figma's layout height*/
         val viewModel: SecretsScreenViewModel = koinViewModel()
 
-        val visibility by SecretsDialogStateHolder.isDialogVisible.collectAsState()
         val notificationVisibility by NotificationStateHolder.isNotificationVisible.collectAsState()
 
         val error = stringResource(Res.string.secretNotAdded)
         val success = stringResource(Res.string.secretAdded)
-
 
         CommonBackground(Res.string.secretsHeader) {
             warningContent(
                 text = viewModel.getWarningText(),
                 action = {},
                 closeAction = { WarningStateHolder.setVisibility(false) },
-                isVisible = viewModel.isWarningVisible,
+                isVisible = WarningStateHolder.isWarningVisible,
                 viewModel.devicesSize
             )
 
@@ -100,19 +93,9 @@ class SecretsScreen : Screen {
         AddButton {
             SecretsDialogStateHolder.setVisibility(true)
         }
-        AnimatedVisibility(
-            visible = visibility,
-            enter = slideInVertically(
-                initialOffsetY = { it },
-                animationSpec = tween(durationMillis = 1500)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(durationMillis = 1000)
-            )
-        ) {
-            popUpSecret()   // Is appropriate place for a function call?
-        }
+
+        popUpSecret()
+
         if (viewModel.secretsSize < 1) {
             Box(
                 modifier = Modifier
@@ -136,7 +119,7 @@ class SecretsScreen : Screen {
                             painter = painterResource(Res.drawable.executioner),
                             contentDescription = null,
                             modifier = Modifier
-                                .size((getScreenHeight() * executionerSizeMultiplier).dp)
+                                .size((actualHeightFactor() * 220).dp)
                                 .align(Alignment.Center),
                             contentScale = ContentScale.Fit
                         )
