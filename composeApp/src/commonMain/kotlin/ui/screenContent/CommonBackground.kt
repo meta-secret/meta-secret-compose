@@ -39,7 +39,7 @@ fun CommonBackground(text: StringResource, screenContent: @Composable () -> Unit
             Text(
                 modifier = Modifier
                     .align(Alignment.Start)
-                    .padding(top = 50.dp, start = 16.dp),
+                    .padding(top = 50.dp, bottom = 30.dp, start = 16.dp),
                 text = stringResource(text),
                 color = AppColors.White,
                 fontFamily = FontFamily(Font(Res.font.manrope_bold)),

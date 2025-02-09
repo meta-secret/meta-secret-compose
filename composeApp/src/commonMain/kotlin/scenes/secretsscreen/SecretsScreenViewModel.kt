@@ -15,8 +15,6 @@ import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
 import sharedData.Repository
 import storage.KeyValueStorage
-import ui.NotificationStateHolder
-import ui.SecretsDialogStateHolder
 import ui.WarningStateHolder
 
 class SecretsScreenViewModel(
@@ -25,39 +23,13 @@ class SecretsScreenViewModel(
     val secretsSize = data().secrets.size
     val devicesSize = data().devices.size
     val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
-    val isSecretDialogVisible: StateFlow<Boolean> = SecretsDialogStateHolder.isDialogVisible
-    val isNotificationVisible: StateFlow<Boolean> = NotificationStateHolder.isNotificationVisible
-
-    fun closeWarning() {
-        WarningStateHolder.setVisibility(false)
-    }
-
-    fun showNotification() {
-        NotificationStateHolder.setVisibility(true)
-    }
-
-    fun hideNotification() {
-        NotificationStateHolder.setVisibility(false)
-    }
-
-    fun showSecretDialog() {
-        SecretsDialogStateHolder.setVisibility(true)
-    }
-
-    fun closeSecretDialog() {
-        SecretsDialogStateHolder.setVisibility(false)
-    }
 
     fun addSecret() {
-//        val repository = Repository(keyValueStorage)
-//        val newSecret = Repository.Secret(secretName = "Name", password = "Password")
-//        repository.addSecret(newSecret)
+        val newSecret = Repository.Secret(secretName = "Names", password = "Password")
+        data().addSecret(newSecret)
     }
 
-    fun data(): Repository {
-        val device = Repository(keyValueStorage)
-        return device
-    }
+    fun data() = Repository(keyValueStorage)
 
     @Composable
     fun getWarningText(): AnnotatedString {
