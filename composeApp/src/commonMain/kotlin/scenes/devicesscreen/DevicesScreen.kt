@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.devicesList
-import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.viewmodel.koinViewModel
 import ui.AddButton
 import ui.DevicesDialogStateHolder
@@ -25,15 +24,13 @@ class DevicesScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: DevicesScreenViewModel = koinViewModel()
-        val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
-
 
         CommonBackground(Res.string.devicesList) {
             warningContent(
                 text = viewModel.getWarningText(),
                 action = { viewModel.addDevice() },
                 closeAction = { WarningStateHolder.setVisibility(false) },
-                isVisible = isWarningVisible,
+                isVisible = WarningStateHolder.isWarningVisible,
                 viewModel.devicesSize
             )
 
@@ -50,7 +47,7 @@ class DevicesScreen : Screen {
         AddButton {
             DevicesDialogStateHolder.setVisibility(true)
         }
-        popUpDevice() // Is appropriate place for a function call?
+        popUpDevice()
     }
 }
 
