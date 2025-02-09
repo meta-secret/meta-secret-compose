@@ -35,17 +35,13 @@ import kotlinproject.composeapp.generated.resources.orUseQR
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-import scenes.devicesscreen.DevicesScreenViewModel
 import sharedData.AppColors
 import sharedData.actualHeightFactor
+import ui.DevicesMainDialogStateHolder
 
 @Composable
 fun addingDevice() {
-    val viewModel: DevicesScreenViewModel = koinViewModel()
-    val visibility by viewModel.isDeviceMainDialogVisible.collectAsState()
-
-    if (!visibility) return
+    val visibility by DevicesMainDialogStateHolder.isDialogVisible.collectAsState()
 
     AnimatedVisibility(
         visible = visibility,
@@ -65,7 +61,7 @@ fun addingDevice() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable { viewModel.closeMainDialog() },
+                    .clickable { DevicesMainDialogStateHolder.setVisibility(false) },
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Box(
@@ -86,7 +82,7 @@ fun addingDevice() {
                             contentDescription = null,
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .clickable { viewModel.closeMainDialog() }
+                                .clickable { DevicesMainDialogStateHolder.setVisibility(false) }
                         )
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -128,7 +124,7 @@ fun addingDevice() {
                         Column(
                             modifier = Modifier
                                 .padding(vertical = 24.dp)
-                        ){
+                        ) {
                             Text(
                                 text = stringResource(Res.string.orUseQR),
                                 fontSize = 15.sp,
