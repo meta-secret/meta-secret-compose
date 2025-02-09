@@ -59,6 +59,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import scenes.secretsscreen.SecretsScreenViewModel
 import sharedData.AppColors
 import sharedData.actualHeightFactor
+import ui.NotificationStateHolder
+import ui.SecretsDialogStateHolder
 
 @Composable
 fun popUpSecret() {
@@ -69,7 +71,7 @@ fun popUpSecret() {
     val imeHeight = WindowInsets.ime.getBottom(density)
 
     val viewModel: SecretsScreenViewModel = koinViewModel()
-    val visibility by viewModel.isSecretDialogVisible.collectAsState()
+    val visibility by SecretsDialogStateHolder.isDialogVisible.collectAsState()
 
     AnimatedVisibility(
         visible = visibility,
@@ -82,82 +84,82 @@ fun popUpSecret() {
             animationSpec = tween(durationMillis = 1000)
         )
     ) {
-    Dialog(
-        onDismissRequest = {},
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable { viewModel.closeSecretDialog() }
-                .padding(bottom = with(density) { imeHeight.toDp() }),
-            contentAlignment = Alignment.BottomCenter
+        Dialog(
+            onDismissRequest = {},
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             Box(
                 modifier = Modifier
-                    .height((actualHeightFactor() * 294).dp)
-                    .fillMaxWidth()
-                    .background(AppColors.PopUp, RoundedCornerShape(10.dp))
-                    .padding(horizontal = 16.dp)
-                    .clickable(onClick = {}, enabled = false),
+                    .fillMaxSize()
+                    .clickable { SecretsDialogStateHolder.setVisibility(false) }
+                    .padding(bottom = with(density) { imeHeight.toDp() }),
+                contentAlignment = Alignment.BottomCenter
             ) {
                 Box(
                     modifier = Modifier
+                        .height((actualHeightFactor() * 294).dp)
                         .fillMaxWidth()
-                        .padding(top = 16.dp)
+                        .background(AppColors.PopUp, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 16.dp)
+                        .clickable(onClick = {}, enabled = false),
                 ) {
-                    Image(
-                        painter = painterResource(Res.drawable.close),
-                        contentDescription = null,
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .clickable { viewModel.closeSecretDialog() }
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(Res.string.addSecret),
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                        color = AppColors.White,
-                        modifier = Modifier
-                            .align(Alignment.Start)
-                            .padding(top = 30.dp)
-                    )
-                    Column {
-                        textInput(stringResource(Res.string.secretName)) { newValue ->
-                            textName = newValue
-                        }
-                        textInput(stringResource(Res.string.secretCapital)) { newValue ->
-                            textSecret = newValue
-                        }
-                    }
-                    Button(
-                        modifier = Modifier
-                            .padding(vertical = 20.dp)
                             .fillMaxWidth()
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(10.dp)),
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = AppColors.ActionMain,
-                            contentColor = AppColors.White,
-                            disabledBackgroundColor = AppColors.ActionMain.copy(alpha = 0.5f),
-                            disabledContentColor = AppColors.White.copy(alpha = 0.5f)
-                        ),
-                        enabled = (textName.isNotEmpty() && textSecret.isNotEmpty()),
-                        onClick = {
-                            viewModel.addSecret()
-                            viewModel.showNotification()
-                            viewModel.closeSecretDialog()
-                        }
+                            .padding(top = 16.dp)
                     ) {
-                        Text(text = stringResource(Res.string.addSecret), fontSize = 16.sp)
+                        Image(
+                            painter = painterResource(Res.drawable.close),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .clickable { SecretsDialogStateHolder.setVisibility(false) }
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = stringResource(Res.string.addSecret),
+                            fontSize = 24.sp,
+                            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                            color = AppColors.White,
+                            modifier = Modifier
+                                .align(Alignment.Start)
+                                .padding(top = 30.dp)
+                        )
+                        Column {
+                            textInput(stringResource(Res.string.secretName)) { newValue ->
+                                textName = newValue
+                            }
+                            textInput(stringResource(Res.string.secretCapital)) { newValue ->
+                                textSecret = newValue
+                            }
+                        }
+                        Button(
+                            modifier = Modifier
+                                .padding(vertical = 20.dp)
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .clip(RoundedCornerShape(10.dp)),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = AppColors.ActionMain,
+                                contentColor = AppColors.White,
+                                disabledBackgroundColor = AppColors.ActionMain.copy(alpha = 0.5f),
+                                disabledContentColor = AppColors.White.copy(alpha = 0.5f)
+                            ),
+                            enabled = (textName.isNotEmpty() && textSecret.isNotEmpty()),
+                            onClick = {
+                                viewModel.addSecret()
+                                NotificationStateHolder.setVisibility(true)
+                                SecretsDialogStateHolder.setVisibility(false)
+                            }
+                        ) {
+                            Text(text = stringResource(Res.string.addSecret), fontSize = 16.sp)
+                        }
                     }
                 }
             }
         }
     }
-}
 }
 
 
@@ -167,10 +169,11 @@ fun textInput(
     onTextChange: (String) -> Unit
 ) {
     var text by remember { mutableStateOf("") }
-    var isError by remember { mutableStateOf(false) }
+    val isError by remember { mutableStateOf(false) }
+    //val focusManager = LocalFocusManager.current
     var isFocused by remember { mutableStateOf(false) }
     val focusRequester = FocusRequester()
-    //val focusManager = LocalFocusManager.current
+
 
     TextField(
         value = text,

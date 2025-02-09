@@ -41,16 +41,15 @@ import kotlinproject.composeapp.generated.resources.useMetaSecret
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-import scenes.devicesscreen.DevicesScreenViewModel
 import sharedData.AppColors
 import sharedData.actualHeightFactor
+import ui.DevicesDialogStateHolder
+import ui.DevicesMainDialogStateHolder
 
 
 @Composable
 fun popUpDevice() {
-    val viewModel: DevicesScreenViewModel = koinViewModel()
-    val visibility by viewModel.isDeviceDialogVisible.collectAsState()
+    val visibility by DevicesDialogStateHolder.isDialogVisible.collectAsState()
 
     AnimatedVisibility(
         visible = visibility,
@@ -70,7 +69,7 @@ fun popUpDevice() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable { viewModel.closeDialog() },
+                    .clickable { DevicesDialogStateHolder.setVisibility(false) },
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Box(
@@ -91,7 +90,7 @@ fun popUpDevice() {
                             contentDescription = null,
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .clickable { viewModel.closeDialog() }
+                                .clickable { DevicesDialogStateHolder.setVisibility(false) }
                         )
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -154,8 +153,8 @@ fun popUpDevice() {
                                 disabledContentColor = AppColors.White.copy(alpha = 0.5f)
                             ),
                             onClick = {
-                                viewModel.closeDialog()
-                                viewModel.openMainDialog()
+                                DevicesDialogStateHolder.setVisibility(false)
+                                DevicesMainDialogStateHolder.setVisibility(true)
                             }
                         ) {
                             Text(text = stringResource(Res.string.addDevice), fontSize = 16.sp)
