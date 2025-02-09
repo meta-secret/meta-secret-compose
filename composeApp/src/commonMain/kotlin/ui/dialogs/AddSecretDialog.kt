@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
@@ -223,14 +222,4 @@ fun textInput(
             unfocusedIndicatorColor = Color.Transparent,
         )
     )
-}
-
-@Composable
-fun alert() {
-    AlertDialog(
-        onDismissRequest = {},
-        confirmButton = {},
-        title = {},
-        text = {},
-        dismissButton = {})
 }

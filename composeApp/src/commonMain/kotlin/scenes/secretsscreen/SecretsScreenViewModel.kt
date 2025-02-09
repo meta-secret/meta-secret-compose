@@ -10,19 +10,16 @@ import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addText
 import kotlinproject.composeapp.generated.resources.lackOfDevices_end
 import kotlinproject.composeapp.generated.resources.lackOfDevices_start
-import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
 import sharedData.Repository
 import storage.KeyValueStorage
-import ui.WarningStateHolder
 
 class SecretsScreenViewModel(
     private val keyValueStorage: KeyValueStorage,
 ) : ViewModel() {
     val secretsSize = data().secrets.size
     val devicesSize = data().devices.size
-    val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
 
     fun addSecret() {
         val newSecret = Repository.Secret(secretName = "Names", password = "Password")
