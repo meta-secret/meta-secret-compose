@@ -24,7 +24,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,11 +57,9 @@ import org.koin.compose.viewmodel.koinViewModel
 import scenes.secretsscreen.SecretsScreenViewModel
 import sharedData.AppColors
 import sharedData.actualHeightFactor
-import ui.NotificationStateHolder
-import ui.SecretsDialogStateHolder
 
 @Composable
-fun popUpSecret() {
+fun popUpSecret(dialogVisibility: (Boolean) -> Unit, notificationVisibility: (Boolean) -> Unit ) {
     var textName by remember { mutableStateOf("") }
     var textSecret by remember { mutableStateOf("") }
 
@@ -70,10 +67,9 @@ fun popUpSecret() {
     val imeHeight = WindowInsets.ime.getBottom(density)
 
     val viewModel: SecretsScreenViewModel = koinViewModel()
-    val visibility by SecretsDialogStateHolder.isDialogVisible.collectAsState()
 
     AnimatedVisibility(
-        visible = visibility,
+        visible = true,
         enter = slideInVertically(
             initialOffsetY = { it },
             animationSpec = tween(durationMillis = 1500)
@@ -90,7 +86,7 @@ fun popUpSecret() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable { SecretsDialogStateHolder.setVisibility(false) }
+                    .clickable { dialogVisibility(false) }
                     .padding(bottom = with(density) { imeHeight.toDp() }),
                 contentAlignment = Alignment.BottomCenter
             ) {
@@ -112,7 +108,7 @@ fun popUpSecret() {
                             contentDescription = null,
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .clickable { SecretsDialogStateHolder.setVisibility(false) }
+                                .clickable { dialogVisibility(false) }
                         )
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -148,8 +144,8 @@ fun popUpSecret() {
                             enabled = (textName.isNotEmpty() && textSecret.isNotEmpty()),
                             onClick = {
                                 viewModel.addSecret()
-                                NotificationStateHolder.setVisibility(true)
-                                SecretsDialogStateHolder.setVisibility(false)
+                                notificationVisibility(true)
+                                dialogVisibility(false)
                             }
                         ) {
                             Text(text = stringResource(Res.string.addSecret), fontSize = 16.sp)

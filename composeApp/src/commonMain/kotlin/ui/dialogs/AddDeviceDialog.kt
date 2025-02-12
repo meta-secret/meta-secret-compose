@@ -19,8 +19,6 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,16 +41,13 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
 import sharedData.actualHeightFactor
-import ui.DevicesDialogStateHolder
-import ui.DevicesMainDialogStateHolder
 
 
 @Composable
-fun popUpDevice() {
-    val visibility by DevicesDialogStateHolder.isDialogVisible.collectAsState()
+fun popUpDevice(dialogVisibility: (Boolean) -> Unit, mainDialogVisibility: (Boolean) -> Unit) {
 
     AnimatedVisibility(
-        visible = visibility,
+        visible = true,
         enter = slideInVertically(
             initialOffsetY = { it },
             animationSpec = tween(durationMillis = 1500)
@@ -69,7 +64,7 @@ fun popUpDevice() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable { DevicesDialogStateHolder.setVisibility(false) },
+                    .clickable { dialogVisibility(false) },
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Box(
@@ -90,7 +85,7 @@ fun popUpDevice() {
                             contentDescription = null,
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .clickable { DevicesDialogStateHolder.setVisibility(false) }
+                                .clickable { dialogVisibility(false) }
                         )
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -153,8 +148,8 @@ fun popUpDevice() {
                                 disabledContentColor = AppColors.White.copy(alpha = 0.5f)
                             ),
                             onClick = {
-                                DevicesDialogStateHolder.setVisibility(false)
-                                DevicesMainDialogStateHolder.setVisibility(true)
+                                dialogVisibility(false)
+                                mainDialogVisibility(true)
                             }
                         ) {
                             Text(text = stringResource(Res.string.addDevice), fontSize = 16.sp)
@@ -164,7 +159,6 @@ fun popUpDevice() {
             }
         }
     }
-    addingDevice() // Is appropriate place for a function call?
 }
 
 
