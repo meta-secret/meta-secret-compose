@@ -23,21 +23,14 @@ import androidx.compose.ui.unit.dp
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.close_blue
 import org.jetbrains.compose.resources.painterResource
-import sharedData.AppColors
 import sharedData.actualHeightFactor
-import sharedData.enums.NotificationType
 
 @Composable
 fun InAppNotification(
     message: String,
-    notificationType: NotificationType,
+    color: Color,
     onDismiss: () -> Unit
 ) {
-
-    val color = when (notificationType) {
-        NotificationType.Red -> AppColors.RedError
-        NotificationType.Blue -> AppColors.ActionMain
-    }
 
     AnimatedVisibility(
         visible = true,
