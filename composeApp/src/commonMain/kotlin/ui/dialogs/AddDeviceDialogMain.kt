@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -37,14 +35,12 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
 import sharedData.actualHeightFactor
-import ui.DevicesMainDialogStateHolder
 
 @Composable
-fun addingDevice() {
-    val visibility by DevicesMainDialogStateHolder.isDialogVisible.collectAsState()
+fun addingDevice(mainDialogVisibility: (Boolean) -> Unit) {
 
     AnimatedVisibility(
-        visible = visibility,
+        visible = true,
         enter = slideInVertically(
             initialOffsetY = { it },
             animationSpec = tween(durationMillis = 1500)
@@ -61,7 +57,7 @@ fun addingDevice() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable { DevicesMainDialogStateHolder.setVisibility(false) },
+                    .clickable { mainDialogVisibility(false) },
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Box(
@@ -82,7 +78,7 @@ fun addingDevice() {
                             contentDescription = null,
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .clickable { DevicesMainDialogStateHolder.setVisibility(false) }
+                                .clickable { mainDialogVisibility(false) }
                         )
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -143,5 +139,6 @@ fun addingDevice() {
         }
     }
 }
+
 
 

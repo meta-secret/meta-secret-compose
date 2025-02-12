@@ -14,25 +14,33 @@ import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
 import sharedData.Repository
 import storage.KeyValueStorage
+import ui.WarningStateHolder
 
 class SecretsScreenViewModel(
     private val keyValueStorage: KeyValueStorage,
 ) : ViewModel() {
-    val secretsSize = data().secrets.size
-    val devicesSize = data().devices.size
+    val secretsCount = data().secrets.size
+    val devicesCount = data().devices.size
 
     fun addSecret() {
         val newSecret = Repository.Secret(secretName = "Names", password = "Password")
-        data().addSecret(newSecret)
+        Repository(keyValueStorage).addSecret(newSecret)
     }
 
-    fun data() = Repository(keyValueStorage)
+    fun data(): Repository {
+        val device = Repository(keyValueStorage)
+        return device
+    }
+
+    fun changeWarningVisibilityTo(state: Boolean) {
+        WarningStateHolder.setVisibility(state)
+    }
 
     @Composable
     fun getWarningText(): AnnotatedString {
         return buildAnnotatedString {
             append(stringResource(Res.string.lackOfDevices_start))
-            append((3 - data().devices.size).toString())
+            append((3 - devicesCount).toString())
             append(stringResource(Res.string.lackOfDevices_end))
             pushStringAnnotation(tag = "addDevice", annotation = "")
             withStyle(style = SpanStyle(color = AppColors.ActionLink)) {
