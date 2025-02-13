@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -44,16 +45,18 @@ import sharedData.enums.DevicesQuantity
 @Composable
 fun SecretsContent(index: Int) {
     val viewModel: SecretsScreenViewModel = koinViewModel()
+    val devicesCount by viewModel.devicesCount
+
     val deviceText = when {
-        viewModel.devicesCount == 0 || viewModel.devicesCount > 4 -> stringResource(Res.string.devices_5)
-        viewModel.devicesCount in 2..4 -> stringResource(Res.string.devices_4)
+        devicesCount == 0 || devicesCount > 4 -> stringResource(Res.string.devices_5)
+        devicesCount in 2..4 -> stringResource(Res.string.devices_4)
         else -> stringResource(Res.string.device)
     }
 
     var protectionLevelShield = painterResource(Res.drawable.shield_l3)
     var protectionLevelText = stringResource(Res.string.level_3)
 
-    when (viewModel.data().devices.size) {
+    when (devicesCount) {
         DevicesQuantity.OneDevice.amount -> {
             protectionLevelShield = painterResource(Res.drawable.shield_l1);
             protectionLevelText = stringResource(Res.string.level_1)
@@ -78,7 +81,7 @@ fun SecretsContent(index: Int) {
             ) {
                 Text(
                     modifier = Modifier.height(22.dp),
-                    text = viewModel.data().secrets[index].secretName,
+                    text = viewModel.getSecret(index).secretName,
                     style = TextStyle(
                         fontSize = 18.sp,
                         fontFamily = FontFamily(Font(Res.font.manrope_bold)),
@@ -94,7 +97,7 @@ fun SecretsContent(index: Int) {
                         tint = AppColors.White75
                     )
                     Text(
-                        text = "${viewModel.data().devices.size} $deviceText",
+                        text = "$devicesCount $deviceText",
                         style = TextStyle(
                             fontSize = 15.sp,
                             fontFamily = FontFamily(Font(Res.font.manrope_regular)),

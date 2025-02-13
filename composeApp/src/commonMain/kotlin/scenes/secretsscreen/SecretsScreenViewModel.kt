@@ -1,6 +1,8 @@
 package scenes.secretsscreen
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -13,23 +15,21 @@ import kotlinproject.composeapp.generated.resources.lackOfDevices_start
 import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
 import sharedData.Repository
-import storage.KeyValueStorage
 import ui.WarningStateHolder
 
 class SecretsScreenViewModel(
-    private val keyValueStorage: KeyValueStorage,
+    private val repository: Repository
 ) : ViewModel() {
-    val secretsCount = data().secrets.size
-    val devicesCount = data().devices.size
 
-    fun addSecret() {
-        val newSecret = Repository.Secret(secretName = "Names", password = "Password")
-        Repository(keyValueStorage).addSecret(newSecret)
-    }
+    private val _secretsCount = mutableStateOf(repository.secrets.size)
+    val secretsCount: State<Int> get() = _secretsCount
 
-    fun data(): Repository {
-        val device = Repository(keyValueStorage)
-        return device
+    private val _devicesCount = mutableStateOf(repository.devices.size)
+    val devicesCount: State<Int> get() = _devicesCount
+
+    fun getSecret (index: Int): Repository.Secret {
+        val secret = repository.secrets[index]
+        return secret
     }
 
     fun changeWarningVisibilityTo(state: Boolean) {
@@ -40,7 +40,7 @@ class SecretsScreenViewModel(
     fun getWarningText(): AnnotatedString {
         return buildAnnotatedString {
             append(stringResource(Res.string.lackOfDevices_start))
-            append((3 - devicesCount).toString())
+            append((3 - repository.devices.size).toString())
             append(stringResource(Res.string.lackOfDevices_end))
             pushStringAnnotation(tag = "addDevice", annotation = "")
             withStyle(style = SpanStyle(color = AppColors.ActionLink)) {
