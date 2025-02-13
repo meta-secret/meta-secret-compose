@@ -1,5 +1,9 @@
 package scenes.secretsscreen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,7 +44,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
 import sharedData.actualHeightFactor
 import ui.AddButton
-import ui.dialogs.popUpSecret
+import ui.dialogs.addsecret.popUpSecret
 import ui.notifications.InAppNotification
 import ui.notifications.warningContent
 import ui.screenContent.CommonBackground
@@ -50,22 +54,25 @@ class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: SecretsScreenViewModel = koinViewModel()
+        val devicesCount by viewModel.devicesCount
+        val secretsCount by viewModel.secretsCount
         var isDialogVisible by remember { mutableStateOf(false) }
         var isNotificationVisibility by remember { mutableStateOf(false) }
+
 
         CommonBackground(Res.string.secretsHeader) {
             warningContent(
                 text = viewModel.getWarningText(),
                 action = {},
                 closeAction = { viewModel.changeWarningVisibilityTo(false) },
-                viewModel.devicesCount
+                devicesCount
             )
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                items(viewModel.secretsCount) { index ->
+                items(secretsCount) { index ->
                     SecretsContent(index)
                 }
             }
@@ -83,14 +90,23 @@ class SecretsScreen : Screen {
         }
         AddButton { isDialogVisible = it }
 
-        if (isDialogVisible) {
+        AnimatedVisibility(
+            visible = isDialogVisible,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(durationMillis = 1500)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(durationMillis = 1000)
+            )
+        ) {
             popUpSecret(
                 dialogVisibility = { isDialogVisible = it },
                 notificationVisibility = { isNotificationVisibility = it }
             )
         }
-
-        if (viewModel.secretsCount < 1) {
+        if (secretsCount < 1) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

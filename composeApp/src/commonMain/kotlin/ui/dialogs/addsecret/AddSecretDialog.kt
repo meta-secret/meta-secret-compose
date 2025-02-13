@@ -1,9 +1,5 @@
-package ui.dialogs
+package ui.dialogs.addsecret
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -54,102 +50,92 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import scenes.secretsscreen.SecretsScreenViewModel
 import sharedData.AppColors
 import sharedData.actualHeightFactor
 
 @Composable
-fun popUpSecret(dialogVisibility: (Boolean) -> Unit, notificationVisibility: (Boolean) -> Unit ) {
+fun popUpSecret(
+    dialogVisibility: (Boolean) -> Unit,
+    notificationVisibility: (Boolean) -> Unit
+) {
     var textName by remember { mutableStateOf("") }
     var textSecret by remember { mutableStateOf("") }
 
     val density = LocalDensity.current
     val imeHeight = WindowInsets.ime.getBottom(density)
 
-    val viewModel: SecretsScreenViewModel = koinViewModel()
+    val viewModel: AddSecretViewModel = koinViewModel()
 
-    AnimatedVisibility(
-        visible = true,
-        enter = slideInVertically(
-            initialOffsetY = { it },
-            animationSpec = tween(durationMillis = 1500)
-        ),
-        exit = slideOutVertically(
-            targetOffsetY = { it },
-            animationSpec = tween(durationMillis = 1000)
-        )
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Dialog(
-            onDismissRequest = {},
-            properties = DialogProperties(usePlatformDefaultWidth = false)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable { dialogVisibility(false) }
+                .padding(bottom = with(density) { imeHeight.toDp() }),
+            contentAlignment = Alignment.BottomCenter
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clickable { dialogVisibility(false) }
-                    .padding(bottom = with(density) { imeHeight.toDp() }),
-                contentAlignment = Alignment.BottomCenter
+                    .height((actualHeightFactor() * 294).dp)
+                    .fillMaxWidth()
+                    .background(AppColors.PopUp, RoundedCornerShape(10.dp))
+                    .padding(horizontal = 16.dp)
+                    .clickable(onClick = {}, enabled = false),
             ) {
                 Box(
                     modifier = Modifier
-                        .height((actualHeightFactor() * 294).dp)
                         .fillMaxWidth()
-                        .background(AppColors.PopUp, RoundedCornerShape(10.dp))
-                        .padding(horizontal = 16.dp)
-                        .clickable(onClick = {}, enabled = false),
+                        .padding(top = 16.dp)
                 ) {
-                    Box(
+                    Image(
+                        painter = painterResource(Res.drawable.close),
+                        contentDescription = null,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp)
-                    ) {
-                        Image(
-                            painter = painterResource(Res.drawable.close),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .clickable { dialogVisibility(false) }
-                        )
+                            .align(Alignment.CenterEnd)
+                            .clickable { dialogVisibility(false) }
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(Res.string.addSecret),
+                        fontSize = 24.sp,
+                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        color = AppColors.White,
+                        modifier = Modifier
+                            .align(Alignment.Start)
+                            .padding(top = 30.dp)
+                    )
+                    Column {
+                        textInput(stringResource(Res.string.secretName)) { newValue ->
+                            textName = newValue
+                        }
+                        textInput(stringResource(Res.string.secretCapital)) { newValue ->
+                            textSecret = newValue
+                        }
                     }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = stringResource(Res.string.addSecret),
-                            fontSize = 24.sp,
-                            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                            color = AppColors.White,
-                            modifier = Modifier
-                                .align(Alignment.Start)
-                                .padding(top = 30.dp)
-                        )
-                        Column {
-                            textInput(stringResource(Res.string.secretName)) { newValue ->
-                                textName = newValue
-                            }
-                            textInput(stringResource(Res.string.secretCapital)) { newValue ->
-                                textSecret = newValue
-                            }
+                    Button(
+                        modifier = Modifier
+                            .padding(vertical = 20.dp)
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .clip(RoundedCornerShape(10.dp)),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = AppColors.ActionMain,
+                            contentColor = AppColors.White,
+                            disabledBackgroundColor = AppColors.ActionMain.copy(alpha = 0.5f),
+                            disabledContentColor = AppColors.White.copy(alpha = 0.5f)
+                        ),
+                        enabled = (textName.isNotEmpty() && textSecret.isNotEmpty()),
+                        onClick = {
+                            viewModel.addSecret(textName, textSecret)
+                            notificationVisibility(true)
+                            dialogVisibility(false)
                         }
-                        Button(
-                            modifier = Modifier
-                                .padding(vertical = 20.dp)
-                                .fillMaxWidth()
-                                .height(48.dp)
-                                .clip(RoundedCornerShape(10.dp)),
-                            colors = ButtonDefaults.buttonColors(
-                                backgroundColor = AppColors.ActionMain,
-                                contentColor = AppColors.White,
-                                disabledBackgroundColor = AppColors.ActionMain.copy(alpha = 0.5f),
-                                disabledContentColor = AppColors.White.copy(alpha = 0.5f)
-                            ),
-                            enabled = (textName.isNotEmpty() && textSecret.isNotEmpty()),
-                            onClick = {
-                                viewModel.addSecret()
-                                notificationVisibility(true)
-                                dialogVisibility(false)
-                            }
-                        ) {
-                            Text(text = stringResource(Res.string.addSecret), fontSize = 16.sp)
-                        }
+                    ) {
+                        Text(text = stringResource(Res.string.addSecret), fontSize = 16.sp)
                     }
                 }
             }
