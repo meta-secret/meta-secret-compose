@@ -44,5 +44,4 @@ actual fun getScreenHeight(): Int {
     val windowMetrics = context.getSystemService(WindowManager::class.java).currentWindowMetrics
     val density = LocalDensity.current.density
     return  (windowMetrics.bounds.height() / density).toInt()
-
 }
