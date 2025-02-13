@@ -10,42 +10,17 @@ import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addText
 import kotlinproject.composeapp.generated.resources.lackOfDevices_end
 import kotlinproject.composeapp.generated.resources.lackOfDevices_start
-import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
 import sharedData.Repository
 import storage.KeyValueStorage
-import ui.DevicesDialogStateHolder
-import ui.DevicesMainDialogStateHolder
 import ui.WarningStateHolder
 
 class DevicesScreenViewModel(
     private val keyValueStorage: KeyValueStorage
 ) : ViewModel() {
-    val devicesSize = data().devices.size
-    val isDeviceDialogVisible: StateFlow<Boolean> = DevicesDialogStateHolder.isDialogVisible
-    val isDeviceMainDialogVisible: StateFlow<Boolean> = DevicesMainDialogStateHolder.isDialogVisible
-    val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
-
-    fun closeWarning() {
-        WarningStateHolder.setVisibility(false)
-    }
-
-    fun closeDialog() {
-        DevicesDialogStateHolder.setVisibility(false)
-    }
-
-    fun openDialog() {
-        DevicesDialogStateHolder.setVisibility(true)
-    }
-
-    fun closeMainDialog() {
-        DevicesMainDialogStateHolder.setVisibility(false)
-    }
-
-    fun openMainDialog() {
-        DevicesMainDialogStateHolder.setVisibility(true)
-    }
+    val devicesCount = data().devices.size
+    val secretsCount = data().secrets.size
 
     fun addDevice() {
         //TODO("Not yet implemented")
@@ -56,11 +31,15 @@ class DevicesScreenViewModel(
         return device
     }
 
+    fun changeWarningVisibilityTo(state: Boolean) {
+        WarningStateHolder.setVisibility(state)
+    }
+
     @Composable
     fun getWarningText(): AnnotatedString {
         return buildAnnotatedString {
             append(stringResource(Res.string.lackOfDevices_start))
-            append((3 - devicesSize).toString())
+            append((3 - devicesCount).toString())
             append(stringResource(Res.string.lackOfDevices_end))
             pushStringAnnotation(tag = "addDevice", annotation = "")
             withStyle(style = SpanStyle(color = AppColors.ActionLink)) {

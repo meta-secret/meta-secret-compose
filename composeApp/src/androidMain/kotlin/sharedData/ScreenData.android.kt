@@ -10,11 +10,11 @@ import androidx.compose.ui.platform.LocalDensity
 
 @Composable
 @RequiresApi(Build.VERSION_CODES.R)
-actual fun actualWidthFactor(): Int {
+actual fun actualWidthFactor(): Float {
     val context = LocalContext.current
     val windowMetrics = context.getSystemService(WindowManager::class.java).currentWindowMetrics
     val density = LocalDensity.current.density
-    val coefficient = ((windowMetrics.bounds.width() / density).toInt()) / 375
+    val coefficient = (windowMetrics.bounds.width() / density) / 375
     return coefficient
 }
 
@@ -29,11 +29,11 @@ actual fun getScreenWidth(): Int {
 
 @RequiresApi(Build.VERSION_CODES.R)
 @Composable
-actual fun actualHeightFactor(): Int {
+actual fun actualHeightFactor(): Float {
     val context = LocalContext.current
     val windowMetrics = context.getSystemService(WindowManager::class.java).currentWindowMetrics
     val density = LocalDensity.current.density
-    val coefficient = ((windowMetrics.bounds.height() / density).toInt()) / 812
+    val coefficient = (windowMetrics.bounds.height() / density) / 812
     return coefficient
 }
 
@@ -44,5 +44,4 @@ actual fun getScreenHeight(): Int {
     val windowMetrics = context.getSystemService(WindowManager::class.java).currentWindowMetrics
     val density = LocalDensity.current.density
     return  (windowMetrics.bounds.height() / density).toInt()
-
 }

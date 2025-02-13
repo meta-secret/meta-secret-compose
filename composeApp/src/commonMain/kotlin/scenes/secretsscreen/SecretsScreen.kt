@@ -17,8 +17,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -34,73 +36,62 @@ import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.noSecrets
 import kotlinproject.composeapp.generated.resources.noSecretsHeader
 import kotlinproject.composeapp.generated.resources.secretAdded
-import kotlinproject.composeapp.generated.resources.secretNotAdded
 import kotlinproject.composeapp.generated.resources.secretsHeader
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
-import sharedData.enums.NotificationType
-import sharedData.getScreenHeight
+import sharedData.actualHeightFactor
 import ui.AddButton
-import ui.NotificationStateHolder
-import ui.SecretsDialogStateHolder
-import ui.dialogs.popUpSecret
+import ui.dialogs.addsecret.popUpSecret
 import ui.notifications.InAppNotification
 import ui.notifications.warningContent
 import ui.screenContent.CommonBackground
-import ui.screenContent.ContentCell
 import ui.screenContent.SecretsContent
 
 class SecretsScreen : Screen {
     @Composable
     override fun Content() {
-        val executionerSizeMultiplier = 220/*Figma's logo size*/ / 812F /*Figma's layout height*/
         val viewModel: SecretsScreenViewModel = koinViewModel()
-
-        val visibility by SecretsDialogStateHolder.isDialogVisible.collectAsState()
-        val notificationVisibility by NotificationStateHolder.isNotificationVisible.collectAsState()
-
-        val error = stringResource(Res.string.secretNotAdded)
-        val success = stringResource(Res.string.secretAdded)
+        val devicesCount by viewModel.devicesCount
+        val secretsCount by viewModel.secretsCount
+        var isDialogVisible by remember { mutableStateOf(false) }
+        var isNotificationVisibility by remember { mutableStateOf(false) }
 
 
         CommonBackground(Res.string.secretsHeader) {
             warningContent(
                 text = viewModel.getWarningText(),
                 action = {},
-                closeAction = { viewModel.closeWarning() },
-                isVisible = viewModel.isWarningVisible,
-                viewModel.devicesSize
+                closeAction = { viewModel.changeWarningVisibilityTo(false) },
+                devicesCount
             )
-
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 80.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                items(viewModel.secretsSize) { index ->
-                    ContentCell { SecretsContent(viewModel.data(), index)}
+                items(secretsCount) { index ->
+                    SecretsContent(index)
                 }
             }
         }
-        if (notificationVisibility) {
+        if (isNotificationVisibility) {
             InAppNotification(
-                success,
-                NotificationType.Blue,
-                { viewModel.hideNotification() }
+                stringResource(Res.string.secretAdded),
+                AppColors.ActionMain,
+                { isNotificationVisibility = false }
             )
             LaunchedEffect(Unit) {
                 kotlinx.coroutines.delay(2000)
-                viewModel.hideNotification()
+                isNotificationVisibility = false
             }
         }
-        AddButton {
-            viewModel.showSecretDialog()
-        }
+        AddButton { isDialogVisible = it }
+
         AnimatedVisibility(
-            visible = visibility,
+            visible = isDialogVisible,
             enter = slideInVertically(
                 initialOffsetY = { it },
                 animationSpec = tween(durationMillis = 1500)
@@ -110,9 +101,12 @@ class SecretsScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            popUpSecret()   // Is appropriate place for a function call?
+            popUpSecret(
+                dialogVisibility = { isDialogVisible = it },
+                notificationVisibility = { isNotificationVisibility = it }
+            )
         }
-        if (viewModel.secretsSize < 1) {
+        if (secretsCount < 1) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -135,7 +129,7 @@ class SecretsScreen : Screen {
                             painter = painterResource(Res.drawable.executioner),
                             contentDescription = null,
                             modifier = Modifier
-                                .size((getScreenHeight() * executionerSizeMultiplier).dp)
+                                .size((actualHeightFactor() * 220).dp)
                                 .align(Alignment.Center),
                             contentScale = ContentScale.Fit
                         )
@@ -162,6 +156,3 @@ class SecretsScreen : Screen {
         }
     }
 }
-
-
-

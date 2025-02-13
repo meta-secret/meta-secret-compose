@@ -15,12 +15,12 @@ import kotlinproject.composeapp.generated.resources.addbutton
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun AddButton(action: () -> Unit) {
+fun AddButton(action: (Boolean) -> Unit) {
     val imgSize = 80
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 113.dp, end = 45.dp),
+            .padding(bottom = 92.dp, end = 24.dp),
         Alignment.BottomEnd
     ) {
         Image(
@@ -28,10 +28,7 @@ fun AddButton(action: () -> Unit) {
             contentDescription = null,
             modifier = Modifier
                 .size(imgSize.dp)
-                .clickable { action() }
+                .clickable { action(true) }
         )
     }
 }
-
-
-

@@ -1,6 +1,8 @@
 package scenes.secretsscreen
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -10,60 +12,35 @@ import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addText
 import kotlinproject.composeapp.generated.resources.lackOfDevices_end
 import kotlinproject.composeapp.generated.resources.lackOfDevices_start
-import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.compose.resources.stringResource
 import sharedData.AppColors
 import sharedData.Repository
-import storage.KeyValueStorage
-import ui.NotificationStateHolder
-import ui.SecretsDialogStateHolder
 import ui.WarningStateHolder
 
 class SecretsScreenViewModel(
-    private val keyValueStorage: KeyValueStorage,
+    private val repository: Repository
 ) : ViewModel() {
-    val secretsSize = data().secrets.size
-    val devicesSize = data().devices.size
-    val isWarningVisible: StateFlow<Boolean> = WarningStateHolder.isWarningVisible
-    val isSecretDialogVisible: StateFlow<Boolean> = SecretsDialogStateHolder.isDialogVisible
-    val isNotificationVisible: StateFlow<Boolean> = NotificationStateHolder.isNotificationVisible
 
-    fun closeWarning() {
-        WarningStateHolder.setVisibility(false)
+    private val _secretsCount = mutableStateOf(repository.secrets.size)
+    val secretsCount: State<Int> get() = _secretsCount
+
+    private val _devicesCount = mutableStateOf(repository.devices.size)
+    val devicesCount: State<Int> get() = _devicesCount
+
+    fun getSecret (index: Int): Repository.Secret {
+        val secret = repository.secrets[index]
+        return secret
     }
 
-    fun showNotification() {
-        NotificationStateHolder.setVisibility(true)
-    }
-
-    fun hideNotification() {
-        NotificationStateHolder.setVisibility(false)
-    }
-
-    fun showSecretDialog() {
-        SecretsDialogStateHolder.setVisibility(true)
-    }
-
-    fun closeSecretDialog() {
-        SecretsDialogStateHolder.setVisibility(false)
-    }
-
-    fun addSecret() {
-//        val repository = Repository(keyValueStorage)
-//        val newSecret = Repository.Secret(secretName = "Name", password = "Password")
-//        repository.addSecret(newSecret)
-    }
-
-    fun data(): Repository {
-        val device = Repository(keyValueStorage)
-        return device
+    fun changeWarningVisibilityTo(state: Boolean) {
+        WarningStateHolder.setVisibility(state)
     }
 
     @Composable
     fun getWarningText(): AnnotatedString {
         return buildAnnotatedString {
             append(stringResource(Res.string.lackOfDevices_start))
-            append((3 - data().devices.size).toString())
+            append((3 - repository.devices.size).toString())
             append(stringResource(Res.string.lackOfDevices_end))
             pushStringAnnotation(tag = "addDevice", annotation = "")
             withStyle(style = SpanStyle(color = AppColors.ActionLink)) {
