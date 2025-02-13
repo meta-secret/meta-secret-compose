@@ -1,5 +1,9 @@
 package scenes.devicesscreen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,8 +19,8 @@ import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.devicesList
 import org.koin.compose.viewmodel.koinViewModel
 import ui.AddButton
-import ui.dialogs.addingDevice
-import ui.dialogs.popUpDevice
+import ui.dialogs.adddevice.addingDevice
+import ui.dialogs.adddevice.popUpDevice
 import ui.notifications.warningContent
 import ui.screenContent.CommonBackground
 import ui.screenContent.DeviceContent
@@ -48,12 +52,33 @@ class DevicesScreen : Screen {
         }
         AddButton { isDialogVisible = it }
 
-        if (isDialogVisible) {
+        AnimatedVisibility(
+            visible = isDialogVisible,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(durationMillis = 1500)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(durationMillis = 1000)
+            )
+        ) {
             popUpDevice(
                 dialogVisibility = { isDialogVisible = it },
                 mainDialogVisibility = { isMainDialogVisible = it }
             )
-        } else if (isMainDialogVisible) {
+        }
+        AnimatedVisibility(
+                visible = isMainDialogVisible,
+        enter = slideInVertically(
+            initialOffsetY = { it },
+            animationSpec = tween(durationMillis = 1500)
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = { it },
+            animationSpec = tween(durationMillis = 1000)
+        )
+        ) {
             addingDevice { isMainDialogVisible = it }
         }
     }
