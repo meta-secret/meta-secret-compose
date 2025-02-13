@@ -10,11 +10,12 @@ import scenes.splashscreen.SplashScreenViewModel
 import sharedData.Repository
 import storage.KeyValueStorage
 import storage.KeyValueStorageImpl
+import ui.dialogs.adddevice.AddDeviceViewModel
+import ui.dialogs.addsecret.AddSecretViewModel
 
 val appModule = module {
-    single {}
     single<KeyValueStorage> { KeyValueStorageImpl() }
-    single<Repository> { Repository(get()) }
+    single { Repository(get()) }
 
     factory { SplashScreenViewModel(get()) }
     factory { OnboardingViewModel(get()) }
@@ -22,4 +23,6 @@ val appModule = module {
     factory { ProfileScreenViewModel(get()) }
     factory { DevicesScreenViewModel(get()) }
     factory { SecretsScreenViewModel(get()) }
+    factory { AddSecretViewModel(get()) }
+    factory { AddDeviceViewModel(get()) }
 }
