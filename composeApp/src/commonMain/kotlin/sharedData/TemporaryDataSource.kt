@@ -1,5 +1,6 @@
 package sharedData
 
+import androidx.compose.runtime.mutableStateListOf
 import storage.KeyValueStorage
 
 
@@ -14,24 +15,21 @@ class Repository(private val keyValueStorage: KeyValueStorage) {
         val password: String
     )
 
-    val devices: List<Device> get() = mutableDeviceList
-    val secrets: List<Secret> get() = mutableSecretsList
+    val devices: MutableList<Device> get() = mutableDeviceList
+    val secrets: MutableList<Secret> get() = mutableSecretsList
 
-    private val mutableDeviceList: MutableList<Device> by lazy {
-        mutableListOf(
+    private val mutableDeviceList = mutableStateListOf(
             Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
-            Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
-            Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString()),
+            Device(getDeviceMake(), keyValueStorage.signInInfo?.username.toString())
         )
-    }
 
-    private val mutableSecretsList: MutableList<Secret> by lazy {
-        mutableListOf(
+
+    private val mutableSecretsList = mutableStateListOf(
             Secret("Random", "getPassword"),
             Secret("Secret", "getPassword"),
             Secret("Name", "getPassword"),
         )
-    }
+
 
     fun addDevice(device: Device) {
         mutableDeviceList.add(device)
