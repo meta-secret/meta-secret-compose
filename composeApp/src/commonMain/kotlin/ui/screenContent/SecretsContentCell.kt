@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +46,7 @@ import sharedData.enums.DevicesQuantity
 @Composable
 fun SecretsContent(index: Int) {
     val viewModel: SecretsScreenViewModel = koinViewModel()
-    val devicesCount by viewModel.devicesCount
+    val devicesCount by viewModel.devicesCount.collectAsState()
 
     val deviceText = when {
         devicesCount == 0 || devicesCount > 4 -> stringResource(Res.string.devices_5)
@@ -58,12 +59,12 @@ fun SecretsContent(index: Int) {
 
     when (devicesCount) {
         DevicesQuantity.OneDevice.amount -> {
-            protectionLevelShield = painterResource(Res.drawable.shield_l1);
+            protectionLevelShield = painterResource(Res.drawable.shield_l1)
             protectionLevelText = stringResource(Res.string.level_1)
         }
 
         DevicesQuantity.TwoDevices.amount -> {
-            protectionLevelShield = painterResource(Res.drawable.shield_l2);
+            protectionLevelShield = painterResource(Res.drawable.shield_l2)
             protectionLevelText = stringResource(Res.string.level_2)
         }
     }
@@ -106,7 +107,6 @@ fun SecretsContent(index: Int) {
                     )
                 }
             }
-
             Column(
                 verticalArrangement = Arrangement.spacedBy(3.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
