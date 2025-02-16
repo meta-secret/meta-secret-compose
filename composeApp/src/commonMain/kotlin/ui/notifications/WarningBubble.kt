@@ -35,7 +35,7 @@ import ui.WarningStateHolder.isWarningVisible
 @Composable
 fun warningContent(
     text: AnnotatedString,
-    action: () -> Unit,
+    addingDevice: () -> Unit,
     closeAction: () -> Unit,
     devicesCount: Int
 ) {
@@ -73,7 +73,7 @@ fun warningContent(
                     text.getStringAnnotations("addText", offset, offset)
                         .firstOrNull()
                         ?.let {
-                            action()
+                            addingDevice()
                         }
                 },
                 modifier = Modifier

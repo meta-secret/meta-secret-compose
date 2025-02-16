@@ -1,11 +1,9 @@
 package ui.dialogs.adddevice
 
 import androidx.lifecycle.ViewModel
-import sharedData.Repository
+import storage.KeyValueStorage
 
 class AddDeviceViewModel (
-    private val repository: Repository
+  private val keyValueStorage: KeyValueStorage
 ) : ViewModel() {
-
-
 }

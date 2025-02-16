@@ -1,4 +1,3 @@
-
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -17,7 +16,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -28,7 +27,7 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -64,7 +63,6 @@ kotlin {
             implementation(libs.multiplatform.settings.serialization)
             implementation(libs.coroutines.core)
             implementation(libs.settings.coroutine)
-            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
         }
     }
 }
@@ -113,14 +111,15 @@ android {
 
 dependencies {
     implementation(libs.androidx.annotation.jvm)
+    implementation(libs.kotlinx.coroutines.core.v164)
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.lifecycle.livedata.core.ktx)
     implementation(libs.material)
     implementation(libs.androidx.glance)
     implementation(libs.ui.android)
-    implementation (libs.androidx.material)
+    implementation(libs.androidx.material)
     implementation(libs.androidx.activity.ktx)
-    runtimeOnly (libs.androidx.runtime)
+    runtimeOnly(libs.androidx.runtime)
 }
 
 
