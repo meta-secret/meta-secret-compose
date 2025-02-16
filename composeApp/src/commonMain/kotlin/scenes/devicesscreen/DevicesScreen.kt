@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,27 +26,30 @@ import ui.notifications.warningContent
 import ui.screenContent.CommonBackground
 import ui.screenContent.DeviceContent
 
-
 class DevicesScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: DevicesScreenViewModel = koinViewModel()
+        val devicesCount by viewModel.devicesCount.collectAsState()
         var isDialogVisible by remember { mutableStateOf(false) }
         var isMainDialogVisible by remember { mutableStateOf(false) }
 
         CommonBackground(Res.string.devicesList) {
             warningContent(
-                text = viewModel.getWarningText(),
-                action = { viewModel.addDevice() },
+                text = viewModel.getWarningText(devicesCount),
+                addingDevice = {
+                    isDialogVisible = true
+                    viewModel.changeWarningVisibilityTo(false)
+                },
                 closeAction = { viewModel.changeWarningVisibilityTo(false) },
-                viewModel.devicesCount
+                devicesCount
             )
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                items(viewModel.devicesCount) { index ->
+                items(devicesCount) { index ->
                     DeviceContent(index)
                 }
             }
@@ -69,18 +73,17 @@ class DevicesScreen : Screen {
             )
         }
         AnimatedVisibility(
-                visible = isMainDialogVisible,
-        enter = slideInVertically(
-            initialOffsetY = { it },
-            animationSpec = tween(durationMillis = 1500)
-        ),
-        exit = slideOutVertically(
-            targetOffsetY = { it },
-            animationSpec = tween(durationMillis = 1000)
-        )
+            visible = isMainDialogVisible,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(durationMillis = 1500)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(durationMillis = 1000)
+            )
         ) {
             addingDevice { isMainDialogVisible = it }
         }
     }
 }
-

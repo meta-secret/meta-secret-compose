@@ -15,6 +15,8 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -56,9 +58,9 @@ fun ProfileBody() {
     val viewModel: ProfileScreenViewModel = koinViewModel()
     val navigator = LocalNavigator.currentOrThrow
     val secrets = stringResource(Res.string.secretsHeader)
-    val secretsCount = viewModel.getSecretsCount().toString()
     val devices = stringResource(Res.string.devicesList)
-    val devicesCount = viewModel.getDevicesCount().toString()
+    val secretsCount by viewModel.secretsCount.collectAsState()
+    val devicesCount by viewModel.devicesCount.collectAsState()
     val nickname = stringResource(Res.string.nickname)
     val nicknameField = viewModel.getNickName().toString()
     Box(
@@ -81,7 +83,7 @@ fun ProfileBody() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally)
             ) {
-                ProfileTextCell(secrets, secretsCount, Alignment.CenterHorizontally)
+                ProfileTextCell(secrets, secretsCount.toString(), Alignment.CenterHorizontally)
                 Box(
                     modifier = Modifier
                         .padding(vertical = 20.dp)
@@ -89,7 +91,7 @@ fun ProfileBody() {
                         .background(color = AppColors.White10)
                         .width(1.dp)
                 )
-                ProfileTextCell(devices, devicesCount, Alignment.CenterHorizontally)
+                ProfileTextCell(devices, devicesCount.toString(), Alignment.CenterHorizontally)
             }
             DrawBoxLine(0)
         }
