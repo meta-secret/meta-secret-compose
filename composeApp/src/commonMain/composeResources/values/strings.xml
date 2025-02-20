@@ -32,9 +32,16 @@
     <string name = "nickname">Nickname</string>
     <string name = "addText"> +Add</string>
     <string name = "addDevice">Adding device</string>
+    <string name = "removeDevice">Remove device</string>
+    <string name = "fromAllDevices"> secret from all of your devices?</string>
     <string name = "addDeviceAdvice">For maximum safety of your passwords you should add at least 3 devices</string>
     <string name = "addSecret">Adding secret</string>
+    <string name = "removeSecret">Remove secret</string>
+    <string name = "removeSecretConfirmation">Do you really want to delete </string>
+    <string name = "remove">Remove</string>
+    <string name = "cancel">Cancel</string>
     <string name = "secretAdded">A secret successfully added</string>
+    <string name = "secretRemoved">A secret successfully removed</string>
     <string name = "secretNotAdded">We were unable to add secret due to reasons</string>
     <string name = "lackOfDevices">Not having enough devices?</string>
     <string name = "useMetaSecret">MetaSecret Cloud Device - you can use our cloud as a device</string>
