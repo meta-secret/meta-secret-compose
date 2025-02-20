@@ -47,9 +47,9 @@ class ShowSecretViewModel(
         .stateIn(viewModelScope, SharingStarted.Lazily, 0)
 
     @Composable
-    fun textRow(text: String) {
+    fun textRow(text: String, isPasswordVisible: Boolean) {
         val scrollState = rememberScrollState()
-        var copy by remember { mutableStateOf(false) }
+        var copyTriggered by remember { mutableStateOf(false) }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -60,7 +60,7 @@ class ShowSecretViewModel(
                 .padding(horizontal = 16.dp)
                 .heightIn(min = 48.dp, max = 200.dp)
                 .verticalScroll(scrollState)
-                .clickable { copy = true},
+                .clickable { if(isPasswordVisible){ copyTriggered = true }},
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -71,9 +71,9 @@ class ShowSecretViewModel(
                 textAlign = TextAlign.Center
             )
         }
-        if (copy) {
+        if (copyTriggered) {
             copyToClipboard(text)
-            copy = false
+            copyTriggered = false
         }
     }
 
