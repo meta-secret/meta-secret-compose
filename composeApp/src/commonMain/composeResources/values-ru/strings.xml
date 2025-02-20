@@ -32,9 +32,16 @@
     <string name = "nickname">Никнэйм</string>
     <string name = "addText"> +Добавить</string>
     <string name = "addDevice">Добавить устройство</string>
+    <string name = "removeDevice">Удалить устройство</string>
+    <string name = "fromAllDevices"> cо всех ваших устройств ?</string>
     <string name = "addDeviceAdvice">Для стабильной безопасности ваших паролей вам нужно иметь более 3x устройств</string>
     <string name = "addSecret">Добавить секрет</string>
+    <string name = "removeSecret">Удалить секрет</string>
+    <string name = "removeSecretConfirmation">Вы действительно хотите удалить секрет </string>
+    <string name = "remove">Удалить</string>
+    <string name = "cancel">Отмена</string>
     <string name = "secretAdded">Секрет успешно добавлен</string>
+    <string name = "secretRemoved">Секрет успешно удалён</string>
     <string name = "secretNotAdded">Мы не смогли добавить секрет по каким-то причинам</string>
     <string name = "lackOfDevices">Не хватает устройств?</string>
     <string name = "useMetaSecret">MetaSecret Cloud Device - используйте наше облако как одно из устройств </string>

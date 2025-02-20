@@ -39,6 +39,7 @@ kotlin {
         }
 
         commonMain.dependencies {
+            implementation(kotlin("stdlib"))
             runtimeOnly(libs.androidx.ui)
             implementation(compose.runtime)
             implementation(compose.foundation)

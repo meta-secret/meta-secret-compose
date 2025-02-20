@@ -54,7 +54,7 @@ import sharedData.AppColors
 import sharedData.actualHeightFactor
 
 @Composable
-fun popUpSecret(
+fun addSecret(
     dialogVisibility: (Boolean) -> Unit,
     notificationVisibility: (Boolean) -> Unit
 ) {
@@ -74,6 +74,7 @@ fun popUpSecret(
             modifier = Modifier
                 .fillMaxSize()
                 .clickable { dialogVisibility(false) }
+                .background(Color.Black.copy(alpha = 0.3f))
                 .padding(bottom = with(density) { imeHeight.toDp() }),
             contentAlignment = Alignment.BottomCenter
         ) {

@@ -10,7 +10,7 @@ object AppColors {
     val White50 = Color(0xFFFFFFFF).copy(alpha = 0.5f)
     val White30 = Color(0xFFFFFFFF).copy(alpha = 0.3f)
     val White10 = Color(0xFFFFFFFF).copy(alpha = 0.10f)
-    val White5 = Color(0xFFFFFFFF).copy(alpha = 0.05f)
+    val White5 = Color(0xFF263752)
 
     //Blue
     val ActionLink = Color(0xFF90BDFF)

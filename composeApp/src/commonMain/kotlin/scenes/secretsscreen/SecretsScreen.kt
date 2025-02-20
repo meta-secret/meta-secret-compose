@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,7 +38,9 @@ import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.noSecrets
 import kotlinproject.composeapp.generated.resources.noSecretsHeader
 import kotlinproject.composeapp.generated.resources.secretAdded
+import kotlinproject.composeapp.generated.resources.secretRemoved
 import kotlinproject.composeapp.generated.resources.secretsHeader
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -45,7 +48,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
 import sharedData.actualHeightFactor
 import ui.AddButton
-import ui.dialogs.addsecret.popUpSecret
+import ui.dialogs.addsecret.addSecret
 import ui.notifications.InAppNotification
 import ui.notifications.warningContent
 import ui.screenContent.CommonBackground
@@ -57,12 +60,18 @@ class SecretsScreen : Screen {
         val viewModel: SecretsScreenViewModel = koinViewModel()
         val devicesCount by viewModel.devicesCount.collectAsState()
         val secretsCount by viewModel.secretsCount.collectAsState()
+        var previousCount by remember { mutableStateOf(secretsCount) }
+        val secretsList by viewModel.secrets.collectAsState()
         var isDialogVisible by remember { mutableStateOf(false) }
-        var isNotificationVisibility by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            previousCount = secretsCount
+
+        }
 
         CommonBackground(Res.string.secretsHeader) {
             warningContent(
-                text = viewModel.getWarningText(),
+                text = viewModel.getWarningText(devicesCount),
                 addingDevice = { }, //TODO()
                 closeAction = { viewModel.changeWarningVisibilityTo(false) },
                 devicesCount
@@ -73,22 +82,12 @@ class SecretsScreen : Screen {
                     .padding(bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                items(secretsCount) { index ->
-                    SecretsContent(index)
+                itemsIndexed(secretsList) { index, secret ->
+                    SecretsContent(index, secret)
                 }
             }
         }
-        if (isNotificationVisibility) {
-            InAppNotification(
-                stringResource(Res.string.secretAdded),
-                AppColors.ActionMain,
-                { isNotificationVisibility = false }
-            )
-            LaunchedEffect(Unit) {
-                kotlinx.coroutines.delay(2000)
-                isNotificationVisibility = false
-            }
-        }
+
         AddButton { isDialogVisible = it }
 
         AnimatedVisibility(
@@ -102,11 +101,28 @@ class SecretsScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            popUpSecret(
+            addSecret(
                 dialogVisibility = { isDialogVisible = it },
-                notificationVisibility = { isNotificationVisibility = it }
+                notificationVisibility = { }
             )
         }
+
+        if (previousCount < secretsCount) {
+            InAppNotification(
+                true,
+                stringResource(Res.string.secretAdded),
+                { previousCount = secretsCount }
+            )
+            LaunchedEffect(Unit) { delay(2000); previousCount = secretsCount }
+        } else if (previousCount > secretsCount) {
+            InAppNotification(
+                true,
+                stringResource(Res.string.secretRemoved),
+                { previousCount = secretsCount }
+            )
+            LaunchedEffect(Unit) { delay(2000); previousCount = secretsCount }
+        }
+
         if (secretsCount < 1) {
             Box(
                 modifier = Modifier
