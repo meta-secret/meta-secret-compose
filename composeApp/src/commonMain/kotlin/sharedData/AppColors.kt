@@ -23,4 +23,5 @@ object AppColors {
     //Black
     val TabBar = Color(0xFF232324)
     val PopUp = Color(0xFF262638)
+    val Black50 = Color(0xFF1D1515)
 }

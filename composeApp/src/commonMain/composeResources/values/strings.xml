@@ -37,9 +37,12 @@
     <string name = "addDeviceAdvice">For maximum safety of your passwords you should add at least 3 devices</string>
     <string name = "addSecret">Adding secret</string>
     <string name = "removeSecret">Remove secret</string>
+    <string name = "showSecret">Show secret</string>
     <string name = "removeSecretConfirmation">Do you really want to delete </string>
     <string name = "remove">Remove</string>
     <string name = "cancel">Cancel</string>
+    <string name = "copySecret">Copy secret</string>
+    <string name = "show">Show</string>
     <string name = "secretAdded">A secret successfully added</string>
     <string name = "secretRemoved">A secret successfully removed</string>
     <string name = "secretNotAdded">We were unable to add secret due to reasons</string>
@@ -52,5 +55,4 @@
     <string name = "level_3">Strong</string>
     <string name = "downloadMetasecret">Download Metasecret on a new device</string>
     <string name = "orUseQR">Or use QR code</string>
-
 </resources>

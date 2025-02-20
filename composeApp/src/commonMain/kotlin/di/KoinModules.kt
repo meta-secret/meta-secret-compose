@@ -12,6 +12,7 @@ import storage.KeyValueStorageImpl
 import ui.dialogs.adddevice.AddDeviceViewModel
 import ui.dialogs.addsecret.AddSecretViewModel
 import ui.dialogs.removesecret.RemoveSecretViewModel
+import ui.dialogs.showsecret.ShowSecretViewModel
 
 val appModule = module {
     single<KeyValueStorage> { KeyValueStorageImpl() }
@@ -25,4 +26,5 @@ val appModule = module {
     factory { AddSecretViewModel(get()) }
     factory { RemoveSecretViewModel(get()) }
     factory { AddDeviceViewModel(get()) }
+    factory { ShowSecretViewModel(get()) }
 }
