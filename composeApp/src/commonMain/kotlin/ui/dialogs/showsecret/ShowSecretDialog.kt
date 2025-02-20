@@ -40,6 +40,7 @@ import kotlinproject.composeapp.generated.resources.device
 import kotlinproject.composeapp.generated.resources.devices_4
 import kotlinproject.composeapp.generated.resources.devices_5
 import kotlinproject.composeapp.generated.resources.devices_logo
+import kotlinproject.composeapp.generated.resources.hide
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.show
 import kotlinproject.composeapp.generated.resources.showSecret
@@ -117,12 +118,12 @@ fun showSecret(
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                     )
-                    viewModel.textRow(secret.secretName)
+                    viewModel.textRow(secret.secretName, false)
                     viewModel.textRow(
                         when (isPasswordVisible) {
                             true -> secret.password
                             false -> "*".repeat(secret.password.length)
-                        }
+                        }, isPasswordVisible
                     )
 
                     Row(
@@ -161,7 +162,10 @@ fun showSecret(
                         }
                     ) {
                         Text(
-                            text = stringResource(Res.string.show),
+                            text = when (isPasswordVisible) {
+                                true -> stringResource(Res.string.hide)
+                                false -> stringResource(Res.string.show)
+                            },
                             fontSize = 16.sp,
                         )
                     }
