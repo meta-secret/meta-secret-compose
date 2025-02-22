@@ -11,12 +11,12 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
@@ -47,6 +47,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import scenes.signinscreen.SignInScreen
 import sharedData.AppColors
+import ui.ClassicButton
 
 class OnboardingScreen : Screen {
     @Composable
@@ -77,12 +78,17 @@ class OnboardingScreen : Screen {
                     .fillMaxSize()
             )
 
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 44.dp, bottom = 12.dp)
-                .padding(horizontal = 16.dp),
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 44.dp, bottom = 12.dp)
+                    .padding(horizontal = 16.dp),
             ) {
-                OnboardingHeader(pagerState = pagerState, viewModel = viewModel, pagesCount = pages.size)
+                OnboardingHeader(
+                    pagerState = pagerState,
+                    viewModel = viewModel,
+                    pagesCount = pages.size
+                )
 
                 HorizontalPager(
                     state = pagerState,
@@ -113,7 +119,8 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             repeat(pagerState.pageCount) { iteration ->
-                val color = if (pagerState.currentPage == iteration) AppColors.ActionLink else AppColors.White50
+                val color =
+                    if (pagerState.currentPage == iteration) AppColors.ActionLink else AppColors.White50
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
@@ -136,6 +143,7 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
             onClick = { viewModel.completeOnboarding() },
             modifier = Modifier
                 .align(Alignment.CenterEnd)
+                .clip(RoundedCornerShape(8.dp))
                 .padding(end = 16.dp),
             colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
             elevation = null
@@ -160,8 +168,8 @@ fun OnboardingFooter(pagerState: PagerState, viewModel: OnboardingViewModel, pag
     ) {
         val coroutineScope = rememberCoroutineScope()
 
-        Button(
-            onClick = {
+        ClassicButton(
+            {
                 coroutineScope.launch {
                     if (pagerState.currentPage + 1 >= pagesCount) {
                         viewModel.completeOnboarding()
@@ -170,13 +178,8 @@ fun OnboardingFooter(pagerState: PagerState, viewModel: OnboardingViewModel, pag
                     }
                 }
             },
-            modifier = Modifier
-                .requiredHeight(48.dp)
-                .fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF0368FF), contentColor = Color.White)
-        ) {
-            Text(text = stringResource(Res.string.next), fontSize = 16.sp)
-        }
+            stringResource(Res.string.next)
+        )
     }
 }
 

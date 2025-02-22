@@ -8,7 +8,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -31,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.executioner
 import kotlinproject.composeapp.generated.resources.manrope_regular
@@ -45,6 +45,7 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import scenes.mainscreen.DevicesTab
 import sharedData.AppColors
 import sharedData.actualHeightFactor
 import ui.AddButton
@@ -63,16 +64,21 @@ class SecretsScreen : Screen {
         var previousCount by remember { mutableStateOf(secretsCount) }
         val secretsList by viewModel.secrets.collectAsState()
         var isDialogVisible by remember { mutableStateOf(false) }
+        var isRedirected by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
             previousCount = secretsCount
-
+        }
+        if (isRedirected) {
+            viewModel.changeWarningVisibilityTo(false)
+            LocalTabNavigator.current.current = DevicesTab
+            viewModel.setTabIndex(1)
         }
 
         CommonBackground(Res.string.secretsHeader) {
             warningContent(
                 text = viewModel.getWarningText(devicesCount),
-                addingDevice = { }, //TODO()
+                addingDevice = { isRedirected = true },
                 closeAction = { viewModel.changeWarningVisibilityTo(false) },
                 devicesCount
             )
@@ -101,22 +107,19 @@ class SecretsScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            addSecret(
-                dialogVisibility = { isDialogVisible = it },
-                notificationVisibility = { }
-            )
+            addSecret(dialogVisibility = { isDialogVisible = it })
         }
 
         if (previousCount < secretsCount) {
             InAppNotification(
-                true,
+                true, //TODO if failed
                 stringResource(Res.string.secretAdded),
                 { previousCount = secretsCount }
             )
             LaunchedEffect(Unit) { delay(2000); previousCount = secretsCount }
         } else if (previousCount > secretsCount) {
             InAppNotification(
-                true,
+                true, //TODO if failed
                 stringResource(Res.string.secretRemoved),
                 { previousCount = secretsCount }
             )
@@ -137,9 +140,7 @@ class SecretsScreen : Screen {
                 ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 75.dp)
-                            .aspectRatio(1f),
+                            .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(

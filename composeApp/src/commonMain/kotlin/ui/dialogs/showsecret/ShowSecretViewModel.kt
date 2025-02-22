@@ -54,8 +54,8 @@ class ShowSecretViewModel(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = AppColors.Black50,
-                    shape = RoundedCornerShape(10.dp)
+                    color = AppColors.TextField,
+                    shape = RoundedCornerShape(8.dp)
                 )
                 .padding(horizontal = 16.dp)
                 .heightIn(min = 48.dp, max = 200.dp)

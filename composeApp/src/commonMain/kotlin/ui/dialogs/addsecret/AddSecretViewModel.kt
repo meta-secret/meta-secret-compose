@@ -93,8 +93,8 @@ class AddSecretViewModel(
             colors = TextFieldDefaults.textFieldColors(
                 backgroundColor = AppColors.White5,
                 cursorColor = AppColors.White,
-                focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent
             )
         )
     }

@@ -24,14 +24,15 @@ import kotlinproject.composeapp.generated.resources.trashbox
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import sharedData.AppColors
+import sharedData.actualWidthFactor
 
 @Composable
 fun RemoveButton(action: (Boolean) -> Unit, description: String) {
     Box(
         modifier = Modifier
-            .width(80.dp)
+            .width((actualWidthFactor() * 80).dp)
             .height(96.dp)
-            .background(AppColors.RedError, RoundedCornerShape(10.dp))
+            .background(AppColors.RedError, RoundedCornerShape(12.dp))
             .clickable { action(true) },
         Alignment.Center
     ) {
