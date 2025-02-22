@@ -8,12 +8,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.executioner
 import kotlinproject.composeapp.generated.resources.manrope_regular
@@ -37,15 +38,18 @@ import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.noSecrets
 import kotlinproject.composeapp.generated.resources.noSecretsHeader
 import kotlinproject.composeapp.generated.resources.secretAdded
+import kotlinproject.composeapp.generated.resources.secretRemoved
 import kotlinproject.composeapp.generated.resources.secretsHeader
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import scenes.mainscreen.DevicesTab
 import sharedData.AppColors
 import sharedData.actualHeightFactor
 import ui.AddButton
-import ui.dialogs.addsecret.popUpSecret
+import ui.dialogs.addsecret.addSecret
 import ui.notifications.InAppNotification
 import ui.notifications.warningContent
 import ui.screenContent.CommonBackground
@@ -57,13 +61,24 @@ class SecretsScreen : Screen {
         val viewModel: SecretsScreenViewModel = koinViewModel()
         val devicesCount by viewModel.devicesCount.collectAsState()
         val secretsCount by viewModel.secretsCount.collectAsState()
+        var previousCount by remember { mutableStateOf(secretsCount) }
+        val secretsList by viewModel.secrets.collectAsState()
         var isDialogVisible by remember { mutableStateOf(false) }
-        var isNotificationVisibility by remember { mutableStateOf(false) }
+        var isRedirected by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            previousCount = secretsCount
+        }
+        if (isRedirected) {
+            viewModel.changeWarningVisibilityTo(false)
+            LocalTabNavigator.current.current = DevicesTab
+            viewModel.setTabIndex(1)
+        }
 
         CommonBackground(Res.string.secretsHeader) {
             warningContent(
-                text = viewModel.getWarningText(),
-                addingDevice = { }, //TODO()
+                text = viewModel.getWarningText(devicesCount),
+                addingDevice = { isRedirected = true },
                 closeAction = { viewModel.changeWarningVisibilityTo(false) },
                 devicesCount
             )
@@ -73,22 +88,12 @@ class SecretsScreen : Screen {
                     .padding(bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                items(secretsCount) { index ->
-                    SecretsContent(index)
+                itemsIndexed(secretsList) { index, secret ->
+                    SecretsContent(index, secret)
                 }
             }
         }
-        if (isNotificationVisibility) {
-            InAppNotification(
-                stringResource(Res.string.secretAdded),
-                AppColors.ActionMain,
-                { isNotificationVisibility = false }
-            )
-            LaunchedEffect(Unit) {
-                kotlinx.coroutines.delay(2000)
-                isNotificationVisibility = false
-            }
-        }
+
         AddButton { isDialogVisible = it }
 
         AnimatedVisibility(
@@ -102,11 +107,25 @@ class SecretsScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            popUpSecret(
-                dialogVisibility = { isDialogVisible = it },
-                notificationVisibility = { isNotificationVisibility = it }
-            )
+            addSecret(dialogVisibility = { isDialogVisible = it })
         }
+
+        if (previousCount < secretsCount) {
+            InAppNotification(
+                true, //TODO if failed
+                stringResource(Res.string.secretAdded),
+                { previousCount = secretsCount }
+            )
+            LaunchedEffect(Unit) { delay(2000); previousCount = secretsCount }
+        } else if (previousCount > secretsCount) {
+            InAppNotification(
+                true, //TODO if failed
+                stringResource(Res.string.secretRemoved),
+                { previousCount = secretsCount }
+            )
+            LaunchedEffect(Unit) { delay(2000); previousCount = secretsCount }
+        }
+
         if (secretsCount < 1) {
             Box(
                 modifier = Modifier
@@ -121,9 +140,7 @@ class SecretsScreen : Screen {
                 ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 75.dp)
-                            .aspectRatio(1f),
+                            .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(

@@ -25,6 +25,7 @@ import kotlinproject.composeapp.generated.resources.addDevice
 import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.downloadMetasecret
 import kotlinproject.composeapp.generated.resources.manrope_regular
+import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.orUseQR
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
@@ -42,6 +43,7 @@ fun addingDevice(mainDialogVisibility: (Boolean) -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(AppColors.Black30)
                 .clickable { mainDialogVisibility(false) },
             contentAlignment = Alignment.BottomCenter
         ) {
@@ -49,7 +51,7 @@ fun addingDevice(mainDialogVisibility: (Boolean) -> Unit) {
                 modifier = Modifier
                     .height((actualHeightFactor() * 560).dp)
                     .fillMaxWidth()
-                    .background(AppColors.PopUp, RoundedCornerShape(10.dp))
+                    .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)
                     .clickable(onClick = {}, enabled = false)
             ) {
@@ -70,7 +72,7 @@ fun addingDevice(mainDialogVisibility: (Boolean) -> Unit) {
                     Text(
                         text = stringResource(Res.string.addDevice),
                         fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
                         color = AppColors.White,
                         modifier = Modifier
                             .align(Alignment.Start)
@@ -84,7 +86,7 @@ fun addingDevice(mainDialogVisibility: (Boolean) -> Unit) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height((actualHeightFactor() * 180).dp)
-                                .background(AppColors.White5, RoundedCornerShape(10.dp))
+                                .background(AppColors.White5, RoundedCornerShape(12.dp))
                         )
                         Text(
                             text = stringResource(Res.string.downloadMetasecret),
@@ -123,7 +125,3 @@ fun addingDevice(mainDialogVisibility: (Boolean) -> Unit) {
         }
     }
 }
-
-
-
-
