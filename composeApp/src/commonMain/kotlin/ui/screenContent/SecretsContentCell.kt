@@ -93,7 +93,7 @@ fun SecretsContent(index: Int, secret: Secret) {
         content = {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    .background(AppColors.White5, RoundedCornerShape(10.dp)).height(96.dp)
+                    .background(AppColors.White5, RoundedCornerShape(12.dp)).height(96.dp)
                     .clickable {
                         if (!isSwiped) {
                             isShowDialogVisible = true
@@ -178,7 +178,6 @@ fun SecretsContent(index: Int, secret: Secret) {
     }
 }
 
-
 @Composable
 fun dialogAnimation(action: @Composable () -> Unit) {
     AnimatedVisibility(
@@ -194,5 +193,4 @@ fun dialogAnimation(action: @Composable () -> Unit) {
     ) {
         action()
     }
-
 }

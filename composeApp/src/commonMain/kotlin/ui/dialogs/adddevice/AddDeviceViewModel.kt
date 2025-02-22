@@ -5,5 +5,4 @@ import storage.KeyValueStorage
 
 class AddDeviceViewModel (
   private val keyValueStorage: KeyValueStorage
-) : ViewModel() {
-}
+) : ViewModel()

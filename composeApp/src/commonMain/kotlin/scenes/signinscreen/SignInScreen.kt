@@ -1,9 +1,9 @@
 package scenes.signinscreen
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
@@ -56,6 +54,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import scenes.mainscreen.MainScreen
 import sharedData.AppColors
+import ui.ClassicButton
 
 class SignInScreen : Screen {
     @Composable
@@ -142,33 +141,22 @@ class SignInScreen : Screen {
                     color = AppColors.White75,
                     fontSize = 15.sp,
                     modifier = Modifier
-                        .padding(vertical = 14.dp)
+                        .padding(top = 14.dp)
                 )
 
-                Column(     //scan + input
+                Column(
                     modifier = Modifier
-                        .padding(top = 26.dp)
+                        .padding(top = 26.dp, bottom = 36.dp)
                         .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Button(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            Color.Transparent,
-                            contentColor = Color.White
-                        ),
-                        border = BorderStroke(1.dp, AppColors.White50),
-                        shape = RoundedCornerShape(8.dp),
-                        elevation = null,
-                        onClick = {
-                           //TODO
-                        }
-                    ) {
-                        Text(text = stringResource(Res.string.scan), fontSize = 16.sp)
-                    }
-
+                    ClassicButton(
+                        {}, //TODO scan
+                        stringResource(Res.string.scan),
+                        color = Color.Transparent,
+                        borderColor = AppColors.White50
+                    )
                     TextField(
                         value = text,
                         onValueChange = { newText -> text = newText },
@@ -176,26 +164,25 @@ class SignInScreen : Screen {
                         placeholder = {
                             Text(
                                 fontSize = 16.sp,
-                                color = Color.White.copy(alpha = 0.5f),
+                                color = AppColors.White50,
                                 text = stringResource(Res.string.placeholder)
                             )
                         },
                         modifier = Modifier
-                            .padding(top = 14.dp)
                             .fillMaxWidth()
                             .height(52.dp)
                             .border(
                                 width = 2.dp,
                                 color =
-                                    if (isError) {
-                                        AppColors.RedError
+                                if (isError) {
+                                    AppColors.RedError
+                                } else {
+                                    if (isFocused) {
+                                        AppColors.ActionPremium
                                     } else {
-                                        if (isFocused) {
-                                            AppColors.ActionPremium
-                                        } else {
-                                            Color.Transparent
-                                        }
-                                    },
+                                        Color.Transparent
+                                    }
+                                },
                                 shape = RoundedCornerShape(8.dp)
                             )
                             .focusRequester(focusRequester)
@@ -207,13 +194,13 @@ class SignInScreen : Screen {
                             imeAction = ImeAction.Done
                         ),
                         textStyle = TextStyle(fontSize = 16.sp, color = Color.White),
+
                         colors = TextFieldDefaults.textFieldColors(
                             backgroundColor = AppColors.White5,
                             cursorColor = AppColors.White,
-                            focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent
                         )
-
                     )
                 }
 
@@ -228,31 +215,19 @@ class SignInScreen : Screen {
                     )
                 }
 
-                Button(     //forward
-                    modifier = Modifier
-                        .padding(top = 36.dp)
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = AppColors.ActionMain,
-                        contentColor = AppColors.White,
-                        disabledBackgroundColor = AppColors.ActionMain.copy(alpha = 0.5f),
-                        disabledContentColor = AppColors.White.copy(alpha = 0.5f)
-                    ),
-                    enabled = text.isNotEmpty(),
-                    onClick = {
+                ClassicButton(
+                    {
                         isError = viewModel.isNameError(text)
                         if (!isError) {
                             viewModel.completeSignIn(true)
                             viewModel.saveUser(text)
                             navigator?.replace(MainScreen())
                         }
-                    }
-                ) {
-                    Text(text = stringResource(Res.string.forward), fontSize = 16.sp)
-                }
+                    },
+                    stringResource(Res.string.forward),
+                    text.isNotEmpty()
+                )
             }
         }
     }
 }
-

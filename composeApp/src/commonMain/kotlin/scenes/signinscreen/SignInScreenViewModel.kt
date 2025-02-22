@@ -11,9 +11,8 @@ class SignInScreenViewModel(
 ) : ViewModel() {
     fun isNameError(string: String): Boolean {
         val regex = "^[A-Za-z0-9_]{2,10}$"
-        return !(string.matches(regex.toRegex()))
+        return !(string.matches(regex.toRegex()) && string != keyValueStorage.signInInfo?.username)
     }
-
 
     val signInStatus: StateFlow<Boolean> =  MutableStateFlow(false)
 
