@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,22 +55,22 @@ class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: SecretsScreenViewModel = koinViewModel()
-        val devicesCount by viewModel.devicesCount
-        val secretsCount by viewModel.secretsCount
+        val devicesCount by viewModel.devicesCount.collectAsState()
+        val secretsCount by viewModel.secretsCount.collectAsState()
         var isDialogVisible by remember { mutableStateOf(false) }
         var isNotificationVisibility by remember { mutableStateOf(false) }
-
 
         CommonBackground(Res.string.secretsHeader) {
             warningContent(
                 text = viewModel.getWarningText(),
-                action = {},
+                addingDevice = { }, //TODO()
                 closeAction = { viewModel.changeWarningVisibilityTo(false) },
                 devicesCount
             )
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .padding(bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 items(secretsCount) { index ->

@@ -49,3 +49,4 @@ fun CommonBackground(text: StringResource, screenContent: @Composable () -> Unit
         }
     }
 }
+
