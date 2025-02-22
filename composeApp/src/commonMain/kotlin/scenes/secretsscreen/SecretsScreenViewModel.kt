@@ -51,12 +51,6 @@ class SecretsScreenViewModel(
         return secretsList.value[index]
     }
 
-    private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-    val devicesCount: StateFlow<Int> = devicesList.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
-
     fun changeWarningVisibilityTo(state: Boolean) {
         WarningStateHolder.setVisibility(state)
     }
