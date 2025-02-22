@@ -2,8 +2,8 @@ package ui.dialogs.removesecret
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,13 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -30,6 +27,7 @@ import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.cancel
 import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.manrope_regular
+import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.remove
 import kotlinproject.composeapp.generated.resources.removeSecret
 import org.jetbrains.compose.resources.Font
@@ -39,6 +37,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
 import sharedData.actualHeightFactor
 import storage.Secret
+import ui.ClassicButton
 
 @Composable
 fun removeSecret(
@@ -58,20 +57,20 @@ fun removeSecret(
                 .fillMaxSize()
                 .clickable { dialogVisibility(false); buttonVisibility(false) }
                 .padding(horizontal = 16.dp)
-                .background(Color.Black.copy(alpha = 0.3f)),
+                .background(AppColors.Black30),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
                     .height((actualHeightFactor() * 280).dp)
-                    .background(AppColors.PopUp, RoundedCornerShape(10.dp))
+                    .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)
                     .clickable(onClick = {}, enabled = false),
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp)
+                        .padding(top = 10.dp)
                 ) {
                     Image(
                         painter = painterResource(Res.drawable.close),
@@ -84,16 +83,18 @@ fun removeSecret(
                             }
                     )
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy((actualHeightFactor() * 14).dp),
+                    modifier = Modifier.padding(top = 20.dp, bottom = 30.dp)
+                ) {
                     Text(
                         text = stringResource(Res.string.removeSecret) + "?",
                         fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
                         color = AppColors.White,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(top = 30.dp)
-
+                        modifier = Modifier.padding(bottom = 10.dp)
                     )
                     Text(
                         text = text,
@@ -101,61 +102,26 @@ fun removeSecret(
                         fontFamily = FontFamily(Font(Res.font.manrope_regular)),
                         color = AppColors.White75,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .padding(top = 24.dp)
+                        modifier = Modifier.padding(bottom = 10.dp)
                     )
-                    Button(
-                        modifier = Modifier
-                            .padding(top = 24.dp)
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(10.dp)),
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = AppColors.RedError,
-                            contentColor = AppColors.White,
-                            disabledBackgroundColor = AppColors.ActionMain.copy(alpha = 0.5f),
-                            disabledContentColor = AppColors.White.copy(alpha = 0.5f)
-                        ),
-                        onClick = {
+                    ClassicButton(
+                        {
                             viewModel.removeSecret(secret)
                             buttonVisibility(false)
                             dialogVisibility(false)
-                        }
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.remove),
-                            fontSize = 16.sp,
-                            color = AppColors.White
-                        )
-                    }
-                    Button(
-                        modifier = Modifier
-                            .padding(top = 14.dp)
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .border(
-                                width = 1.dp,
-                                color = AppColors.White50,
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .clip(RoundedCornerShape(10.dp)),
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Color.Transparent,
-                            contentColor = AppColors.White,
-                            disabledBackgroundColor = AppColors.ActionMain.copy(alpha = 0.5f),
-                            disabledContentColor = AppColors.White.copy(alpha = 0.5f)
-                        ),
-                        onClick = {
+                        },
+                        stringResource(Res.string.remove),
+                        color = AppColors.RedError
+                    )
+                    ClassicButton(
+                        {
                             buttonVisibility(false)
                             dialogVisibility(false)
-                        }
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.cancel),
-                            fontSize = 16.sp,
-                            color = AppColors.White
-                        )
-                    }
+                        },
+                        stringResource(Res.string.cancel),
+                        color = Color.Transparent,
+                        borderColor = AppColors.White50
+                    )
                 }
             }
         }

@@ -66,7 +66,7 @@ fun DeviceContent(index: Int) {
         content = {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    .background(AppColors.White5, RoundedCornerShape(10.dp)).height(96.dp)
+                    .background(AppColors.White5, RoundedCornerShape(12.dp)).height(96.dp)
                     .clickable { isSwiped = false }
             ) {
                 Row(

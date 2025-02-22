@@ -54,12 +54,14 @@ import sharedData.enums.DevicesQuantity
 import storage.Secret
 import ui.SwipeableItem
 import ui.dialogs.removesecret.removeSecret
+import ui.dialogs.showsecret.showSecret
 
 @Composable
 fun SecretsContent(index: Int, secret: Secret) {
     val viewModel: SecretsScreenViewModel = koinViewModel()
     val devicesCount by viewModel.devicesCount.collectAsState()
     var isRemoveDialogVisible by remember { mutableStateOf(false) }
+    var isShowDialogVisible by remember { mutableStateOf(false) }
     var isSwiped by remember { mutableStateOf(false) }
 
     val deviceText = when {
@@ -85,14 +87,20 @@ fun SecretsContent(index: Int, secret: Secret) {
     SwipeableItem(
         buttonText = stringResource(Res.string.removeSecret),
         isRevealed = isSwiped,
-        action = { isRemoveDialogVisible = it},
+        action = { isRemoveDialogVisible = it },
         onExpanded = { isSwiped = true },
         onCollapsed = { isSwiped = false },
         content = {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    .background(AppColors.White5, RoundedCornerShape(10.dp)).height(96.dp)
-                    .clickable { isSwiped = false }
+                    .background(AppColors.White5, RoundedCornerShape(12.dp)).height(96.dp)
+                    .clickable {
+                        if (!isSwiped) {
+                            isShowDialogVisible = true
+                        } else {
+                            isSwiped = false
+                        }
+                    }
             ) {
                 Row(
                     modifier = Modifier.fillMaxSize().height(60.dp).padding(horizontal = 16.dp),
@@ -152,8 +160,28 @@ fun SecretsContent(index: Int, secret: Secret) {
             }
         }
     )
+    if (isRemoveDialogVisible) {
+        dialogAnimation({
+            removeSecret(
+                viewModel.deleteSecretText(secret.secretName),
+                secret,
+                buttonVisibility = { isSwiped = it },
+                dialogVisibility = { isRemoveDialogVisible = it })
+        })
+    }
+    if (isShowDialogVisible) {
+        dialogAnimation({
+            showSecret(
+                secret,
+                dialogVisibility = { isShowDialogVisible = it })
+        })
+    }
+}
+
+@Composable
+fun dialogAnimation(action: @Composable () -> Unit) {
     AnimatedVisibility(
-        visible = isRemoveDialogVisible,
+        visible = true,
         enter = slideInVertically(
             initialOffsetY = { it },
             animationSpec = tween(durationMillis = 1500)
@@ -163,11 +191,6 @@ fun SecretsContent(index: Int, secret: Secret) {
             animationSpec = tween(durationMillis = 1000)
         )
     ) {
-        removeSecret(
-            viewModel.deleteSecretText(secret.secretName),
-            secret,
-            buttonVisibility =  {isSwiped = it},
-            dialogVisibility = { isRemoveDialogVisible = it },
-        )
+        action()
     }
 }

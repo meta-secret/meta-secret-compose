@@ -23,4 +23,6 @@ object AppColors {
     //Black
     val TabBar = Color(0xFF232324)
     val PopUp = Color(0xFF262638)
+    val TextField = Color(0xFF1D1515)
+    val Black30 = Color.Black.copy(alpha = 0.3f)
 }

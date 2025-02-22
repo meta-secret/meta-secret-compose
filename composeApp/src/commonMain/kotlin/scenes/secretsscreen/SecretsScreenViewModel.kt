@@ -26,6 +26,7 @@ import sharedData.AppColors
 import storage.Device
 import storage.KeyValueStorage
 import storage.Secret
+import ui.TabStateHolder
 import ui.WarningStateHolder
 
 class SecretsScreenViewModel(
@@ -52,6 +53,10 @@ class SecretsScreenViewModel(
 
     fun changeWarningVisibilityTo(state: Boolean) {
         WarningStateHolder.setVisibility(state)
+    }
+
+    fun setTabIndex(index: Int) {
+        TabStateHolder.setTabIndex(index)
     }
 
     @Composable

@@ -37,9 +37,13 @@
     <string name = "addDeviceAdvice">Для стабильной безопасности ваших паролей вам нужно иметь более 3x устройств</string>
     <string name = "addSecret">Добавить секрет</string>
     <string name = "removeSecret">Удалить секрет</string>
+    <string name = "showSecret">Показать секрет</string>
     <string name = "removeSecretConfirmation">Вы действительно хотите удалить секрет </string>
     <string name = "remove">Удалить</string>
     <string name = "cancel">Отмена</string>
+    <string name = "copySecret">Копировать секрет</string>
+    <string name = "show">Показать</string>
+    <string name = "hide">Скрыть</string>
     <string name = "secretAdded">Секрет успешно добавлен</string>
     <string name = "secretRemoved">Секрет успешно удалён</string>
     <string name = "secretNotAdded">Мы не смогли добавить секрет по каким-то причинам</string>
