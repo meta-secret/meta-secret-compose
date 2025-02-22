@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -40,9 +42,10 @@ import sharedData.getDeviceId
 @Composable
 fun DeviceContent(index: Int) {
     val viewModel: DevicesScreenViewModel = koinViewModel()
+    val secretsCount by viewModel.secretsCount.collectAsState()
     val secretText = when {
-        viewModel.secretsCount == 0 || viewModel.secretsCount > 4 -> stringResource(Res.string.secrets_5)
-        viewModel.secretsCount in 2..4 -> stringResource(Res.string.secrets_4)
+        secretsCount == 0 || secretsCount > 4 -> stringResource(Res.string.secrets_5)
+        secretsCount in 2..4 -> stringResource(Res.string.secrets_4)
         else -> stringResource(Res.string.secret)
     }
     Box(
@@ -61,7 +64,7 @@ fun DeviceContent(index: Int) {
             )
             Column {
                 Text(
-                    text = viewModel.data().devices[index].deviceMake + " (" + viewModel.data().devices[index].name + ")",
+                    text = viewModel.getDevice(index).deviceMake + " (" + viewModel.getNickName() + ")",
                     style = TextStyle(
                         fontSize = 16.sp,
                         fontFamily = FontFamily(Font(Res.font.manrope_bold)),
@@ -76,7 +79,7 @@ fun DeviceContent(index: Int) {
                     )
                 )
                 Text(
-                    text = viewModel.data().secrets.size.toString() + " " + secretText,
+                    text = "$secretsCount $secretText",
                     style = TextStyle(
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(Res.font.manrope_regular)),
