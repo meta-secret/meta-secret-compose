@@ -15,9 +15,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -28,14 +25,17 @@ import cafe.adriel.voyager.navigator.tab.TabNavigator
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import org.jetbrains.compose.resources.Font
+import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
 import sharedData.getScreenWidth
+import ui.TabStateHolder
 
 class MainScreen : Screen {
     @Composable
     override fun Content() {
+        val viewModel: MainScreenViewModel = koinViewModel()
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
-        var selectedTabIndex by remember { mutableStateOf(0) }
+        val selectedTabIndex by TabStateHolder.selectedTabIndex
         val tabSize = getScreenWidth() / tabs.size
 
         TabNavigator(tabs[selectedTabIndex]) {
@@ -69,7 +69,7 @@ class MainScreen : Screen {
                                         .background(AppColors.TabBar),
                                     selected = selectedTabIndex == index,
                                     onClick = {
-                                        selectedTabIndex = index
+                                        viewModel.setTabIndex(index)
                                         tabNavigator.current = tab
                                     },
                                     icon = {
@@ -99,5 +99,3 @@ class MainScreen : Screen {
         }
     }
 }
-
-

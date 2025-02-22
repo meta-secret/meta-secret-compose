@@ -15,14 +15,16 @@ interface KeyValueStorage {
     fun cleanStorage()
     fun resetKeyValueStorage()
     fun addSecret(secret: Secret)
+    fun removeSecret(secret: Secret)
     fun addDevice(device: Device)
+    fun removeDevice(index: Int)
 }
 
 @Serializable
 data class LoginInfo(val username: String, val password: String)
 
 @Serializable
-data class Secret( val secretName: String, val password: String)
+data class Secret(val secretName: String, val password: String)
 
 @Serializable
 data class Device(val deviceMake: String, val username: String)

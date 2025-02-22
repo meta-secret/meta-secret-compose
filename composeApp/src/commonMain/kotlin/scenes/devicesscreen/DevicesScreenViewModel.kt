@@ -44,6 +44,10 @@ class DevicesScreenViewModel(
         keyValueStorage.addDevice(device)
     }
 
+    fun removeDevice() {
+        keyValueStorage.removeDevice(0) //TODO
+    }
+
     fun getNickName(): String? {
         return keyValueStorage.signInInfo?.username
     }

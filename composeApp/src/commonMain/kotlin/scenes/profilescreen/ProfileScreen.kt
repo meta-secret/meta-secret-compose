@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -41,8 +39,8 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
 import sharedData.getAppVersion
+import ui.ClassicButton
 import ui.screenContent.CommonBackground
-
 
 class ProfileScreen : Screen {
     @Composable
@@ -74,7 +72,7 @@ fun ProfileBody() {
                 .fillMaxSize()
         ) {
             ProfileTextCell(nickname, nicknameField, Alignment.Start)
-            DrawBoxLine(15)
+            DrawBoxLine(20)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -100,29 +98,13 @@ fun ProfileBody() {
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 90.dp),
         ) {
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .align(Alignment.CenterHorizontally),
-                colors = ButtonDefaults.buttonColors(
-                    backgroundColor = AppColors.RedError,
-                    contentColor = AppColors.White,
-                    disabledBackgroundColor = AppColors.RedError.copy(alpha = 0.5f),
-                    disabledContentColor = AppColors.White.copy(alpha = 0.5f)
-                ),
-                onClick = {
+            ClassicButton({
                     viewModel.completeSignIn(false)
                     navigator.popUntilRoot()
-                }
-            ) {
-                Text(
-                    text = stringResource(Res.string.signOut),
-                    modifier = Modifier
-                        .height(22.dp),
-                    fontSize = 16.sp
-                )
-            }
+                },
+                stringResource(Res.string.signOut),
+                color = AppColors.RedError
+            )
             Column(
                 modifier = Modifier
                     .fillMaxWidth(),

@@ -64,6 +64,15 @@ class KeyValueStorageImpl : KeyValueStorage {
         saveToStorage()
     }
 
+    override fun removeSecret(secret: Secret) {
+        _secretData.update { currentList ->
+            currentList.toMutableList().apply {
+                remove(secret)
+            }
+        }
+        saveToStorage()
+    }
+
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     private fun saveToStorage() {
         settings.encodeValue(
@@ -93,6 +102,15 @@ class KeyValueStorageImpl : KeyValueStorage {
     override fun addDevice(device: Device) {
         _deviceData.update { currentList ->
             currentList.plus(device)
+        }
+        saveDeviceToStorage()
+    }
+
+    override fun removeDevice(index: Int) {
+        _deviceData.update { currentList ->
+            currentList.toMutableList().apply {
+                if (index in indices) removeAt(index)
+            }
         }
         saveDeviceToStorage()
     }
