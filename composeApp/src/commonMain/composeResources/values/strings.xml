@@ -33,7 +33,7 @@
     <string name = "addText"> +Add</string>
     <string name = "addDevice">Adding device</string>
     <string name = "removeDevice">Remove device</string>
-    <string name = "fromAllDevices"> secret from all of your devices?</string>
+    <string name = "fromAllDevices">secret from all of your devices?</string>
     <string name = "addDeviceAdvice">For maximum safety of your passwords you should add at least 3 devices</string>
     <string name = "addSecret">Adding secret</string>
     <string name = "removeSecret">Remove secret</string>
