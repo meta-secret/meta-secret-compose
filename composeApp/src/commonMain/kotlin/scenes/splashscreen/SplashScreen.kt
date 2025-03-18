@@ -26,11 +26,12 @@ import kotlinproject.composeapp.generated.resources.background_main
 import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.text
 import org.jetbrains.compose.resources.painterResource
+import sharedData.getScreenHeight
 import org.koin.compose.viewmodel.koinViewModel
 import scenes.mainscreen.MainScreen
 import scenes.onboarding.OnboardingScreen
 import scenes.signinscreen.SignInScreen
-import sharedData.getScreenHeight
+
 
 class SplashScreen : Screen {
     @Composable
@@ -45,25 +46,25 @@ class SplashScreen : Screen {
         val logo = painterResource(Res.drawable.logo)
         val text = painterResource(Res.drawable.text)
 
-        LaunchedEffect(Unit) {
-            viewModel.onAppear()
-        }
+                LaunchedEffect(Unit) {
+                    viewModel.onAppear()
+                }
 
-        when (navigationEvent) {
-            SplashNavigationEvent.NavigateToMain -> {
-                navigator?.push(MainScreen())
-            }
+                when (navigationEvent) {
+                    SplashNavigationEvent.NavigateToMain -> {
+                        navigator?.push(MainScreen())
+                    }
 
-            SplashNavigationEvent.NavigateToSignUp -> {
-                navigator?.push(SignInScreen())
-            }
+                    SplashNavigationEvent.NavigateToSignUp -> {
+                        navigator?.push(SignInScreen())
+                    }
 
-            SplashNavigationEvent.NavigateToOnboarding -> {
-                navigator?.push(OnboardingScreen())
-            }
+                    SplashNavigationEvent.NavigateToOnboarding -> {
+                        navigator?.push(OnboardingScreen())
+                    }
 
-            else -> Unit
-        }
+                    else -> Unit
+                }
 
         Box(
             modifier = Modifier
