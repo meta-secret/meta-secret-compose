@@ -1,13 +1,25 @@
 package sharedData
 
+import kotlinx.cinterop.ExperimentalForeignApi
+import platform.Foundation.NSBundle
+import platform.UIKit.UIDevice
+import platform.Foundation.NSUUID
+
+@OptIn(ExperimentalForeignApi::class)
 actual fun getAppVersion(): String {
-    TODO("Not yet implemented")
+    val mainBundle = NSBundle.mainBundle
+    val version = mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String
+    val build = mainBundle.objectForInfoDictionaryKey("CFBundleVersion") as? String
+    return "${version ?: "1.0.0"}${if (build != null) " ($build)" else ""}"
 }
 
+@OptIn(ExperimentalForeignApi::class)
 actual fun getDeviceMake(): String {
-    TODO("Not yet implemented")
+    return UIDevice.currentDevice.model.uppercase()
 }
 
+@OptIn(ExperimentalForeignApi::class)
 actual fun getDeviceId(): String {
-    TODO("Not yet implemented")
+    // Используем identifierForVendor или создаем случайный UUID
+    return UIDevice.currentDevice.identifierForVendor?.UUIDString() ?: NSUUID().UUIDString()
 }
