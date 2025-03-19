@@ -72,7 +72,6 @@ class SignInScreen : Screen {
         val logo = painterResource(Res.drawable.logo)
         val isSignedIn by viewModel.signInStatus.collectAsState()
 
-
         LaunchedEffect(isSignedIn) {
             if (isSignedIn) {
                 navigator?.push(MainScreen())
@@ -217,12 +216,12 @@ class SignInScreen : Screen {
 
                 ClassicButton(
                     {
-                        isError = viewModel.isNameError(text)
-                        if (!isError) {
-                            viewModel.completeSignIn(true)
-                            viewModel.saveUser(text)
-                            navigator?.replace(MainScreen())
-                        }
+//                        isError = viewModel.isNameError(text)
+//                        if (!isError) {
+//                            viewModel.completeSignIn(true)
+//                            viewModel.saveUser(text)
+//                            navigator?.replace(MainScreen())
+//                        }
                     },
                     stringResource(Res.string.forward),
                     text.isNotEmpty()
