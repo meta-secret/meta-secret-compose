@@ -14,25 +14,21 @@ private func sign_up(_ userName: UnsafePointer<CChar>) -> UnsafeMutablePointer<C
 @_silgen_name("free_string")
 private func free_string(_ ptr: UnsafeMutablePointer<CChar>?)
 
-class MetaSecretCoreService {
+class InternalMetaSecretCoreService {
     
-    /// Регистрация нового пользователя
-    /// - Parameter userName: Имя пользователя
-    /// - Returns: Результат операции в виде строки JSON
+    /// New vault registration
+    /// - Parameter userName: Vault name
+    /// - Returns: State as JSON
     func signUp(userName: String) -> String? {
-        // Конвертация Swift строки в С-строку
         guard let cUserName = userName.cString(using: .utf8) else {
             return nil
         }
-        
-        // Вызов нативной C-функции
+
         let resultPtr = sign_up(cUserName)
         
-        // Проверка на nil и преобразование результата в Swift строку
         if let resultPtr = resultPtr {
             let result = String(cString: resultPtr)
             
-            // Освобождение памяти, выделенной в C
             free_string(resultPtr)
             
             return result

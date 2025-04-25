@@ -3,10 +3,12 @@ package scenes.signinscreen
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import sharedData.MetaSecretCoreInterface
 import storage.KeyValueStorage
 import storage.LoginInfo
 
 class SignInScreenViewModel(
+    private val metaSecretCoreInterface: MetaSecretCoreInterface,
     private val keyValueStorage: KeyValueStorage
 ) : ViewModel() {
     fun isNameError(string: String): Boolean {
@@ -16,8 +18,9 @@ class SignInScreenViewModel(
 
     val signInStatus: StateFlow<Boolean> =  MutableStateFlow(false)
 
-    fun completeSignIn(state: Boolean) {
-        keyValueStorage.isSignInCompleted = state
+    fun completeSignIn(name: String) {
+        metaSecretCoreInterface.signUp(name)
+//        keyValueStorage.isSignInCompleted = state
     }
 
     fun saveUser(inputText: String) {

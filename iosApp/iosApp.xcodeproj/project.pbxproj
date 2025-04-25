@@ -12,7 +12,7 @@
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		E5A615412DBBB1F900DC425F /* metasecret-mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E5A615402DBBB1F900DC425F /* metasecret-mobile.a */; };
-		E5A615442DBBB23C00DC425F /* MetaSecretCoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A615432DBBB23300DC425F /* MetaSecretCoreService.swift */; };
+		E5A615442DBBB23C00DC425F /* InternalMetaSecretCoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A615432DBBB23300DC425F /* InternalMetaSecretCoreService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,7 +25,7 @@
 		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		E5A6153F2DBBB1F900DC425F /* metasecret-mobile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "metasecret-mobile.h"; sourceTree = "<group>"; };
 		E5A615402DBBB1F900DC425F /* metasecret-mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "metasecret-mobile.a"; sourceTree = "<group>"; };
-		E5A615432DBBB23300DC425F /* MetaSecretCoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaSecretCoreService.swift; sourceTree = "<group>"; };
+		E5A615432DBBB23300DC425F /* InternalMetaSecretCoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalMetaSecretCoreService.swift; sourceTree = "<group>"; };
 		E5A615452DBBB36300DC425F /* iosApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iosApp-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -109,7 +109,7 @@
 		E5A615422DBBB22300DC425F /* MetaSecretCoreService */ = {
 			isa = PBXGroup;
 			children = (
-				E5A615432DBBB23300DC425F /* MetaSecretCoreService.swift */,
+				E5A615432DBBB23300DC425F /* InternalMetaSecretCoreService.swift */,
 			);
 			path = MetaSecretCoreService;
 			sourceTree = "<group>";
@@ -211,7 +211,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E5A615442DBBB23C00DC425F /* MetaSecretCoreService.swift in Sources */,
+				E5A615442DBBB23C00DC425F /* InternalMetaSecretCoreService.swift in Sources */,
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 			);
