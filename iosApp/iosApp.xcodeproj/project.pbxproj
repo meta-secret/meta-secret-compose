@@ -70,6 +70,7 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				E5318D682DBB90620076683A /* MetaSecretLib */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* ContentView.swift */,
 				7555FF8C242A565B00829871 /* Info.plist */,
@@ -85,6 +86,13 @@
 				AB3632DC29227652001CCB65 /* Config.xcconfig */,
 			);
 			path = Configuration;
+			sourceTree = "<group>";
+		};
+		E5318D682DBB90620076683A /* MetaSecretLib */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = MetaSecretLib;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
