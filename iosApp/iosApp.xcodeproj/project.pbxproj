@@ -13,6 +13,7 @@
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		E5A615412DBBB1F900DC425F /* metasecret-mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E5A615402DBBB1F900DC425F /* metasecret-mobile.a */; };
 		E5A615442DBBB23C00DC425F /* InternalMetaSecretCoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A615432DBBB23300DC425F /* InternalMetaSecretCoreService.swift */; };
+		E5A615472DBBDCCA00DC425F /* MetaSecretCoreBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A615462DBBDCB900DC425F /* MetaSecretCoreBridge.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 		E5A615402DBBB1F900DC425F /* metasecret-mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "metasecret-mobile.a"; sourceTree = "<group>"; };
 		E5A615432DBBB23300DC425F /* InternalMetaSecretCoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalMetaSecretCoreService.swift; sourceTree = "<group>"; };
 		E5A615452DBBB36300DC425F /* iosApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iosApp-Bridging-Header.h"; sourceTree = "<group>"; };
+		E5A615462DBBDCB900DC425F /* MetaSecretCoreBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaSecretCoreBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,6 +111,7 @@
 		E5A615422DBBB22300DC425F /* MetaSecretCoreService */ = {
 			isa = PBXGroup;
 			children = (
+				E5A615462DBBDCB900DC425F /* MetaSecretCoreBridge.swift */,
 				E5A615432DBBB23300DC425F /* InternalMetaSecretCoreService.swift */,
 			);
 			path = MetaSecretCoreService;
@@ -211,6 +214,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E5A615472DBBDCCA00DC425F /* MetaSecretCoreBridge.swift in Sources */,
 				E5A615442DBBB23C00DC425F /* InternalMetaSecretCoreService.swift in Sources */,
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
