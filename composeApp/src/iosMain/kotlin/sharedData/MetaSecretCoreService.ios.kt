@@ -6,6 +6,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun signUp(name: String) {
-        MetaSecretCoreBridge().signUp()
+        val result = MetaSecretCoreBridge().signUp()
+        println(result)
     }
 }
