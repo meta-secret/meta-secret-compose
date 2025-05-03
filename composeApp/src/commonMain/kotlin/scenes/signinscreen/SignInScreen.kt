@@ -55,17 +55,19 @@ import org.koin.compose.viewmodel.koinViewModel
 import scenes.mainscreen.MainScreen
 import sharedData.AppColors
 import ui.ClassicButton
+import ui.dialogs.qrscanning.scanQRCode
 
 class SignInScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: SignInScreenViewModel = koinViewModel()
         val navigator = LocalNavigator.current
-        var text by remember { mutableStateOf("") }
         var isError by remember { mutableStateOf(false) }
         var isFocused by remember { mutableStateOf(false) }
+        var isScanning by remember { mutableStateOf(false) }
         val focusRequester = FocusRequester()
         val focusManager = LocalFocusManager.current
+        var scannedText by remember { mutableStateOf("") }
 
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
@@ -152,14 +154,19 @@ class SignInScreen : Screen {
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     ClassicButton(
-                        {}, //TODO scan
+                        { isScanning = true },
                         stringResource(Res.string.scan),
                         color = Color.Transparent,
                         borderColor = AppColors.White50
                     )
+                    if (isScanning) {
+                        scanQRCode(
+                            isVisible = { isScanning = it },
+                            scannedText = { scannedText = it })
+                    }
                     TextField(
-                        value = text,
-                        onValueChange = { newText -> text = newText },
+                        value = scannedText,
+                        onValueChange = { newText -> scannedText = newText },
                         shape = RoundedCornerShape(8.dp),
                         placeholder = {
                             Text(
@@ -174,15 +181,15 @@ class SignInScreen : Screen {
                             .border(
                                 width = 2.dp,
                                 color =
-                                if (isError) {
-                                    AppColors.RedError
-                                } else {
-                                    if (isFocused) {
-                                        AppColors.ActionPremium
+                                    if (isError) {
+                                        AppColors.RedError
                                     } else {
-                                        Color.Transparent
-                                    }
-                                },
+                                        if (isFocused) {
+                                            AppColors.ActionPremium
+                                        } else {
+                                            Color.Transparent
+                                        }
+                                    },
                                 shape = RoundedCornerShape(8.dp)
                             )
                             .focusRequester(focusRequester)
@@ -217,15 +224,15 @@ class SignInScreen : Screen {
 
                 ClassicButton(
                     {
-                        isError = viewModel.isNameError(text)
+                        isError = viewModel.isNameError(scannedText)
                         if (!isError) {
                             viewModel.completeSignIn(true)
-                            viewModel.saveUser(text)
+                            viewModel.saveUser(scannedText)
                             navigator?.replace(MainScreen())
                         }
                     },
                     stringResource(Res.string.forward),
-                    text.isNotEmpty()
+                    scannedText.isNotEmpty()
                 )
             }
         }
