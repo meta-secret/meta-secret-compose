@@ -3,6 +3,7 @@ package ui.dialogs.adddevice
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -30,12 +32,13 @@ import kotlinproject.composeapp.generated.resources.orUseQR
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import qrgenerator.qrkitpainter.rememberQrKitPainter
 import sharedData.AppColors
 import sharedData.actualHeightFactor
 
 @Composable
-fun addingDevice(mainDialogVisibility: (Boolean) -> Unit) {
-
+fun addingDevice(mainDialogVisibility: (Boolean) -> Unit, userName: String) {
+    val painter = rememberQrKitPainter(userName)
     Dialog(
         onDismissRequest = {},
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -105,8 +108,7 @@ fun addingDevice(mainDialogVisibility: (Boolean) -> Unit) {
                             .height(1.dp)
                     )
                     Column(
-                        modifier = Modifier
-                            .padding(vertical = 24.dp)
+                       verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
                         Text(
                             text = stringResource(Res.string.orUseQR),
@@ -115,9 +117,18 @@ fun addingDevice(mainDialogVisibility: (Boolean) -> Unit) {
                             color = AppColors.White75,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
+                                .padding(top = 10.dp)
                         )
-                        Box {
-                            //QR-code
+                        Box(
+                            modifier = Modifier
+                            .background(color = AppColors.White)
+                        )
+                        {
+                            Image(
+                                painter = painter,
+                                contentDescription = null,
+                                modifier = Modifier.size(106.5.dp)
+                            )
                         }
                     }
                 }

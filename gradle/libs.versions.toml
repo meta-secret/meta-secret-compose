@@ -1,29 +1,30 @@
 [versions]
 accompanistPager = "0.36.0"
-agp = "8.9.1"
+agp = "8.9.2"
 android-minSdk = "24"
 android-targetSdk = "34"
 androidx-activityCompose = "1.10.1"
-androidxMaterial = "1.7.8"
+androidxMaterial = "1.8.0"
 annotationJvm = "1.9.1"
 compose-plugin = "1.7.3"
-core = "1.15.0"
+core = "1.16.0"
 coroutinesVersion = "1.10.1"
-foundationLayoutAndroid = "1.7.8"
+foundationLayoutAndroid = "1.8.0"
 jetbrainsKotlinxCoroutinesCoreVersion = "1.10.1"
 koin = "4.0.1"
 kotlin = "2.1.0"
 lifecycleLivedataCoreKtx = "2.8.7"
 multiplatformSettings = "1.3.0"
-runtime = "1.7.8"
+qrKit = "3.0.6"
+runtime = "1.8.0"
 serialization = "1.7.3"
-ui = "1.7.8"
-uiAndroid = "1.7.8"
-uiGraphicsAndroid = "1.7.8"
+ui = "1.8.0"
+uiAndroid = "1.8.0"
+uiGraphicsAndroid = "1.8.0"
 voyager = "1.1.0-beta03"
 material = "1.12.0"
 glance = "1.1.1"
-uiAndroidVersion = "1.7.8"
+uiAndroidVersion = "1.8.0"
 activityKtx = "1.10.1"
 
 [plugins]
@@ -47,6 +48,7 @@ koin-composeVM = { module = "io.insert-koin:koin-compose-viewmodel", version.ref
 #share settings
 kotlinx-coroutines-core-v164 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "jetbrainsKotlinxCoroutinesCoreVersion" }
 multiplatform-settings = {module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings"}
+qr-kit = { module = "network.chaintech:qr-kit", version.ref = "qrKit" }
 serialization-json = {module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization"}
 multiplatform-settings-serialization = {module = "com.russhwolf:multiplatform-settings-serialization", version.ref = "multiplatformSettings"}
 coroutines-core = {module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutinesVersion"}
