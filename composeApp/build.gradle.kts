@@ -121,6 +121,8 @@ dependencies {
     implementation(libs.ui.android)
     implementation(libs.androidx.material)
     implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.runtime.android)
+    implementation(libs.androidx.compose.material.core)
     runtimeOnly(libs.androidx.runtime)
 }
 
