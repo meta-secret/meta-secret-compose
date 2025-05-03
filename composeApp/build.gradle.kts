@@ -64,6 +64,7 @@ kotlin {
             implementation(libs.multiplatform.settings.serialization)
             implementation(libs.coroutines.core)
             implementation(libs.settings.coroutine)
+            implementation(libs.qr.kit)
         }
     }
 }

@@ -85,7 +85,7 @@ class DevicesScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            addingDevice { isMainDialogVisible = it }
+            addingDevice ({ isMainDialogVisible = it}, viewModel.getNickName().toString())
         }
     }
 }
