@@ -12,7 +12,7 @@ import Foundation
     @objc public var vaultName: String = ""
 
     @objc public func signUp() {
-        let vaultInfo = getAppInfo()
+        let vaultInfo = "getAppInfo()"
         print("DK: \(vaultInfo)")
     }
 }
