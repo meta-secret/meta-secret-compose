@@ -9,18 +9,10 @@
 import Foundation
 
 @objc public class MetaSecretCoreBridge: NSObject {
-
-    private var service: InternalMetaSecretCoreService
-    
-    @objc public override init() {
-        self.service = InternalMetaSecretCoreService()
-    }
-    
     @objc public var vaultName: String = ""
 
     @objc public func signUp() {
-        
-        let result = service.signUp(userName: vaultName)
-        print("DK: \(result)")
+        let vaultInfo = getAppInfo()
+        print("DK: \(vaultInfo)")
     }
 }
