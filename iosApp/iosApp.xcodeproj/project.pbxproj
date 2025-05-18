@@ -11,8 +11,6 @@
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
-		E5A0EFD62DD6797800D7BAD7 /* Mobile.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E5A0EFD52DD6797800D7BAD7 /* Mobile.xcframework */; };
-		E5A0EFDE2DD6862C00D7BAD7 /* Mobile.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A0EFDD2DD6862C00D7BAD7 /* Mobile.swift */; };
 		E5A615472DBBDCCA00DC425F /* MetaSecretCoreBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A615462DBBDCB900DC425F /* MetaSecretCoreBridge.swift */; };
 /* End PBXBuildFile section */
 
@@ -24,8 +22,6 @@
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
-		E5A0EFD52DD6797800D7BAD7 /* Mobile.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = Mobile.xcframework; sourceTree = "<group>"; };
-		E5A0EFDD2DD6862C00D7BAD7 /* Mobile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mobile.swift; sourceTree = "<group>"; };
 		E5A615462DBBDCB900DC425F /* MetaSecretCoreBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaSecretCoreBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -34,7 +30,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E5A0EFD62DD6797800D7BAD7 /* Mobile.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,7 +73,6 @@
 			isa = PBXGroup;
 			children = (
 				E5A615422DBBB22300DC425F /* MetaSecretCoreService */,
-				E5318D682DBB90620076683A /* MetaSecretLib */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* ContentView.swift */,
 				7555FF8C242A565B00829871 /* Info.plist */,
@@ -94,15 +88,6 @@
 				AB3632DC29227652001CCB65 /* Config.xcconfig */,
 			);
 			path = Configuration;
-			sourceTree = "<group>";
-		};
-		E5318D682DBB90620076683A /* MetaSecretLib */ = {
-			isa = PBXGroup;
-			children = (
-				E5A0EFD52DD6797800D7BAD7 /* Mobile.xcframework */,
-				E5A0EFDD2DD6862C00D7BAD7 /* Mobile.swift */,
-			);
-			path = MetaSecretLib;
 			sourceTree = "<group>";
 		};
 		E5A615422DBBB22300DC425F /* MetaSecretCoreService */ = {
@@ -213,7 +198,6 @@
 				E5A615472DBBDCCA00DC425F /* MetaSecretCoreBridge.swift in Sources */,
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
-				E5A0EFDE2DD6862C00D7BAD7 /* Mobile.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -371,7 +355,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_ID}${TEAM_ID}";
 				PRODUCT_NAME = "${APP_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/iosApp/MetaSecretLib/iosApp-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -408,7 +391,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_ID}${TEAM_ID}";
 				PRODUCT_NAME = "${APP_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/iosApp/MetaSecretLib/iosApp-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
