@@ -19,8 +19,8 @@ class SignInScreenViewModel(
     val signInStatus: StateFlow<Boolean> =  MutableStateFlow(false)
 
     fun completeSignIn(name: String) {
-        metaSecretCoreInterface.signUp(name)
-//        keyValueStorage.isSignInCompleted = state
+        val masterKey = metaSecretCoreInterface.generateMasterKey()
+        println("masterKey: $masterKey")
     }
 
     fun saveUser(inputText: String) {

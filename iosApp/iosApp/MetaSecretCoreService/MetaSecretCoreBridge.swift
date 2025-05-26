@@ -10,6 +10,10 @@ import Foundation
 
 @objc public class MetaSecretCoreBridge: NSObject {
     @objc public var vaultName: String = ""
+    
+    @objc public func generateMasterKey() -> String {
+        return "masterKey"
+    }
 
     @objc public func signUp() {
         let vaultInfo = "getAppInfo()"
