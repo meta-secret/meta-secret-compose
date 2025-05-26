@@ -1,6 +1,5 @@
 package metasecret.project.com
 
-import App
 import android.os.Build
 import android.os.Bundle
 import android.window.OnBackInvokedDispatcher
@@ -8,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import platform.App
 import storage.KeyValueStorage
 import storage.KeyValueStorageImpl
 

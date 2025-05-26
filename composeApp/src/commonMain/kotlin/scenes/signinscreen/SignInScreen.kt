@@ -226,7 +226,7 @@ class SignInScreen : Screen {
                     {
                         isError = viewModel.isNameError(scannedText)
                         if (!isError) {
-                            viewModel.completeSignIn(true)
+                            viewModel.completeSignIn("")
                             viewModel.saveUser(scannedText)
                             navigator?.replace(MainScreen())
                         }

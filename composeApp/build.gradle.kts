@@ -26,6 +26,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "Metasecret"
             isStatic = true
+            binaryOption("bundleId", "metasecret.project.com")
         }
 
         iosTarget.compilations {
