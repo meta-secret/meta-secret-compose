@@ -21,11 +21,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         keyValueStorage.resetKeyValueStorage()
 
-
         //Background extension through the status bar
         window.statusBarColor = android.graphics.Color.TRANSPARENT
         window.decorView.systemUiVisibility = (android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
-
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(

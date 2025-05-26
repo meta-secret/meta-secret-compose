@@ -6,7 +6,8 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
-    kotlin("plugin.serialization") version "2.0.20"
+    kotlin("plugin.serialization") version "2.1.21-RC"
+    alias(libs.plugins.swiftklib)
 }
 
 kotlin {
@@ -26,6 +27,14 @@ kotlin {
             baseName = "Metasecret"
             isStatic = true
         }
+
+        iosTarget.compilations {
+            val main by getting {
+                cinterops {
+                    create("MetaSecretCoreBridge")
+                }
+            }
+        }
     }
 
     sourceSets {
@@ -36,11 +45,16 @@ kotlin {
             implementation(libs.androidx.ui.graphics.android)
             implementation(libs.accompanist.pager)
             implementation(libs.accompanist.pager.indicators)
+            implementation(libs.androidx.core)
+            runtimeOnly(libs.androidx.ui)
+        }
+
+        iosMain.dependencies {
+            // iOS-специфичные зависимости здесь
         }
 
         commonMain.dependencies {
             implementation(kotlin("stdlib"))
-            runtimeOnly(libs.androidx.ui)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material)
@@ -48,7 +62,7 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.core)
+            
             implementation(project.dependencies.platform("io.insert-koin:koin-bom:3.6.0-wasm-alpha2"))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
@@ -57,7 +71,6 @@ kotlin {
             implementation(libs.voyager.tabNavigator)
             implementation(libs.voyager.transitions)
 
-            // Settings sharable
             api(libs.koin.core)
             implementation(libs.multiplatform.settings)
             implementation(libs.serialization.json)
@@ -126,4 +139,9 @@ dependencies {
     runtimeOnly(libs.androidx.runtime)
 }
 
-
+swiftklib {
+    create("MetaSecretCoreBridge") {
+        path = file("../iosApp/iosApp/MetaSecretCoreService/")
+        packageName("com.metaSecret.ios")
+    }
+}
