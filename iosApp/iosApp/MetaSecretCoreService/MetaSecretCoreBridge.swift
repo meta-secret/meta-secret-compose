@@ -12,11 +12,15 @@ import Foundation
     @objc public var vaultName: String = ""
     
     @objc public func generateMasterKey() -> String {
-        return "masterKey"
+        let cString = generate_master_key() ?? ""
+        let swiftString = String(cString: cString)
+        if cString != "" {
+            free_string(cString)
+        }
+        return swiftString
     }
 
     @objc public func signUp() {
-        let vaultInfo = "getAppInfo()"
-        print("DK: \(vaultInfo)")
+        print("DK: ")
     }
 }

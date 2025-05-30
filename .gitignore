@@ -6,7 +6,7 @@ xcuserdata
 !src/**/build/
 local.properties
 .idea
-.DS_Store
+**/.DS_Store
 captures
 .externalNativeBuild
 .cxx
@@ -17,3 +17,15 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 !composeApp/src/androidMain/jniLibs/*
+
+# iOS build artifacts
+*.a
+meta-secret-mobile.a
+*.framework
+*.dSYM
+
+# Android JNI/NDK build artifacts
+*.so
+libmetasecret_mobile.so
+**/libs/**/*.so
+**/jniLibs/**/*.so
