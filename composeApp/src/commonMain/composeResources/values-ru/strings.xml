@@ -71,7 +71,7 @@
     
     <!-- New strings -->
     <string name = "authentication_error">Ошибка аутентификации</string>
-    <string name = "enable_biometric_required">Для использования приложения необходимо разрешить биометрическую аутентификацию</string>
+    <string name = "enable_biometric_required">Для использования приложения необходимо разрешить биометрическую аутентификацию в настройках телефона</string>
     <string name = "enable_biometric_settings">Разрешить биометрию в настройках</string>
     <string name = "biometric_permission_required">Требуется разрешение на использование биометрии</string>
     <string name = "biometric_permission_settings">Пожалуйста, предоставьте доступ в настройках</string>

@@ -38,6 +38,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
@@ -102,25 +103,6 @@ class SignInScreen : Screen {
                 is BiometricState.Success -> {}
                 else -> {}
             }
-        }
-
-        if (showErrorDialog) {
-            AlertDialog(
-                onDismissRequest = {
-                    showErrorDialog = false
-                    viewModel.resetBiometricState()
-                },
-                title = { Text(text = stringResource(Res.string.authentication_error)) },
-                text = { Text(text = errorMessage) },
-                confirmButton = {
-                    Button(onClick = {
-                        showErrorDialog = false
-                        viewModel.resetBiometricState()
-                    }) {
-                        Text(text = stringResource(Res.string.biometric_cancel))
-                    }
-                }
-            )
         }
 
         Box(
@@ -269,7 +251,9 @@ class SignInScreen : Screen {
                         text = stringResource(Res.string.enable_biometric_required),
                         color = AppColors.RedError,
                         fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
                         modifier = Modifier
+                            .fillMaxWidth()
                             .padding(vertical = 8.dp)
                     )
                 }
@@ -286,19 +270,6 @@ class SignInScreen : Screen {
                     stringResource(Res.string.forward),
                     scannedText.isNotEmpty() && viewModel.isBiometricAvailable()
                 )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                if (!viewModel.isBiometricAvailable()) {
-                    ClassicButton(
-                        {
-                            viewModel.openAppSettings()
-                        },
-                        stringResource(Res.string.enable_biometric_settings),
-                        true,
-                        color = AppColors.ActionPremium
-                    )
-                }
             }
         }
     }

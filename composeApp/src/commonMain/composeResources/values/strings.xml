@@ -71,7 +71,7 @@
     
     <!-- New strings -->
     <string name = "authentication_error">Authentication Error</string>
-    <string name = "enable_biometric_required">To use the app, biometric authentication must be enabled</string>
+    <string name = "enable_biometric_required">To use the app, biometric authentication must be enabled in app settings</string>
     <string name = "enable_biometric_settings">Enable biometrics in settings</string>
     <string name = "biometric_permission_required">Biometric permission required</string>
     <string name = "biometric_permission_settings">Please provide access in settings</string>
