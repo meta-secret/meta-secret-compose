@@ -10,6 +10,7 @@ interface KeyValueStorage {
     var isWarningVisible: Boolean
     var secretData: StateFlow<List<Secret>>
     var deviceData: StateFlow<List<Device>>
+    var isBiometricEnabled: Boolean
 //    val observableToken: Flow<String>
 
     fun cleanStorage()
@@ -35,7 +36,8 @@ enum class StorageKeys {
     LOGIN_INFO,
     WARNING_INFO,
     SECRET_DATA,
-    DEVICE_DATA;
+    DEVICE_DATA,
+    BIOMETRIC_ENABLED;
 
     val key get() = name
 }

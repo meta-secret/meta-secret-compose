@@ -47,11 +47,12 @@ kotlin {
             implementation(libs.accompanist.pager)
             implementation(libs.accompanist.pager.indicators)
             implementation(libs.androidx.core)
+            implementation(libs.androidx.biometric)
             runtimeOnly(libs.androidx.ui)
         }
 
         iosMain.dependencies {
-            // iOS-специфичные зависимости здесь
+            // iOS-specific dependencies
         }
 
         commonMain.dependencies {

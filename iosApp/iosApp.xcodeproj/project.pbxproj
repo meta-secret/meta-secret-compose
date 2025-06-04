@@ -11,6 +11,7 @@
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
+		E55338EA2DEA51580050C3F5 /* metasecret-mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E55338E92DEA51580050C3F5 /* metasecret-mobile.a */; };
 		E56CFB602DDFA36500D674CD /* MetaSecretCoreBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56CFB5F2DDFA36500D674CD /* MetaSecretCoreBridge.swift */; };
 /* End PBXBuildFile section */
 
@@ -22,6 +23,9 @@
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		E55338E82DEA51580050C3F5 /* metasecret-mobile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "metasecret-mobile.h"; sourceTree = "<group>"; };
+		E55338E92DEA51580050C3F5 /* metasecret-mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "metasecret-mobile.a"; sourceTree = "<group>"; };
+		E55338EB2DEA55690050C3F5 /* MetaSecretCoreLibrary-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MetaSecretCoreLibrary-Bridging-Header.h"; sourceTree = "<group>"; };
 		E56CFB5F2DDFA36500D674CD /* MetaSecretCoreBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaSecretCoreBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -30,6 +34,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E55338EA2DEA51580050C3F5 /* metasecret-mobile.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,6 +77,7 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				E55338E72DEA51380050C3F5 /* MetaSecretCoreLibrary */,
 				E56CFB542DDF64AF00D674CD /* MetaSecretCoreService */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* ContentView.swift */,
@@ -88,6 +94,16 @@
 				AB3632DC29227652001CCB65 /* Config.xcconfig */,
 			);
 			path = Configuration;
+			sourceTree = "<group>";
+		};
+		E55338E72DEA51380050C3F5 /* MetaSecretCoreLibrary */ = {
+			isa = PBXGroup;
+			children = (
+				E55338E82DEA51580050C3F5 /* metasecret-mobile.h */,
+				E55338E92DEA51580050C3F5 /* metasecret-mobile.a */,
+				E55338EB2DEA55690050C3F5 /* MetaSecretCoreLibrary-Bridging-Header.h */,
+			);
+			path = MetaSecretCoreLibrary;
 			sourceTree = "<group>";
 		};
 		E56CFB542DDF64AF00D674CD /* MetaSecretCoreService */ = {
@@ -347,6 +363,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/iosApp/MetaSecretLib",
+					"$(PROJECT_DIR)/iosApp/MetaSecretCoreLibrary",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -356,7 +373,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_ID}${TEAM_ID}";
 				PRODUCT_NAME = "${APP_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/iosApp/MetaSecretLib/MetaSecret-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/iosApp/MetaSecretCoreLibrary/MetaSecretCoreLibrary-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -385,6 +402,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/iosApp/MetaSecretLib",
+					"$(PROJECT_DIR)/iosApp/MetaSecretCoreLibrary",
 				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -394,7 +412,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "${BUNDLE_ID}${TEAM_ID}";
 				PRODUCT_NAME = "${APP_NAME}";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/iosApp/MetaSecretLib/MetaSecret-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/iosApp/MetaSecretCoreLibrary/MetaSecretCoreLibrary-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

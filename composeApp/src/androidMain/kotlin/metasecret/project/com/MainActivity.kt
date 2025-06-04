@@ -3,16 +3,16 @@ package metasecret.project.com
 import android.os.Build
 import android.os.Bundle
 import android.window.OnBackInvokedDispatcher
-import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.fragment.app.FragmentActivity
 import platform.App
 import storage.KeyValueStorage
 import storage.KeyValueStorageImpl
 
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val keyValueStorage: KeyValueStorage by lazy { KeyValueStorageImpl() }
 
