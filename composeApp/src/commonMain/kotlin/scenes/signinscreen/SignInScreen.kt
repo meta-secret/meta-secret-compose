@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
@@ -41,8 +44,12 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.advice
+import kotlinproject.composeapp.generated.resources.authentication_error
 import kotlinproject.composeapp.generated.resources.background_logo
 import kotlinproject.composeapp.generated.resources.background_main
+import kotlinproject.composeapp.generated.resources.biometric_cancel
+import kotlinproject.composeapp.generated.resources.enable_biometric_required
+import kotlinproject.composeapp.generated.resources.enable_biometric_settings
 import kotlinproject.composeapp.generated.resources.forward
 import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.nicknameError
@@ -68,17 +75,52 @@ class SignInScreen : Screen {
         val focusRequester = FocusRequester()
         val focusManager = LocalFocusManager.current
         var scannedText by remember { mutableStateOf("") }
-
+        var showErrorDialog by remember { mutableStateOf(false) }
+        var errorMessage by remember { mutableStateOf("") }
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
+        val biometricState by viewModel.biometricState.collectAsState()
         val isSignedIn by viewModel.signInStatus.collectAsState()
 
+        LaunchedEffect(Unit) {
+            viewModel.checkBiometricAvailability()
+        }
 
         LaunchedEffect(isSignedIn) {
             if (isSignedIn) {
                 navigator?.push(MainScreen())
             }
+        }
+
+        LaunchedEffect(biometricState) {
+            when (val state = biometricState) {
+                is BiometricState.Error -> {
+                    errorMessage = state.message
+                    showErrorDialog = true
+                }
+                is BiometricState.Success -> {}
+                else -> {}
+            }
+        }
+
+        if (showErrorDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showErrorDialog = false
+                    viewModel.resetBiometricState()
+                },
+                title = { Text(text = stringResource(Res.string.authentication_error)) },
+                text = { Text(text = errorMessage) },
+                confirmButton = {
+                    Button(onClick = {
+                        showErrorDialog = false
+                        viewModel.resetBiometricState()
+                    }) {
+                        Text(text = stringResource(Res.string.biometric_cancel))
+                    }
+                }
+            )
         }
 
         Box(
@@ -222,18 +264,41 @@ class SignInScreen : Screen {
                     )
                 }
 
+                if (!viewModel.isBiometricAvailable()) {
+                    Text(
+                        text = stringResource(Res.string.enable_biometric_required),
+                        color = AppColors.RedError,
+                        fontSize = 13.sp,
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                    )
+                }
+
                 ClassicButton(
                     {
                         isError = viewModel.isNameError(scannedText)
                         if (!isError) {
-                            viewModel.completeSignIn("")
                             viewModel.saveUser(scannedText)
-                            navigator?.replace(MainScreen())
+                            viewModel.setBiometricEnabled(true)
+                            viewModel.authenticateWithBiometrics()
                         }
                     },
                     stringResource(Res.string.forward),
-                    scannedText.isNotEmpty()
+                    scannedText.isNotEmpty() && viewModel.isBiometricAvailable()
                 )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                if (!viewModel.isBiometricAvailable()) {
+                    ClassicButton(
+                        {
+                            viewModel.openAppSettings()
+                        },
+                        stringResource(Res.string.enable_biometric_settings),
+                        true,
+                        color = AppColors.ActionPremium
+                    )
+                }
             }
         }
     }

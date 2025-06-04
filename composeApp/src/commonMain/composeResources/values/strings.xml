@@ -56,4 +56,23 @@
     <string name = "level_3">Strong</string>
     <string name = "downloadMetasecret">Download Metasecret on a new device</string>
     <string name = "orUseQR">Or use QR code</string>
+    
+    <!-- Biometric authentication strings -->
+    <string name = "biometric_title">Biometric Authentication</string>
+    <string name = "biometric_subtitle">Sign in using biometrics</string>
+    <string name = "biometric_description">Please authenticate to access the app</string>
+    <string name = "biometric_error">Authentication failed</string>
+    <string name = "biometric_not_available">Biometric authentication is not available</string>
+    <string name = "biometric_error_no_hardware">This device doesn't have biometric hardware</string>
+    <string name = "biometric_error_no_enrolled">No biometric credentials are enrolled</string>
+    <string name = "biometric_fallback">Use password instead</string>
+    <string name = "biometric_cancel">Cancel</string>
+    <string name = "biometric_prompt">Use your biometric credential to sign in</string>
+    
+    <!-- New strings -->
+    <string name = "authentication_error">Authentication Error</string>
+    <string name = "enable_biometric_required">To use the app, biometric authentication must be enabled</string>
+    <string name = "enable_biometric_settings">Enable biometrics in settings</string>
+    <string name = "biometric_permission_required">Biometric permission required</string>
+    <string name = "biometric_permission_settings">Please provide access in settings</string>
 </resources>

@@ -4,6 +4,7 @@
 <dict>
 <key>NSCameraUsageDescription</key><string>$(PRODUCT_NAME) camera description.</string>
 <key>NSPhotoLibraryUsageDescription</key><string>$(PRODUCT_NAME) photos description.</string>
+<key>NSFaceIDUsageDescription</key><string>$(PRODUCT_NAME) requires Face ID permission for biometric authentication</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>

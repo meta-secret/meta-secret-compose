@@ -56,4 +56,23 @@
     <string name = "level_3">Максимум</string>
     <string name = "downloadMetasecret">Скачайте приложение MetaSecret на новом устройстве</string>
     <string name = "orUseQR">Или воспользуйтесь QR кодом</string>
+    
+    <!-- Biometric authentication strings -->
+    <string name = "biometric_title">Биометрическая аутентификация</string>
+    <string name = "biometric_subtitle">Войдите с помощью биометрии</string>
+    <string name = "biometric_description">Пожалуйста, пройдите аутентификацию для доступа к приложению</string>
+    <string name = "biometric_error">Ошибка аутентификации</string>
+    <string name = "biometric_not_available">Биометрическая аутентификация недоступна</string>
+    <string name = "biometric_error_no_hardware">На этом устройстве нет биометрического оборудования</string>
+    <string name = "biometric_error_no_enrolled">Биометрические данные не зарегистрированы</string>
+    <string name = "biometric_fallback">Использовать пароль</string>
+    <string name = "biometric_cancel">Отмена</string>
+    <string name = "biometric_prompt">Используйте биометрические данные для входа</string>
+    
+    <!-- New strings -->
+    <string name = "authentication_error">Ошибка аутентификации</string>
+    <string name = "enable_biometric_required">Для использования приложения необходимо разрешить биометрическую аутентификацию</string>
+    <string name = "enable_biometric_settings">Разрешить биометрию в настройках</string>
+    <string name = "biometric_permission_required">Требуется разрешение на использование биометрии</string>
+    <string name = "biometric_permission_settings">Пожалуйста, предоставьте доступ в настройках</string>
 </resources>

@@ -36,6 +36,12 @@ class KeyValueStorageImpl : KeyValueStorage {
             settings[StorageKeys.WARNING_INFO.key] = value
         }
 
+    override var isBiometricEnabled: Boolean
+        get() = settings.getBoolean(StorageKeys.BIOMETRIC_ENABLED.key, defaultValue = false)
+        set(value) {
+            settings[StorageKeys.BIOMETRIC_ENABLED.key] = value
+        }
+
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override var signInInfo: LoginInfo?
         get() = settings.decodeValueOrNull(LoginInfo.serializer(), StorageKeys.LOGIN_INFO.key)
