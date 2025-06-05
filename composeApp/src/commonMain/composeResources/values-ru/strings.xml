@@ -12,7 +12,7 @@
     <string name = "placeholder">Выберите уникальный никнэйм</string>
     <string name = "advice">Выберите уникальный никнейм - который вы будете использовать в дальнейшем на других устройствах или войдите по QR коду</string>
     <string name = "start">Начать работу</string>
-    <string name = "nicknameError">Данный никнейм уже занят. Попробуйте другой</string>
+    <string name = "nicknameError">Данный никнейм содержит запрещенные символы. Попробуйте другой</string>
     <string name = "secretsHeader">Секреты</string>
     <string name = "secret">секрет</string>
     <string name = "secretCapital">Секрет</string>

@@ -70,38 +70,24 @@ class SignInScreen : Screen {
     override fun Content() {
         val viewModel: SignInScreenViewModel = koinViewModel()
         val navigator = LocalNavigator.current
+        val focusRequester = FocusRequester()
+        val focusManager = LocalFocusManager.current
+
         var isError by remember { mutableStateOf(false) }
         var isFocused by remember { mutableStateOf(false) }
         var isScanning by remember { mutableStateOf(false) }
-        val focusRequester = FocusRequester()
-        val focusManager = LocalFocusManager.current
         var scannedText by remember { mutableStateOf("") }
         var showErrorDialog by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf("") }
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
-        val biometricState by viewModel.biometricState.collectAsState()
-        val isSignedIn by viewModel.signInStatus.collectAsState()
 
-        LaunchedEffect(Unit) {
-            viewModel.checkBiometricAvailability()
-        }
+        val isSignedIn by viewModel.signInStatus.collectAsState()
 
         LaunchedEffect(isSignedIn) {
             if (isSignedIn) {
                 navigator?.push(MainScreen())
-            }
-        }
-
-        LaunchedEffect(biometricState) {
-            when (val state = biometricState) {
-                is BiometricState.Error -> {
-                    errorMessage = state.message
-                    showErrorDialog = true
-                }
-                is BiometricState.Success -> {}
-                else -> {}
             }
         }
 
@@ -246,29 +232,14 @@ class SignInScreen : Screen {
                     )
                 }
 
-                if (!viewModel.isBiometricAvailable()) {
-                    Text(
-                        text = stringResource(Res.string.enable_biometric_required),
-                        color = AppColors.RedError,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                    )
-                }
-
                 ClassicButton(
                     {
                         isError = viewModel.isNameError(scannedText)
                         if (!isError) {
-                            viewModel.saveUser(scannedText)
-                            viewModel.setBiometricEnabled(true)
-                            viewModel.authenticateWithBiometrics()
+                            // TODO: Generate master key + sign up or join
                         }
                     },
-                    stringResource(Res.string.forward),
-                    scannedText.isNotEmpty() && viewModel.isBiometricAvailable()
+                    stringResource(Res.string.forward)
                 )
             }
         }

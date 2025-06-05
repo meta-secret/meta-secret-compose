@@ -19,9 +19,9 @@ val appModule = module {
     single<KeyValueStorage> { KeyValueStorageImpl() }
 
     factory { MainScreenViewModel(get()) }
-    factory { SplashScreenViewModel(get()) }
+    factory { SplashScreenViewModel(get(), get()) }
     factory { OnboardingViewModel(get()) }
-    factory { SignInScreenViewModel(get(), get(), get()) }
+    factory { SignInScreenViewModel(get(), get()) }
     factory { ProfileScreenViewModel(get()) }
     factory { DevicesScreenViewModel(get()) }
     factory { SecretsScreenViewModel(get()) }

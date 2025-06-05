@@ -13,6 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -25,12 +28,15 @@ import kotlinproject.composeapp.generated.resources.background_logo
 import kotlinproject.composeapp.generated.resources.background_main
 import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.text
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import sharedData.getScreenHeight
 import org.koin.compose.viewmodel.koinViewModel
 import scenes.mainscreen.MainScreen
 import scenes.onboarding.OnboardingScreen
 import scenes.signinscreen.SignInScreen
+import sharedData.BiometricState
+import ui.notifications.InAppNotification
 
 
 class SplashScreen : Screen {
@@ -39,32 +45,37 @@ class SplashScreen : Screen {
     override fun Content() {
         val viewModel: SplashScreenViewModel = koinViewModel()
         val navigator: Navigator? = LocalNavigator.current
-        val navigationEvent by viewModel.navigationEvent.collectAsState()
 
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
         val text = painterResource(Res.drawable.text)
 
-                LaunchedEffect(Unit) {
-                    viewModel.onAppear()
+        val navigationEvent by viewModel.navigationEvent.collectAsState()
+        val biometricState by viewModel.biometricState.collectAsState()
+        
+        var showErrorNotification by remember { mutableStateOf(false) }
+        var errorMessage by remember { mutableStateOf("") }
+
+        LaunchedEffect(Unit) {
+            viewModel.onAppear()
+        }
+
+        LaunchedEffect(biometricState) {
+            println("Biometric state is $biometricState")
+            when (val state = biometricState) {
+                is BiometricState.Error -> {
+                    errorMessage = state.message
+                    showErrorNotification = true
+                    delay(3000)
+                    showErrorNotification = false
                 }
-
-                when (navigationEvent) {
-                    SplashNavigationEvent.NavigateToMain -> {
-                        navigator?.push(MainScreen())
-                    }
-
-                    SplashNavigationEvent.NavigateToSignUp -> {
-                        navigator?.push(SignInScreen())
-                    }
-
-                    SplashNavigationEvent.NavigateToOnboarding -> {
-                        navigator?.push(OnboardingScreen())
-                    }
-
-                    else -> Unit
+                is BiometricState.Success -> {
+                    navigate(navigationEvent, navigator)
                 }
+                else -> {}
+            }
+        }
 
         Box(
             modifier = Modifier
@@ -124,6 +135,32 @@ class SplashScreen : Screen {
                     }
                 }
             }
+            
+            if (showErrorNotification) {
+                InAppNotification(
+                    isSuccessful = false,
+                    message = errorMessage,
+                    onDismiss = { showErrorNotification = false }
+                )
+            }
         }
+    }
+}
+
+fun navigate(navigationEvent: SplashNavigationEvent, navigator: Navigator?) {
+    when (navigationEvent) {
+        SplashNavigationEvent.NavigateToMain -> {
+            navigator?.push(MainScreen())
+        }
+
+        SplashNavigationEvent.NavigateToSignUp -> {
+            navigator?.push(SignInScreen())
+        }
+
+        SplashNavigationEvent.NavigateToOnboarding -> {
+            navigator?.push(OnboardingScreen())
+        }
+
+        else -> Unit
     }
 }
