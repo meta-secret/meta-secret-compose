@@ -3,12 +3,15 @@ package scenes.splashscreen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,10 +29,13 @@ import cafe.adriel.voyager.navigator.Navigator
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.background_logo
 import kotlinproject.composeapp.generated.resources.background_main
+import kotlinproject.composeapp.generated.resources.biometric_error
+import kotlinproject.composeapp.generated.resources.enable_biometric_required
 import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.text
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sharedData.getScreenHeight
 import org.koin.compose.viewmodel.koinViewModel
 import scenes.mainscreen.MainScreen
@@ -51,6 +57,8 @@ class SplashScreen : Screen {
         val logo = painterResource(Res.drawable.logo)
         val text = painterResource(Res.drawable.text)
 
+        val biometricError = stringResource(Res.string.enable_biometric_required)
+
         val navigationEvent by viewModel.navigationEvent.collectAsState()
         val biometricState by viewModel.biometricState.collectAsState()
         
@@ -62,7 +70,6 @@ class SplashScreen : Screen {
         }
 
         LaunchedEffect(biometricState) {
-            println("Biometric state is $biometricState")
             when (val state = biometricState) {
                 is BiometricState.Error -> {
                     errorMessage = state.message
@@ -73,7 +80,13 @@ class SplashScreen : Screen {
                 is BiometricState.Success -> {
                     navigate(navigationEvent, navigator)
                 }
-                else -> {}
+                else -> {
+                    errorMessage = biometricError
+                    delay(1000)
+                    showErrorNotification = true
+                    delay(3000)
+                    showErrorNotification = false
+                }
             }
         }
 
@@ -137,11 +150,15 @@ class SplashScreen : Screen {
             }
             
             if (showErrorNotification) {
-                InAppNotification(
-                    isSuccessful = false,
-                    message = errorMessage,
-                    onDismiss = { showErrorNotification = false }
-                )
+                Column {
+                    Spacer(modifier = Modifier.height(40.dp))
+                    InAppNotification(
+                        isSuccessful = false,
+                        message = errorMessage,
+                        onDismiss = { showErrorNotification = false }
+                    )
+                    Spacer(modifier = Modifier.fillMaxHeight())
+                }
             }
         }
     }
