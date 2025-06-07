@@ -1,6 +1,6 @@
 package sharedData
 
-interface BiometricAuthenticator {
+interface BiometricAuthenticatorInterface {
     fun isBiometricAvailable(): Boolean
     fun authenticate(
         onSuccess: () -> Unit,
