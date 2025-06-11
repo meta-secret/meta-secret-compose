@@ -12,7 +12,15 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import android.util.Base64
-import android.content.SharedPreferences
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import android.os.Environment
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class KeyChainManagerAndroid(private val context: Context) : KeyChainInterface {
     
@@ -22,8 +30,32 @@ class KeyChainManagerAndroid(private val context: Context) : KeyChainInterface {
         private const val KEY_ALIAS_PREFIX = "MetaSecret_"
         private const val GCM_IV_LENGTH = 12
         private const val GCM_TAG_LENGTH = 128
-        private const val ENCRYPTED_DATA_PREFS = "encrypted_data_prefs"
+        private const val STORAGE_DIRECTORY = "MetaSecret"
         private const val IV_SUFFIX = "_iv"
+        private const val PERMISSION_REQUEST_CODE = 123
+    }
+
+    init {
+        checkPermissions()
+    }
+
+    private fun checkPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+
+        val notGrantedPermissions = permissions.filter {
+            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (notGrantedPermissions.isNotEmpty() && context is Activity) {
+            ActivityCompat.requestPermissions(
+                context,
+                notGrantedPermissions.toTypedArray(),
+                PERMISSION_REQUEST_CODE
+            )
+        }
     }
 
     override suspend fun saveString(key: String, value: String): Boolean = withContext(Dispatchers.IO) {
@@ -38,10 +70,8 @@ class KeyChainManagerAndroid(private val context: Context) : KeyChainInterface {
             val encryptedValue = Base64.encodeToString(encryptedBytes, Base64.DEFAULT)
             val ivValue = Base64.encodeToString(iv, Base64.DEFAULT)
 
-            sharedPreferences.edit()
-                .putString(key, encryptedValue)
-                .putString(key + IV_SUFFIX, ivValue)
-                .apply()
+            saveToExternalStorage(key, encryptedValue)
+            saveToExternalStorage(key + IV_SUFFIX, ivValue)
             
             true
         } catch (e: Exception) {
@@ -52,8 +82,8 @@ class KeyChainManagerAndroid(private val context: Context) : KeyChainInterface {
     
     override suspend fun getString(key: String): String? = withContext(Dispatchers.IO) {
         try {
-            val encryptedValue = sharedPreferences.getString(key, null) ?: return@withContext null
-            val ivValue = sharedPreferences.getString(key + IV_SUFFIX, null) ?: return@withContext null
+            val encryptedValue = readFromExternalStorage(key) ?: return@withContext null
+            val ivValue = readFromExternalStorage(key + IV_SUFFIX) ?: return@withContext null
             
             val encryptedBytes = Base64.decode(encryptedValue, Base64.DEFAULT)
             val iv = Base64.decode(ivValue, Base64.DEFAULT)
@@ -73,10 +103,8 @@ class KeyChainManagerAndroid(private val context: Context) : KeyChainInterface {
     
     override suspend fun removeKey(key: String): Boolean = withContext(Dispatchers.IO) {
         try {
-            sharedPreferences.edit()
-                .remove(key)
-                .remove(key + IV_SUFFIX)
-                .apply()
+            deleteFromExternalStorage(key)
+            deleteFromExternalStorage(key + IV_SUFFIX)
 
             try {
                 val keyAlias = getKeyAlias(key)
@@ -95,12 +123,15 @@ class KeyChainManagerAndroid(private val context: Context) : KeyChainInterface {
     }
     
     override suspend fun containsKey(key: String): Boolean = withContext(Dispatchers.IO) {
-        sharedPreferences.contains(key) && sharedPreferences.contains(key + IV_SUFFIX)
+        fileExists(key) && fileExists(key + IV_SUFFIX)
     }
     
     override suspend fun clearAll(): Boolean = withContext(Dispatchers.IO) {
         try {
-            sharedPreferences.edit().clear().apply()
+            val storageDir = getStorageDirectory()
+            if (storageDir.exists()) {
+                storageDir.listFiles()?.forEach { it.delete() }
+            }
 
             val aliases = keyStore.aliases()
             while (aliases.hasMoreElements()) {
@@ -149,9 +180,57 @@ class KeyChainManagerAndroid(private val context: Context) : KeyChainInterface {
             load(null)
         }
     }
-
-    private val sharedPreferences: SharedPreferences by lazy {
-        context.getSharedPreferences(ENCRYPTED_DATA_PREFS, Context.MODE_PRIVATE)
+    
+    private fun getStorageDirectory(): File {
+        val externalDir = Environment.getExternalStorageDirectory()
+        val storageDir = File(externalDir, STORAGE_DIRECTORY)
+        if (!storageDir.exists()) {
+            storageDir.mkdirs()
+        }
+        return storageDir
     }
 
+    private fun getFile(key: String): File {
+        return File(getStorageDirectory(), key)
+    }
+
+    private fun fileExists(key: String): Boolean {
+        return getFile(key).exists()
+    }
+
+    private fun saveToExternalStorage(key: String, data: String): Boolean {
+        try {
+            val file = getFile(key)
+            FileOutputStream(file).use { outputStream ->
+                outputStream.write(data.toByteArray(Charset.defaultCharset()))
+            }
+            return true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    private fun readFromExternalStorage(key: String): String? {
+        try {
+            val file = getFile(key)
+            if (!file.exists()) {
+                return null
+            }
+            
+            FileInputStream(file).use { inputStream ->
+                val bytes = ByteArray(file.length().toInt())
+                inputStream.read(bytes)
+                return String(bytes, Charset.defaultCharset())
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
+    private fun deleteFromExternalStorage(key: String): Boolean {
+        val file = getFile(key)
+        return if (file.exists()) file.delete() else true
+    }
 } 
