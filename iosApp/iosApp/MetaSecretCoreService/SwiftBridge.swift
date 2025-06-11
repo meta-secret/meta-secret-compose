@@ -1,17 +1,70 @@
 //
-//  KeychainBridge.swift
+//  SwiftBridge.swift
 //  iosApp
 //
-//  Created by MetaSecret Team
-//  Copyright © 2025 MetaSecret. All rights reserved.
+//  Created by Dmitry Kuklin on 25.04.2025.
+//  Copyright © 2025 orgName. All rights reserved.
 //
 
 import Foundation
-import Security
 
-@objc(KeychainBridge)
-public class KeychainBridge: NSObject {
+@objc public class SwiftBridge: NSObject {
+    // MARK: - MetaSecretCoreBridge API
+
+    @_silgen_name("generate_master_key")
+    private func c_generate_master_key() -> UnsafeMutablePointer<CChar>?
+
+    @_silgen_name("init")
+    private func c_init(_ master_key_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
     
+    @_silgen_name("get_state")
+    private func c_get_state() -> UnsafeMutablePointer<CChar>?
+
+    @_silgen_name("free_string")
+    private func c_free_string(_ ptr: UnsafeMutablePointer<CChar>?)
+    
+    // MARK: - MetaSecretCoreBridge
+    
+    @objc public var vaultName: String = ""
+    
+    @objc public func generateMasterKey() -> String {
+        let cString = c_generate_master_key() ?? nil
+        guard let cString = cString else {
+            return ""
+        }
+        
+        let swiftString = String(cString: cString)
+        c_free_string(cString)
+        return swiftString
+    }
+
+    @objc public func initWith(masterKey: String) -> String {
+        guard let cString = masterKey.cString(using: .utf8) else {
+            return ""
+        }
+        
+        let resultPtr = c_init(cString)
+        guard let resultPtr = resultPtr else {
+            return ""
+        }
+        
+        let resultString = String(cString: resultPtr)
+        c_free_string(resultPtr)
+        return resultString
+    }
+    
+    @objc public func getState() -> String {
+        let cString = c_get_state()
+        guard let cString = cString else {
+            return ""
+        }
+        
+        let resultString = String(cString: cString)
+        c_free_string(cString)
+        return resultString
+    }
+    
+    // MARK: - KeyChain
     private let serviceName: String = "MetaSecret"
     
     @objc public func saveString(key: String, value: String) -> Bool {
@@ -97,4 +150,4 @@ public class KeychainBridge: NSObject {
         let status = SecItemDelete(query as CFDictionary)
         return status == errSecSuccess || status == errSecItemNotFound
     }
-} 
+}

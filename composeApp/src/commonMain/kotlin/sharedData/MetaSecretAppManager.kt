@@ -8,11 +8,12 @@ class MetaSecretAppManager(
     suspend fun initWithSavedKey(): Boolean {
         val masterKey = keyChainInterface.getString("master_key")
         return if (!masterKey.isNullOrEmpty()) {
-            println("✅ AppManager is initiated")
             metaSecretCoreInterface.initAppManager(masterKey)
+            println("✅ AppManager is initiated")
             true
         } else {
             println("⛔ AppManager init error")
+            keyChainInterface.clearAll()
             false
         }
     }

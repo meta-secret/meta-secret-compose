@@ -23,6 +23,8 @@ class SplashScreenViewModel(
 
     fun onAppear() {
         viewModelScope.launch {
+            keyChainInterface.clearAll()
+
             if (checkBiometricAvailability()) {
                 authenticateWithBiometrics(
                     onSuccess = {

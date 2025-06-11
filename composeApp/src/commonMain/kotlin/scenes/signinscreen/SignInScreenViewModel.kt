@@ -37,14 +37,16 @@ class SignInScreenViewModel(
 
     suspend fun generateAndSaveMasterKey(): Boolean {
         val masterKeyModel = generateMasterKey()
+
         if (masterKeyModel.success && !masterKeyModel.masterKey.isNullOrEmpty()) {
             println("✅ Got master key: $masterKeyModel")
+            keyChainInterface.saveString("master_key", masterKeyModel.masterKey)
+
             if (appManager.initWithSavedKey()) {
                 val state = appManager.getState()
                 println("State: $state")
             }
-            
-//            keyChainInterface.saveString("master_key", masterKeyModel.masterKey)
+
             return true
         } else {
             _masterKeyGenerationError.value = masterKeyModel.error

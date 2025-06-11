@@ -19,7 +19,7 @@ kotlin {
     }
 
     listOf(
-        iosX64(),
+        // iosX64(), // Временно отключаем из-за проблем с компиляцией
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
@@ -32,7 +32,7 @@ kotlin {
         iosTarget.compilations {
             val main by getting {
                 cinterops {
-                    create("MetaSecretCoreBridge")
+                    create("SwiftBridge")
                 }
             }
         }
@@ -142,7 +142,7 @@ dependencies {
 }
 
 swiftklib {
-    create("MetaSecretCoreBridge") {
+    create("SwiftBridge") {
         path = file("../iosApp/iosApp/MetaSecretCoreService/")
         packageName("com.metaSecret.ios")
     }
