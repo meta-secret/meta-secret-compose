@@ -19,7 +19,7 @@ class ProfileScreenViewModel(
         .stateIn(viewModelScope, SharingStarted.Lazily, 0)
 
     fun completeSignIn(state: Boolean) {
-        keyValueStorage.isSignInCompleted = state
+//        keyValueStorage.isSignInCompleted = state
     }
 
     fun getNickName(): String? {

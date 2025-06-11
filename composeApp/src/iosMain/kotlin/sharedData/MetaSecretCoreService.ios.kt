@@ -3,6 +3,8 @@ package sharedData
 import com.metaSecret.ios.MetaSecretCoreBridge
 import kotlinx.cinterop.ExperimentalForeignApi
 
+// TODO: Do not use init MetaSecretCoreBridge() every time. Need to store only one example of this type
+
 class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun generateMasterKey(): String {

@@ -5,13 +5,15 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import sharedData.BiometricAuthenticator
+import sharedData.BiometricAuthenticatorInterface
 import storage.KeyValueStorage
 import sharedData.BiometricState
+import sharedData.KeyChainInterface
 
 class SplashScreenViewModel(
     private val keyValueStorage: KeyValueStorage,
-    private val biometricAuthenticator: BiometricAuthenticator
+    private val biometricAuthenticator: BiometricAuthenticatorInterface,
+    private val keyChainInterface: KeyChainInterface,
 ) : ViewModel() {
     private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
@@ -26,10 +28,12 @@ class SplashScreenViewModel(
                     onSuccess = {
                         when {
                             isOnboardingComplete() -> {
-                                if (checkAuth()) {
-                                    _navigationEvent.value = SplashNavigationEvent.NavigateToMain
-                                } else {
-                                    _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                                viewModelScope.launch {
+                                    if (checkAuth()) {
+                                        _navigationEvent.value = SplashNavigationEvent.NavigateToMain
+                                    } else {
+                                        _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                                    }
                                 }
                             }
                             else -> {
@@ -76,8 +80,10 @@ class SplashScreenViewModel(
         return keyValueStorage.isOnboardingCompleted
     }
 
-    private fun checkAuth(): Boolean {
-        return keyValueStorage.isSignInCompleted
+    private suspend fun checkAuth(): Boolean {
+        val masterKey = keyChainInterface.getString("master_key")
+        println("Master key is: $masterKey")
+        return !masterKey.isNullOrEmpty()
     }
 }
 
