@@ -38,7 +38,9 @@ import Foundation
         return swiftString
     }
 
-    @objc public func initWith(masterKey: String) -> String {
+    @objc public func initWithMasterKey(_ masterKey: String) -> String {
+        cleanDB()
+        
         guard let cString = masterKey.cString(using: .utf8) else {
             return ""
         }
@@ -149,5 +151,19 @@ import Foundation
         
         let status = SecItemDelete(query as CFDictionary)
         return status == errSecSuccess || status == errSecItemNotFound
+    }
+}
+
+private extension SwiftBridge {
+    func cleanDB() {
+        print("CLEAN DB")
+        let fileManager = FileManager.default
+        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let dbPath = documentsPath.appendingPathComponent("meta-secret.db")
+        let isExists = fileManager.fileExists(atPath: dbPath.path)
+        
+        if isExists {
+            _ = try? fileManager.removeItem(at: dbPath)
+        }
     }
 }

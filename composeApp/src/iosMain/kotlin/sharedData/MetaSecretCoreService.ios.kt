@@ -9,6 +9,7 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun generateMasterKey(): String {
         try {
+            println("✅ Calling generateMasterKey")
             val masterKey = SwiftBridge().generateMasterKey()
             println("✅ Master key: $masterKey")
             return masterKey
@@ -22,11 +23,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun initAppManager(masterKey: String): String {
         try {
+            println("✅ Calling iOS initWithMasterKey with: $masterKey")
             val result = SwiftBridge().initWithMasterKey(masterKey)
-            println("✅ Appmanager: $result")
-            return "$result"
+            println("✅ AppManager iOS: $result")
+            return result
         } catch (e: Exception) {
-            println("⛔ Appmanager initialization error: ${e.message}")
+            println("⛔ AppManager iOS initialization error: ${e.message}")
             e.printStackTrace()
             throw e
         }
@@ -35,11 +37,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun getAppState(): String {
         try {
-//            val result = SwiftBridge().initWithMasterKey(masterKey)
-//            println("✅ Appmanager: $result")
-            return "result"
+            println("✅ Calling iOS getState")
+            val result = SwiftBridge().getState()
+            println("✅ App iOS State: $result")
+            return result
         } catch (e: Exception) {
-            println("⛔ Appmanager initialization error: ${e.message}")
+            println("⛔ AppManager iOS initialization error: ${e.message}")
             e.printStackTrace()
             throw e
         }

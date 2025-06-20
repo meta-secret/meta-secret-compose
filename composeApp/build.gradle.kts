@@ -19,7 +19,6 @@ kotlin {
     }
 
     listOf(
-        // iosX64(), // Временно отключаем из-за проблем с компиляцией
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->

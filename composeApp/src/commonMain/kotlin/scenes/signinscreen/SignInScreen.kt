@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import kotlinproject.composeapp.generated.resources.Res
@@ -86,6 +88,7 @@ class SignInScreen : Screen {
 
         val isSignedIn by viewModel.signInStatus.collectAsState()
         val masterKeyError by viewModel.masterKeyGenerationError.collectAsState()
+        val isLoading by viewModel.isLoading.collectAsState()
 
         LaunchedEffect(isSignedIn) {
             if (isSignedIn) {
@@ -248,6 +251,20 @@ class SignInScreen : Screen {
                     },
                     stringResource(Res.string.forward)
                 )
+            }
+            
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(10f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = AppColors.White,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         }
     }
