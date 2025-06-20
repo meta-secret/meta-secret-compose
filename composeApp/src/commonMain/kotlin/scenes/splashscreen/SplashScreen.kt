@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,7 +28,6 @@ import cafe.adriel.voyager.navigator.Navigator
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.background_logo
 import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.biometric_error
 import kotlinproject.composeapp.generated.resources.enable_biometric_required
 import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.text

@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
@@ -25,7 +26,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -41,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import kotlinproject.composeapp.generated.resources.Res
@@ -72,18 +76,19 @@ class SignInScreen : Screen {
         val navigator = LocalNavigator.current
         val focusRequester = FocusRequester()
         val focusManager = LocalFocusManager.current
+        val coroutineScope = rememberCoroutineScope()
 
         var isError by remember { mutableStateOf(false) }
         var isFocused by remember { mutableStateOf(false) }
         var isScanning by remember { mutableStateOf(false) }
         var scannedText by remember { mutableStateOf("") }
-        var showErrorDialog by remember { mutableStateOf(false) }
-        var errorMessage by remember { mutableStateOf("") }
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
 
         val isSignedIn by viewModel.signInStatus.collectAsState()
+        val masterKeyError by viewModel.masterKeyGenerationError.collectAsState()
+        val isLoading by viewModel.isLoading.collectAsState()
 
         LaunchedEffect(isSignedIn) {
             if (isSignedIn) {
@@ -236,11 +241,30 @@ class SignInScreen : Screen {
                     {
                         isError = viewModel.isNameError(scannedText)
                         if (!isError) {
-                            // TODO: Generate master key + sign up or join
+                            coroutineScope.launch {
+                                val success = viewModel.generateAndSaveMasterKey()
+                                if (success) {
+                                    viewModel.completeSignIn(name = scannedText)
+                                }
+                            }
                         }
                     },
                     stringResource(Res.string.forward)
                 )
+            }
+            
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(10f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = AppColors.White,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         }
     }

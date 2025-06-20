@@ -19,7 +19,6 @@ kotlin {
     }
 
     listOf(
-        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
@@ -32,7 +31,7 @@ kotlin {
         iosTarget.compilations {
             val main by getting {
                 cinterops {
-                    create("MetaSecretCoreBridge")
+                    create("SwiftBridge")
                 }
             }
         }
@@ -142,7 +141,7 @@ dependencies {
 }
 
 swiftklib {
-    create("MetaSecretCoreBridge") {
+    create("SwiftBridge") {
         path = file("../iosApp/iosApp/MetaSecretCoreService/")
         packageName("com.metaSecret.ios")
     }

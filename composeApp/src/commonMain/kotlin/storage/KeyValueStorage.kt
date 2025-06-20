@@ -5,13 +5,11 @@ import kotlinx.serialization.Serializable
 
 interface KeyValueStorage {
     var isOnboardingCompleted: Boolean
-    var isSignInCompleted: Boolean
     var signInInfo: LoginInfo?
     var isWarningVisible: Boolean
     var secretData: StateFlow<List<Secret>>
     var deviceData: StateFlow<List<Device>>
     var isBiometricEnabled: Boolean
-//    val observableToken: Flow<String>
 
     fun cleanStorage()
     fun resetKeyValueStorage()
@@ -32,7 +30,6 @@ data class Device(val deviceMake: String, val username: String)
 
 enum class StorageKeys {
     ONBOARDING_INFO,
-    SIGNIN_INFO,
     LOGIN_INFO,
     WARNING_INFO,
     SECRET_DATA,

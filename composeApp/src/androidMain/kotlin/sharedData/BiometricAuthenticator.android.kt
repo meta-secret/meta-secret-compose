@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.app.ActivityCompat
@@ -27,10 +26,10 @@ import kotlinproject.composeapp.generated.resources.biometric_error_no_hardware
 import kotlinproject.composeapp.generated.resources.biometric_error_no_enrolled
 import kotlinproject.composeapp.generated.resources.biometric_permission_required
 
-class BiometricAuthenticatorAndroid(
+class BiometricAuthenticatorAndroid (
     private val context: Context,
     private val activity: FragmentActivity
-) : BiometricAuthenticator {
+) : BiometricAuthenticatorInterface {
 
     private val executor = ContextCompat.getMainExecutor(context)
 

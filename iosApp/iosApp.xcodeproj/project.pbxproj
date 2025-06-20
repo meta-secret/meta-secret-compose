@@ -12,7 +12,7 @@
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		E55338EA2DEA51580050C3F5 /* metasecret-mobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E55338E92DEA51580050C3F5 /* metasecret-mobile.a */; };
-		E56CFB602DDFA36500D674CD /* MetaSecretCoreBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56CFB5F2DDFA36500D674CD /* MetaSecretCoreBridge.swift */; };
+		E56CFB602DDFA36500D674CD /* SwiftBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56CFB5F2DDFA36500D674CD /* SwiftBridge.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,7 +26,7 @@
 		E55338E82DEA51580050C3F5 /* metasecret-mobile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "metasecret-mobile.h"; sourceTree = "<group>"; };
 		E55338E92DEA51580050C3F5 /* metasecret-mobile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "metasecret-mobile.a"; sourceTree = "<group>"; };
 		E55338EB2DEA55690050C3F5 /* MetaSecretCoreLibrary-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MetaSecretCoreLibrary-Bridging-Header.h"; sourceTree = "<group>"; };
-		E56CFB5F2DDFA36500D674CD /* MetaSecretCoreBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetaSecretCoreBridge.swift; sourceTree = "<group>"; };
+		E56CFB5F2DDFA36500D674CD /* SwiftBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,7 +109,7 @@
 		E56CFB542DDF64AF00D674CD /* MetaSecretCoreService */ = {
 			isa = PBXGroup;
 			children = (
-				E56CFB5F2DDFA36500D674CD /* MetaSecretCoreBridge.swift */,
+				E56CFB5F2DDFA36500D674CD /* SwiftBridge.swift */,
 			);
 			path = MetaSecretCoreService;
 			sourceTree = "<group>";
@@ -212,7 +212,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
-				E56CFB602DDFA36500D674CD /* MetaSecretCoreBridge.swift in Sources */,
+				E56CFB602DDFA36500D674CD /* SwiftBridge.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

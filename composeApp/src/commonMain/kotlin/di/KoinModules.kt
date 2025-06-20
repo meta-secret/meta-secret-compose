@@ -8,6 +8,7 @@ import scenes.profilescreen.ProfileScreenViewModel
 import scenes.secretsscreen.SecretsScreenViewModel
 import scenes.signinscreen.SignInScreenViewModel
 import scenes.splashscreen.SplashScreenViewModel
+import sharedData.MetaSecretAppManager
 import storage.KeyValueStorage
 import storage.KeyValueStorageImpl
 import ui.dialogs.adddevice.AddDeviceViewModel
@@ -17,11 +18,12 @@ import ui.dialogs.showsecret.ShowSecretViewModel
 
 val appModule = module {
     single<KeyValueStorage> { KeyValueStorageImpl() }
+    single<MetaSecretAppManager> { MetaSecretAppManager(get(), get()) }
 
-    factory { MainScreenViewModel(get()) }
-    factory { SplashScreenViewModel(get(), get()) }
+    factory { MainScreenViewModel(get(), get()) }
+    factory { SplashScreenViewModel(get(), get(), get()) }
     factory { OnboardingViewModel(get()) }
-    factory { SignInScreenViewModel(get(), get()) }
+    factory { SignInScreenViewModel(get(), get(), get(), get()) }
     factory { ProfileScreenViewModel(get()) }
     factory { DevicesScreenViewModel(get()) }
     factory { SecretsScreenViewModel(get()) }

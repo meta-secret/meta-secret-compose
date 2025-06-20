@@ -1,11 +1,13 @@
 package scenes.mainscreen
 
 import androidx.lifecycle.ViewModel
+import sharedData.MetaSecretAppManager
 import storage.KeyValueStorage
 import ui.TabStateHolder
 
 class MainScreenViewModel(
-     keyValueStorage: KeyValueStorage
+    keyValueStorage: KeyValueStorage,
+    private val appManager: MetaSecretAppManager
 ) : ViewModel() {
     fun setTabIndex(index: Int) {
         TabStateHolder.setTabIndex(index)

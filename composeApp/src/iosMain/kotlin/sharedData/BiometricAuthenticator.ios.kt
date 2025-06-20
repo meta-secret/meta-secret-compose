@@ -4,10 +4,6 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSURL
 import platform.LocalAuthentication.LAContext
 import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthenticationWithBiometrics
-import platform.LocalAuthentication.kLAErrorBiometryNotAvailable
-import platform.LocalAuthentication.kLAErrorBiometryNotEnrolled
-import platform.LocalAuthentication.kLAErrorUserFallback
-import platform.Foundation.NSError
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
 import kotlinx.coroutines.runBlocking
@@ -21,7 +17,7 @@ import kotlinproject.composeapp.generated.resources.biometric_error_no_enrolled
 import kotlinproject.composeapp.generated.resources.biometric_prompt
 import kotlinproject.composeapp.generated.resources.biometric_permission_settings
 
-class BiometricAuthenticatorIos : BiometricAuthenticator {
+class BiometricAuthenticatorIos : BiometricAuthenticatorInterface {
 
     @OptIn(ExperimentalResourceApi::class)
     private fun getStringResource(resource: StringResource): String {

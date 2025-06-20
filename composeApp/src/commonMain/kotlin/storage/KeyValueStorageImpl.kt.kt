@@ -24,12 +24,6 @@ class KeyValueStorageImpl : KeyValueStorage {
             settings[StorageKeys.ONBOARDING_INFO.key] = value
         }
 
-    override var isSignInCompleted: Boolean
-        get() = settings.getBoolean(StorageKeys.SIGNIN_INFO.key, defaultValue = false)
-        set(value) {
-            settings[StorageKeys.SIGNIN_INFO.key] = value
-        }
-
     override var isWarningVisible: Boolean
         get() = settings.getBoolean(StorageKeys.WARNING_INFO.key, defaultValue = true)
         set(value) {
