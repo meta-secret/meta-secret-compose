@@ -12,16 +12,4 @@ class MainScreenViewModel(
     fun setTabIndex(index: Int) {
         TabStateHolder.setTabIndex(index)
     }
-    
-    // Метод для проверки инициализации appManager
-//    fun isAppManagerInitialized(): Boolean {
-////        return appManager.isInitialized
-//    }
-    
-    // Пример использования MetaSecretAppManager
-    // Любой метод, который вам нужен, можно вызвать через экземпляр appManager
-    // Например:
-    // fun someAppManagerMethod() {
-    //     appManager.someMethod()
-    // }
 }
