@@ -9,12 +9,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun generateMasterKey(): String {
         try {
-            println("✅ Calling generateMasterKey")
+            println("✅ Calling iOS generateMasterKey")
             val masterKey = SwiftBridge().generateMasterKey()
-            println("✅ Master key: $masterKey")
+            println("✅ iOS Master key: $masterKey")
             return masterKey
         } catch (e: Exception) {
-            println("⛔ Master key generation error: ${e.message}")
+            println("⛔ iOS Master key generation error: ${e.message}")
             e.printStackTrace()
             throw e
         }

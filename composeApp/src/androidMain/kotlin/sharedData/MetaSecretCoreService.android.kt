@@ -1,9 +1,14 @@
 package sharedData
 
 import com.metasecret.core.MetaSecretNative
+import android.content.Context
+import org.koin.java.KoinJavaComponent.inject
+import java.io.File
 
 class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
 
+    private val context: Context by inject(Context::class.java)
+    
     companion object {
         init {
             try {
@@ -18,11 +23,12 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
 
     override fun generateMasterKey(): String {
         try {
+            println("✅ Calling Android generateMasterKey")
             val masterKey = MetaSecretNative.generateMasterKey()
-            println("Master key: $masterKey")
+            println("✅ Android Master key: $masterKey")
             return masterKey
         } catch (e: Exception) {
-            println("Master key generation error: ${e.message}")
+            println("Android Master key generation error: ${e.message}")
             e.printStackTrace()
             throw e
         }
@@ -30,21 +36,49 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
 
     override fun initAppManager(masterKey: String): String {
         try {
-            val initResult = MetaSecretNative.initAppManager(masterKey)
-            println("Initial result is: $initResult")
-            return initResult
+            cleanDB() // TODO: It's temporary. Need to remove it
+
+            println("✅ Calling Android initAppManager with: $masterKey")
+            val result = MetaSecretNative.initAppManager(masterKey)
+            println("✅ AppManager Android: $result")
+            return result
         } catch (e: Exception) {
-            println("Initial result error: ${e.message}")
+            println("⛔ AppManager Android initialization error: ${e.message}")
             e.printStackTrace()
             throw e
         }
     }
 
     override fun getAppState(): String {
-        TODO("Not yet implemented")
+        try {
+            println("✅ Calling Android getState")
+            val result = MetaSecretNative.getAppState()
+            println("✅ App Android State: $result")
+            return result
+        } catch (e: Exception) {
+            println("⛔ AppManager Android initialization error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
     }
 
     override fun signUp(name: String) {
         TODO("Not yet implemented")
+    }
+    
+    private fun cleanDB() {
+        println("CLEAN DB (Android)")
+        try {
+            val dbFile = File(context.getDatabasePath("meta-secret.db").path)
+            if (dbFile.exists()) {
+                val deleted = dbFile.delete()
+                println("✅ DB file deleted: $deleted")
+            } else {
+                println("✅ DB file does not exist")
+            }
+        } catch (e: Exception) {
+            println("⛔ Error cleaning DB: ${e.message}")
+            e.printStackTrace()
+        }
     }
 }
