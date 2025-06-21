@@ -14,13 +14,6 @@ expect fun getPlatformModule(): org.koin.core.module.Module
 @Composable
 @Preview
 fun App() {
-    startKoin {
-        modules(
-            appModule,
-            getPlatformModule()
-        )
-    }
-
     MaterialTheme {
         Navigator(SplashScreen()){ navigator ->
             SlideTransition(navigator)

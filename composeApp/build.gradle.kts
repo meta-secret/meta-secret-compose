@@ -47,6 +47,8 @@ kotlin {
             implementation(libs.accompanist.pager.indicators)
             implementation(libs.androidx.core)
             implementation(libs.androidx.biometric)
+            implementation("io.insert-koin:koin-android:3.6.0-wasm-alpha2")
+            implementation("io.insert-koin:koin-android-compat:3.6.0-wasm-alpha2")
             runtimeOnly(libs.androidx.ui)
         }
 
