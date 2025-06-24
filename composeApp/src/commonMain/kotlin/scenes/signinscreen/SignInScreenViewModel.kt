@@ -5,17 +5,20 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import models.CommonResponseModel
-import models.MasterKeyModel
+import models.apiModels.CommonResponseModel
+import models.apiModels.MasterKeyModel
+import models.appInternalModels.HandleStateModel
 import sharedData.KeyChainInterface
-import sharedData.MetaSecretAppManager
-import sharedData.MetaSecretCoreInterface
 import storage.KeyValueStorage
-import sharedData.InitResult
+import sharedData.metaSecretCore.InitResult
+import sharedData.metaSecretCore.MetaSecretAppManager
+import sharedData.metaSecretCore.MetaSecretCoreInterface
+import sharedData.metaSecretCore.MetaSecretStateResolverInterface
 
 class SignInScreenViewModel(
-    private val metaSecretCoreInterface: MetaSecretCoreInterface,
-    private val keyChainInterface: KeyChainInterface,
+    private val metaSecretCore: MetaSecretCoreInterface,
+    private val metaSecretStateResolver: MetaSecretStateResolverInterface,
+    private val keyChainManager: KeyChainInterface,
     private val keyValueStorage: KeyValueStorage,
     private val appManager: MetaSecretAppManager,
 ) : ViewModel() {
@@ -39,19 +42,21 @@ class SignInScreenViewModel(
         }
     }
 
-    suspend fun generateAndSaveMasterKey(): Boolean {
+    suspend fun generateAndSaveMasterKey(vaultName: String): Boolean {
         _isLoading.value = true
         val masterKeyModel = generateMasterKey()
 
         if (masterKeyModel.success && !masterKeyModel.masterKey.isNullOrEmpty()) {
             println("✅ Generated master key: $masterKeyModel")
-            keyChainInterface.saveString("master_key", masterKeyModel.masterKey)
+            keyChainManager.saveString("master_key", masterKeyModel.masterKey)
 
             when (val initResult = appManager.initWithSavedKey()) {
                 is InitResult.Success -> {
                     val appManagerInitResult = CommonResponseModel.fromJson(initResult.result)
                     if (appManagerInitResult.success) {
                         val state = appManager.getState()
+                        metaSecretStateResolver.handleState(HandleStateModel(state, vaultName))
+
                         _isLoading.value = false
                         return false // TODO: Return true or false according to state result
                     } else {
@@ -78,7 +83,7 @@ class SignInScreenViewModel(
     }
 
     private fun generateMasterKey(): MasterKeyModel {
-        val jsonResponse = metaSecretCoreInterface.generateMasterKey()
+        val jsonResponse = metaSecretCore.generateMasterKey()
         return MasterKeyModel.fromJson(jsonResponse)
     }
 

@@ -1,10 +1,10 @@
-package sharedData
+package sharedData.metaSecretCore
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import models.apiModels.MetaSecretCoreStateModel
+import sharedData.KeyChainInterface
 
 sealed class InitResult {
     object Loading : InitResult()
@@ -37,8 +37,9 @@ class MetaSecretAppManager(
         }
     }
 
-    fun getState(): String {
-        return metaSecretCoreInterface.getAppState()
+    fun getState(): MetaSecretCoreStateModel {
+        val stateJson = metaSecretCoreInterface.getAppState()
+        return MetaSecretCoreStateModel.fromJson(stateJson)
     }
 
 }

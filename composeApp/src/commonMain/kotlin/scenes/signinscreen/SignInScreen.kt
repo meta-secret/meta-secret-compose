@@ -242,7 +242,7 @@ class SignInScreen : Screen {
                         isError = viewModel.isNameError(scannedText)
                         if (!isError) {
                             coroutineScope.launch {
-                                val success = viewModel.generateAndSaveMasterKey()
+                                val success = viewModel.generateAndSaveMasterKey(scannedText)
                                 if (success) {
                                     viewModel.completeSignIn(name = scannedText)
                                 }

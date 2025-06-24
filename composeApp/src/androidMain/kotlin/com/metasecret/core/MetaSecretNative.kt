@@ -11,5 +11,8 @@ object MetaSecretNative {
     external fun getAppState(): String
 
     @JvmStatic
-    external fun signUp(name: String)
+    external fun generateUserCreds(vaultName: String): String
+
+    @JvmStatic
+    external fun signUp(): String
 } 

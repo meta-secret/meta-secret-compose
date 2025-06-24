@@ -3,6 +3,7 @@ package sharedData
 import com.metasecret.core.MetaSecretNative
 import android.content.Context
 import org.koin.java.KoinJavaComponent.inject
+import sharedData.metaSecretCore.MetaSecretCoreInterface
 import java.io.File
 
 class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
@@ -62,8 +63,30 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
         }
     }
 
-    override fun signUp(name: String) {
-        TODO("Not yet implemented")
+    override fun generateUserCreds(vaultName: String): String {
+        try {
+            println("✅ Calling Android generateUserCreds")
+            val result = MetaSecretNative.generateUserCreds(vaultName)
+            println("✅ App Android generateUserCreds: $result")
+            return result
+        } catch (e: Exception) {
+            println("⛔ AppManager Android generateUserCreds error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun signUp(): String {
+        try {
+            println("✅ Calling Android signUp")
+            val result = MetaSecretNative.signUp()
+            println("✅ App Android signUp State: $result")
+            return result
+        } catch (e: Exception) {
+            println("⛔ AppManager Android initialization error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
     }
     
     private fun cleanDB() {

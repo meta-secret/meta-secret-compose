@@ -1,7 +1,7 @@
 package scenes.mainscreen
 
 import androidx.lifecycle.ViewModel
-import sharedData.MetaSecretAppManager
+import sharedData.metaSecretCore.MetaSecretAppManager
 import storage.KeyValueStorage
 import ui.TabStateHolder
 
