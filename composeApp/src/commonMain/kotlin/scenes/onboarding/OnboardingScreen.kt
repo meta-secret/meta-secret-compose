@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import scenes.mainscreen.MainScreen
 import scenes.signinscreen.SignInScreen
 import sharedData.AppColors
 import ui.ClassicButton
@@ -53,19 +54,20 @@ class OnboardingScreen : Screen {
     @Composable
     @OptIn(ExperimentalFoundationApi::class)
     override fun Content() {
-        val backgroundMain = painterResource(Res.drawable.background_main)
-
         val viewModel: OnboardingViewModel = koinViewModel()
         val navigator = LocalNavigator.currentOrThrow
+        val pages = viewModel.pages
+        val pagerState = rememberPagerState(pageCount = { pages.size })
+
+        val backgroundMain = painterResource(Res.drawable.background_main)
 
         val currentPage by viewModel.currentPage.collectAsState()
-        val pages = viewModel.pages
-
-        val pagerState = rememberPagerState(pageCount = { pages.size })
 
         LaunchedEffect(currentPage) {
             if (currentPage == -1) {
                 navigator.push(SignInScreen())
+            } else if (currentPage == -2) {
+                navigator.push(MainScreen())
             }
         }
 
@@ -110,6 +112,8 @@ class OnboardingScreen : Screen {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pagesCount: Int) {
+    val coroutineScope = rememberCoroutineScope()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -140,7 +144,12 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
         )
 
         Button(
-            onClick = { viewModel.completeOnboarding() },
+            onClick = {
+                coroutineScope.launch {
+                    val result = viewModel.completeOnboarding()
+                    println(result)
+                }
+            },
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .clip(RoundedCornerShape(8.dp))

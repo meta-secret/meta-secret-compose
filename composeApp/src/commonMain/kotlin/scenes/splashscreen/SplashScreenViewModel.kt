@@ -23,7 +23,7 @@ class SplashScreenViewModel(
 
     fun onAppear() {
         viewModelScope.launch {
-            keyChainInterface.clearAll()
+//            keyChainInterface.clearAll()
 
             if (checkBiometricAvailability()) {
                 authenticateWithBiometrics(
@@ -32,13 +32,16 @@ class SplashScreenViewModel(
                             isOnboardingComplete() -> {
                                 viewModelScope.launch {
                                     if (checkAuth()) {
+                                        println("\uD83D\uDC49 Move to Main")
                                         _navigationEvent.value = SplashNavigationEvent.NavigateToMain
                                     } else {
+                                        println("\uD83D\uDC49 Move to Sign up")
                                         _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
                                     }
                                 }
                             }
                             else -> {
+                                println("\uD83D\uDC49 Move to Onboarding")
                                 _navigationEvent.value = SplashNavigationEvent.NavigateToOnboarding
                             }
                         }
@@ -84,7 +87,7 @@ class SplashScreenViewModel(
 
     private suspend fun checkAuth(): Boolean {
         val masterKey = keyChainInterface.getString("master_key")
-        println("Master key is: $masterKey")
+        println("\uD83E\uDEC6 Master key is: $masterKey")
         return !masterKey.isNullOrEmpty()
     }
 }

@@ -2,18 +2,20 @@ package scenes.signinscreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import models.apiModels.CommonResponseModel
 import models.apiModels.MasterKeyModel
-import models.appInternalModels.HandleStateModel
 import sharedData.KeyChainInterface
 import storage.KeyValueStorage
 import sharedData.metaSecretCore.InitResult
 import sharedData.metaSecretCore.MetaSecretAppManager
 import sharedData.metaSecretCore.MetaSecretCoreInterface
 import sharedData.metaSecretCore.MetaSecretStateResolverInterface
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
 
 class SignInScreenViewModel(
     private val metaSecretCore: MetaSecretCoreInterface,
@@ -26,17 +28,19 @@ class SignInScreenViewModel(
     // Properties
     private val _signInStatus = MutableStateFlow(false)
     val signInStatus: StateFlow<Boolean> = _signInStatus
-    private val _masterKeyGenerationError = MutableStateFlow<String?>(null)
-    val masterKeyGenerationError: StateFlow<String?> = _masterKeyGenerationError
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
+    private val _errorNotification = MutableStateFlow<String?>(null)
+    val errorNotification: StateFlow<String?> = _errorNotification
+    private val _showErrorNotification = MutableStateFlow<Boolean>(false)
+    val showErrorNotification: StateFlow<Boolean> = _showErrorNotification
 
     fun isNameError(string: String): Boolean {
         val regex = "^[A-Za-z0-9_]{2,10}$"
         return !(string.matches(regex.toRegex()) && string != keyValueStorage.signInInfo?.username)
     }
 
-    fun completeSignIn(name: String) {
+    fun completeSignIn() {
         viewModelScope.launch {
             _signInStatus.value = true
         }
@@ -44,6 +48,7 @@ class SignInScreenViewModel(
 
     suspend fun generateAndSaveMasterKey(vaultName: String): Boolean {
         _isLoading.value = true
+
         val masterKeyModel = generateMasterKey()
 
         if (masterKeyModel.success && !masterKeyModel.masterKey.isNullOrEmpty()) {
@@ -52,32 +57,48 @@ class SignInScreenViewModel(
 
             when (val initResult = appManager.initWithSavedKey()) {
                 is InitResult.Success -> {
-                    val appManagerInitResult = CommonResponseModel.fromJson(initResult.result)
-                    if (appManagerInitResult.success) {
-                        val state = appManager.getState()
-                        metaSecretStateResolver.handleState(HandleStateModel(state, vaultName))
+                    println("✅ Start Sign Up")
+                    val signUpResult = withContext(Dispatchers.IO) {
+                        metaSecretStateResolver.startFirstSignUp(vaultName)
+                    }
 
-                        _isLoading.value = false
-                        return false // TODO: Return true or false according to state result
-                    } else {
-                        _isLoading.value = false
+                    _isLoading.value = false
+
+                    if (signUpResult.error != null) {
+                        println("⛔No further actions")
+                        _errorNotification.value = signUpResult.error.value
+                        _showErrorNotification.value = true
+                        delay(3000)
+                        _showErrorNotification.value = false
                         return false
                     }
+
+                    println("✅Sign up is successfull")
+                    return true
                 }
                 is InitResult.Error -> {
-                    _masterKeyGenerationError.value = initResult.message
+                    _errorNotification.value = initResult.message
                     _isLoading.value = false
+                    _showErrorNotification.value = true
+                    delay(3000)
+                    _showErrorNotification.value = false
                     return false
                 }
                 is InitResult.Loading -> {
-                    _masterKeyGenerationError.value = "Unexpected loading state"
+                    _errorNotification.value = "Unexpected loading state"
                     _isLoading.value = false
+                    _showErrorNotification.value = true
+                    delay(3000)
+                    _showErrorNotification.value = false
                     return false
                 }
             }
         } else {
             _isLoading.value = false
-            _masterKeyGenerationError.value = masterKeyModel.error
+            _errorNotification.value = masterKeyModel.error
+            _showErrorNotification.value = true
+            delay(3000)
+            _showErrorNotification.value = false
             return false
         }
     }

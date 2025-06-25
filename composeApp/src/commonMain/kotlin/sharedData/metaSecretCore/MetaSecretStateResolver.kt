@@ -1,27 +1,24 @@
 package sharedData.metaSecretCore
 
-import models.apiModels.MetaSecretCoreStateModel
-import models.apiModels.StateType
-import models.appInternalModels.HandleStateModel
+import models.appInternalModels.AppErrors
 
 class MetaSecretStateResolver(
-    private val metaSecretCoreInterface: MetaSecretCoreInterface
+    private val metaSecretCore: MetaSecretCoreInterface
 ) : MetaSecretStateResolverInterface {
-    override fun handleState(model: HandleStateModel) {
-        when (model.stateModel.message.state) {
-            StateType.LOCAL -> handleLocalState(model.vaultName)
-            StateType.VAULT -> handleVaultState()
-        }
+
+    override fun startFirstSignUp(
+        vaultName: String
+    ): AppStateResult {
+        val localStateResult = LocalState(vaultName, metaSecretCore).new()
+            ?: return AppStateResult(null, AppErrors.CreateLocalError)
+
+        val userCredsResult = localStateResult.generateNewCreds()
+            ?: return AppStateResult(null, AppErrors.CredsGenerationError)
+
+        val memberResult = userCredsResult.signUp()
+            ?:  return AppStateResult(null, AppErrors.SignUpError)
+
+        return AppStateResult(memberResult, null)
     }
-    
-    private fun handleLocalState(vaultName: String) {
-        val result = metaSecretCoreInterface.generateUserCreds(vaultName)
-        println("DEBUG: $result")
-        val resultS = metaSecretCoreInterface.signUp()
-        println("DEBUG: $resultS")
-    }
-    
-    private fun handleVaultState() {
-        println("DEBUG: Handling VAULT state")
-    }
+
 }

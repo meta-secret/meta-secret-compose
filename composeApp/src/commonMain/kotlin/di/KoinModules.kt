@@ -25,7 +25,7 @@ val appModule = module {
 
     factory { MainScreenViewModel(get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get()) }
-    factory { OnboardingViewModel(get()) }
+    factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get()) }
     factory { ProfileScreenViewModel(get()) }
     factory { DevicesScreenViewModel(get()) }

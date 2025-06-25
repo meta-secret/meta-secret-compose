@@ -8,14 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -41,7 +40,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -49,12 +47,8 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.advice
-import kotlinproject.composeapp.generated.resources.authentication_error
 import kotlinproject.composeapp.generated.resources.background_logo
 import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.biometric_cancel
-import kotlinproject.composeapp.generated.resources.enable_biometric_required
-import kotlinproject.composeapp.generated.resources.enable_biometric_settings
 import kotlinproject.composeapp.generated.resources.forward
 import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.nicknameError
@@ -68,6 +62,7 @@ import scenes.mainscreen.MainScreen
 import sharedData.AppColors
 import ui.ClassicButton
 import ui.dialogs.qrscanning.scanQRCode
+import ui.notifications.InAppNotification
 
 class SignInScreen : Screen {
     @Composable
@@ -87,7 +82,8 @@ class SignInScreen : Screen {
         val logo = painterResource(Res.drawable.logo)
 
         val isSignedIn by viewModel.signInStatus.collectAsState()
-        val masterKeyError by viewModel.masterKeyGenerationError.collectAsState()
+        val showErrorNotification by viewModel.showErrorNotification.collectAsState()
+        val errorMessage by viewModel.errorNotification.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
 
         LaunchedEffect(isSignedIn) {
@@ -239,12 +235,13 @@ class SignInScreen : Screen {
 
                 ClassicButton(
                     {
+                        focusManager.clearFocus()
                         isError = viewModel.isNameError(scannedText)
                         if (!isError) {
                             coroutineScope.launch {
                                 val success = viewModel.generateAndSaveMasterKey(scannedText)
                                 if (success) {
-                                    viewModel.completeSignIn(name = scannedText)
+                                    viewModel.completeSignIn()
                                 }
                             }
                         }
@@ -264,6 +261,18 @@ class SignInScreen : Screen {
                         color = AppColors.White,
                         modifier = Modifier.padding(16.dp)
                     )
+                }
+            }
+
+            if (showErrorNotification) {
+                Column {
+                    Spacer(modifier = Modifier.height(40.dp))
+                    InAppNotification(
+                        isSuccessful = false,
+                        message = errorMessage ?: "",
+                        onDismiss = {}
+                    )
+                    Spacer(modifier = Modifier.fillMaxHeight())
                 }
             }
         }

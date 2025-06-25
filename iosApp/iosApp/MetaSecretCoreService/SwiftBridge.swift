@@ -44,8 +44,6 @@ import Foundation
     }
 
     @objc public func initWithMasterKey(_ masterKey: String) -> String {
-        cleanDB()
-        
         guard let cString = masterKey.cString(using: .utf8) else {
             return ""
         }
@@ -167,6 +165,8 @@ import Foundation
     }
     
     @objc public func clearAll() -> Bool {
+        cleanDB()
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName
@@ -184,7 +184,7 @@ private extension SwiftBridge {
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dbPath = documentsPath.appendingPathComponent("meta-secret.db")
         let isExists = fileManager.fileExists(atPath: dbPath.path)
-        
+
         if isExists {
             _ = try? fileManager.removeItem(at: dbPath)
         }
