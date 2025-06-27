@@ -39,7 +39,15 @@ class MetaSecretAppManager(
 
     fun getState(): MetaSecretCoreStateModel {
         val stateJson = metaSecretCoreInterface.getAppState()
-        return MetaSecretCoreStateModel.fromJson(stateJson)
+        return try {
+            MetaSecretCoreStateModel.fromJson(stateJson)
+        } catch (e: Exception) {
+            println("⛔ Failed to parse state JSON: ${e.message}")
+            MetaSecretCoreStateModel(
+                null,
+                false
+            )
+        }
     }
 
 }

@@ -32,7 +32,7 @@ class OnboardingViewModel(
 
     private suspend fun checkAuth(): Boolean {
         val masterKey = keyChain.getString("master_key")
-        println("\uD83E\uDEC6 Master key is: $masterKey")
+        println("🫆Master key exists: ${!masterKey.isNullOrEmpty()}")
         return !masterKey.isNullOrEmpty()
     }
 }

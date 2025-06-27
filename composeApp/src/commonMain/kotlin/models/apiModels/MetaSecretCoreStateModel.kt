@@ -67,26 +67,26 @@ data class StateMessageSimple(
 
 @Serializable
 data class MetaSecretCoreStateModel(
-    val message: JsonElement,
+    val message: JsonElement?,
     val success: Boolean
 ) {
-    fun getState(): StateType {
+    fun getState(): StateType? {
         val messageObj = message as JsonObject
-        val stateElement = messageObj["state"] ?: return StateType.LOCAL
+        val stateElement = messageObj["state"] ?: return null
         
         if (stateElement is JsonPrimitive) {
             return when (stateElement.content) {
                 "local" -> StateType.LOCAL
                 "member" -> StateType.MEMBER
                 "outsider" -> StateType.OUTSIDER
-                else -> StateType.LOCAL
+                else -> null
             }
         } else {
             val stateObj = stateElement as JsonObject
             if (stateObj.containsKey("vault")) {
                 return StateType.VAULT
             }
-            return StateType.LOCAL
+            return null
         }
     }
     

@@ -67,7 +67,7 @@ import Foundation
         return resultString
     }
     
-    @objc public func generateUserCreds(with vaultName: String) -> String {
+    @objc public func generateUserCreds() -> String {
         guard let cString = c_generate_user_creds() else {
             return ""
         }
