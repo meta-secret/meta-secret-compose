@@ -17,4 +17,8 @@ char *init(const char *master_key_ptr);
 
 char *get_state(void);
 
+char *generate_user_creds(const char *vault_name_ptr);
+
+char *sign_up(void);
+
 void free_string(char *ptr);

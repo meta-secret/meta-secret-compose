@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import sharedData.KeyChainInterface
 import storage.KeyValueStorage
 
 
 class OnboardingViewModel(
-    private val keyValueStorage: KeyValueStorage
+    private val keyValueStorage: KeyValueStorage,
+    private val keyChain: KeyChainInterface
 ) : ViewModel() {
     val pages = listOf(
         OnBoardingPage.First,
@@ -19,8 +21,18 @@ class OnboardingViewModel(
     private val _currentPage = MutableStateFlow(0)
     val currentPage: StateFlow<Int> = _currentPage
 
-    fun completeOnboarding() {
+    suspend fun completeOnboarding() {
         keyValueStorage.isOnboardingCompleted = true
-        _currentPage.update { -1 }
+        if (checkAuth()) {
+            _currentPage.update { -2 }
+        } else {
+            _currentPage.update { -1 }
+        }
+    }
+
+    private suspend fun checkAuth(): Boolean {
+        val masterKey = keyChain.getString("master_key")
+        println("🫆Master key exists: ${!masterKey.isNullOrEmpty()}")
+        return !masterKey.isNullOrEmpty()
     }
 }

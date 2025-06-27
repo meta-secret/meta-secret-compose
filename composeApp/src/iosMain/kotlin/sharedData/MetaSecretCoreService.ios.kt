@@ -1,7 +1,8 @@
 package sharedData
 
-import com.metaSecret.ios.SwiftBridge
 import kotlinx.cinterop.ExperimentalForeignApi
+import sharedData.metaSecretCore.MetaSecretCoreInterface
+import com.metaSecret.ios.SwiftBridge
 
 // TODO: Do not use init SwiftBridge() every time. Need to store only one example of this type
 
@@ -48,8 +49,31 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
         }
     }
 
-    override fun signUp(name: String) {
-        TODO("Not yet implemented")
+    @OptIn(ExperimentalForeignApi::class)
+    override fun generateUserCreds(vaultName: String): String {
+        try {
+            println("✅ Calling iOS generateUserCreds")
+            val result = SwiftBridge().generateUserCreds()
+            println("✅ App iOS generateUserCreds: result")
+            return "result"
+        } catch (e: Exception) {
+            println("⛔ AppManager iOS generateUserCreds error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
     }
 
+    @OptIn(ExperimentalForeignApi::class)
+    override fun signUp(): String {
+        try {
+            println("✅ Calling signUp")
+            val result = SwiftBridge().signUp()
+            println("✅ SignUp result: $result")
+            return result
+        } catch (e: Exception) {
+            println("⛔ SignUp error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
 }

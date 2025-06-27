@@ -1,8 +1,9 @@
-package sharedData
+package sharedData.metaSecretCore
 
 interface MetaSecretCoreInterface {
     fun generateMasterKey(): String
     fun initAppManager(masterKey: String): String
     fun getAppState(): String
-    fun signUp(name: String)
+    fun generateUserCreds(vaultName: String): String
+    fun signUp(): String
 }

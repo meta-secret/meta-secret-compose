@@ -7,8 +7,8 @@ import sharedData.BiometricAuthenticatorAndroid
 import sharedData.BiometricAuthenticatorInterface
 import sharedData.KeyChainInterface
 import sharedData.KeyChainManagerAndroid
-import sharedData.MetaSecretCoreInterface
 import sharedData.MetaSecretCoreServiceAndroid
+import sharedData.metaSecretCore.MetaSecretCoreInterface
 
 val androidPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceAndroid() }

@@ -19,6 +19,12 @@ import Foundation
     
     @_silgen_name("get_state")
     private func c_get_state() -> UnsafeMutablePointer<CChar>?
+    
+    @_silgen_name("generate_user_creds")
+    private func c_generate_user_creds() -> UnsafeMutablePointer<CChar>?
+    
+    @_silgen_name("sign_up")
+    private func c_sign_up() -> UnsafeMutablePointer<CChar>?
 
     @_silgen_name("free_string")
     private func c_free_string(_ ptr: UnsafeMutablePointer<CChar>?)
@@ -28,8 +34,7 @@ import Foundation
     @objc public var vaultName: String = ""
     
     @objc public func generateMasterKey() -> String {
-        let cString = c_generate_master_key() ?? nil
-        guard let cString = cString else {
+        guard let cString = c_generate_master_key() else {
             return ""
         }
         
@@ -39,14 +44,11 @@ import Foundation
     }
 
     @objc public func initWithMasterKey(_ masterKey: String) -> String {
-        cleanDB()
-        
         guard let cString = masterKey.cString(using: .utf8) else {
             return ""
         }
-        
-        let resultPtr = c_init(cString)
-        guard let resultPtr = resultPtr else {
+ 
+        guard let resultPtr = c_init(cString) else {
             return ""
         }
         
@@ -56,8 +58,27 @@ import Foundation
     }
     
     @objc public func getState() -> String {
-        let cString = c_get_state()
-        guard let cString = cString else {
+        guard let cString = c_get_state() else {
+            return ""
+        }
+        
+        let resultString = String(cString: cString)
+        c_free_string(cString)
+        return resultString
+    }
+    
+    @objc public func generateUserCreds() -> String {
+        guard let cString = c_generate_user_creds() else {
+            return ""
+        }
+        
+        let resultString = String(cString: cString)
+        c_free_string(cString)
+        return resultString
+    }
+    
+    @objc public func signUp() -> String {
+        guard let cString = c_sign_up() else {
             return ""
         }
         
@@ -144,6 +165,8 @@ import Foundation
     }
     
     @objc public func clearAll() -> Bool {
+        cleanDB()
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName
@@ -161,7 +184,7 @@ private extension SwiftBridge {
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dbPath = documentsPath.appendingPathComponent("meta-secret.db")
         let isExists = fileManager.fileExists(atPath: dbPath.path)
-        
+
         if isExists {
             _ = try? fileManager.removeItem(at: dbPath)
         }
