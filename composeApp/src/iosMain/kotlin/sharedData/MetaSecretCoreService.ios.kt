@@ -54,8 +54,8 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
         try {
             println("✅ Calling iOS generateUserCreds")
             val result = SwiftBridge().generateUserCreds()
-            println("✅ App iOS generateUserCreds: result")
-            return "result"
+            println("✅ App iOS generateUserCreds: $result")
+            return result
         } catch (e: Exception) {
             println("⛔ AppManager iOS generateUserCreds error: ${e.message}")
             e.printStackTrace()
