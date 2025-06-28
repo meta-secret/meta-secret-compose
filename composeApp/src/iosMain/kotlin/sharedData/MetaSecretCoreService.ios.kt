@@ -54,7 +54,7 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     override fun generateUserCreds(vaultName: String): String {
         try {
             println("✅ Calling iOS generateUserCreds")
-            val result = swiftBridge.generateUserCreds()
+            val result = swiftBridge.generateUserCredsWithVaultName(vaultName)
             println("✅ App iOS generateUserCreds: $result")
             return result
         } catch (e: Exception) {

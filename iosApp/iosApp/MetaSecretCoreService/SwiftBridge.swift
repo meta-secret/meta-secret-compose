@@ -20,18 +20,16 @@ import Foundation
     @_silgen_name("get_state")
     private func c_get_state() -> UnsafeMutablePointer<CChar>?
     
-    @_silgen_name("generate_user_creds")
-    private func c_generate_user_creds() -> UnsafeMutablePointer<CChar>?
-    
     @_silgen_name("sign_up")
     private func c_sign_up() -> UnsafeMutablePointer<CChar>?
 
     @_silgen_name("free_string")
     private func c_free_string(_ ptr: UnsafeMutablePointer<CChar>?)
     
-    // MARK: - MetaSecretCoreBridge
+    @_silgen_name("generate_user_creds")
+    private func c_generate_user_creds(_ vault_name_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
     
-    @objc public var vaultName: String = ""
+    // MARK: - MetaSecretCoreBridge
     
     @objc public func generateMasterKey() -> String {
         guard let cString = c_generate_master_key() else {
@@ -67,8 +65,12 @@ import Foundation
         return resultString
     }
     
-    @objc public func generateUserCreds() -> String {
-        guard let cString = c_generate_user_creds() else {
+    @objc public func generateUserCreds(vaultName: String) -> String {
+        guard let cVaultName = vaultName.cString(using: .utf8) else {
+            return ""
+        }
+        
+        guard let cString = c_generate_user_creds(cVaultName) else {
             return ""
         }
         
