@@ -42,15 +42,26 @@ open class LocalState(
 
     fun generateNewCreds(): VaultState? {
         println("✅ Start generate new creds")
-        val jsonResult = metaSecretCore.generateUserCreds(vaultName)
-        val coreStateModel = MetaSecretCoreStateModel.fromJson(jsonResult)
+        var jsonResult = metaSecretCore.generateUserCreds(vaultName)
+        var coreStateModel = MetaSecretCoreStateModel.fromJson(jsonResult)
 
-        val isSuccess = coreStateModel.success
+        var isSuccess = coreStateModel.success
+        if (isSuccess) {
+            jsonResult = metaSecretCore.getAppState()
+            println("Debug: State Model jsonResult $jsonResult")
+        }
+
+        coreStateModel = MetaSecretCoreStateModel.fromJson(jsonResult)
+        isSuccess = coreStateModel.success
         val stateModel = coreStateModel.getState()
 
-        val result: VaultState? = if (isSuccess && stateModel == StateType.VAULT) {
+        println("Debug: State Model $stateModel")
+        val result: VaultState? = if (isSuccess && stateModel == StateType.VAULT_NOT_EXISTS) {
             println("✅ Current state is VAULT")
             VaultState(metaSecretCore)
+        } else if (isSuccess && stateModel == StateType.MEMBER) {
+            println("⛔ VAULT is already MEMBER")
+            null
         } else {
             println("⛔ SWW with VAULT state")
             null
