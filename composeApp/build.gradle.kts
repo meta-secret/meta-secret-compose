@@ -129,12 +129,12 @@ android {
 
 dependencies {
     implementation(libs.androidx.annotation.jvm)
-    implementation(libs.kotlinx.coroutines.core.v164)
+    implementation(libs.coroutines.core)
     implementation(libs.androidx.foundation.layout.android)
     implementation(libs.androidx.lifecycle.livedata.core.ktx)
     implementation(libs.material)
     implementation(libs.androidx.glance)
-    implementation(libs.ui.android)
+    implementation(libs.androidx.ui.android)
     implementation(libs.androidx.material)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.runtime.android)

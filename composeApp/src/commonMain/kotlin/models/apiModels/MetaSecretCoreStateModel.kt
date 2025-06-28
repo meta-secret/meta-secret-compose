@@ -16,6 +16,9 @@ enum class StateType {
     @SerialName("vault")
     VAULT,
     
+    @SerialName("vaultNotExists")
+    VAULT_NOT_EXISTS,
+    
     @SerialName("member")
     MEMBER,
     
@@ -79,6 +82,7 @@ data class MetaSecretCoreStateModel(
                 "local" -> StateType.LOCAL
                 "member" -> StateType.MEMBER
                 "outsider" -> StateType.OUTSIDER
+                "vaultNotExists" -> StateType.VAULT_NOT_EXISTS
                 else -> null
             }
         } else {

@@ -24,8 +24,10 @@ class OnboardingViewModel(
     suspend fun completeOnboarding() {
         keyValueStorage.isOnboardingCompleted = true
         if (checkAuth()) {
+            println("\uD83D\uDC49 Move to Main")
             _currentPage.update { -2 }
         } else {
+            println("\uD83D\uDC49 Move to Sign Up")
             _currentPage.update { -1 }
         }
     }
