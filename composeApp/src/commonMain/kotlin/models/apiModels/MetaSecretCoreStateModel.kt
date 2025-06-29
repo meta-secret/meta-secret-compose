@@ -27,6 +27,18 @@ enum class StateType {
 }
 
 @Serializable
+enum class OutsiderStatus {
+    @SerialName("nonMember")
+    NON_MEMBER,
+    
+    @SerialName("pending")
+    PENDING,
+    
+    @SerialName("declined")
+    DECLINED
+}
+
+@Serializable
 data class DeviceKeys(
     val dsaPk: String,
     val transportPk: String
@@ -46,8 +58,21 @@ data class NotExistsInfo(
 )
 
 @Serializable
+data class UserData(
+    val device: DeviceInfo,
+    val vaultName: String
+)
+
+@Serializable
+data class OutsiderInfo(
+    val status: OutsiderStatus,
+    val userData: UserData
+)
+
+@Serializable
 data class VaultInfo(
-    val notExists: NotExistsInfo? = null
+    val notExists: NotExistsInfo? = null,
+    val outsider: OutsiderInfo? = null
 )
 
 @Serializable
@@ -74,7 +99,7 @@ data class MetaSecretCoreStateModel(
     val success: Boolean
 ) {
     fun getState(): StateType? {
-        val messageObj = message as JsonObject
+        val messageObj = message as? JsonObject ?: return null
         val stateElement = messageObj["state"] ?: return null
         
         if (stateElement is JsonPrimitive) {
@@ -88,6 +113,10 @@ data class MetaSecretCoreStateModel(
         } else {
             val stateObj = stateElement as JsonObject
             if (stateObj.containsKey("vault")) {
+                val vaultObj = stateObj["vault"] as? JsonObject
+                if (vaultObj != null && vaultObj.containsKey("outsider")) {
+                    return StateType.OUTSIDER
+                }
                 return StateType.VAULT
             }
             return null
@@ -95,7 +124,7 @@ data class MetaSecretCoreStateModel(
     }
     
     fun getVaultInfo(): VaultInfo? {
-        val messageObj = message as JsonObject
+        val messageObj = message as? JsonObject ?: return null
         val stateElement = messageObj["state"] ?: return null
         
         if (stateElement is JsonObject && stateElement.containsKey("vault")) {
@@ -104,6 +133,11 @@ data class MetaSecretCoreStateModel(
             return stateObj.state.vault
         }
         return null
+    }
+    
+    fun getOutsiderStatus(): OutsiderStatus? {
+        val vaultInfo = getVaultInfo() ?: return null
+        return vaultInfo.outsider?.status
     }
     
     companion object {

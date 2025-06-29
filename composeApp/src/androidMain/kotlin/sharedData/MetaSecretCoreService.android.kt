@@ -37,8 +37,6 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
 
     override fun initAppManager(masterKey: String): String {
         try {
-            cleanDB() // TODO: It's temporary. Need to remove it
-
             println("✅ Calling Android initAppManager with: $masterKey")
             val result = MetaSecretNative.initAppManager(masterKey)
             println("✅ AppManager Android: $result")

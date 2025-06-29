@@ -23,7 +23,7 @@ class SplashScreenViewModel(
 
     fun onAppear() {
         viewModelScope.launch {
-//            keyChainInterface.clearAll()
+            keyChainInterface.clearAll()
 
             if (checkBiometricAvailability()) {
                 authenticateWithBiometrics(
@@ -49,7 +49,7 @@ class SplashScreenViewModel(
                     }
                 )
             } else {
-                // TODO: Set pin code
+                // TODO: #48 Set pin code
                 _biometricState.value = BiometricState.NeedRegistration
             }
         }
