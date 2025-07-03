@@ -81,10 +81,10 @@ open class LocalState(
     }
 }
 
-class  VaultState(
+class VaultState(
     private val metaSecretCore: MetaSecretCoreInterface
 ) : AppState {
-    fun signUp(): MemberState? {
+    fun signUp(): AppState? {
         println("✅ Start SignUp")
         val jsonResult = metaSecretCore.signUp()
         val coreStateModel = MetaSecretCoreStateModel.fromJson(jsonResult)
@@ -92,9 +92,12 @@ class  VaultState(
         val isSuccess = coreStateModel.success
         val stateModel = coreStateModel.getState()
 
-        val result: MemberState? = if (isSuccess && stateModel == StateType.MEMBER) {
+        val result: AppState? = if (isSuccess && stateModel == StateType.MEMBER) {
             println("✅ Current state is MEMBER")
             MemberState()
+        } else if (isSuccess && stateModel == StateType.OUTSIDER) {
+            println("✅ Current state is OUTSIDER")
+            OutsiderState()
         } else {
             println("⛔ SWW with MEMBER state")
             null

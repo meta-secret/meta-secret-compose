@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import models.apiModels.MetaSecretCoreStateModel
-import models.apiModels.StateType
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 
@@ -18,7 +17,7 @@ class MetaSecretSocketHandler(
     private val metaSecretCore: MetaSecretCoreInterface
 ): MetaSecretSocketHandlerInterface {
     private val _actionType = MutableStateFlow(SocketActionModel.NONE)
-    val actionType: StateFlow<SocketActionModel> = _actionType
+    override val actionType: StateFlow<SocketActionModel> = _actionType
 
     private var actionsToFollow = mutableSetOf<SocketRequestModel>()
 
@@ -27,6 +26,7 @@ class MetaSecretSocketHandler(
     private val timerScope = CoroutineScope(Dispatchers.Default)
 
     init {
+        println("\uD83D\uDD0C Socket: init")
         startFollowing()
     }
 
@@ -34,7 +34,7 @@ class MetaSecretSocketHandler(
         add: List<SocketRequestModel>?,
         exclude: List<SocketRequestModel>?
     ) {
-        println("✅ Update actions to follow")
+        println("✅\uD83D\uDD0C Socket: Update actions to follow")
 
         exclude?.let { toExclude ->
             actionsToFollow.removeAll(toExclude.toSet())
@@ -44,11 +44,11 @@ class MetaSecretSocketHandler(
             actionsToFollow.addAll(toAdd)
         }
 
-        println("✅ Actual actions to follow: $actionsToFollow")
+        println("✅\uD83D\uDD0C Socket: Actual actions to follow: $actionsToFollow")
     }
 
     private fun startFollowing() {
-        println("⏱\uFE0F Timer is started")
+        println("⏱\uFE0F \uD83D\uDD0C Socket: Timer is started")
         stopTimer()
         timerJob = timerScope.launch {
             while (isActive) {
@@ -60,11 +60,10 @@ class MetaSecretSocketHandler(
 
     private fun searchRequest() {
         if (!isLocked && actionsToFollow.isNotEmpty()) {
-            println("✅ Fire the timer!")
+            println("\uD83D\uDD0C ✅Socket: Fire the timer!")
             isLocked = true
             val stateJson = metaSecretCore.getAppState()
             val currentState = MetaSecretCoreStateModel.fromJson(stateJson)
-//            val stateType = currentState.getState()
 
             if (!currentState.success) {
                 isLocked = false
@@ -72,21 +71,23 @@ class MetaSecretSocketHandler(
             }
 
             if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
-                println("✅ Need to show Ask to join pop up")
+                println("\uD83D\uDD0C ✅Socket: Need to show Ask to join pop up")
                 _actionType.value = SocketActionModel.ASK_TO_JOIN
             }
 
             if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)) {
-                println("✅ Waiting for join response")
-                _actionType.value = SocketActionModel.JOIN_REQUEST_ACCEPTED
+                println("\uD83D\uDD0C ✅Socket: Waiting for join response")
+                _actionType.value = SocketActionModel.JOIN_REQUEST_PENDING
             }
 
             isLocked = false
+        } else {
+            println("\uD83D\uDD0C ✅Socket: NO any subscriptions")
         }
     }
 
     private fun stopTimer() {
-        println("⏱\uFE0F Timer is stopped")
+        println("⏱\uFE0F \uD83D\uDD0C Socket: Timer is stopped")
         timerJob?.cancel()
         timerJob = null
     }

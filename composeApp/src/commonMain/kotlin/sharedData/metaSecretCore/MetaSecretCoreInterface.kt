@@ -6,4 +6,6 @@ interface MetaSecretCoreInterface {
     fun getAppState(): String
     fun generateUserCreds(vaultName: String): String
     fun signUp(): String
+    fun acceptJoinRequest(): String
+    fun declineJoinRequest(): String
 }

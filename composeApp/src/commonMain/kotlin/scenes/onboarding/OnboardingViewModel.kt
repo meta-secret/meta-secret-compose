@@ -4,13 +4,16 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import models.apiModels.StateType
 import sharedData.KeyChainInterface
+import sharedData.metaSecretCore.InitResult
+import sharedData.metaSecretCore.MetaSecretAppManager
 import storage.KeyValueStorage
 
 
 class OnboardingViewModel(
     private val keyValueStorage: KeyValueStorage,
-    private val keyChain: KeyChainInterface
+    private val metaSecretAppManager: MetaSecretAppManager
 ) : ViewModel() {
     val pages = listOf(
         OnBoardingPage.First,
@@ -33,8 +36,12 @@ class OnboardingViewModel(
     }
 
     private suspend fun checkAuth(): Boolean {
-        val masterKey = keyChain.getString("master_key")
-        println("🫆Master key exists: ${!masterKey.isNullOrEmpty()}")
-        return !masterKey.isNullOrEmpty()
+        println("✅Onboarding: Auth check")
+        return when (metaSecretAppManager.initWithSavedKey()) {
+            is InitResult.Success -> {
+                metaSecretAppManager.getState() == StateType.MEMBER
+            }
+            else -> false
+        }
     }
 }

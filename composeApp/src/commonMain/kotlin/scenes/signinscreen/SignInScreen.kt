@@ -82,8 +82,9 @@ class SignInScreen : Screen {
         val logo = painterResource(Res.drawable.logo)
 
         val isSignedIn by viewModel.signInStatus.collectAsState()
-        val showErrorNotification by viewModel.showErrorNotification.collectAsState()
-        val errorMessage by viewModel.errorNotification.collectAsState()
+        val showSnackBar by viewModel.showSnackBar.collectAsState()
+        val snackBarMessage by viewModel.snackBarMessage.collectAsState()
+        val isUIBlocked by viewModel.isUIBlocked.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
 
         LaunchedEffect(isSignedIn) {
@@ -168,7 +169,8 @@ class SignInScreen : Screen {
                         { isScanning = true },
                         stringResource(Res.string.scan),
                         color = Color.Transparent,
-                        borderColor = AppColors.White50
+                        borderColor = AppColors.White50,
+                        isEnabled = !isUIBlocked && !isLoading
                     )
                     if (isScanning) {
                         scanQRCode(
@@ -186,6 +188,7 @@ class SignInScreen : Screen {
                                 text = stringResource(Res.string.placeholder)
                             )
                         },
+                        enabled = !isUIBlocked && !isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
@@ -246,7 +249,8 @@ class SignInScreen : Screen {
                             }
                         }
                     },
-                    stringResource(Res.string.forward)
+                    stringResource(Res.string.forward),
+                    isEnabled = !isUIBlocked && !isLoading
                 )
             }
             
@@ -264,12 +268,12 @@ class SignInScreen : Screen {
                 }
             }
 
-            if (showErrorNotification) {
+            if (showSnackBar) {
                 Column {
                     Spacer(modifier = Modifier.height(40.dp))
                     InAppNotification(
-                        isSuccessful = false,
-                        message = errorMessage ?: "",
+                        isSuccessful = !isError,
+                        message = snackBarMessage ?: "",
                         onDismiss = {}
                     )
                     Spacer(modifier = Modifier.fillMaxHeight())

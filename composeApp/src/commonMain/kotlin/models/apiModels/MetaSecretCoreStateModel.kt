@@ -95,8 +95,8 @@ data class StateMessageSimple(
 
 @Serializable
 data class MetaSecretCoreStateModel(
-    val message: JsonElement?,
-    val success: Boolean
+    val message: JsonElement? = null,
+    val success: Boolean = false
 ) {
     fun getState(): StateType? {
         val messageObj = message as? JsonObject ?: return null
@@ -142,8 +142,17 @@ data class MetaSecretCoreStateModel(
     
     companion object {
         fun fromJson(jsonResponse: String): MetaSecretCoreStateModel {
-            val json = Json { ignoreUnknownKeys = true }
-            return json.decodeFromString<MetaSecretCoreStateModel>(jsonResponse)
+            val json = Json { 
+                ignoreUnknownKeys = true
+                isLenient = true
+                coerceInputValues = true
+            }
+            return try {
+                json.decodeFromString<MetaSecretCoreStateModel>(jsonResponse)
+            } catch (e: Exception) {
+                println("⛔ Failed to parse JSON: $jsonResponse, error: ${e.message}")
+                MetaSecretCoreStateModel(message = null, success = false)
+            }
         }
     }
 }

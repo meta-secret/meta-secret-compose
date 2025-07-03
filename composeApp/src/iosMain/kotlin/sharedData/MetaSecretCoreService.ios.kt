@@ -77,4 +77,32 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
             throw e
         }
     }
+    
+    @OptIn(ExperimentalForeignApi::class)
+    override fun acceptJoinRequest(): String {
+        try {
+            println("✅ Calling iOS acceptJoinRequest")
+//            val result = swiftBridge.acceptJoinRequest()
+            println("✅ iOS acceptJoinRequest: result")
+            return "result"
+        } catch (e: Exception) {
+            println("⛔ iOS acceptJoinRequest error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+    
+    @OptIn(ExperimentalForeignApi::class)
+    override fun declineJoinRequest(): String {
+        try {
+            println("✅ Calling iOS declineJoinRequest")
+//            val result = swiftBridge.declineJoinRequest()
+            println("✅ iOS declineJoinRequest: result")
+            return "result"
+        } catch (e: Exception) {
+            println("⛔ iOS declineJoinRequest error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
 }

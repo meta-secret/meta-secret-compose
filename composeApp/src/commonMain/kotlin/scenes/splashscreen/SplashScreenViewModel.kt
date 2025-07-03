@@ -5,15 +5,21 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import models.apiModels.MetaSecretCoreStateModel
+import models.apiModels.StateType
 import sharedData.BiometricAuthenticatorInterface
 import storage.KeyValueStorage
 import sharedData.BiometricState
 import sharedData.KeyChainInterface
+import sharedData.metaSecretCore.InitResult
+import sharedData.metaSecretCore.MetaSecretAppManager
+import sharedData.metaSecretCore.MetaSecretCoreInterface
 
 class SplashScreenViewModel(
     private val keyValueStorage: KeyValueStorage,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
-    private val keyChainInterface: KeyChainInterface,
+    private val metaSecretAppManager: MetaSecretAppManager,
+    private val keyChain: KeyChainInterface
 ) : ViewModel() {
     private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
@@ -23,7 +29,7 @@ class SplashScreenViewModel(
 
     fun onAppear() {
         viewModelScope.launch {
-            keyChainInterface.clearAll()
+            keyChain.clearAll()
 
             if (checkBiometricAvailability()) {
                 authenticateWithBiometrics(
@@ -45,18 +51,20 @@ class SplashScreenViewModel(
                                 _navigationEvent.value = SplashNavigationEvent.NavigateToOnboarding
                             }
                         }
+                        println("✅BiometricState Success")
                         _biometricState.value = BiometricState.Success
                     }
                 )
             } else {
                 // TODO: #48 Set pin code
+                println("✅BiometricState NeedRegistration")
                 _biometricState.value = BiometricState.NeedRegistration
             }
         }
     }
 
     private fun checkBiometricAvailability(): Boolean {
-        println("\uD83E\uDEC6 Biometric is available? ${biometricAuthenticator.isBiometricAvailable()}")
+        println("\uD83E\uDEC6 SplashVM: Biometric is available? ${biometricAuthenticator.isBiometricAvailable()}")
         return biometricAuthenticator.isBiometricAvailable()
     }
 
@@ -67,15 +75,15 @@ class SplashScreenViewModel(
     ) {
         biometricAuthenticator.authenticate(
             onSuccess = {
-                println("\uD83E\uDEC6 Biometric is approved")
+                println("\uD83E\uDEC6 SplashVM: Biometric is approved")
                 onSuccess?.invoke()
             },
             onError = {
-                println("\uD83E\uDEC6 Biometric is failed")
+                println("\uD83E\uDEC6 SplashVM: Biometric is failed")
                 onError?.invoke(it)
             },
             onFallback = {
-                println("\uD83E\uDEC6 Biometric is prohibited")
+                println("\uD83E\uDEC6 SplashVM: Biometric is prohibited")
                 onFallback?.invoke()
             }
         )
@@ -86,9 +94,13 @@ class SplashScreenViewModel(
     }
 
     private suspend fun checkAuth(): Boolean {
-        val masterKey = keyChainInterface.getString("master_key")
-        println("🫆Master key exists: ${!masterKey.isNullOrEmpty()}")
-        return !masterKey.isNullOrEmpty()
+        println("✅SplashVM: Auth check")
+        return when (metaSecretAppManager.initWithSavedKey()) {
+            is InitResult.Success -> {
+                metaSecretAppManager.getState() == StateType.MEMBER
+            }
+            else -> false
+        }
     }
 }
 

@@ -87,6 +87,32 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
         }
     }
     
+    override fun acceptJoinRequest(): String {
+        try {
+            println("✅ Calling Android acceptJoinRequest")
+//            val result = MetaSecretNative.acceptJoinRequest()
+            println("✅ App Android acceptJoinRequest: result")
+            return "result"
+        } catch (e: Exception) {
+            println("⛔ AppManager Android acceptJoinRequest error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+    
+    override fun declineJoinRequest(): String {
+        try {
+            println("✅ Calling Android declineJoinRequest")
+//            val result = MetaSecretNative.declineJoinRequest()
+            println("✅ App Android declineJoinRequest: result")
+            return "result"
+        } catch (e: Exception) {
+            println("⛔ AppManager Android declineJoinRequest error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+    
     private fun cleanDB() {
         println("CLEAN DB (Android)")
         try {

@@ -9,6 +9,8 @@ import scenes.secretsscreen.SecretsScreenViewModel
 import scenes.signinscreen.SignInScreenViewModel
 import scenes.splashscreen.SplashScreenViewModel
 import sharedData.metaSecretCore.MetaSecretAppManager
+import sharedData.metaSecretCore.MetaSecretSocketHandler
+import sharedData.metaSecretCore.MetaSecretSocketHandlerInterface
 import sharedData.metaSecretCore.MetaSecretStateResolver
 import sharedData.metaSecretCore.MetaSecretStateResolverInterface
 import storage.KeyValueStorage
@@ -22,11 +24,12 @@ val appModule = module {
     single<KeyValueStorage> { KeyValueStorageImpl() }
     single<MetaSecretAppManager> { MetaSecretAppManager(get(), get()) }
     single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get()) }
+    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get()) }
 
     factory { MainScreenViewModel(get(), get()) }
-    factory { SplashScreenViewModel(get(), get(), get()) }
+    factory { SplashScreenViewModel(get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
-    factory { SignInScreenViewModel(get(), get(), get(), get(), get()) }
+    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get()) }
     factory { ProfileScreenViewModel(get()) }
     factory { DevicesScreenViewModel(get()) }
     factory { SecretsScreenViewModel(get()) }

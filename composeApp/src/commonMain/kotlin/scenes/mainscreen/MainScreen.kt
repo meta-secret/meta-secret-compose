@@ -14,6 +14,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
@@ -29,6 +30,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
 import sharedData.getScreenWidth
 import ui.TabStateHolder
+import ui.dialogs.joinrequest.JoinRequestDialog
 
 class MainScreen : Screen {
     @Composable
@@ -37,6 +39,7 @@ class MainScreen : Screen {
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         val selectedTabIndex by TabStateHolder.selectedTabIndex
         val tabSize = getScreenWidth() / tabs.size
+        val showJoinRequestDialog by viewModel.showJoinRequestDialog.collectAsState()
 
         TabNavigator(tabs[selectedTabIndex]) {
             val tabNavigator = LocalTabNavigator.current
@@ -94,7 +97,22 @@ class MainScreen : Screen {
                     }
                 }
             ) {
-                CurrentTab()
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CurrentTab()
+                    
+                    if (showJoinRequestDialog) {
+                        JoinRequestDialog(
+                            onAccept = {
+                                viewModel.hideJoinRequestDialog()
+                                viewModel.acceptJoinRequest()
+                            },
+                            onDecline = {
+                                viewModel.hideJoinRequestDialog()
+                                viewModel.declineJoinRequest()
+                            }
+                        )
+                    }
+                }
             }
         }
     }
