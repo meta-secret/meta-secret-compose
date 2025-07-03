@@ -71,8 +71,10 @@ class MetaSecretSocketHandler(
             }
 
             if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
-                println("\uD83D\uDD0C ✅Socket: Need to show Ask to join pop up")
-                _actionType.value = SocketActionModel.ASK_TO_JOIN
+                if (1 != 1) { // TODO: Need to check state for claims
+                    println("\uD83D\uDD0C ✅Socket: Need to show Ask to join pop up")
+                    _actionType.value = SocketActionModel.ASK_TO_JOIN
+                }
             }
 
             if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)) {

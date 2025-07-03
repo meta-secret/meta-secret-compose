@@ -23,7 +23,7 @@ open class LocalState(
     private val metaSecretCore: MetaSecretCoreInterface
 ) : AppState {
     fun new(): LocalState? {
-        println("✅ Start get app state")
+        println("✅ AppState: Start get app state")
         val jsonResult = metaSecretCore.getAppState()
         val coreStateModel = MetaSecretCoreStateModel.fromJson(jsonResult)
 
@@ -31,10 +31,10 @@ open class LocalState(
         val stateModel = coreStateModel.getState()
 
         val result: LocalState? = if (isSuccess && stateModel == StateType.LOCAL) {
-            println("✅ Current state is LOCAL")
+            println("✅ AppState: Current state is LOCAL")
             LocalState(vaultName, metaSecretCore)
         } else {
-            println("⛔ SWW with LOCAL state")
+            println("⛔ AppState: SWW with LOCAL state")
             null
         }
 
@@ -42,7 +42,7 @@ open class LocalState(
     }
 
     fun generateNewCreds(): VaultState? {
-        println("✅ Start generate new creds")
+        println("✅ AppState: Start generate new creds")
         val jsonResult = metaSecretCore.generateUserCreds(vaultName)
         val coreStateModel = MetaSecretCoreStateModel.fromJson(jsonResult)
 
@@ -50,30 +50,34 @@ open class LocalState(
         val stateModel = coreStateModel.getState()
         val vaultInfo = coreStateModel.getVaultInfo()
 
-        val result: VaultState? = if (isSuccess && stateModel == StateType.VAULT_NOT_EXISTS) {
-            println("✅ Current state is VAULT")
+        val result: VaultState? = if (isSuccess && stateModel == StateType.VAULT) {
+            println("✅ AppState: Current state is VAULT")
             VaultState(metaSecretCore)
         } else if (isSuccess && stateModel == StateType.OUTSIDER) {
+            println("✅ AppState: Current state is OUTSIDER")
             when (vaultInfo?.outsider?.status) {
                 OutsiderStatus.NON_MEMBER -> {
+                    println("✅ AppState: Current state is NON_MEMBER")
                     VaultState(metaSecretCore)
                 }
                 OutsiderStatus.PENDING -> {
+                    println("✅ AppState: Current state is PENDING")
                     // TODO: #47 Show alert that tells user to accept the request
                     null
                 }
                 OutsiderStatus.DECLINED -> {
+                    println("✅ AppState: Current state is DECLINED")
                     //  TODO: #47 Show alert that request has been declined
                     null
                 }
                 null -> {
-                    println("⛔ SWW with OUTSIDER state")
+                    println("⛔ AppState: SWW with OUTSIDER state")
                     null
                 }
             }
 
         } else {
-            println("⛔ SWW with VAULT state")
+            println("⛔AppState: SWW with VAULT state")
             null
         }
 
@@ -85,7 +89,7 @@ class VaultState(
     private val metaSecretCore: MetaSecretCoreInterface
 ) : AppState {
     fun signUp(): AppState? {
-        println("✅ Start SignUp")
+        println("✅ AppState: Start SignUp")
         val jsonResult = metaSecretCore.signUp()
         val coreStateModel = MetaSecretCoreStateModel.fromJson(jsonResult)
 
@@ -93,13 +97,13 @@ class VaultState(
         val stateModel = coreStateModel.getState()
 
         val result: AppState? = if (isSuccess && stateModel == StateType.MEMBER) {
-            println("✅ Current state is MEMBER")
+            println("✅ AppState: Current state is MEMBER")
             MemberState()
         } else if (isSuccess && stateModel == StateType.OUTSIDER) {
-            println("✅ Current state is OUTSIDER")
+            println("✅ AppState: Current state is OUTSIDER")
             OutsiderState()
         } else {
-            println("⛔ SWW with MEMBER state")
+            println("⛔AppState: SWW with MEMBER state")
             null
         }
 
