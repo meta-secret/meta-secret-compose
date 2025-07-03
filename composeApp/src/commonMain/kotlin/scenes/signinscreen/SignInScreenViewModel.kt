@@ -55,6 +55,7 @@ class SignInScreenViewModel(
 
     init {
         socketSubscribe()
+        addSubscriptionToSocket()
     }
 
     fun isNameError(string: String): Boolean {
@@ -164,28 +165,30 @@ class SignInScreenViewModel(
                     }
                 }
             }
+        }
+    }
 
-            // Subscribe init
+    private fun addSubscriptionToSocket() {
+        // Subscribe init
+        viewModelScope.launch {
             val initResult = appManager.initWithSavedKey()
+            println("\uD83D\uDD10 ✅ SignInVM: initResult $initResult")
             when (initResult) {
                 is InitResult.Success -> {
-                    val stateJson = metaSecretCore.getAppState()
-                    val currentState = MetaSecretCoreStateModel.fromJson(stateJson)
+                    val appState = appManager.getState()
 
-                    if (currentState.success &&
-                        currentState.getState() == StateType.OUTSIDER &&
-                        currentState.getVaultInfo()?.outsider?.status == OutsiderStatus.PENDING
-                    ) {
+                    if (appState == StateType.OUTSIDER) { // TODO: Do we need to get a PENDING status?
                         println("\uD83D\uDD10 ✅ SignInVM: Already in progress")
                         socketHandler.actionsToFollow(
                             add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE),
                             exclude = null
                         )
-                        showErrorSnackBar(waitForJoinMessage,  false, null)
+                        showErrorSnackBar(waitForJoinMessage, false, null)
                     } else {
                         println("\uD83D\uDD10 ✅ SignInVM: It's not a pending")
                     }
                 }
+
                 else -> {}
             }
         }

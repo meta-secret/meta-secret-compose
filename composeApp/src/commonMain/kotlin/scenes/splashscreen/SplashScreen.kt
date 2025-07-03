@@ -67,9 +67,8 @@ class SplashScreen : Screen {
         }
 
         LaunchedEffect(biometricState) {
-            println("⛔Show biometric error snack bar")
+            println("SplashScreen: Biometric error snack bar state: $biometricState")
             when (val state = biometricState) {
-
                 is BiometricState.Error -> {
                     errorMessage = state.message
                     showErrorNotification = true

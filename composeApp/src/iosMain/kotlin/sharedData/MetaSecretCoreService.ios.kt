@@ -11,12 +11,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun generateMasterKey(): String {
         try {
-            println("✅ Calling iOS generateMasterKey")
+            println("\uF8FF ✅ iOS: Calling generateMasterKey")
             val masterKey = swiftBridge.generateMasterKey()
-            println("✅ iOS Master key: $masterKey")
+            println("\uF8FF ✅ iOS: Master key: $masterKey")
             return masterKey
         } catch (e: Exception) {
-            println("⛔ iOS Master key generation error: ${e.message}")
+            println("\uF8FF ⛔ iOS: Master key generation error: ${e.message}")
             e.printStackTrace()
             throw e
         }
@@ -25,12 +25,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun initAppManager(masterKey: String): String {
         try {
-            println("✅ Calling iOS initWithMasterKey with: $masterKey")
+            println("\uF8FF ✅ iOS: Calling initWithMasterKey with: $masterKey")
             val result = swiftBridge.initWithMasterKey(masterKey)
-            println("✅ AppManager iOS: $result")
+            println("\uF8FF ✅ iOS: AppManager: $result")
             return result
         } catch (e: Exception) {
-            println("⛔ AppManager iOS initialization error: ${e.message}")
+            println("\uF8FF ⛔ iOS: AppManager initialization error: ${e.message}")
             e.printStackTrace()
             throw e
         }
@@ -39,12 +39,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun getAppState(): String {
         try {
-            println("✅ Calling iOS getState")
+            println("\uF8FF ✅ iOS: Calling getState")
             val result = swiftBridge.getState()
-            println("✅ App iOS State: $result")
+            println("\uF8FF ✅ iOS: App State: $result")
             return result
         } catch (e: Exception) {
-            println("⛔ AppManager iOS initialization error: ${e.message}")
+            println("\uF8FF ⛔ iOS: AppManager initialization error: ${e.message}")
             e.printStackTrace()
             throw e
         }
@@ -53,12 +53,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun generateUserCreds(vaultName: String): String {
         try {
-            println("✅ Calling iOS generateUserCreds")
+            println("\uF8FF ✅ iOS: Calling generateUserCreds")
             val result = swiftBridge.generateUserCredsWithVaultName(vaultName)
-            println("✅ App iOS generateUserCreds: $result")
+            println("\uF8FF ✅ iOS: App generateUserCreds: $result")
             return result
         } catch (e: Exception) {
-            println("⛔ AppManager iOS generateUserCreds error: ${e.message}")
+            println("\uF8FF ⛔ iOS: AppManager generateUserCreds error: ${e.message}")
             e.printStackTrace()
             throw e
         }
@@ -67,12 +67,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun signUp(): String {
         try {
-            println("✅ Calling signUp")
+            println("\uF8FF ✅ iOS: Calling signUp")
             val result = swiftBridge.signUp()
-            println("✅ SignUp result: $result")
+            println("\uF8FF ✅ iOS: SignUp result: $result")
             return result
         } catch (e: Exception) {
-            println("⛔ SignUp error: ${e.message}")
+            println("\uF8FF ⛔ iOS: SignUp error: ${e.message}")
             e.printStackTrace()
             throw e
         }
@@ -81,12 +81,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun acceptJoinRequest(): String {
         try {
-            println("✅ Calling iOS acceptJoinRequest")
+            println("\uF8FF ✅ iOS: Calling acceptJoinRequest")
 //            val result = swiftBridge.acceptJoinRequest()
-            println("✅ iOS acceptJoinRequest: result")
+            println("\uF8FF ✅ iOS: acceptJoinRequest: result")
             return "result"
         } catch (e: Exception) {
-            println("⛔ iOS acceptJoinRequest error: ${e.message}")
+            println("\uF8FF ⛔ iOS: acceptJoinRequest error: ${e.message}")
             e.printStackTrace()
             throw e
         }
@@ -95,12 +95,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun declineJoinRequest(): String {
         try {
-            println("✅ Calling iOS declineJoinRequest")
+            println("\uF8FF ✅ iOS: Calling declineJoinRequest")
 //            val result = swiftBridge.declineJoinRequest()
-            println("✅ iOS declineJoinRequest: result")
+            println("\uF8FF ✅ iOS: declineJoinRequest: result")
             return "result"
         } catch (e: Exception) {
-            println("⛔ iOS declineJoinRequest error: ${e.message}")
+            println("\uF8FF ⛔ iOS: declineJoinRequest error: ${e.message}")
             e.printStackTrace()
             throw e
         }
