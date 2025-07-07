@@ -9,12 +9,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import models.apiModels.MetaSecretCoreStateModel
+import models.apiModels.AppStateModel
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 
 class MetaSecretSocketHandler(
-    private val metaSecretCore: MetaSecretCoreInterface
+    private val metaSecretCore: MetaSecretCoreInterface,
+    private val appManager: MetaSecretAppManager
 ): MetaSecretSocketHandlerInterface {
     private val _actionType = MutableStateFlow(SocketActionModel.NONE)
     override val actionType: StateFlow<SocketActionModel> = _actionType
@@ -63,7 +64,7 @@ class MetaSecretSocketHandler(
             println("\uD83D\uDD0C ✅Socket: Fire the timer!")
             isLocked = true
             val stateJson = metaSecretCore.getAppState()
-            val currentState = MetaSecretCoreStateModel.fromJson(stateJson)
+            val currentState = AppStateModel.fromJson(stateJson)
 
             if (!currentState.success) {
                 isLocked = false
@@ -71,6 +72,9 @@ class MetaSecretSocketHandler(
             }
 
             if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
+                val state = appManager.getStateModel()
+                println("✅\uD83D\uDD0C Socket: $state")
+
                 if (1 != 1) { // TODO: Need to check state for claims
                     println("\uD83D\uDD0C ✅Socket: Need to show Ask to join pop up")
                     _actionType.value = SocketActionModel.ASK_TO_JOIN

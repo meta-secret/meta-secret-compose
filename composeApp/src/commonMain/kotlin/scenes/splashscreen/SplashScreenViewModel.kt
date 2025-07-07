@@ -5,56 +5,44 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import models.apiModels.MetaSecretCoreStateModel
-import models.apiModels.StateType
+import scenes.common.CommonViewModel
+import scenes.common.CommonViewModelEventsInterface
 import sharedData.BiometricAuthenticatorInterface
 import storage.KeyValueStorage
 import sharedData.BiometricState
 import sharedData.KeyChainInterface
-import sharedData.metaSecretCore.InitResult
-import sharedData.metaSecretCore.MetaSecretAppManager
-import sharedData.metaSecretCore.MetaSecretCoreInterface
+import sharedData.metaSecretCore.AuthState
+import sharedData.metaSecretCore.MetaSecretAppManagerInterface
 
 class SplashScreenViewModel(
     private val keyValueStorage: KeyValueStorage,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
-    private val metaSecretAppManager: MetaSecretAppManager,
+    private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val keyChain: KeyChainInterface
-) : ViewModel() {
+) : ViewModel(), CommonViewModel {
     private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
 
     private val _biometricState = MutableStateFlow<BiometricState>(BiometricState.Idle)
     val biometricState: StateFlow<BiometricState> = _biometricState
 
-    fun onAppear() {
+    // Public API for View
+    override fun handle(event: CommonViewModelEventsInterface) {
+        if (event is SplashViewEvents) {
+            when (event) {
+                SplashViewEvents.ON_APPEAR -> biometricRoutine()
+                SplashViewEvents.BIOMETRIC_SUCCEEDED -> biometricSucceeded()
+            }
+        }
+    }
+
+    // All biometric routine
+    private fun biometricRoutine() {
         viewModelScope.launch {
-//            keyChain.clearAll()
+            keyChain.clearAll()
 
             if (checkBiometricAvailability()) {
-                authenticateWithBiometrics(
-                    onSuccess = {
-                        when {
-                            isOnboardingComplete() -> {
-                                viewModelScope.launch {
-                                    if (checkAuth()) {
-                                        println("\uD83D\uDC49 Move to Main")
-                                        _navigationEvent.value = SplashNavigationEvent.NavigateToMain
-                                    } else {
-                                        println("\uD83D\uDC49 Move to Sign up")
-                                        _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
-                                    }
-                                }
-                            }
-                            else -> {
-                                println("\uD83D\uDC49 Move to Onboarding")
-                                _navigationEvent.value = SplashNavigationEvent.NavigateToOnboarding
-                            }
-                        }
-                        println("✅BiometricState Success")
-                        _biometricState.value = BiometricState.Success
-                    }
-                )
+                authenticateWithBiometrics()
             } else {
                 // TODO: #48 Set pin code
                 println("✅BiometricState NeedRegistration")
@@ -68,39 +56,55 @@ class SplashScreenViewModel(
         return biometricAuthenticator.isBiometricAvailable()
     }
 
-    private fun authenticateWithBiometrics(
-        onSuccess: (() -> Unit)? = null,
-        onError: ((String) -> Unit)? = null,
-        onFallback: (() -> Unit)? = null
-    ) {
+    private fun authenticateWithBiometrics() {
         biometricAuthenticator.authenticate(
             onSuccess = {
                 println("\uD83E\uDEC6 SplashVM: Biometric is approved")
-                onSuccess?.invoke()
+                _biometricState.value = BiometricState.Success
             },
             onError = {
                 println("\uD83E\uDEC6 SplashVM: Biometric is failed")
-                onError?.invoke(it)
+                _biometricState.value = BiometricState.Error("")
             },
             onFallback = {
                 println("\uD83E\uDEC6 SplashVM: Biometric is prohibited")
-                onFallback?.invoke()
+                _biometricState.value = BiometricState.Error("")
             }
         )
     }
 
-    private fun isOnboardingComplete(): Boolean {
-        return keyValueStorage.isOnboardingCompleted
+    private fun biometricSucceeded() {
+        when (isOnboardingComplete()) {
+            OnboardingState.COMPLETED -> {
+                viewModelScope.launch {
+                    when (checkAuth()) {
+                        AuthState.COMPLETED -> {
+                            println("\uD83D\uDC49 SplashVM: Move to Main")
+                            _navigationEvent.value = SplashNavigationEvent.NavigateToMain
+                        }
+                        AuthState.NOT_YET_COMPLETED -> {
+                            println("\uD83D\uDC49 SplashVM: Move to Sign up")
+                            _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                        }
+                    }
+                }
+            }
+            OnboardingState.NOT_YET_COMPLETED -> {
+                println("\uD83D\uDC49 SplashVM: Move to Onboarding")
+                _navigationEvent.value = SplashNavigationEvent.NavigateToOnboarding
+            }
+        }
+        println("✅BiometricState Success")
     }
 
-    private suspend fun checkAuth(): Boolean {
+    // Different statuses check
+    private fun isOnboardingComplete(): OnboardingState {
+        return if (keyValueStorage.isOnboardingCompleted) { OnboardingState.COMPLETED } else { OnboardingState.NOT_YET_COMPLETED }
+    }
+
+    private suspend fun checkAuth(): AuthState {
         println("✅SplashVM: Auth check")
-        return when (metaSecretAppManager.initWithSavedKey()) {
-            is InitResult.Success -> {
-                metaSecretAppManager.getState() == StateType.MEMBER
-            }
-            else -> false
-        }
+        return metaSecretAppManager.checkAuth()
     }
 }
 
@@ -110,3 +114,14 @@ enum class SplashNavigationEvent {
     NavigateToSignUp,
     NavigateToOnboarding
 }
+
+enum class SplashViewEvents: CommonViewModelEventsInterface {
+    ON_APPEAR,
+    BIOMETRIC_SUCCEEDED
+}
+
+private enum class OnboardingState {
+    COMPLETED,
+    NOT_YET_COMPLETED
+}
+

@@ -146,7 +146,7 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
         Button(
             onClick = {
                 coroutineScope.launch {
-                    val result = viewModel.completeOnboarding()
+                    val result = viewModel.handle(OnboardingViewEvents.COMPLETE_ONBOARDING)
                     println(result)
                 }
             },
@@ -181,7 +181,7 @@ fun OnboardingFooter(pagerState: PagerState, viewModel: OnboardingViewModel, pag
             {
                 coroutineScope.launch {
                     if (pagerState.currentPage + 1 >= pagesCount) {
-                        viewModel.completeOnboarding()
+                        viewModel.handle(OnboardingViewEvents.COMPLETE_ONBOARDING)
                     } else {
                         pagerState.animateScrollToPage(pagerState.currentPage + 1)
                     }

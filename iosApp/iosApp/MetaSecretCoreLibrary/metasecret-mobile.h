@@ -21,4 +21,6 @@ char *generate_user_creds(const char *vault_name_ptr);
 
 char *sign_up(void);
 
+char *clean_up_database(void);
+
 void free_string(char *ptr);

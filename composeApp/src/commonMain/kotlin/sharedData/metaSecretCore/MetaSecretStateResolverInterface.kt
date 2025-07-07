@@ -1,8 +1,9 @@
 package sharedData.metaSecretCore
 
-import models.apiModels.MetaSecretCoreStateModel
-import models.apiModels.OutsiderStatus
-import models.apiModels.StateType
+import models.apiModels.AppStateModel
+import models.apiModels.State
+import models.apiModels.UserDataOutsiderStatus
+import models.apiModels.VaultFullInfo
 import models.appInternalModels.AppErrors
 
 data class AppStateResult (
@@ -25,12 +26,12 @@ open class LocalState(
     fun new(): LocalState? {
         println("✅ AppState: Start get app state")
         val jsonResult = metaSecretCore.getAppState()
-        val coreStateModel = MetaSecretCoreStateModel.fromJson(jsonResult)
+        val coreStateModel = AppStateModel.fromJson(jsonResult)
 
         val isSuccess = coreStateModel.success
-        val stateModel = coreStateModel.getState()
+        val stateModel = coreStateModel.getAppState()
 
-        val result: LocalState? = if (isSuccess && stateModel == StateType.LOCAL) {
+        val result: LocalState? = if (isSuccess && stateModel is State.Local) {
             println("✅ AppState: Current state is LOCAL")
             LocalState(vaultName, metaSecretCore)
         } else {
@@ -44,38 +45,33 @@ open class LocalState(
     fun generateNewCreds(): VaultState? {
         println("✅ AppState: Start generate new creds")
         val jsonResult = metaSecretCore.generateUserCreds(vaultName)
-        val coreStateModel = MetaSecretCoreStateModel.fromJson(jsonResult)
+        val coreStateModel = AppStateModel.fromJson(jsonResult)
 
         val isSuccess = coreStateModel.success
-        val stateModel = coreStateModel.getState()
-        val vaultInfo = coreStateModel.getVaultInfo()
+        val stateModel = coreStateModel.getAppState()
+        val vaultInfo = coreStateModel.getVaultState()
 
-        val result: VaultState? = if (isSuccess && stateModel == StateType.VAULT) {
+        val result: VaultState? = if (isSuccess && stateModel is State.Local) {
             println("✅ AppState: Current state is VAULT")
             VaultState(metaSecretCore)
-        } else if (isSuccess && stateModel == StateType.OUTSIDER) {
+        } else if (isSuccess && vaultInfo is VaultFullInfo.Outsider) {
             println("✅ AppState: Current state is OUTSIDER")
-            when (vaultInfo?.outsider?.status) {
-                OutsiderStatus.NON_MEMBER -> {
+            when (vaultInfo.outsider.status) {
+                UserDataOutsiderStatus.NON_MEMBER -> {
                     println("✅ AppState: Current state is NON_MEMBER")
                     VaultState(metaSecretCore)
                 }
-                OutsiderStatus.PENDING -> {
+                UserDataOutsiderStatus.PENDING -> {
                     println("✅ AppState: Current state is PENDING")
                     // TODO: #47 Show alert that tells user to accept the request
                     null
                 }
-                OutsiderStatus.DECLINED -> {
+                UserDataOutsiderStatus.DECLINED -> {
                     println("✅ AppState: Current state is DECLINED")
                     //  TODO: #47 Show alert that request has been declined
                     null
                 }
-                null -> {
-                    println("⛔ AppState: SWW with OUTSIDER state")
-                    null
-                }
             }
-
         } else {
             println("⛔AppState: SWW with VAULT state")
             null
@@ -91,17 +87,17 @@ class VaultState(
     fun signUp(): AppState? {
         println("✅ AppState: Start SignUp")
         val jsonResult = metaSecretCore.signUp()
-        val coreStateModel = MetaSecretCoreStateModel.fromJson(jsonResult)
+        val coreStateModel = AppStateModel.fromJson(jsonResult)
 
         val isSuccess = coreStateModel.success
-        val stateModel = coreStateModel.getState()
+        val vaultInfo = coreStateModel.getVaultState()
 
-        val result: AppState? = if (isSuccess && stateModel == StateType.MEMBER) {
+        val result: AppState? = if (isSuccess && vaultInfo is VaultFullInfo.Member) {
             println("✅ AppState: Current state is MEMBER")
             MemberState()
-        } else if (isSuccess && stateModel == StateType.OUTSIDER) {
+        } else if (isSuccess && vaultInfo is VaultFullInfo.Outsider) {
             println("✅ AppState: Current state is OUTSIDER")
-            OutsiderState()
+            OutsiderState(coreStateModel)
         } else {
             println("⛔AppState: SWW with MEMBER state")
             null
@@ -113,4 +109,4 @@ class VaultState(
 
 class  MemberState : AppState
 
-class  OutsiderState : AppState
+class  OutsiderState(val coreStateModel: AppStateModel) : AppState

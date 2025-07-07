@@ -46,6 +46,7 @@ import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import kotlinproject.composeapp.generated.resources.Res
+import kotlinproject.composeapp.generated.resources.accept_request_on_other_device
 import kotlinproject.composeapp.generated.resources.advice
 import kotlinproject.composeapp.generated.resources.background_logo
 import kotlinproject.composeapp.generated.resources.background_main
@@ -53,8 +54,10 @@ import kotlinproject.composeapp.generated.resources.forward
 import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.nicknameError
 import kotlinproject.composeapp.generated.resources.placeholder
+import kotlinproject.composeapp.generated.resources.reject_join
 import kotlinproject.composeapp.generated.resources.scan
 import kotlinproject.composeapp.generated.resources.start
+import kotlinproject.composeapp.generated.resources.unexpected_login
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -71,26 +74,57 @@ class SignInScreen : Screen {
         val navigator = LocalNavigator.current
         val focusRequester = FocusRequester()
         val focusManager = LocalFocusManager.current
-        val coroutineScope = rememberCoroutineScope()
 
-        var isError by remember { mutableStateOf(false) }
+        var isNameError by remember { mutableStateOf(false) }
+        var isSnackError by remember { mutableStateOf(false) }
         var isFocused by remember { mutableStateOf(false) }
         var isScanning by remember { mutableStateOf(false) }
         var scannedText by remember { mutableStateOf("") }
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
+        val unexpectedLoginStringResource = stringResource(Res.string.unexpected_login)
+        val waitForJoinMessage = stringResource(Res.string.accept_request_on_other_device)
+        val nameErrorMessage = stringResource(Res.string.nicknameError)
+        val rejectedJoinMessage = stringResource(Res.string.reject_join)
 
-        val isSignedIn by viewModel.signInStatus.collectAsState()
-        val showSnackBar by viewModel.showSnackBar.collectAsState()
-        val snackBarMessage by viewModel.snackBarMessage.collectAsState()
-        val isUIBlocked by viewModel.isUIBlocked.collectAsState()
+        val snackBarMessageType by viewModel.snackBarMessage.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
+        val navigationEvent by viewModel.navigationEvent.collectAsState()
 
-        LaunchedEffect(isSignedIn) {
-            if (isSignedIn) {
+        var snackBarMessage: String? = null
+
+        LaunchedEffect(navigationEvent) {
+            if (navigationEvent) {
                 navigator?.push(MainScreen())
             }
+        }
+
+        LaunchedEffect(snackBarMessageType) {
+             when (snackBarMessageType) {
+                SignInSnackMessages.UNEXPECTED_LOGIN_STATE -> {
+                    isSnackError = true
+                    snackBarMessage = unexpectedLoginStringResource
+                }
+                SignInSnackMessages.WAIT_JOIN -> {
+                    isSnackError = false
+                    snackBarMessage = waitForJoinMessage
+                }
+                SignInSnackMessages.INCORRECT_NAME -> {
+                    isNameError = true
+                }
+                SignInSnackMessages.SIGN_IN_ERROR -> {
+                    isSnackError = true
+                    snackBarMessage = unexpectedLoginStringResource
+                }
+                SignInSnackMessages.REJECT -> {
+                    isSnackError = true
+                    snackBarMessage = rejectedJoinMessage
+                }
+                null -> {
+                    snackBarMessage = null
+                }
+             }
         }
 
         Box(
@@ -170,7 +204,7 @@ class SignInScreen : Screen {
                         stringResource(Res.string.scan),
                         color = Color.Transparent,
                         borderColor = AppColors.White50,
-                        isEnabled = !isUIBlocked && !isLoading
+                        isEnabled = !isLoading
                     )
                     if (isScanning) {
                         scanQRCode(
@@ -188,14 +222,14 @@ class SignInScreen : Screen {
                                 text = stringResource(Res.string.placeholder)
                             )
                         },
-                        enabled = !isUIBlocked && !isLoading,
+                        enabled = !isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
                             .border(
                                 width = 2.dp,
                                 color =
-                                    if (isError) {
+                                    if (isNameError) {
                                         AppColors.RedError
                                     } else {
                                         if (isFocused) {
@@ -225,9 +259,9 @@ class SignInScreen : Screen {
                     )
                 }
 
-                if (isError) {
+                if (isNameError) {
                     Text(
-                        text = stringResource(Res.string.nicknameError),
+                        text = nameErrorMessage,
                         color = AppColors.RedError,
                         fontSize = 13.sp,
                         modifier = Modifier
@@ -239,18 +273,10 @@ class SignInScreen : Screen {
                 ClassicButton(
                     {
                         focusManager.clearFocus()
-                        isError = viewModel.isNameError(scannedText)
-                        if (!isError) {
-                            coroutineScope.launch {
-                                val success = viewModel.generateAndSaveMasterKey(scannedText)
-                                if (success) {
-                                    viewModel.completeSignIn()
-                                }
-                            }
-                        }
+                        viewModel.handle(SignInViewEvents.START_SIGN_IN_PROCESS.withData(scannedText))
                     },
                     stringResource(Res.string.forward),
-                    isEnabled = !isUIBlocked && !isLoading
+                    isEnabled = !isLoading
                 )
             }
             
@@ -268,11 +294,11 @@ class SignInScreen : Screen {
                 }
             }
 
-            if (showSnackBar) {
+            if (snackBarMessage != null) {
                 Column {
                     Spacer(modifier = Modifier.height(40.dp))
                     InAppNotification(
-                        isSuccessful = !isError,
+                        isSuccessful = !isSnackError,
                         message = snackBarMessage ?: "",
                         onDismiss = {}
                     )

@@ -63,19 +63,20 @@ class SplashScreen : Screen {
         var errorMessage by remember { mutableStateOf("") }
 
         LaunchedEffect(Unit) {
-            viewModel.onAppear()
+            viewModel.handle(SplashViewEvents.ON_APPEAR)
         }
 
         LaunchedEffect(biometricState) {
-            println("SplashScreen: Biometric error snack bar state: $biometricState")
-            when (val state = biometricState) {
-                is BiometricState.Error -> {
-                    errorMessage = state.message
+            when (biometricState) {
+                is BiometricState.Success -> {
+                    viewModel.handle(SplashViewEvents.BIOMETRIC_SUCCEEDED)
+                }
+                else -> {
+                    errorMessage = biometricError
                     showErrorNotification = true
                     delay(3000)
                     showErrorNotification = false
                 }
-                else -> {}
             }
         }
 

@@ -12,7 +12,7 @@
     <string name = "placeholder">Choose unique nickname</string>
     <string name = "advice">Choose unique nickname - the one you will be using in the future on other devices or log in using the QR code</string>
     <string name = "start">Let's start</string>
-    <string name = "nicknameError">This username contains prohibited characters. Please try a different one.</string>
+    <string name = "nicknameError">This username contains prohibited characters. Or has been already taken Please try a different one.</string>
     <string name = "secretsHeader">Secrets</string>
     <string name = "secret">secret</string>
     <string name = "secretCapital">Secret</string>
@@ -76,4 +76,5 @@
     <string name = "decline">Decline</string>
     <string name = "accept_request_on_other_device">Accept the request on your other device</string>
     <string name = "unexpected_login">"Unexpected loading state"</string>
+    <string name = "reject_join">"Registration denied. You may be connecting to the wrong account."</string>
 </resources>

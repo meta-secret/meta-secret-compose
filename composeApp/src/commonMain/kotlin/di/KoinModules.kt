@@ -9,6 +9,7 @@ import scenes.secretsscreen.SecretsScreenViewModel
 import scenes.signinscreen.SignInScreenViewModel
 import scenes.splashscreen.SplashScreenViewModel
 import sharedData.metaSecretCore.MetaSecretAppManager
+import sharedData.metaSecretCore.MetaSecretAppManagerInterface
 import sharedData.metaSecretCore.MetaSecretSocketHandler
 import sharedData.metaSecretCore.MetaSecretSocketHandlerInterface
 import sharedData.metaSecretCore.MetaSecretStateResolver
@@ -22,9 +23,9 @@ import ui.dialogs.showsecret.ShowSecretViewModel
 
 val appModule = module {
     single<KeyValueStorage> { KeyValueStorageImpl() }
-    single<MetaSecretAppManager> { MetaSecretAppManager(get(), get()) }
+    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get()) }
     single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get()) }
-    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get()) }
+    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get()) }
 
     factory { MainScreenViewModel(get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get()) }
