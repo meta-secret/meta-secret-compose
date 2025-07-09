@@ -80,9 +80,6 @@ class SignInScreenViewModel(
         if (initAppManagerResult()) {
             metaSecretAppManager.getStateModel()?.getAppState()?.let { state ->
                 when (state) {
-                    is State.Local -> {
-                        error("Critical error! Impossible Locale state")
-                    }
                     is State.Vault -> {
                         currentState = when (metaSecretAppManager.getVaultInfoModel()) {
                             is VaultFullInfo.Outsider -> {
@@ -94,6 +91,7 @@ class SignInScreenViewModel(
                             else -> error("Critical error! Impossible state")
                         }
                     }
+                    else -> {}
                 }
             }
         } else {
@@ -103,13 +101,24 @@ class SignInScreenViewModel(
 
     // Resolve all states of the screen
     private suspend fun signInStateResolver() {
-        currentName?.let { name ->
             when (currentState) {
                 SignInStates.IDLE -> println("\uD83D\uDD10 ✅ SignInVM: Waiting for SignUp")
-                SignInStates.START_SIGN_IN -> isNameError(name)
+                SignInStates.START_SIGN_IN -> {
+                    currentName?.let { name ->
+                        isNameError(name)
+                    } ?: run {
+                        currentState = SignInStates.NAME_INCORRECT
+                    }
+                }
                 SignInStates.NAME_INCORRECT -> showErrorSnackBar(SignInSnackMessages.INCORRECT_NAME)
                 SignInStates.NAME_SUCCEEDED -> generateMasterKey()
-                SignInStates.MASTER_KEY_GENERATED -> firstSignUp(name)
+                SignInStates.MASTER_KEY_GENERATED -> {
+                    currentName?.let { name ->
+                        firstSignUp(name)
+                    } ?: run {
+                        currentState = SignInStates.NAME_INCORRECT
+                    }
+                }
                 SignInStates.MASTER_KEY_FAILED -> showErrorSnackBar(SignInSnackMessages.SIGN_IN_ERROR)
                 SignInStates.SIGN_IN_PENDING -> viewModelScope.launch { showPendingState() }
                 SignInStates.SIGN_IN_REJECTED -> showErrorSnackBar(SignInSnackMessages.REJECT)
@@ -118,9 +127,6 @@ class SignInScreenViewModel(
                 null -> showErrorSnackBar(SignInSnackMessages.SIGN_IN_ERROR)
 
             }
-        } ?: run {
-            currentState = SignInStates.NAME_INCORRECT
-        }
     }
 
     private suspend fun showPendingState() {
@@ -246,13 +252,16 @@ class SignInScreenViewModel(
     }
 
     private suspend fun showErrorSnackBar(message: SignInSnackMessages, blockUI: Boolean = false, duration: Long? = 3000) {
-        _snackBarMessage.value = message
-        _isLoading.value = blockUI
-        delay(duration ?: Long.MAX_VALUE)
-        _isLoading.value = false
-        _snackBarMessage.value = null
-
-
+        println("Debug: showErrorSnackBar")
+        withContext(Dispatchers.Main.immediate) {
+            _snackBarMessage.value = message
+            _isLoading.value = blockUI
+        }
+        delay(duration ?: Long.MAX_VALUE) // TODO: Long.MAX_VALUE is freezing the main UI flow
+        withContext(Dispatchers.Main.immediate) {
+            _isLoading.value = false
+            _snackBarMessage.value = null
+        }
     }
 }
 

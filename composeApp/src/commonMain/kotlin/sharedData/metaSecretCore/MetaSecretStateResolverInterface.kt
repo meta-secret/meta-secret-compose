@@ -51,7 +51,7 @@ open class LocalState(
         val stateModel = coreStateModel.getAppState()
         val vaultInfo = coreStateModel.getVaultState()
 
-        val result: VaultState? = if (isSuccess && stateModel is State.Local) {
+        val result: VaultState? = if (isSuccess && stateModel is State.Vault) {
             println("✅ AppState: Current state is VAULT")
             VaultState(metaSecretCore)
         } else if (isSuccess && vaultInfo is VaultFullInfo.Outsider) {

@@ -15,7 +15,7 @@ import models.appInternalModels.SocketRequestModel
 
 class MetaSecretSocketHandler(
     private val metaSecretCore: MetaSecretCoreInterface,
-    private val appManager: MetaSecretAppManager
+    private val appManager: MetaSecretAppManagerInterface
 ): MetaSecretSocketHandlerInterface {
     private val _actionType = MutableStateFlow(SocketActionModel.NONE)
     override val actionType: StateFlow<SocketActionModel> = _actionType

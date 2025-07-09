@@ -46,7 +46,7 @@ class OnboardingViewModel(
                 _currentPage.update { -2 } // TODO: Need to use enum instead of -2 and -1
             }
             AuthState.NOT_YET_COMPLETED -> {
-                println("\uD83D\uDC49 Move to Sign Up")
+                println("\uD83D\uDC49 OnboardingVM: Move to Sign Up")
                 _currentPage.update { -1 } // TODO: Need to use enum instead of -2 and -1
             }
         }

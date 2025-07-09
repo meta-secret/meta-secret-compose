@@ -92,7 +92,7 @@ class SignInScreen : Screen {
         val isLoading by viewModel.isLoading.collectAsState()
         val navigationEvent by viewModel.navigationEvent.collectAsState()
 
-        var snackBarMessage: String? = null
+        var snackBarMessage: String? by remember { mutableStateOf(null) }
 
         LaunchedEffect(navigationEvent) {
             if (navigationEvent) {
@@ -101,12 +101,14 @@ class SignInScreen : Screen {
         }
 
         LaunchedEffect(snackBarMessageType) {
+            println("Debug: snackBarMessageType $snackBarMessageType")
              when (snackBarMessageType) {
                 SignInSnackMessages.UNEXPECTED_LOGIN_STATE -> {
                     isSnackError = true
                     snackBarMessage = unexpectedLoginStringResource
                 }
                 SignInSnackMessages.WAIT_JOIN -> {
+                    println("Debug: waitForJoinMessage $waitForJoinMessage")
                     isSnackError = false
                     snackBarMessage = waitForJoinMessage
                 }
@@ -122,6 +124,7 @@ class SignInScreen : Screen {
                     snackBarMessage = rejectedJoinMessage
                 }
                 null -> {
+                    println("DEBUG: RESET Snackbar")
                     snackBarMessage = null
                 }
              }
@@ -294,6 +297,7 @@ class SignInScreen : Screen {
                 }
             }
 
+            println("DEBUG: snackBarMessage $snackBarMessage")
             if (snackBarMessage != null) {
                 Column {
                     Spacer(modifier = Modifier.height(40.dp))

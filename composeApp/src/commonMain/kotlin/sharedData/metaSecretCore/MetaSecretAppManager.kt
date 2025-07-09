@@ -71,7 +71,10 @@ class MetaSecretAppManager(
             is InitResult.Success -> {
                 when (getStateModel()?.getAppState()) {
                     is State.Vault -> {
-                        return AuthState.COMPLETED
+                        when (getStateModel()?.getVaultState()) {
+                            is VaultFullInfo.Member -> return AuthState.COMPLETED
+                            else -> return AuthState.NOT_YET_COMPLETED
+                        }
                     }
                     else -> {
                         return AuthState.NOT_YET_COMPLETED
