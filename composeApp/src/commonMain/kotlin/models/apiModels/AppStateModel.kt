@@ -89,10 +89,16 @@ enum class UserDataOutsiderStatus {
 }
 
 @Serializable
+data class UserMembership(
+    val member: UserDataMember? = null,
+    val outsider: UserDataOutsider? = null
+)
+
+@Serializable
 data class VaultData(
     val vaultName: String,
-//    val users: HashMap<DeviceId, UserMembership>,
-//    val secrets: HashSet<MetaPasswordId>,
+    val users: Map<String, UserMembership> = emptyMap(),
+    val secrets: List<String> = emptyList(), // Placeholder for secrets structure
 )
 
 @Serializable
@@ -107,10 +113,43 @@ data class VaultMember(
 )
 
 @Serializable
+data class JoinClusterRequest(
+    val candidate: UserData
+)
+
+@Serializable 
+data class VaultRequest(
+    val joinCluster: JoinClusterRequest? = null
+)
+
+@Serializable
+data class VaultEvents(
+    val requests: List<VaultRequest> = emptyList(),
+    val updates: List<String> = emptyList() // Placeholder for updates structure
+) {
+    fun hasJoinRequests(): Boolean {
+        return requests.any { it.joinCluster != null }
+    }
+    
+    fun getJoinRequests(): List<JoinClusterRequest> {
+        return requests.mapNotNull { it.joinCluster }
+    }
+
+    fun getJoinRequestsCount(): Int {
+        return getJoinRequests().size
+    }
+}
+
+@Serializable
+data class SsClaims(
+    val claims: Map<String, String> = emptyMap()
+)
+
+@Serializable
 data class UserMemberFullInfo(
     val member: VaultMember,
-//    val ss_claims: SsLogData,
-//    val vault_events: VaultActionEvents,
+    val ssClaims: SsClaims? = null,
+    val vaultEvents: VaultEvents? = null,
 )
 
 @Serializable
@@ -187,6 +226,17 @@ data class AppStateModel(
             is VaultFullInfo.Outsider -> vaultInfo.outsider.status
             else -> null
         }
+    }
+
+    fun getVaultEvents(): VaultEvents? {
+        return when (val vaultInfo = getVaultState()) {
+            is VaultFullInfo.Member -> vaultInfo.member.vaultEvents
+            else -> null
+        }
+    }
+
+    fun getJoinRequestsCount(): Int {
+        return getVaultEvents()?.getJoinRequestsCount() ?: 0
     }
 
     companion object {

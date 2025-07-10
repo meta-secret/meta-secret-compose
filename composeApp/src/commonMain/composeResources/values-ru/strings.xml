@@ -72,6 +72,8 @@
     <string name = "biometric_permission_required">Требуется разрешение на использование биометрии</string>
     <string name = "biometric_permission_settings">Пожалуйста, предоставьте доступ в настройках</string>
     <string name = "join_request_title">Добавить устройство в вашу сеть?</string>
+    <string name = "you_have">У вас </string>
+    <string name = "join_requests"> запросов на присоединение </string>
     <string name = "accept">Принять</string>
     <string name = "decline">Отклонить</string>
     <string name = "accept_request_on_other_device">Примите запрос на другом вашем девайсе</string>

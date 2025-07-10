@@ -27,7 +27,9 @@ import kotlinproject.composeapp.generated.resources.accept
 import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.decline
 import kotlinproject.composeapp.generated.resources.join_request_title
+import kotlinproject.composeapp.generated.resources.join_requests
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
+import kotlinproject.composeapp.generated.resources.you_have
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -37,6 +39,7 @@ import ui.ClassicButton
 
 @Composable
 fun JoinRequestDialog(
+    requestsCount: Int,
     onAccept: () -> Unit,
     onDecline: () -> Unit
 ) {
@@ -86,6 +89,16 @@ fun JoinRequestDialog(
                         text = stringResource(Res.string.join_request_title),
                         fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
                         fontSize = 22.sp,
+                        color = AppColors.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+
+                    val text = "${stringResource(Res.string.you_have)} $requestsCount ${stringResource(Res.string.join_requests)}"
+                    Text(
+                        text = text,
+                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        fontSize = 14.sp,
                         color = AppColors.White,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 16.dp)

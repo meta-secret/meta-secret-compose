@@ -3,6 +3,9 @@ package sharedData
 import kotlinx.cinterop.ExperimentalForeignApi
 import sharedData.metaSecretCore.MetaSecretCoreInterface
 import com.metaSecret.ios.SwiftBridge
+import models.apiModels.UserData
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalForeignApi::class)
 class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
@@ -77,30 +80,16 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
             throw e
         }
     }
-    
-    @OptIn(ExperimentalForeignApi::class)
-    override fun acceptJoinRequest(): String {
+
+    override fun updateMembership(candidate: UserData, actionUpdate: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling acceptJoinRequest")
-//            val result = swiftBridge.acceptJoinRequest()
-            println("\uF8FF ✅ iOS: acceptJoinRequest: result")
-            return "result"
+            println("\uF8FF ✅ iOS: Calling updateMembership")
+            val userDataJson = Json.encodeToString(candidate)
+            val result = swiftBridge.updateMembership(userDataJson, actionUpdate)
+            println("\uF8FF ✅ iOS: SignUp result: $result")
+            return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: acceptJoinRequest error: ${e.message}")
-            e.printStackTrace()
-            throw e
-        }
-    }
-    
-    @OptIn(ExperimentalForeignApi::class)
-    override fun declineJoinRequest(): String {
-        try {
-            println("\uF8FF ✅ iOS: Calling declineJoinRequest")
-//            val result = swiftBridge.declineJoinRequest()
-            println("\uF8FF ✅ iOS: declineJoinRequest: result")
-            return "result"
-        } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: declineJoinRequest error: ${e.message}")
+            println("\uF8FF ⛔ iOS: SignUp error: ${e.message}")
             e.printStackTrace()
             throw e
         }

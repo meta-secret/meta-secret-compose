@@ -4,7 +4,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.apiModels.AppStateModel
+import models.apiModels.JoinClusterRequest
 import models.apiModels.State
+import models.apiModels.VaultEvents
 import models.apiModels.VaultFullInfo
 import sharedData.KeyChainInterface
 
@@ -58,10 +60,52 @@ class MetaSecretAppManager(
         val stateJson = metaSecretCore.getAppState()
         return try {
             val currentState = AppStateModel.fromJson(stateJson)
-            println("\uD83D\uDEE0\uFE0F AppManager: vaultInfo is $currentState")
-            currentState.getVaultState()
+            val vaultState = currentState.getVaultState()
+            println("\uD83D\uDEE0\uFE0F AppManager: vaultInfo is $vaultState")
+            vaultState
         } catch (e: Exception) {
             println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse vaultInfo JSON: ${e.message}")
+            null
+        }
+    }
+
+    override fun getVaultEventsModel(): VaultEvents? {
+        val stateJson = metaSecretCore.getAppState()
+        return try {
+            val currentState = AppStateModel.fromJson(stateJson)
+            val vaultEvents = currentState.getVaultEvents()
+            println("\uD83D\uDEE0\uFE0F AppManager: vaultEvents is $vaultEvents")
+            vaultEvents
+        } catch (e: Exception) {
+            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse vaultEvents JSON: ${e.message}")
+            null
+        }
+    }
+
+    override fun getJoinRequestsCount(): Int? {
+        val stateJson = metaSecretCore.getAppState()
+        return try {
+            val currentState = AppStateModel.fromJson(stateJson)
+            val vaultEvents = currentState.getVaultEvents()
+            val requestsCount = vaultEvents?.getJoinRequestsCount()
+            println("\uD83D\uDEE0\uFE0F AppManager: requestsCount is $requestsCount")
+            requestsCount
+        } catch (e: Exception) {
+            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse requestsCount JSON: ${e.message}")
+            null
+        }
+    }
+
+    override fun getJoinRequestsCandidate(): List<JoinClusterRequest>? {
+        val stateJson = metaSecretCore.getAppState()
+        return try {
+            val currentState = AppStateModel.fromJson(stateJson)
+            val vaultEvents = currentState.getVaultEvents()
+            val requests = vaultEvents?.getJoinRequests()
+            println("\uD83D\uDEE0\uFE0F AppManager: getJoinRequests is $requests")
+            requests
+        } catch (e: Exception) {
+            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse getJoinRequests JSON: ${e.message}")
             null
         }
     }

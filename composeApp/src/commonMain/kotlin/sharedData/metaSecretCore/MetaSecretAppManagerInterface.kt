@@ -1,6 +1,8 @@
 package sharedData.metaSecretCore
 
 import models.apiModels.AppStateModel
+import models.apiModels.JoinClusterRequest
+import models.apiModels.VaultEvents
 import models.apiModels.VaultFullInfo
 
 interface MetaSecretAppManagerInterface {
@@ -9,4 +11,7 @@ interface MetaSecretAppManagerInterface {
 
     fun getStateModel(): AppStateModel?
     fun getVaultInfoModel(): VaultFullInfo?
+    fun getVaultEventsModel(): VaultEvents?
+    fun getJoinRequestsCount(): Int?
+    fun getJoinRequestsCandidate(): List<JoinClusterRequest>?
 }

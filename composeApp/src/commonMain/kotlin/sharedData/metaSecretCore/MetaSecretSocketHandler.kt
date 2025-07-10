@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import models.apiModels.AppStateModel
+import models.apiModels.JoinClusterRequest
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 
@@ -73,9 +74,10 @@ class MetaSecretSocketHandler(
 
             if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
                 val state = appManager.getStateModel()
-                println("✅\uD83D\uDD0C Socket: $state")
+                val hasJoinRequests = state?.getVaultEvents()?.hasJoinRequests() == true
+                println("✅\uD83D\uDD0C Socket: AppState is $state, hasJoinRequest is $hasJoinRequests")
 
-                if (1 != 1) { // TODO: Need to check state for claims
+                if (state?.success == true && hasJoinRequests) {
                     println("\uD83D\uDD0C ✅Socket: Need to show Ask to join pop up")
                     _actionType.value = SocketActionModel.ASK_TO_JOIN
                 }

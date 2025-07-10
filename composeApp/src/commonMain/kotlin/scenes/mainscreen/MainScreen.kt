@@ -39,7 +39,7 @@ class MainScreen : Screen {
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         val selectedTabIndex by TabStateHolder.selectedTabIndex
         val tabSize = getScreenWidth() / tabs.size
-        val showJoinRequestDialog by viewModel.showJoinRequestDialog.collectAsState()
+        val joinRequestsCount by viewModel.joinRequestsCount.collectAsState()
 
         TabNavigator(tabs[selectedTabIndex]) {
             val tabNavigator = LocalTabNavigator.current
@@ -72,7 +72,7 @@ class MainScreen : Screen {
                                         .background(AppColors.TabBar),
                                     selected = selectedTabIndex == index,
                                     onClick = {
-                                        viewModel.setTabIndex(index)
+                                        viewModel.handle(MainViewEvents.SetTabIndex(index))
                                         tabNavigator.current = tab
                                     },
                                     icon = {
@@ -100,15 +100,14 @@ class MainScreen : Screen {
                 Box(modifier = Modifier.fillMaxSize()) {
                     CurrentTab()
                     
-                    if (showJoinRequestDialog) {
+                    if (joinRequestsCount != null) {
                         JoinRequestDialog(
+                            joinRequestsCount!!,
                             onAccept = {
-                                viewModel.hideJoinRequestDialog()
-                                viewModel.acceptJoinRequest()
+                                viewModel.handle(MainViewEvents.AcceptJoinRequest)
                             },
                             onDecline = {
-                                viewModel.hideJoinRequestDialog()
-                                viewModel.declineJoinRequest()
+                                viewModel.handle(MainViewEvents.DeclineJoinRequest)
                             }
                         )
                     }
