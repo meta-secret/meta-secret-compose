@@ -67,6 +67,7 @@ class SplashScreen : Screen {
         }
 
         LaunchedEffect(biometricState) {
+            println("Debug: biometric State $biometricState")
             when (biometricState) {
                 is BiometricState.Success -> {
                     viewModel.handle(SplashViewEvents.BIOMETRIC_SUCCEEDED)

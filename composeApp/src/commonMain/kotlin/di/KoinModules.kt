@@ -27,7 +27,7 @@ val appModule = module {
     single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get()) }
     single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get()) }
 
-    factory { MainScreenViewModel(get(), get()) }
+    factory { MainScreenViewModel(get(), get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get()) }

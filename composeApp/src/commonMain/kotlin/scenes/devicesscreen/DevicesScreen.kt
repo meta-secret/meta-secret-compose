@@ -23,7 +23,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import ui.AddButton
 import ui.dialogs.adddevice.addingDevice
 import ui.dialogs.adddevice.popUpDevice
-import ui.notifications.warningContent
 import ui.screenContent.CommonBackground
 import ui.screenContent.DeviceContent
 
@@ -36,15 +35,6 @@ class DevicesScreen : Screen {
         var isMainDialogVisible by remember { mutableStateOf(false) }
 
         CommonBackground(Res.string.devicesList) {
-            warningContent(
-                text = viewModel.getWarningText(devicesCount),
-                addingDevice = {
-                    isDialogVisible = true
-                    viewModel.changeWarningVisibilityTo(false)
-                },
-                closeAction = { viewModel.changeWarningVisibilityTo(false) },
-                devicesCount
-            )
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()

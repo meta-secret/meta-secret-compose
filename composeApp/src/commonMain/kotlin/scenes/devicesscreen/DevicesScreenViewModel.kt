@@ -15,11 +15,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import org.jetbrains.compose.resources.stringResource
-import sharedData.AppColors
 import storage.Device
 import storage.KeyValueStorage
-import ui.WarningStateHolder
 
 class DevicesScreenViewModel(
     private val keyValueStorage: KeyValueStorage
@@ -50,23 +47,5 @@ class DevicesScreenViewModel(
 
     fun getNickName(): String? {
         return keyValueStorage.signInInfo?.username
-    }
-
-    fun changeWarningVisibilityTo(state: Boolean) {
-        WarningStateHolder.setVisibility(state)
-    }
-
-    @Composable
-    fun getWarningText(devicesCount: Int): AnnotatedString {
-        return buildAnnotatedString {
-            append(stringResource(Res.string.lackOfDevices_start))
-            append((3 - devicesCount).toString())
-            append(stringResource(Res.string.lackOfDevices_end))
-            pushStringAnnotation(tag = "addText", annotation = "")
-            withStyle(style = SpanStyle(color = AppColors.ActionLink)) {
-                append(stringResource(Res.string.addText))
-            }
-            pop()
-        }
     }
 }

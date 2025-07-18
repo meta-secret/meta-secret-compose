@@ -51,7 +51,6 @@ import sharedData.actualHeightFactor
 import ui.AddButton
 import ui.dialogs.addsecret.addSecret
 import ui.notifications.InAppNotification
-import ui.notifications.warningContent
 import ui.screenContent.CommonBackground
 import ui.screenContent.SecretsContent
 
@@ -59,29 +58,21 @@ class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: SecretsScreenViewModel = koinViewModel()
-        val devicesCount by viewModel.devicesCount.collectAsState()
         val secretsCount by viewModel.secretsCount.collectAsState()
         var previousCount by remember { mutableStateOf(secretsCount) }
         val secretsList by viewModel.secrets.collectAsState()
         var isDialogVisible by remember { mutableStateOf(false) }
-        var isRedirected by remember { mutableStateOf(false) }
+        val isRedirected by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
             previousCount = secretsCount
         }
         if (isRedirected) {
-            viewModel.changeWarningVisibilityTo(false)
             LocalTabNavigator.current.current = DevicesTab
             viewModel.setTabIndex(1)
         }
 
         CommonBackground(Res.string.secretsHeader) {
-            warningContent(
-                text = viewModel.getWarningText(devicesCount),
-                addingDevice = { isRedirected = true },
-                closeAction = { viewModel.changeWarningVisibilityTo(false) },
-                devicesCount
-            )
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()

@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -30,18 +28,13 @@ import kotlinproject.composeapp.generated.resources.warning
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import sharedData.AppColors
-import ui.WarningStateHolder.isWarningVisible
 
 @Composable
 fun warningContent(
     text: AnnotatedString,
-    addingDevice: () -> Unit,
-    closeAction: () -> Unit,
-    devicesCount: Int
+    mainAction: () -> Unit?,
+    closeAction: () -> Unit
 ) {
-    val isWarningVisible by isWarningVisible.collectAsState()
-
-    if (!isWarningVisible || devicesCount >= 3) return
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -73,7 +66,7 @@ fun warningContent(
                     text.getStringAnnotations("addText", offset, offset)
                         .firstOrNull()
                         ?.let {
-                            addingDevice()
+                            mainAction()
                         }
                 },
                 modifier = Modifier
@@ -83,8 +76,8 @@ fun warningContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
-                .padding(end = 5.dp)
+                .padding(top = 12.dp)
+                .padding(end = 12.dp)
         ) {
             Image(
                 painter = painterResource(Res.drawable.close),

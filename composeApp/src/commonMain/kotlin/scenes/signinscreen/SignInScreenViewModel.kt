@@ -252,7 +252,6 @@ class SignInScreenViewModel(
     }
 
     private suspend fun showErrorSnackBar(message: SignInSnackMessages, blockUI: Boolean = false, duration: Long? = 3000) {
-        println("Debug: showErrorSnackBar")
         withContext(Dispatchers.Main.immediate) {
             _snackBarMessage.value = message
             _isLoading.value = blockUI

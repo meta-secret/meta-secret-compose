@@ -10,10 +10,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.addText
 import kotlinproject.composeapp.generated.resources.fromAllDevices
-import kotlinproject.composeapp.generated.resources.lackOfDevices_end
-import kotlinproject.composeapp.generated.resources.lackOfDevices_start
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.removeSecretConfirmation
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,7 +24,6 @@ import storage.Device
 import storage.KeyValueStorage
 import storage.Secret
 import ui.TabStateHolder
-import ui.WarningStateHolder
 
 class SecretsScreenViewModel(
     keyValueStorage: KeyValueStorage
@@ -51,26 +47,8 @@ class SecretsScreenViewModel(
         return secretsList.value[index]
     }
 
-    fun changeWarningVisibilityTo(state: Boolean) {
-        WarningStateHolder.setVisibility(state)
-    }
-
     fun setTabIndex(index: Int) {
         TabStateHolder.setTabIndex(index)
-    }
-
-    @Composable
-    fun getWarningText(devicesCount: Int): AnnotatedString {
-        return buildAnnotatedString {
-            append(stringResource(Res.string.lackOfDevices_start))
-            append((3 - devicesCount).toString())
-            append(stringResource(Res.string.lackOfDevices_end))
-            pushStringAnnotation(tag = "addText", annotation = "")
-            withStyle(style = SpanStyle(color = AppColors.ActionLink)) {
-                append(stringResource(Res.string.addText))
-            }
-            pop()
-        }
     }
 
     @Composable

@@ -2,6 +2,9 @@ package sharedData
 
 import com.metasecret.core.MetaSecretNative
 import android.content.Context
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import models.apiModels.UserData
 import org.koin.java.KoinJavaComponent.inject
 import sharedData.metaSecretCore.MetaSecretCoreInterface
 import java.io.File
@@ -86,39 +89,28 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
             throw e
         }
     }
-    
-    override fun acceptJoinRequest(): String {
+
+    override fun updateMembership(candidate: UserData, actionUpdate: String): String {
         try {
-            println("✅ Calling Android acceptJoinRequest")
-//            val result = MetaSecretNative.acceptJoinRequest()
-            println("✅ App Android acceptJoinRequest: result")
-            return "result"
+            println("\uF8FF ✅ Android: Calling updateMembership")
+            val userDataJson = Json.encodeToString(candidate)
+            val result = MetaSecretNative.updateMembership(userDataJson, actionUpdate)
+            println("\uF8FF ✅ Android: updateMembership result: $result")
+            return result
         } catch (e: Exception) {
-            println("⛔ AppManager Android acceptJoinRequest error: ${e.message}")
+            println("\uF8FF ⛔ Android: updateMembership error: ${e.message}")
             e.printStackTrace()
             throw e
         }
     }
-    
-    override fun declineJoinRequest(): String {
-        try {
-            println("✅ Calling Android declineJoinRequest")
-//            val result = MetaSecretNative.declineJoinRequest()
-            println("✅ App Android declineJoinRequest: result")
-            return "result"
-        } catch (e: Exception) {
-            println("⛔ AppManager Android declineJoinRequest error: ${e.message}")
-            e.printStackTrace()
-            throw e
-        }
-    }
-    
+
     private fun cleanDB() {
         println("CLEAN DB (Android)")
         try {
             val dbFile = File(context.getDatabasePath("meta-secret.db").path)
             if (dbFile.exists()) {
                 val deleted = dbFile.delete()
+                MetaSecretNative.cleanUpDatabase()
                 println("✅ DB file deleted: $deleted")
             } else {
                 println("✅ DB file does not exist")
