@@ -1,51 +1,75 @@
 package scenes.devicesscreen
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.addText
-import kotlinproject.composeapp.generated.resources.lackOfDevices_end
-import kotlinproject.composeapp.generated.resources.lackOfDevices_start
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import storage.Device
-import storage.KeyValueStorage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import models.apiModels.UserStatus
+import models.appInternalModels.DeviceCellModel
+import models.appInternalModels.DeviceStatus
+import scenes.common.CommonViewModel
+import scenes.common.CommonViewModelEventsInterface
+import sharedData.metaSecretCore.MetaSecretAppManagerInterface
 
 class DevicesScreenViewModel(
-    private val keyValueStorage: KeyValueStorage
-) : ViewModel() {
+    private val appManager: MetaSecretAppManagerInterface
+) : ViewModel(), CommonViewModel {
 
-    private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData
-        .stateIn(
-            viewModelScope, SharingStarted.Lazily, emptyList()
-        )
+    private val _devicesList = MutableStateFlow<List<DeviceCellModel>>(emptyList())
+    val devicesList = _devicesList.asStateFlow()
 
-    val devicesCount: StateFlow<Int> = devicesList.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+    private val _vaultName = MutableStateFlow<String?>(null)
+    val vaultName = _vaultName.asStateFlow()
+    
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
 
-    val secretsCount: StateFlow<Int> = keyValueStorage.secretData.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
-
-    fun getDevice(index: Int): Device {
-        return devicesList.value[index]
+    override fun handle(event: CommonViewModelEventsInterface) {
+        if (event is DeviceViewEvents) {
+            when (event) {
+                DeviceViewEvents.ON_APPEAR -> onAppear()
+            }
+        }
     }
 
-    fun addDevice(device: Device) {
-        keyValueStorage.addDevice(device)
+    private fun onAppear() {
+        loadDevicesList()
     }
 
-    fun removeDevice() {
-        keyValueStorage.removeDevice(0) //TODO
-    }
+    private fun loadDevicesList() {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
 
-    fun getNickName(): String? {
-        return keyValueStorage.signInInfo?.username
+                val vaultSummary = withContext(Dispatchers.Default) {
+                    appManager.getVaultSummary()
+                }
+
+                val devices = vaultSummary?.users?.map { (_, userInfo) ->
+                    DeviceCellModel(
+                        status = when (userInfo.status) {
+                            UserStatus.MEMBER -> DeviceStatus.Member
+                            UserStatus.PENDING -> DeviceStatus.Pending
+                            else -> DeviceStatus.Unknown
+                        },
+                        secretsCount = vaultSummary.secretsCount,
+                        devicesCount = vaultSummary.users.size,
+                        deviceName = vaultSummary.vaultName
+                    )
+                } ?: emptyList()
+
+                _devicesList.value = devices
+                _vaultName.value = vaultSummary?.vaultName
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
+}
+
+enum class DeviceViewEvents: CommonViewModelEventsInterface {
+    ON_APPEAR
 }

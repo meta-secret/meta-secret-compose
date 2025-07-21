@@ -10,7 +10,6 @@ import models.apiModels.MasterKeyModel
 import sharedData.KeyChainInterface
 import storage.KeyValueStorage
 import sharedData.metaSecretCore.InitResult
-import sharedData.metaSecretCore.MetaSecretAppManager
 import sharedData.metaSecretCore.MetaSecretCoreInterface
 import sharedData.metaSecretCore.MetaSecretStateResolverInterface
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +23,6 @@ import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 import scenes.common.CommonViewModel
 import scenes.common.CommonViewModelEventsInterface
-import scenes.splashscreen.navigate
 import sharedData.metaSecretCore.MemberState
 import sharedData.metaSecretCore.MetaSecretAppManagerInterface
 import sharedData.metaSecretCore.MetaSecretSocketHandlerInterface
@@ -81,7 +79,7 @@ class SignInScreenViewModel(
             metaSecretAppManager.getStateModel()?.getAppState()?.let { state ->
                 when (state) {
                     is State.Vault -> {
-                        currentState = when (metaSecretAppManager.getVaultInfoModel()) {
+                        currentState = when (metaSecretAppManager.getVaultFullInfoModel()) {
                             is VaultFullInfo.Outsider -> {
                                 SignInStates.SIGN_IN_PENDING
                             }
@@ -233,7 +231,7 @@ class SignInScreenViewModel(
             when (metaSecretAppManager.initWithSavedKey()) {
                 is InitResult.Success -> {
                     val appState = metaSecretAppManager.getStateModel()
-                    val vaultState = appState?.getVaultState()
+                    val vaultState = appState?.getVaultFullInfo()
                     val outsiderState = appState?.getOutsiderStatus()
 
                     if ( vaultState is VaultFullInfo.Outsider && outsiderState == UserDataOutsiderStatus.PENDING) {

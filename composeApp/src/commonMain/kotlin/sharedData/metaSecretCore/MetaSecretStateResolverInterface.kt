@@ -49,7 +49,7 @@ open class LocalState(
 
         val isSuccess = coreStateModel.success
         val stateModel = coreStateModel.getAppState()
-        val vaultInfo = coreStateModel.getVaultState()
+        val vaultInfo = coreStateModel.getVaultFullInfo()
 
         val result: VaultState? = if (isSuccess && stateModel is State.Vault) {
             println("✅ AppState: Current state is VAULT")
@@ -90,7 +90,7 @@ class VaultState(
         val coreStateModel = AppStateModel.fromJson(jsonResult)
 
         val isSuccess = coreStateModel.success
-        val vaultInfo = coreStateModel.getVaultState()
+        val vaultInfo = coreStateModel.getVaultFullInfo()
 
         val result: AppState? = if (isSuccess && vaultInfo is VaultFullInfo.Member) {
             println("✅ AppState: Current state is MEMBER")

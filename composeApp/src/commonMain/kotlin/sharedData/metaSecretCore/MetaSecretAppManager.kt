@@ -8,6 +8,7 @@ import models.apiModels.JoinClusterRequest
 import models.apiModels.State
 import models.apiModels.VaultEvents
 import models.apiModels.VaultFullInfo
+import models.apiModels.VaultSummary
 import sharedData.KeyChainInterface
 
 sealed class InitResult {
@@ -56,11 +57,11 @@ class MetaSecretAppManager(
         }
     }
 
-    override fun getVaultInfoModel(): VaultFullInfo? {
+    override fun getVaultFullInfoModel(): VaultFullInfo? {
         val stateJson = metaSecretCore.getAppState()
         return try {
             val currentState = AppStateModel.fromJson(stateJson)
-            val vaultState = currentState.getVaultState()
+            val vaultState = currentState.getVaultFullInfo()
             println("\uD83D\uDEE0\uFE0F AppManager: vaultInfo is $vaultState")
             vaultState
         } catch (e: Exception) {
@@ -110,12 +111,25 @@ class MetaSecretAppManager(
         }
     }
 
+    override fun getVaultSummary(): VaultSummary? {
+        val stateJson = metaSecretCore.getAppState()
+        return try {
+            val currentState = AppStateModel.fromJson(stateJson)
+            val vaultSummary = currentState.getVaultSummary()
+            println("\uD83D\uDEE0\uFE0F AppManager: vaultSummary is $vaultSummary")
+            vaultSummary
+        } catch (e: Exception) {
+            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse vaultSummary JSON: ${e.message}")
+            null
+        }
+    }
+
     override suspend fun checkAuth(): AuthState {
         return when (initWithSavedKey()) {
             is InitResult.Success -> {
                 when (getStateModel()?.getAppState()) {
                     is State.Vault -> {
-                        when (getStateModel()?.getVaultState()) {
+                        when (getStateModel()?.getVaultFullInfo()) {
                             is VaultFullInfo.Member -> return AuthState.COMPLETED
                             else -> return AuthState.NOT_YET_COMPLETED
                         }

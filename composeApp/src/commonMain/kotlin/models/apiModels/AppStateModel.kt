@@ -214,7 +214,7 @@ data class AppStateModel(
         return message?.state
     }
 
-    fun getVaultState(): VaultFullInfo? {
+    fun getVaultFullInfo(): VaultFullInfo? {
         return when (val state = getAppState()) {
             is State.Vault -> state.vault
             else -> null
@@ -222,14 +222,14 @@ data class AppStateModel(
     }
 
     fun getOutsiderStatus(): UserDataOutsiderStatus? {
-        return when (val vaultInfo = getVaultState()) {
+        return when (val vaultInfo = getVaultFullInfo()) {
             is VaultFullInfo.Outsider -> vaultInfo.outsider.status
             else -> null
         }
     }
 
     fun getVaultEvents(): VaultEvents? {
-        return when (val vaultInfo = getVaultState()) {
+        return when (val vaultInfo = getVaultFullInfo()) {
             is VaultFullInfo.Member -> vaultInfo.member.vaultEvents
             else -> null
         }
@@ -237,6 +237,41 @@ data class AppStateModel(
 
     fun getJoinRequestsCount(): Int {
         return getVaultEvents()?.getJoinRequestsCount() ?: 0
+    }
+
+    fun getVaultSummary(): VaultSummary? {
+        val vaultInfo = getVaultFullInfo() ?: return null
+        
+        return when (vaultInfo) {
+            is VaultFullInfo.Member -> {
+                val vaultData = vaultInfo.member.member.vault
+                val users = mutableMapOf<String, UserInfo>()
+                
+                vaultData.users.forEach { (deviceId, membership) ->
+                    val status = when {
+                        membership.member != null -> UserStatus.MEMBER
+                        membership.outsider?.status == UserDataOutsiderStatus.PENDING -> UserStatus.PENDING
+                        membership.outsider?.status == UserDataOutsiderStatus.DECLINED -> UserStatus.DECLINED
+                        else -> UserStatus.NON_MEMBER
+                    }
+                    
+                    val deviceName = when {
+                        membership.member != null -> membership.member.userData.device.deviceName
+                        membership.outsider != null -> membership.outsider.userData.device.deviceName
+                        else -> ""
+                    }
+                    
+                    users[deviceId] = UserInfo(deviceName, status)
+                }
+                
+                VaultSummary(
+                    vaultName = vaultData.vaultName,
+                    secretsCount = vaultData.secrets.size,
+                    users = users
+                )
+            }
+            else -> null
+        }
     }
 
     companion object {
@@ -251,3 +286,26 @@ data class AppStateModel(
         }
     }
 }
+
+@Serializable
+enum class UserStatus {
+    @SerialName("member")
+    MEMBER,
+    @SerialName("pending")
+    PENDING,
+    @SerialName("declined")
+    DECLINED,
+    @SerialName("nonMember")
+    NON_MEMBER
+}
+
+data class UserInfo(
+    val deviceName: String,
+    val status: UserStatus
+)
+
+data class VaultSummary(
+    val vaultName: String,
+    val secretsCount: Int,
+    val users: Map<String, UserInfo>
+)
