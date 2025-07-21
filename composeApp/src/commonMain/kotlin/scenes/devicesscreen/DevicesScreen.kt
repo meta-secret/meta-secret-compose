@@ -25,10 +25,12 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.devicesList
+import models.appInternalModels.DeviceStatus
 import org.koin.compose.viewmodel.koinViewModel
 import sharedData.AppColors
 import ui.AddButton
 import ui.dialogs.adddevice.addingDevice
+import ui.dialogs.adddevice.joinDevice
 import ui.dialogs.adddevice.popUpDevice
 import ui.screenContent.CommonBackground
 import ui.screenContent.DeviceContent
@@ -42,9 +44,10 @@ class DevicesScreen : Screen {
         
         var isDialogVisible by remember { mutableStateOf(false) }
         var isMainDialogVisible by remember { mutableStateOf(false) }
+        var isJoinRequestVisible by remember { mutableStateOf(false) }
         
         LaunchedEffect(Unit) {
-            viewModel.handle(DeviceViewEvents.ON_APPEAR)
+            viewModel.handle(DeviceViewEvents.OnAppear)
         }
 
         CommonBackground(Res.string.devicesList) {
@@ -62,7 +65,15 @@ class DevicesScreen : Screen {
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         items(devices) { device ->
-                            DeviceContent(device)
+                            DeviceContent(
+                                device,
+                                onClick = {
+                                    if (device.status != DeviceStatus.Member) {
+                                        viewModel.handle(DeviceViewEvents.SelectDevice(device.id))
+                                        isJoinRequestVisible = true
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -99,6 +110,34 @@ class DevicesScreen : Screen {
             )
         ) {
             addingDevice ({ isMainDialogVisible = it}, viewModel.vaultName.value ?: "")
+        }
+        AnimatedVisibility(
+            visible = isJoinRequestVisible,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(durationMillis = 1500)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(durationMillis = 1000)
+            )
+        ) {
+            joinDevice(
+                onDismiss = {
+                    if (it != null) {
+                        val action = if (it) {
+                            DeviceViewEvents.Accept
+                        } else {
+                            DeviceViewEvents.Decline
+                        }
+
+                        viewModel.handle(action)
+                        isJoinRequestVisible = false
+                    } else {
+                        viewModel.handle(DeviceViewEvents.SelectDevice(null))
+                    }
+                }
+            )
         }
     }
 }

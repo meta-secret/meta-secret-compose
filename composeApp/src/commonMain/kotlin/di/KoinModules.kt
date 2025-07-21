@@ -32,7 +32,7 @@ val appModule = module {
     factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get()) }
     factory { ProfileScreenViewModel(get()) }
-    factory { DevicesScreenViewModel(get()) }
+    factory { DevicesScreenViewModel(get(), get()) }
     factory { SecretsScreenViewModel(get()) }
     factory { AddSecretViewModel(get()) }
     factory { RemoveSecretViewModel(get()) }

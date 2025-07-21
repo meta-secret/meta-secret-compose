@@ -1,6 +1,7 @@
 package models.appInternalModels
 
 data class DeviceCellModel(
+    val id: String,
     val status: DeviceStatus,
     val secretsCount: Int,
     val devicesCount: Int,

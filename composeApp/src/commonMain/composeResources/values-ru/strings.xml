@@ -80,4 +80,5 @@
     <string name = "unexpected_login">"Неизвестная ошибка при логине"</string>
     <string name = "reject_join">"Отказанов регистрации. Возможно вы присоединяетесь не к своему аккаунту."</string>
     <string name = "goto_devices_tab">Перейдите во вкладку Устройства и добавьте необходимые в вашу сеть</string>
+    <string name = "wanna_join">Вы хотитет добавить это устройство?</string>
 </resources>

@@ -14,11 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -27,7 +22,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.arrow
 import kotlinproject.composeapp.generated.resources.devices
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
@@ -40,14 +34,14 @@ import models.appInternalModels.DeviceStatus
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-import scenes.devicesscreen.DevicesScreenViewModel
 import sharedData.AppColors
-import sharedData.getDeviceId
 import ui.SwipeableItem
 
 @Composable
-fun DeviceContent(model: DeviceCellModel) {
+fun DeviceContent(
+    model: DeviceCellModel,
+    onClick: ()-> Unit
+) {
     val secretText = when {
         model.secretsCount == 0 || model.secretsCount > 4 -> stringResource(Res.string.secrets_5)
         model.secretsCount in 2..4 -> stringResource(Res.string.secrets_4)
@@ -65,7 +59,7 @@ fun DeviceContent(model: DeviceCellModel) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     .background(AppColors.White5, RoundedCornerShape(12.dp)).height(96.dp)
                     .clickable {
-                        // TODO: Show alert or anything else do decline or accept
+                        onClick()
                     }
             ) {
                 Row(
@@ -98,7 +92,7 @@ fun DeviceContent(model: DeviceCellModel) {
                                 color = when (model.status) {
                                     DeviceStatus.Member -> AppColors.White30
                                     DeviceStatus.Pending -> AppColors.Warning
-                                    DeviceStatus.Unknown -> AppColors.White50
+                                    DeviceStatus.Unknown -> AppColors.RedError
                                 }
                             )
                         )

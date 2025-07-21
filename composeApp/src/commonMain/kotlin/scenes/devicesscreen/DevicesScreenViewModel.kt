@@ -7,14 +7,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import models.apiModels.UserStatus
 import models.appInternalModels.DeviceCellModel
 import models.appInternalModels.DeviceStatus
+import models.appInternalModels.SocketActionModel
+import models.appInternalModels.SocketRequestModel
+import models.appInternalModels.UpdateMemberActionModel
 import scenes.common.CommonViewModel
 import scenes.common.CommonViewModelEventsInterface
 import sharedData.metaSecretCore.MetaSecretAppManagerInterface
+import sharedData.metaSecretCore.MetaSecretSocketHandlerInterface
 
 class DevicesScreenViewModel(
+    private val socketHandler: MetaSecretSocketHandlerInterface,
     private val appManager: MetaSecretAppManagerInterface
 ) : ViewModel(), CommonViewModel {
 
@@ -27,10 +33,32 @@ class DevicesScreenViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
+    private val _currentDeviceId = MutableStateFlow<String?>(null)
+
+    init {
+        println("✅ DeviceScreenVM: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
+        socketHandler.actionsToFollow(
+            add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN),
+            exclude = null
+        )
+
+        viewModelScope.launch {
+            socketHandler.actionType.collectLatest { actionType ->
+                if (actionType == SocketActionModel.ASK_TO_JOIN) {
+                    println("✅ DeviceScreenVM: New state for Join request has been gotten")
+                    loadDevicesList()
+                }
+            }
+        }
+    }
+
     override fun handle(event: CommonViewModelEventsInterface) {
         if (event is DeviceViewEvents) {
             when (event) {
-                DeviceViewEvents.ON_APPEAR -> onAppear()
+                DeviceViewEvents.OnAppear -> onAppear()
+                DeviceViewEvents.Accept -> updateMembership(true)
+                DeviceViewEvents.Decline -> updateMembership(false)
+                is DeviceViewEvents.SelectDevice -> selectCurrentDevice(event.deviceId)
             }
         }
     }
@@ -50,6 +78,7 @@ class DevicesScreenViewModel(
 
                 val devices = vaultSummary?.users?.map { (_, userInfo) ->
                     DeviceCellModel(
+                        id = userInfo.deviceName,
                         status = when (userInfo.status) {
                             UserStatus.MEMBER -> DeviceStatus.Member
                             UserStatus.PENDING -> DeviceStatus.Pending
@@ -68,8 +97,24 @@ class DevicesScreenViewModel(
             }
         }
     }
+
+    private fun updateMembership(isJoin: Boolean) {
+        val candidate = _currentDeviceId.value?.let { appManager.getUserDataBy(it) }
+        val action = if (isJoin) { UpdateMemberActionModel.Accept } else { UpdateMemberActionModel.Decline }
+        if (candidate != null) {
+            appManager.updateMember(candidate, action.name)
+        }
+        _currentDeviceId.value = null
+    }
+
+    private fun selectCurrentDevice(deviceId: String?) {
+        _currentDeviceId.value = deviceId
+    }
 }
 
-enum class DeviceViewEvents: CommonViewModelEventsInterface {
-    ON_APPEAR
+sealed class DeviceViewEvents : CommonViewModelEventsInterface {
+    data object OnAppear : DeviceViewEvents()
+    data object Accept : DeviceViewEvents()
+    data object Decline : DeviceViewEvents()
+    data class SelectDevice(val deviceId: String?) : DeviceViewEvents()
 }

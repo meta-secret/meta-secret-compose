@@ -43,7 +43,7 @@ class MainScreenViewModel(
         .stateIn(viewModelScope, SharingStarted.Lazily, 0)
 
     init {
-        println("✅ Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
+        println("✅ MainScreenVM: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN),
             exclude = null

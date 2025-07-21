@@ -239,6 +239,37 @@ data class AppStateModel(
         return getVaultEvents()?.getJoinRequestsCount() ?: 0
     }
 
+    fun getUserDataByDeviceId(deviceId: String): UserData? {
+        val vaultInfo = getVaultFullInfo() ?: return null
+        
+        return when (vaultInfo) {
+            is VaultFullInfo.Member -> {
+                val users = vaultInfo.member.member.vault.users
+                users[deviceId]?.let { membership ->
+                    when {
+                        membership.member != null -> membership.member.userData
+                        membership.outsider != null -> membership.outsider.userData
+                        else -> null
+                    }
+                }
+            }
+            is VaultFullInfo.Outsider -> {
+                if (vaultInfo.outsider.userData.device.deviceId == deviceId) {
+                    vaultInfo.outsider.userData
+                } else {
+                    null
+                }
+            }
+            is VaultFullInfo.NotExists -> {
+                if (vaultInfo.notExists.device.deviceId == deviceId) {
+                    vaultInfo.notExists
+                } else {
+                    null
+                }
+            }
+        }
+    }
+
     fun getVaultSummary(): VaultSummary? {
         val vaultInfo = getVaultFullInfo() ?: return null
         

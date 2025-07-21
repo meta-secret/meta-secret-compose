@@ -4,8 +4,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.apiModels.AppStateModel
+import models.apiModels.CommonResponseModel
 import models.apiModels.JoinClusterRequest
 import models.apiModels.State
+import models.apiModels.UserData
 import models.apiModels.VaultEvents
 import models.apiModels.VaultFullInfo
 import models.apiModels.VaultSummary
@@ -120,6 +122,31 @@ class MetaSecretAppManager(
             vaultSummary
         } catch (e: Exception) {
             println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse vaultSummary JSON: ${e.message}")
+            null
+        }
+    }
+
+    override fun updateMember(candidate: UserData, actionUpdate: String): CommonResponseModel? {
+        val updateResult = metaSecretCore.updateMembership(candidate, actionUpdate)
+        return try {
+            val result = CommonResponseModel.fromJson(updateResult)
+            println("\uD83D\uDEE0\uFE0F AppManager: updatecandidate result is $result")
+            result
+        } catch (e: Exception) {
+            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse updatecandidate candidate JSON: ${e.message}")
+            null
+        }
+    }
+
+    override fun getUserDataBy(deviceId: String): UserData? {
+        val stateJson = metaSecretCore.getAppState()
+        return try {
+            val currentState = AppStateModel.fromJson(stateJson)
+            val deviceIdResult = currentState.getUserDataByDeviceId(deviceId)
+            println("\uD83D\uDEE0\uFE0F AppManager: getUserDataBy deviceId $deviceId is $deviceIdResult")
+            deviceIdResult
+        } catch (e: Exception) {
+            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse getUserDataById JSON: ${e.message}")
             null
         }
     }
