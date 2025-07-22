@@ -6,6 +6,10 @@ import com.metaSecret.ios.SwiftBridge
 import models.apiModels.UserData
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 @OptIn(ExperimentalForeignApi::class)
 class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
@@ -84,12 +88,29 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     override fun updateMembership(candidate: UserData, actionUpdate: String): String {
         try {
             println("\uF8FF ✅ iOS: Calling updateMembership")
-            val userDataJson = Json.encodeToString(candidate)
-            val result = swiftBridge.updateMembership(userDataJson, actionUpdate)
-            println("\uF8FF ✅ iOS: SignUp result: $result")
+            val jsonObject = buildJsonObject {
+                put("vaultName", JsonPrimitive(candidate.vaultName))
+                putJsonObject("device") {
+                    put("deviceId", JsonPrimitive(candidate.device.deviceId))
+                    put("deviceName", JsonPrimitive(candidate.device.deviceName))
+                    putJsonObject("keys") {
+                        put("dsaPk", JsonPrimitive(candidate.device.keys.dsaPk))
+                        put("transportPk", JsonPrimitive(candidate.device.keys.transportPk))
+                    }
+                }
+            }
+            
+            val userDataJson = jsonObject.toString()
+            println("\uF8FF ✅ iOS: Formatted userData Json: $userDataJson")
+
+            val jsonActionUpdate = "\"" + actionUpdate.lowercase() + "\""
+            println("\uF8FF ✅ iOS: Formatted actionUpdate: $jsonActionUpdate")
+            
+            val result = swiftBridge.updateMembership(userDataJson, jsonActionUpdate)
+            println("\uF8FF ✅ iOS: updateMembership result: $result")
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: SignUp error: ${e.message}")
+            println("\uF8FF ⛔ iOS: updateMembership error: ${e.message}")
             e.printStackTrace()
             throw e
         }
