@@ -130,7 +130,7 @@ class MetaSecretAppManager(
         val updateResult = metaSecretCore.updateMembership(candidate, actionUpdate)
         return try {
             val result = CommonResponseModel.fromJson(updateResult)
-            println("\uD83D\uDEE0\uFE0F AppManager: updatecandidate result is $result")
+            println("\uD83D\uDEE0\uFE0F AppManager: update candidate result is $result")
             result
         } catch (e: Exception) {
             println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse updatecandidate candidate JSON: ${e.message}")

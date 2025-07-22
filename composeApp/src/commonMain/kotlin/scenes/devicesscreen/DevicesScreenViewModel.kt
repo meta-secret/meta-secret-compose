@@ -55,7 +55,7 @@ class DevicesScreenViewModel(
     override fun handle(event: CommonViewModelEventsInterface) {
         if (event is DeviceViewEvents) {
             when (event) {
-                DeviceViewEvents.OnAppear -> onAppear()
+                DeviceViewEvents.OnAppear -> loadDevicesList()
                 DeviceViewEvents.Accept -> updateMembership(true)
                 DeviceViewEvents.Decline -> updateMembership(false)
                 is DeviceViewEvents.SelectDevice -> selectCurrentDevice(event.deviceId)
@@ -63,12 +63,9 @@ class DevicesScreenViewModel(
         }
     }
 
-    private fun onAppear() {
-        loadDevicesList()
-    }
-
     private fun loadDevicesList() {
         viewModelScope.launch {
+            println("✅ DeviceScreenVM: Need to load devices list")
             try {
                 _isLoading.value = true
 
@@ -78,7 +75,7 @@ class DevicesScreenViewModel(
 
                 val devices = vaultSummary?.users?.map { (_, userInfo) ->
                     DeviceCellModel(
-                        id = userInfo.deviceName,
+                        id = userInfo.deviceId,
                         status = when (userInfo.status) {
                             UserStatus.MEMBER -> DeviceStatus.Member
                             UserStatus.PENDING -> DeviceStatus.Pending
@@ -99,15 +96,25 @@ class DevicesScreenViewModel(
     }
 
     private fun updateMembership(isJoin: Boolean) {
-        val candidate = _currentDeviceId.value?.let { appManager.getUserDataBy(it) }
-        val action = if (isJoin) { UpdateMemberActionModel.Accept } else { UpdateMemberActionModel.Decline }
-        if (candidate != null) {
-            appManager.updateMember(candidate, action.name)
+        println("✅ DeviceScreenVM: Start Update candidate")
+        viewModelScope.launch {
+            _isLoading.value = true
+            val action = if (isJoin) { UpdateMemberActionModel.Accept } else { UpdateMemberActionModel.Decline }
+            val updateResult = withContext(Dispatchers.Default) {
+                val candidate = _currentDeviceId.value?.let { appManager.getUserDataBy(it) }
+                println("✅ DeviceScreenVM: Update candidate $candidate")
+                if (candidate != null) {
+                    appManager.updateMember(candidate, action.name)
+                }
+            }
+            _currentDeviceId.value = null
+            _isLoading.value = false
+            println("✅ DeviceScreenVM: Update candidate result $updateResult")
         }
-        _currentDeviceId.value = null
     }
 
     private fun selectCurrentDevice(deviceId: String?) {
+        println("✅ DeviceScreenVM: Select device with Id: $deviceId")
         _currentDeviceId.value = deviceId
     }
 }

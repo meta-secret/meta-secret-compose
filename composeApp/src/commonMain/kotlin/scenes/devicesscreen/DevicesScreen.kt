@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.devicesList
@@ -52,31 +53,39 @@ class DevicesScreen : Screen {
 
         CommonBackground(Res.string.devicesList) {
             Box(modifier = Modifier.fillMaxSize()) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(50.dp).align(Alignment.Center),
-                        color = AppColors.ActionMain
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(bottom = 100.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        items(devices) { device ->
-                            DeviceContent(
-                                device,
-                                onClick = {
-                                    if (device.status != DeviceStatus.Member) {
-                                        viewModel.handle(DeviceViewEvents.SelectDevice(device.id))
-                                        isJoinRequestVisible = true
-                                    }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 100.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    items(devices) { device ->
+                        DeviceContent(
+                            device,
+                            onClick = {
+                                if (device.status != DeviceStatus.Member) {
+                                    println("DEGUG: SelectDevice ${device.id}")
+                                    viewModel.handle(DeviceViewEvents.SelectDevice(device.id))
+                                    isJoinRequestVisible = true
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
                 }
+            }
+        }
+
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(10f),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = AppColors.White,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
         }
         
@@ -134,7 +143,9 @@ class DevicesScreen : Screen {
                         viewModel.handle(action)
                         isJoinRequestVisible = false
                     } else {
+                        println("DEGUG: SelectDevice NULL")
                         viewModel.handle(DeviceViewEvents.SelectDevice(null))
+                        isJoinRequestVisible = false
                     }
                 }
             )

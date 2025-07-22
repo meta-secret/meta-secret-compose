@@ -292,7 +292,7 @@ data class AppStateModel(
                         else -> ""
                     }
                     
-                    users[deviceId] = UserInfo(deviceName, status)
+                    users[deviceId] = UserInfo(deviceId, deviceName, status)
                 }
                 
                 VaultSummary(
@@ -331,6 +331,7 @@ enum class UserStatus {
 }
 
 data class UserInfo(
+    val deviceId: String,
     val deviceName: String,
     val status: UserStatus
 )
