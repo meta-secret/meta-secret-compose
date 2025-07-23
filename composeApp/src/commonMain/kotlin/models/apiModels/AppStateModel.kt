@@ -22,7 +22,8 @@ object StateSerializer : KSerializer<State> {
     }
 
     override fun deserialize(decoder: Decoder): State {
-        val jsonDecoder = decoder as JsonDecoder
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: throw IllegalArgumentException("This serializer only supports JSON format")
         val jsonElement = jsonDecoder.decodeJsonElement()
         val jsonObject = jsonElement.jsonObject
 
@@ -50,7 +51,8 @@ object VaultFullInfoSerializer : KSerializer<VaultFullInfo> {
     }
 
     override fun deserialize(decoder: Decoder): VaultFullInfo {
-        val jsonDecoder = decoder as JsonDecoder
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: throw IllegalArgumentException("This serializer only supports JSON format")
         val jsonElement = jsonDecoder.decodeJsonElement()
         val jsonObject = jsonElement.jsonObject
 

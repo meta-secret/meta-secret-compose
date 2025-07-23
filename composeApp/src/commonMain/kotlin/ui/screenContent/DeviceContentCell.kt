@@ -77,7 +77,7 @@ fun DeviceContent(
                         horizontalAlignment = Alignment.Start
                     ) {
                         Text(
-                            text = model.deviceName,
+                            text = model.vaultName,
                             style = TextStyle(
                                 fontSize = 16.sp,
                                 fontFamily = FontFamily(Font(Res.font.manrope_bold)),

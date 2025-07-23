@@ -5,7 +5,7 @@ data class DeviceCellModel(
     val status: DeviceStatus,
     val secretsCount: Int,
     val devicesCount: Int,
-    val deviceName: String
+    val vaultName: String
 )
 
 enum class DeviceStatus(val value: String) {

@@ -83,7 +83,7 @@ class DevicesScreenViewModel(
                         },
                         secretsCount = vaultSummary.secretsCount,
                         devicesCount = vaultSummary.users.size,
-                        deviceName = vaultSummary.vaultName
+                        vaultName = vaultSummary.vaultName
                     )
                 } ?: emptyList()
 
@@ -99,17 +99,26 @@ class DevicesScreenViewModel(
         println("✅ DeviceScreenVM: Start Update candidate")
         viewModelScope.launch {
             _isLoading.value = true
-            val action = if (isJoin) { UpdateMemberActionModel.Accept } else { UpdateMemberActionModel.Decline }
-            val updateResult = withContext(Dispatchers.Default) {
-                val candidate = _currentDeviceId.value?.let { appManager.getUserDataBy(it) }
-                println("✅ DeviceScreenVM: Update candidate $candidate")
-                if (candidate != null) {
-                    appManager.updateMember(candidate, action.name)
+            try {
+                val action = if (isJoin) { UpdateMemberActionModel.Accept } else { UpdateMemberActionModel.Decline }
+                val updateResult = withContext(Dispatchers.Default) {
+                    val candidate = _currentDeviceId.value?.let { appManager.getUserDataBy(it) }
+                    println("✅ DeviceScreenVM: Update candidate $candidate")
+                    if (candidate != null) {
+                        appManager.updateMember(candidate, action.name)
+                    } else {
+                        throw IllegalStateException("Candidate not found")
+                    }
                 }
+                if (updateResult?.success == false) {
+                    println("✅ DeviceScreenVM: Update failed: ${updateResult.error}")
+                }
+                _currentDeviceId.value = null
+            } catch (e: Exception) {
+                println("✅ DeviceScreenVM: Update error: ${e.message}")
+            } finally {
+                _isLoading.value = false
             }
-            _currentDeviceId.value = null
-            _isLoading.value = false
-            println("✅ DeviceScreenVM: Update candidate result $updateResult")
         }
     }
 

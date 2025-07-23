@@ -117,7 +117,7 @@ class MainScreen : Screen {
                     CurrentTab()
 
                     if (devicesCount < 3 || joinRequestsCount != null) {
-                        viewModel.handle(MainViewEvents.ShowWarning(false))
+                        viewModel.handle(MainViewEvents.ShowWarning(true))
                     } else {
                         viewModel.handle(MainViewEvents.ShowWarning(false))
                     }

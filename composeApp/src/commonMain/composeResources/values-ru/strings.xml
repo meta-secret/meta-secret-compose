@@ -78,7 +78,7 @@
     <string name = "decline">Отклонить</string>
     <string name = "accept_request_on_other_device">Примите запрос на другом вашем девайсе</string>
     <string name = "unexpected_login">"Неизвестная ошибка при логине"</string>
-    <string name = "reject_join">"Отказанов регистрации. Возможно вы присоединяетесь не к своему аккаунту."</string>
+    <string name = "reject_join">"Отказано в регистрации. Возможно вы присоединяетесь не к своему аккаунту."</string>
     <string name = "goto_devices_tab">Перейдите во вкладку Устройства и добавьте необходимые в вашу сеть</string>
-    <string name = "wanna_join">Вы хотитет добавить это устройство?</string>
+    <string name = "wanna_join">Вы хотите добавить это устройство?</string>
 </resources>

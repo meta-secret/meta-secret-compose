@@ -65,8 +65,8 @@ class SignInScreenViewModel(
     override fun handle(event: CommonViewModelEventsInterface) {
         if (event is SignInViewEvents) {
             when (event) {
-                SignInViewEvents.START_SIGN_IN_PROCESS -> {
-                    currentName = event.data
+                is SignInViewEvents.StartSignInProcess -> {
+                    currentName = event.name
                     currentState = SignInStates.START_SIGN_IN
                 }
             }
@@ -270,21 +270,8 @@ enum class SignInSnackMessages {
     REJECT,
 }
 
-enum class SignInViewEvents(val eventData: String? = null): CommonViewModelEventsInterface {
-    START_SIGN_IN_PROCESS;
-
-    fun withData(value: String): SignInViewEvents {
-        return when(this) {
-            START_SIGN_IN_PROCESS -> {
-                val copy = this
-                copy.data = value
-                copy
-            }
-        }
-    }
-
-    var data: String? = null
-        private set
+sealed class SignInViewEvents : CommonViewModelEventsInterface {
+    data class StartSignInProcess(val name: String) : SignInViewEvents()
 }
 
 private enum class SignInStates {

@@ -32,6 +32,7 @@ class SplashScreenViewModel(
             when (event) {
                 SplashViewEvents.ON_APPEAR -> biometricRoutine()
                 SplashViewEvents.BIOMETRIC_SUCCEEDED -> biometricSucceeded()
+                SplashViewEvents.BIOMETRIC_NEEDS_REGISTRATION -> TODO()
             }
         }
     }
@@ -117,7 +118,8 @@ enum class SplashNavigationEvent {
 
 enum class SplashViewEvents: CommonViewModelEventsInterface {
     ON_APPEAR,
-    BIOMETRIC_SUCCEEDED
+    BIOMETRIC_SUCCEEDED,
+    BIOMETRIC_NEEDS_REGISTRATION
 }
 
 private enum class OnboardingState {

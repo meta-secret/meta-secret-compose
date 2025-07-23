@@ -273,7 +273,7 @@ class SignInScreen : Screen {
                 ClassicButton(
                     {
                         focusManager.clearFocus()
-                        viewModel.handle(SignInViewEvents.START_SIGN_IN_PROCESS.withData(scannedText))
+                        viewModel.handle(SignInViewEvents.StartSignInProcess(scannedText))
                     },
                     stringResource(Res.string.forward),
                     isEnabled = !isLoading

@@ -113,6 +113,9 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
             val userDataJson = jsonObject.toString()
             println("\uF8FF ✅ Android: Formatted userData Json: $userDataJson")
 
+            if (actionUpdate.isBlank()) {
+                throw IllegalArgumentException("actionUpdate cannot be blank")
+            }
             val jsonActionUpdate = "\"" + actionUpdate.lowercase() + "\""
             println("\uF8FF ✅ Android: Formatted actionUpdate: $jsonActionUpdate")
             
