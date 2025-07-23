@@ -230,6 +230,13 @@ data class AppStateModel(
         }
     }
 
+    fun getCurrentDeviceId(): String? {
+        return when (val vaultInfo = getVaultFullInfo()) {
+            is VaultFullInfo.Outsider -> vaultInfo.outsider.userData.device.deviceId
+            else -> null
+        }
+    }
+
     fun getVaultEvents(): VaultEvents? {
         return when (val vaultInfo = getVaultFullInfo()) {
             is VaultFullInfo.Member -> vaultInfo.member.vaultEvents

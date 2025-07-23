@@ -43,7 +43,7 @@ class DevicesScreenViewModel(
         )
 
         viewModelScope.launch {
-            socketHandler.actionType.collectLatest { actionType ->
+            socketHandler.actionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
                     println("✅ DeviceScreenVM: New state for Join request has been gotten")
                     loadDevicesList()

@@ -11,6 +11,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import models.apiModels.AppStateModel
 import models.apiModels.JoinClusterRequest
+import models.apiModels.State
+import models.apiModels.UserDataOutsiderStatus
+import models.apiModels.UserStatus
+import models.apiModels.VaultFullInfo
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 
@@ -85,7 +89,20 @@ class MetaSecretSocketHandler(
 
             if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)) {
                 println("\uD83D\uDD0C ✅Socket: Waiting for join response")
-                _actionType.value = SocketActionModel.JOIN_REQUEST_PENDING
+
+                when (currentState.getVaultFullInfo()) {
+                    is VaultFullInfo.Member -> _actionType.value = SocketActionModel.JOIN_REQUEST_ACCEPTED
+                    is VaultFullInfo.NotExists -> _actionType.value = SocketActionModel.NONE
+                    is VaultFullInfo.Outsider -> {
+                        when (currentState.getOutsiderStatus()) {
+                            UserDataOutsiderStatus.NON_MEMBER -> { _actionType.value = SocketActionModel.NONE }
+                            UserDataOutsiderStatus.PENDING -> { _actionType.value = SocketActionModel.JOIN_REQUEST_PENDING }
+                            UserDataOutsiderStatus.DECLINED -> { _actionType.value = SocketActionModel.JOIN_REQUEST_DECLINED }
+                            null -> _actionType.value = SocketActionModel.NONE
+                        }
+                    }
+                    null -> _actionType.value = SocketActionModel.JOIN_REQUEST_PENDING
+                }
             }
 
             isLocked = false
