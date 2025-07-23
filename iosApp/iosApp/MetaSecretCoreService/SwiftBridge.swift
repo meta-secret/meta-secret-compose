@@ -28,7 +28,12 @@ import Foundation
     
     @_silgen_name("generate_user_creds")
     private func c_generate_user_creds(_ vault_name_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-    
+
+    @_silgen_name("update_membership")
+    private func c_update_memberships(_ candidate_ptr: UnsafePointer<CChar>?, _ action_update_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
+
+    @_silgen_name("clean_up_database")
+    private func c_clean_up_database() -> UnsafeMutablePointer<CChar>?
     // MARK: - MetaSecretCoreBridge
     
     @objc public func generateMasterKey() -> String {
@@ -86,6 +91,22 @@ import Foundation
         
         let resultString = String(cString: cString)
         c_free_string(cString)
+        return resultString
+    }
+
+    @objc public func updateMembership(_ candidate: String, _ actionUpdate: String) -> String {
+        guard let candidateString = candidate.cString(using: .utf8),
+              let actionUpdateString = actionUpdate.cString(using: .utf8)
+         else {
+            return ""
+        }
+
+        guard let resultPtr = c_update_memberships(candidateString, actionUpdateString) else {
+            return ""
+        }
+
+        let resultString = String(cString: resultPtr)
+        c_free_string(resultPtr)
         return resultString
     }
     
@@ -168,6 +189,7 @@ import Foundation
     
     @objc public func clearAll() -> Bool {
         cleanDB()
+        let _ = c_clean_up_database()
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

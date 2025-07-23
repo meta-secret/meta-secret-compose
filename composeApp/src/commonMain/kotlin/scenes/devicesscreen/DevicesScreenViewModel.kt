@@ -1,72 +1,136 @@
 package scenes.devicesscreen
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.addText
-import kotlinproject.composeapp.generated.resources.lackOfDevices_end
-import kotlinproject.composeapp.generated.resources.lackOfDevices_start
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import org.jetbrains.compose.resources.stringResource
-import sharedData.AppColors
-import storage.Device
-import storage.KeyValueStorage
-import ui.WarningStateHolder
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import models.apiModels.UserStatus
+import models.appInternalModels.DeviceCellModel
+import models.appInternalModels.DeviceStatus
+import models.appInternalModels.SocketActionModel
+import models.appInternalModels.SocketRequestModel
+import models.appInternalModels.UpdateMemberActionModel
+import scenes.common.CommonViewModel
+import scenes.common.CommonViewModelEventsInterface
+import sharedData.metaSecretCore.MetaSecretAppManagerInterface
+import sharedData.metaSecretCore.MetaSecretSocketHandlerInterface
 
 class DevicesScreenViewModel(
-    private val keyValueStorage: KeyValueStorage
-) : ViewModel() {
+    private val socketHandler: MetaSecretSocketHandlerInterface,
+    private val appManager: MetaSecretAppManagerInterface
+) : ViewModel(), CommonViewModel {
 
-    private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData
-        .stateIn(
-            viewModelScope, SharingStarted.Lazily, emptyList()
+    private val _devicesList = MutableStateFlow<List<DeviceCellModel>>(emptyList())
+    val devicesList = _devicesList.asStateFlow()
+
+    private val _vaultName = MutableStateFlow<String?>(null)
+    val vaultName = _vaultName.asStateFlow()
+    
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
+
+    private val _currentDeviceId = MutableStateFlow<String?>(null)
+
+    init {
+        println("✅ DeviceScreenVM: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
+        socketHandler.actionsToFollow(
+            add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN),
+            exclude = null
         )
 
-    val devicesCount: StateFlow<Int> = devicesList.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
-
-    val secretsCount: StateFlow<Int> = keyValueStorage.secretData.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
-
-    fun getDevice(index: Int): Device {
-        return devicesList.value[index]
-    }
-
-    fun addDevice(device: Device) {
-        keyValueStorage.addDevice(device)
-    }
-
-    fun removeDevice() {
-        keyValueStorage.removeDevice(0) //TODO
-    }
-
-    fun getNickName(): String? {
-        return keyValueStorage.signInInfo?.username
-    }
-
-    fun changeWarningVisibilityTo(state: Boolean) {
-        WarningStateHolder.setVisibility(state)
-    }
-
-    @Composable
-    fun getWarningText(devicesCount: Int): AnnotatedString {
-        return buildAnnotatedString {
-            append(stringResource(Res.string.lackOfDevices_start))
-            append((3 - devicesCount).toString())
-            append(stringResource(Res.string.lackOfDevices_end))
-            pushStringAnnotation(tag = "addText", annotation = "")
-            withStyle(style = SpanStyle(color = AppColors.ActionLink)) {
-                append(stringResource(Res.string.addText))
+        viewModelScope.launch {
+            socketHandler.actionType.collectLatest { actionType ->
+                if (actionType == SocketActionModel.ASK_TO_JOIN) {
+                    println("✅ DeviceScreenVM: New state for Join request has been gotten")
+                    loadDevicesList()
+                }
             }
-            pop()
         }
     }
+
+    override fun handle(event: CommonViewModelEventsInterface) {
+        if (event is DeviceViewEvents) {
+            when (event) {
+                DeviceViewEvents.OnAppear -> loadDevicesList()
+                DeviceViewEvents.Accept -> updateMembership(true)
+                DeviceViewEvents.Decline -> updateMembership(false)
+                is DeviceViewEvents.SelectDevice -> selectCurrentDevice(event.deviceId)
+            }
+        }
+    }
+
+    private fun loadDevicesList() {
+        viewModelScope.launch {
+            println("✅ DeviceScreenVM: Need to load devices list")
+            try {
+                _isLoading.value = true
+
+                val vaultSummary = withContext(Dispatchers.Default) {
+                    appManager.getVaultSummary()
+                }
+
+                val devices = vaultSummary?.users?.map { (_, userInfo) ->
+                    DeviceCellModel(
+                        id = userInfo.deviceId,
+                        status = when (userInfo.status) {
+                            UserStatus.MEMBER -> DeviceStatus.Member
+                            UserStatus.PENDING -> DeviceStatus.Pending
+                            else -> DeviceStatus.Unknown
+                        },
+                        secretsCount = vaultSummary.secretsCount,
+                        devicesCount = vaultSummary.users.size,
+                        vaultName = vaultSummary.vaultName
+                    )
+                } ?: emptyList()
+
+                _devicesList.value = devices
+                _vaultName.value = vaultSummary?.vaultName
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private fun updateMembership(isJoin: Boolean) {
+        println("✅ DeviceScreenVM: Start Update candidate")
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val action = if (isJoin) { UpdateMemberActionModel.Accept } else { UpdateMemberActionModel.Decline }
+                val updateResult = withContext(Dispatchers.Default) {
+                    val candidate = _currentDeviceId.value?.let { appManager.getUserDataBy(it) }
+                    println("✅ DeviceScreenVM: Update candidate $candidate")
+                    if (candidate != null) {
+                        appManager.updateMember(candidate, action.name)
+                    } else {
+                        throw IllegalStateException("Candidate not found")
+                    }
+                }
+                if (updateResult?.success == false) {
+                    println("✅ DeviceScreenVM: Update failed: ${updateResult.error}")
+                }
+                _currentDeviceId.value = null
+            } catch (e: Exception) {
+                println("✅ DeviceScreenVM: Update error: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private fun selectCurrentDevice(deviceId: String?) {
+        println("✅ DeviceScreenVM: Select device with Id: $deviceId")
+        _currentDeviceId.value = deviceId
+    }
+}
+
+sealed class DeviceViewEvents : CommonViewModelEventsInterface {
+    data object OnAppear : DeviceViewEvents()
+    data object Accept : DeviceViewEvents()
+    data object Decline : DeviceViewEvents()
+    data class SelectDevice(val deviceId: String?) : DeviceViewEvents()
 }

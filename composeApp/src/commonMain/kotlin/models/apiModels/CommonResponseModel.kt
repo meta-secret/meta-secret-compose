@@ -7,12 +7,12 @@ import kotlinx.serialization.json.Json
 @Serializable
 data class CommonResponseModel(
     val success: Boolean,
-    @SerialName("message") val masterKey: String? = null,
+    val message: String? = null,
     val error: String? = null
 ) {
     companion object {
-        fun fromJson(jsonResponse: String): MasterKeyModel {
-            return Json.decodeFromString<MasterKeyModel>(jsonResponse)
+        fun fromJson(jsonResponse: String): CommonResponseModel {
+            return Json.decodeFromString<CommonResponseModel>(jsonResponse)
         }
     }
 }

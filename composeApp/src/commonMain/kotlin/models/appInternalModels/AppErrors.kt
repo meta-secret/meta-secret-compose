@@ -1,6 +1,6 @@
 package models.appInternalModels
 
-// TODO: Localize all errors
+// TODO: #44 Localize all errors
 enum class AppErrors(val value: String) {
     CreateLocalError("CreateLocalError"),
     CredsGenerationError("CredsGenerationError"),

@@ -15,4 +15,10 @@ object MetaSecretNative {
 
     @JvmStatic
     external fun signUp(): String
+
+    @JvmStatic
+    external fun updateMembership(candidate: String, actionUpdate: String): String
+
+    @JvmStatic
+    external fun cleanUpDatabase(): String
 } 

@@ -2,6 +2,13 @@ package sharedData
 
 import com.metasecret.core.MetaSecretNative
 import android.content.Context
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import models.apiModels.UserData
 import org.koin.java.KoinJavaComponent.inject
 import sharedData.metaSecretCore.MetaSecretCoreInterface
 import java.io.File
@@ -37,8 +44,6 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
 
     override fun initAppManager(masterKey: String): String {
         try {
-            cleanDB() // TODO: It's temporary. Need to remove it
-
             println("✅ Calling Android initAppManager with: $masterKey")
             val result = MetaSecretNative.initAppManager(masterKey)
             println("✅ AppManager Android: $result")
@@ -88,13 +93,49 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
             throw e
         }
     }
-    
+
+    override fun updateMembership(candidate: UserData, actionUpdate: String): String {
+        try {
+            println("\uF8FF ✅ Android: Calling updateMembership")
+
+            val jsonObject = buildJsonObject {
+                put("vaultName", JsonPrimitive(candidate.vaultName))
+                putJsonObject("device") {
+                    put("deviceId", JsonPrimitive(candidate.device.deviceId))
+                    put("deviceName", JsonPrimitive(candidate.device.deviceName))
+                    putJsonObject("keys") {
+                        put("dsaPk", JsonPrimitive(candidate.device.keys.dsaPk))
+                        put("transportPk", JsonPrimitive(candidate.device.keys.transportPk))
+                    }
+                }
+            }
+            
+            val userDataJson = jsonObject.toString()
+            println("\uF8FF ✅ Android: Formatted userData Json: $userDataJson")
+
+            if (actionUpdate.isBlank()) {
+                throw IllegalArgumentException("actionUpdate cannot be blank")
+            }
+            val jsonActionUpdate = "\"" + actionUpdate.lowercase() + "\""
+            println("\uF8FF ✅ Android: Formatted actionUpdate: $jsonActionUpdate")
+            
+            val result = MetaSecretNative.updateMembership(userDataJson, jsonActionUpdate)
+            println("\uF8FF ✅ Android: updateMembership result: $result")
+            return result
+        } catch (e: Exception) {
+            println("\uF8FF ⛔ Android: updateMembership error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
     private fun cleanDB() {
         println("CLEAN DB (Android)")
         try {
             val dbFile = File(context.getDatabasePath("meta-secret.db").path)
             if (dbFile.exists()) {
                 val deleted = dbFile.delete()
+                MetaSecretNative.cleanUpDatabase()
                 println("✅ DB file deleted: $deleted")
             } else {
                 println("✅ DB file does not exist")

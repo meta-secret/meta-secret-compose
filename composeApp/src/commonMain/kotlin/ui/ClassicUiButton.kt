@@ -3,6 +3,7 @@ package ui
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -21,11 +22,15 @@ fun ClassicButton(
     text: String,
     isEnabled: Boolean = true,
     color: Color = AppColors.ActionMain,
-    borderColor: Color = AppColors.White5
+    borderColor: Color = AppColors.White5,
+    fillMaxWidth: Boolean = true,
+    horizontalPadding: Int = 0,
+    modifier: Modifier = Modifier
 ) {
     Button(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .let { if (fillMaxWidth) it.fillMaxWidth() else it }
+            .padding(horizontal = horizontalPadding.dp)
             .height(48.dp)
             .clip(RoundedCornerShape(8.dp))
             .border(

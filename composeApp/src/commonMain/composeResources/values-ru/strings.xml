@@ -12,7 +12,7 @@
     <string name = "placeholder">Выберите уникальный никнэйм</string>
     <string name = "advice">Выберите уникальный никнейм - который вы будете использовать в дальнейшем на других устройствах или войдите по QR коду</string>
     <string name = "start">Начать работу</string>
-    <string name = "nicknameError">Данный никнейм содержит запрещенные символы. Попробуйте другой</string>
+    <string name = "nicknameError">Данный никнейм содержит запрещенные символы. Или уже занят. Попробуйте другой</string>
     <string name = "secretsHeader">Секреты</string>
     <string name = "secret">секрет</string>
     <string name = "secretCapital">Секрет</string>
@@ -56,8 +56,6 @@
     <string name = "level_3">Максимум</string>
     <string name = "downloadMetasecret">Скачайте приложение MetaSecret на новом устройстве</string>
     <string name = "orUseQR">Или воспользуйтесь QR кодом</string>
-    
-    <!-- Biometric authentication strings -->
     <string name = "biometric_title">Биометрическая аутентификация</string>
     <string name = "biometric_subtitle">Войдите с помощью биометрии</string>
     <string name = "biometric_description">Пожалуйста, пройдите аутентификацию для доступа к приложению</string>
@@ -73,4 +71,14 @@
     <string name = "enable_biometric_settings">Разрешить биометрию в настройках</string>
     <string name = "biometric_permission_required">Требуется разрешение на использование биометрии</string>
     <string name = "biometric_permission_settings">Пожалуйста, предоставьте доступ в настройках</string>
+    <string name = "join_request_title">Добавить устройство в вашу сеть?</string>
+    <string name = "you_have">У вас </string>
+    <string name = "join_requests"> запросов на присоединение </string>
+    <string name = "accept">Принять</string>
+    <string name = "decline">Отклонить</string>
+    <string name = "accept_request_on_other_device">Примите запрос на другом вашем девайсе</string>
+    <string name = "unexpected_login">"Неизвестная ошибка при логине"</string>
+    <string name = "reject_join">"Отказано в регистрации. Возможно вы присоединяетесь не к своему аккаунту."</string>
+    <string name = "goto_devices_tab">Перейдите во вкладку Устройства и добавьте необходимые в вашу сеть</string>
+    <string name = "wanna_join">Вы хотите добавить это устройство?</string>
 </resources>

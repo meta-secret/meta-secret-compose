@@ -12,7 +12,7 @@
     <string name = "placeholder">Choose unique nickname</string>
     <string name = "advice">Choose unique nickname - the one you will be using in the future on other devices or log in using the QR code</string>
     <string name = "start">Let's start</string>
-    <string name = "nicknameError">This username contains prohibited characters. Please try a different one.</string>
+    <string name = "nicknameError">This username contains prohibited characters. Or has been already taken Please try a different one.</string>
     <string name = "secretsHeader">Secrets</string>
     <string name = "secret">secret</string>
     <string name = "secretCapital">Secret</string>
@@ -56,8 +56,6 @@
     <string name = "level_3">Strong</string>
     <string name = "downloadMetasecret">Download Metasecret on a new device</string>
     <string name = "orUseQR">Or use QR code</string>
-    
-    <!-- Biometric authentication strings -->
     <string name = "biometric_title">Biometric Authentication</string>
     <string name = "biometric_subtitle">Sign in using biometrics</string>
     <string name = "biometric_description">Please authenticate to access the app</string>
@@ -73,4 +71,14 @@
     <string name = "enable_biometric_settings">Enable biometrics in settings</string>
     <string name = "biometric_permission_required">Biometric permission required</string>
     <string name = "biometric_permission_settings">Please provide access in settings</string>
+    <string name = "join_request_title">Add device to your network?</string>
+    <string name = "you_have">You have </string>
+    <string name = "join_requests"> join requests</string>
+    <string name = "accept">Accept</string>
+    <string name = "decline">Decline</string>
+    <string name = "accept_request_on_other_device">Accept the request on your other device</string>
+    <string name = "unexpected_login">"Unexpected loading state"</string>
+    <string name = "reject_join">"Registration denied. You may be connecting to the wrong account."</string>
+    <string name = "goto_devices_tab">Go to the Devices tab and add the necessary ones to your network</string>
+    <string name = "wanna_join">Do you want to join this device to your cluster?</string>
 </resources>

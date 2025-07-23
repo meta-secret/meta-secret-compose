@@ -50,12 +50,11 @@ class SplashScreen : Screen {
         val viewModel: SplashScreenViewModel = koinViewModel()
         val navigator: Navigator? = LocalNavigator.current
 
+        val biometricError = stringResource(Res.string.enable_biometric_required)
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
         val text = painterResource(Res.drawable.text)
-
-        val biometricError = stringResource(Res.string.enable_biometric_required)
 
         val navigationEvent by viewModel.navigationEvent.collectAsState()
         val biometricState by viewModel.biometricState.collectAsState()
@@ -64,27 +63,30 @@ class SplashScreen : Screen {
         var errorMessage by remember { mutableStateOf("") }
 
         LaunchedEffect(Unit) {
-            viewModel.onAppear()
+            viewModel.handle(SplashViewEvents.ON_APPEAR)
         }
 
         LaunchedEffect(biometricState) {
-            when (val state = biometricState) {
+            println("Debug: biometric State $biometricState")
+            when (biometricState) {
+                is BiometricState.Success ->
+                    viewModel.handle(SplashViewEvents.BIOMETRIC_SUCCEEDED)
+                is BiometricState.NeedRegistration ->
+                    viewModel.handle(SplashViewEvents.BIOMETRIC_NEEDS_REGISTRATION)
                 is BiometricState.Error -> {
-                    errorMessage = state.message
-                    showErrorNotification = true
-                    delay(3000)
-                    showErrorNotification = false
-                }
-                is BiometricState.Success -> {
-                    navigate(navigationEvent, navigator)
-                }
-                else -> {
                     errorMessage = biometricError
-                    delay(1000)
                     showErrorNotification = true
                     delay(3000)
                     showErrorNotification = false
                 }
+
+                BiometricState.Idle -> Unit
+            }
+        }
+
+        LaunchedEffect(navigationEvent) {
+            if (navigationEvent != SplashNavigationEvent.Idle) {
+                navigate(navigationEvent, navigator)
             }
         }
 
