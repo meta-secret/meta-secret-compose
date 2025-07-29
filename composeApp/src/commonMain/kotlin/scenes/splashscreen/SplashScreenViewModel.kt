@@ -40,7 +40,7 @@ class SplashScreenViewModel(
     // All biometric routine
     private fun biometricRoutine() {
         viewModelScope.launch {
-//            keyChain.clearAll()
+            keyChain.clearAll()
 
             if (checkBiometricAvailability()) {
                 authenticateWithBiometrics()

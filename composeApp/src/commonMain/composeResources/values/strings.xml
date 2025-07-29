@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name = "gotSecrets">Do you have any important information?</string>
-    <string name = "splitIt">Split it between your devices</string>
-    <string name = "secureSafe">All passwords and private information will be stored only on you devices and safely protected by RSA and AES encryption standards</string>
+    <string name = "onBoardingTitle1">Got secrets to keep?</string>
+    <string name = "onBoardingSubTitle1">Store them on your own devices</string>
+    <string name = "onBoardingDescription1">Your data never leaves your devices. It's encrypted with AES and RSA, then split and stored safely across your personal cloud.</string>
+    <string name = "onBoardingTitle2">No servers. No accounts.</string>
+    <string name = "onBoardingSubTitle2">Just your devices and you</string>
+    <string name = "onBoardingDescription2">We don't use servers or logins. Your secrets live only on your trusted devices, protected by your biometrics.</string>
+    <string name = "onBoardingTitle3">Need access? Use your other device</string>
+    <string name = "onBoardingSubTitle3">Recovery that’s simple and secure</string>
+    <string name = "onBoardingDescription3">To unlock a secret, just approve the request from another device you own. Two devices. Zero compromise.</string>
     <string name = "devices">The more devices you have the better</string>
     <string name = "next"> Continue </string>
     <string name = "skip"> Skip </string>

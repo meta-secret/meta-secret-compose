@@ -161,15 +161,16 @@ class MetaSecretAppManager(
                             else -> return AuthState.NOT_YET_COMPLETED
                         }
                     }
+
                     else -> {
                         return AuthState.NOT_YET_COMPLETED
                     }
                 }
             }
+
             else -> AuthState.NOT_YET_COMPLETED
         }
     }
-
 }
 
 enum class AuthState {

@@ -3,15 +3,19 @@ package scenes.onboarding
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -30,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -58,10 +63,10 @@ class OnboardingScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val pages = viewModel.pages
         val pagerState = rememberPagerState(pageCount = { pages.size })
-
         val backgroundMain = painterResource(Res.drawable.background_main)
-
         val currentPage by viewModel.currentPage.collectAsState()
+        val density = LocalDensity.current
+        val topInset = with(density) { WindowInsets.systemBars.getTop(this).toDp() }
 
         LaunchedEffect(currentPage) {
             if (currentPage == -1) {
@@ -83,8 +88,8 @@ class OnboardingScreen : Screen {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 44.dp, bottom = 12.dp)
-                    .padding(horizontal = 16.dp),
+                    .padding(top = topInset, bottom = 24.dp)
+                    .padding(horizontal = 0.dp),
             ) {
                 OnboardingHeader(
                     pagerState = pagerState,
@@ -117,9 +122,11 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .height(32.dp)
     ) {
         Row(
-            modifier = Modifier.align(Alignment.Center),
+            modifier = Modifier
+                .align(Alignment.Center),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             repeat(pagerState.pageCount) { iteration ->
@@ -134,34 +141,29 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
             }
         }
 
-        Text(
+        Row(
             modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 16.dp),
-            fontSize = 15.sp,
-            color = AppColors.White75,
-            text = "${pagerState.currentPage + 1} / $pagesCount"
-        )
-
-        Button(
-            onClick = {
-                coroutineScope.launch {
-                    val result = viewModel.handle(OnboardingViewEvents.COMPLETE_ONBOARDING)
-                    println(result)
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .clip(RoundedCornerShape(8.dp))
-                .padding(end = 16.dp),
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
-            elevation = null
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
+                fontSize = 15.sp,
+                color = AppColors.White75,
+                text = "${pagerState.currentPage + 1} / $pagesCount"
+            )
+            Text(
+                modifier = Modifier
+                    .clickable {
+                        coroutineScope.launch {
+                            val result = viewModel.handle(OnboardingViewEvents.COMPLETE_ONBOARDING)
+                            println(result)
+                        }
+                    },
                 text = stringResource(Res.string.skip),
                 fontSize = 15.sp,
                 color = AppColors.ActionLink,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.End,
             )
         }
     }
@@ -172,7 +174,8 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
 fun OnboardingFooter(pagerState: PagerState, viewModel: OnboardingViewModel, pagesCount: Int) {
     Column(
         modifier = Modifier
-            .padding(vertical = 24.dp)
+            .padding(top = 24.dp)
+            .padding(horizontal = 24.dp)
             .fillMaxWidth()
     ) {
         val coroutineScope = rememberCoroutineScope()
@@ -218,27 +221,33 @@ fun PagerScreen(onBoardingPage: OnBoardingPage) {
         Column(
             modifier = Modifier
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = stringResource(onBoardingPage.title),
                 color = AppColors.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 28.sp,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
             )
             Text(
                 text = stringResource(onBoardingPage.subTitle),
                 color = AppColors.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
             )
             Text(
                 text = stringResource(onBoardingPage.description),
                 fontSize = 16.sp,
                 color = AppColors.White75,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
             )
         }
     }
