@@ -48,10 +48,10 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import scenes.secretsscreen.SecretsScreenViewModel
-import sharedData.AppColors
-import sharedData.enums.DevicesQuantity
-import storage.Secret
+import ui.scenes.secretsscreen.SecretsScreenViewModel
+import core.AppColors
+import models.appInternalModels.DevicesQuantity
+import core.Secret
 import ui.SwipeableItem
 import ui.dialogs.removesecret.removeSecret
 import ui.dialogs.showsecret.showSecret

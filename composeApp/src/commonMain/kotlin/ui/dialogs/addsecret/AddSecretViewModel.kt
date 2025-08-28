@@ -25,9 +25,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
-import sharedData.AppColors
-import storage.KeyValueStorage
-import storage.Secret
+import core.AppColors
+import core.KeyValueStorage
+import core.Secret
 
 class AddSecretViewModel(
     private val keyValueStorage: KeyValueStorage

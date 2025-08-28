@@ -1,8 +1,8 @@
 package ui.dialogs.removesecret
 
 import androidx.lifecycle.ViewModel
-import storage.KeyValueStorage
-import storage.Secret
+import core.KeyValueStorage
+import core.Secret
 
 class RemoveSecretViewModel(
     private val keyValueStorage: KeyValueStorage

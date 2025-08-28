@@ -37,8 +37,7 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import sharedData.AppColors
-import sharedData.actualHeightFactor
+import core.AppColors
 import ui.ClassicButton
 
 @Composable

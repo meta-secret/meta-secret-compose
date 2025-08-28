@@ -33,8 +33,7 @@ import kotlinproject.composeapp.generated.resources.useMetaSecret
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import sharedData.AppColors
-import sharedData.actualHeightFactor
+import core.AppColors
 import ui.ClassicButton
 
 

@@ -32,9 +32,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.compose.resources.Font
-import sharedData.AppColors
-import storage.Device
-import storage.KeyValueStorage
+import core.AppColors
+import core.Device
+import core.KeyValueStorage
 
 class ShowSecretViewModel(
     private val keyValueStorage: KeyValueStorage

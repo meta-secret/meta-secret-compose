@@ -1,0 +1,132 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# SECURITY
+
+This document defines the minimum security requirements for the project.  
+Scope: Kotlin-first (KMM) app with a minimal Swift proxy and a prebuilt Rust binary accessed via FFI.  
+Strictness level: **Baseline** (can be tightened later).
+
+---
+
+## Secrets & Storage
+
+- **iOS**: Secrets/tokens must be stored in **Keychain**.
+- **Android**: Secrets/tokens must be stored via **Keystore** (e.g., EncryptedSharedPreferences or equivalent Keystore-backed storage).
+- **No additional app-level encryption** layers are required at this time.
+- Secrets/tokens **must not** be checked into source control, hardcoded in code, or placed in app bundles.
+- Access to secrets must go through `core/` interfaces; `ui/` must never handle raw secrets.
+
+> Note: If additional secret types or storage policies are introduced, update this section accordingly.
+
+---
+
+## Permissions Policy
+
+Request only what is needed:
+
+- **Biometrics**: allowed for authentication/lock.
+- **Camera**: allowed for camera features.
+- **Push Notifications**: allowed for messaging/notifications.
+- No other permissions should be requested without an explicit decision.
+
+Apps must show a clear rationale (in-app copy) before the system prompt where applicable.
+
+---
+
+## Input Validation
+
+_Currently no explicit input validation requirements beyond platform defaults._
+
+- If/when user input or external data is introduced (forms, files, FFI buffers), validation should live in **core/** and be:
+  - **Type-safe** and **length-bounded**,
+  - With clear error messages mapped to sealed error types,
+  - Rejecting invalid/unknown fields by default.
+
+---
+
+## Anti-Injection
+
+- The app does **not** use SQL/templating/command execution or network APIs at this time.
+- If such components are added later, update this section with the relevant injection defenses (parameterized queries, escaping, sandboxing, etc.).
+
+---
+
+## Logging & PII
+
+_Reserved for future policy (no additional restrictions defined yet)._
+
+> Until filled, follow general hygiene: avoid secrets/PII in logs; mask identifiers when possible.
+
+---
+
+## App Lock (Biometrics / Lock Screen)
+
+- The app **may** be protected with a biometric/pin lock.
+- If enabled:
+  - Lock on demand (user action) and on **inactivity timeout**.
+  - Re-authenticate on app resume if the lock is active.
+  - Store lock state securely (Keychain/Keystore) and never log it.
+
+---
+
+## Error Messages
+
+- User-facing errors must be **safe** and not reveal internals (stack traces, file paths, raw codes).
+- Internal errors are mapped to **sealed** error types in `core/` and converted to localized/user-friendly text in `ui/`.
+- Do not expose raw FFI/native error strings to the UI.
+
+---
+
+## Clipboard & Screenshots
+
+- No current restrictions on clipboard usage or screenshot behavior.
+- If secrets are ever copied to the clipboard, add time-based clearing and warning UX (to be defined later).
+
+---
+
+## FFI / Native Binary Integrity
+
+- No explicit integrity/signature checks required for the prebuilt native library at this time.
+- If distribution channels or threat model change, revisit this policy (hash pinning, signature verification, secure loading).
+
+---
+
+## Backups / Data Retention
+
+_Reserved for future policy._
+
+---
+
+## CI/CD & Signing
+
+_Reserved for future policy._
+
+---
+
+## .env / Configuration
+
+_Reserved for future policy._
+
+---
+
+## Security Checklist (Baseline)
+
+- [ ] Secrets/tokens live only in Keychain (iOS) / Keystore-backed storage (Android).
+- [ ] Only biometrics, camera, and push permissions are requested.
+- [ ] Error messages are safe; sealed-domain errors used internally.
+- [ ] No secrets/PII in logs (until logging policy is finalized).
+- [ ] App lock (if enabled) re-authenticates on resume/timeout.
+- [ ] No SQL/network/command injection surfaces (update policy if introduced).
+- [ ] FFI calls are never performed from `ui/`; access only via `core/` interfaces.
+
+---
+
+## Change Control
+
+Any change that introduces new data flows, storage, permissions, or external interfaces must be accompanied by:
+- An ADR (Architecture Decision Record),
+- An update to this `SECURITY.md`,
+- Tests that cover the security-critical behavior (where applicable).

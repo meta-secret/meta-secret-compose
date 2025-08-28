@@ -1,6 +1,5 @@
 package ui.dialogs.adddevice
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,8 +29,7 @@ import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.wanna_join
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
-import sharedData.AppColors
-import sharedData.actualHeightFactor
+import core.AppColors
 import ui.ClassicButton
 
 @Composable

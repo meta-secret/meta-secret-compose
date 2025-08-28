@@ -3,12 +3,12 @@ package di
 import android.content.Context
 import androidx.fragment.app.FragmentActivity
 import org.koin.dsl.module
-import sharedData.BiometricAuthenticatorAndroid
-import sharedData.BiometricAuthenticatorInterface
-import sharedData.KeyChainInterface
-import sharedData.KeyChainManagerAndroid
-import sharedData.MetaSecretCoreServiceAndroid
-import sharedData.metaSecretCore.MetaSecretCoreInterface
+import core.BiometricAuthenticatorAndroid
+import core.BiometricAuthenticatorInterface
+import core.KeyChainInterface
+import core.KeyChainManagerAndroid
+import core.MetaSecretCoreServiceAndroid
+import core.metaSecretCore.MetaSecretCoreInterface
 
 val androidPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceAndroid() }

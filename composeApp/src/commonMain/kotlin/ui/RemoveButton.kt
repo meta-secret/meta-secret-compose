@@ -23,8 +23,7 @@ import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.trashbox
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
-import sharedData.AppColors
-import sharedData.actualWidthFactor
+import core.AppColors
 
 @Composable
 fun RemoveButton(action: (Boolean) -> Unit, description: String) {

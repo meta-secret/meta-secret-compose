@@ -1,0 +1,100 @@
+---
+alwaysApply: true
+---
+# Project Rules
+
+## Goals
+- MVP: Distributed secret saver. Serverless. Keeping all data on the device only. No master password. No Auth. Only biometrical checking.
+
+## Stack and Versions
+- Runtime:
+  - Rust: stable (via rustup), minimum = latest stable (pinned in rust-toolchain.toml)
+  - Kotlin: latest stable (Kotlin 2.1.21, JVM 11, Android minSdk 25)
+  - Swift: latest stable (Swift 5.x, current Xcode 16.4, iOS target ≥ 15.3)
+
+- Update Policy:
+  - All languages/SDKs must be upgraded to the latest stable release at least once per quarter.
+  - Lock files (Cargo.lock, Gradle lock, SwiftPM) are mandatory for reproducible builds.
+
+### Architectural Style
+    - The application follows **MVVM (Model–View–ViewModel)**.
+    - ui/ contains Views (Compose/Swift/UIViewControllers) and ViewModels.
+    - ViewModels expose state and navigation events as Flows/Streams.
+    - core/ contains UseCases and domain logic, consumed by ViewModels.
+    - infra/ provides repositories/adapters implementing interfaces defined in core/.
+    - Unidirectional data flow: View → ViewModel → UseCase → Repository → Data source → back to View.
+
+### Architecture Principles (SOLID)
+  - **Single Responsibility**: each type has exactly one reason to change.
+  - **Open/Closed**: extend via new types, do not modify stable ones without ADR.
+  - **Liskov Substitution**: interface contracts must allow substitutability of implementations.
+  - **Interface Segregation**: prefer small, purpose-specific interfaces over “god” services.
+  - **Dependency Inversion**: depend on interfaces defined in `core/`, not on platform implementations.
+
+### Access Policy (Interface-Only)
+- All services/managers are accessed exclusively via interfaces defined in `core/`.
+- Concrete implementations live in platform adapters (~infra) and are wired via DI (Koin).
++ Implementations may live in `commonMain` **only if** they are platform-agnostic; otherwise they live in `androidMain` / `iosMain`.
++ DI bindings are declared in the same source set as the implementation.
+- Public APIs, constructor params, and return types must use interfaces only (no `*Impl` in signatures).
+- Instantiating implementations directly outside DI is forbidden.
+
+## Architecture (Boundaries)
+- ui/
+  - Android: Jetpack Compose screens and view models.
+  - iOS: UIKit screens, minimal proxy layer that forwards calls to the shared core/Rust APIs.
+  - Contains presentation logic only (MVVM).
+  - May depend on core/ (public APIs only).
+  - Must not access infra/ directly.
+  - No business logic here.
+
+- core/
+  - Shared Kotlin Multiplatform codebase (99% of the app).
+  - Contains domain models, use-cases, validation, state management, and navigation events.
+  - Provides a sealed-class–based error model, mapped from Rust errors into domain-level errors.
+  - Exposes a clean asynchronous API to ui/, even if internally delegating to synchronous Rust.
+  - Dependency injection via Koin.
+  - Uses interfaces instead of `expect/actual` for platform abstraction.
+
+- infra/
+  - FFI bindings to the Rust core library.
+  - Implements platform services through interfaces defined in core/ (camera, push, biometrics, keychain, secure storage).
+  - Keychain and KeyValueStorage adapters live here.
+  - Provides only technical implementations; no business rules.
+
+### Allowed Dependencies (one-way)
+- ui/ → core/
+- core/ → infra/ (via interfaces/ports only; concrete implementations injected at composition root)
+- infra/ → (no upward dependencies; implements interfaces from core/)
+
+### Composition Root
+- Android: App module wires Koin (core + infra implementations) and injects into Jetpack Compose UI.
+- iOS: Proxy file (UIKit) wires infra services + Rust bindings, then provides them into ui/.
+
+### Data Flow
+- Unidirectional: UI → ViewModel (core) → UseCase (core) → Repository/Adapter (infra).
+- Results flow back to UI as immutable state and navigation events.
+- Asynchronous boundaries ensure that Rust calls never block UI threads.
+
+### Error Handling
+- Rust errors → mapped into sealed class hierarchies in core/.
+- UI layer consumes sealed classes and maps them into user-facing messages.
+- No exceptions thrown across module boundaries.
+
+### Testing
+- core/ (`commonMain`): unit tests are required for use-cases, mappers, and error mapping.
+- platform adapters (`androidMain` / `iosMain`): (when introduced) integration tests for Keychain/Keystore storage and FFI bridges (SwiftBridge/JNI). Tests live in the respective platform test targets.
+- ui/: ViewModel unit tests with fakes that implement core interfaces; view/UI tests are optional and can be added later.
+- Regression tests: added on demand (manual decision).
+
+
+### Security
+- Secrets must never live in ui/.
+- Secure storage only via Keychain (iOS) and platform equivalents (Android).
+- FFI boundary audited for memory safety; core/ must wrap all unsafe APIs.
+
+### Forbidden
+- UI directly calling Business logic or FFI.
+- Business logic inside ui/.
+- Adding new infra dependencies without ADR.
+- Using `expect/actual`; platform abstractions must be interfaces only.

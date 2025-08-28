@@ -1,0 +1,44 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# LLM Collaboration Rules
+
+## How to Provide Context
+- Always include the relevant files, folders, or code snippets.
+- Specify the input/output format when necessary.
+- Mention architectural boundaries explicitly: `ui/`, `core/` (`commonMain`), and the **platform adapters** in `androidMain/` and `iosMain` (including FFI bindings).
+- Clearly state the intention of the change (bugfix, feature, refactor, optimization).
+
+## How to Request Changes
+- Full file output is allowed when creating new files or replacing small ones.
+- For existing files: prefer unified `diff` format.
+- Process:
+  1. AI restates the task in its own words.
+  2. AI asks: "Can I proceed?".
+  3. After user confirmation → provide the code (diff or full file).
+- No comments in code — only pure code.
+- Debug logging must follow this convention:
+  - Format: `[emoji][FileName]: [message]`
+  - The same emoji is used for both View and ViewModel of a screen.
+  - Errors must start with a red ❌, successful execution with a green ✅.
+  - Example: `👤ProfileViewModel: ✅ User loaded successfully`
+
+## Forbidden Files/Directories
+- (reserved for user, leave empty for now)
+
+## Glossary
+- **metasecret-mobile**: Rust core library (shared secret engine).
+- **composeApp**: shared Kotlin Multiplatform module.
+- **SwiftBridge**: iOS proxy file to call Rust library.
+- (reserved for additional terms)
+
+## Prompt Templates
+- (reserved for now, will be filled with common task templates later)
+
+## Interface-First Workflow
+  -   1) Propose/define an interface in `core/` (`commonMain`).
+  -   2) If implementation is platform-agnostic → implement in `commonMain`. Otherwise → implement in `androidMain` / `iosMain`.
+  -   3) Register Koin bindings **in the same source set** as the implementation.
+  -   4) Update ViewModels to depend on the interface only.

@@ -12,12 +12,14 @@ import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import platform.App
 import platform.getPlatformModule
-import sharedData.BiometricAuthenticatorAndroid
-import sharedData.BiometricAuthenticatorInterface
-import sharedData.KeyChainInterface
-import sharedData.KeyChainManagerAndroid
-import storage.KeyValueStorage
-import storage.KeyValueStorageImpl
+import core.BiometricAuthenticatorAndroid
+import core.BiometricAuthenticatorInterface
+import core.KeyChainInterface
+import core.KeyChainManagerAndroid
+import core.BackupCoordinatorInterface
+import core.BackupCoordinatorInterfaceAndroid
+import core.KeyValueStorage
+import core.KeyValueStorageImpl
 
 
 class MainActivity : FragmentActivity() {
@@ -53,6 +55,9 @@ class MainActivity : FragmentActivity() {
             }
             single<KeyChainInterface> { 
                 KeyChainManagerAndroid(this@MainActivity.applicationContext)
+            }
+            single<BackupCoordinatorInterface> {
+                BackupCoordinatorInterfaceAndroid(this@MainActivity, get())
             }
         }
 

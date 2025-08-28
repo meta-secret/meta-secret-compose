@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name = "gotSecrets">Есть очень важные секреты?</string>
-    <string name = "splitIt">Поделите их между своими устройствами</string>
-    <string name = "secureSafe">Все пароли и секретная информация хранятся только на ваших устройствах и надежно защищены по стандартам шифрования RSA и AES</string>
+    <string name = "onBoardingTitle1">Есть секреты?</string>
+    <string name = "onBoardingSubTitle1">Сохрани их на своих устройствах</string>
+    <string name = "onBoardingDescription1">Ваши данные никогда не покинут ваших устройств. Они зашифрованы, разделены и сохранены в собственном облаке.</string>
+    <string name = "onBoardingTitle2">Ни серверов. Ни аккаунтов</string>
+    <string name = "onBoardingSubTitle2">Только ваше устройство и вы</string>
+    <string name = "onBoardingDescription2">Мы не используем сервер. Ваши секреты живут лишть там где вы одобрили, и защищены вашей биометрией.</string>
+    <string name = "onBoardingTitle3">Нужен доступ? Воспользуйтесь вашими другими устройствами</string>
+    <string name = "onBoardingSubTitle3">Восстановление на столько же простое как и сохранение</string>
+    <string name = "onBoardingDescription3">Чтобы увидеть секрет, просто разрешите это сделать на любом другом устройстве.</string>
     <string name = "devices">Чем больше устройств тем лучше</string>
     <string name = "next"> Далее </string>
     <string name = "skip"> Пропустить </string>
@@ -81,4 +87,7 @@
     <string name = "reject_join">"Отказано в регистрации. Возможно вы присоединяетесь не к своему аккаунту."</string>
     <string name = "goto_devices_tab">Перейдите во вкладку Устройства и добавьте необходимые в вашу сеть</string>
     <string name = "wanna_join">Вы хотите добавить это устройство?</string>
+    <string name = "backup_choose_path_message">Выберите путь, для сохранения Базы Данных</string>
+    <string name = "backup_choose_path_warning">Если вы не укажите путь, ваши данные будут утеряны при деинсталяции приложения</string>
+    <string name = "ok">Ок</string>
 </resources>

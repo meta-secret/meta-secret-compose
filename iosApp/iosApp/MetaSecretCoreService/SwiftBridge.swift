@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import UIKit
+import ObjectiveC
 
 @objc public class SwiftBridge: NSObject {
     // MARK: - MetaSecretCoreBridge API
@@ -34,8 +36,8 @@ import Foundation
 
     @_silgen_name("clean_up_database")
     private func c_clean_up_database() -> UnsafeMutablePointer<CChar>?
-    // MARK: - MetaSecretCoreBridge
     
+    // MARK: - MetaSecretCoreBridge
     @objc public func generateMasterKey() -> String {
         guard let cString = c_generate_master_key() else {
             return ""
@@ -71,15 +73,19 @@ import Foundation
     }
     
     @objc public func generateUserCreds(vaultName: String) -> String {
+        print("🦅 Swift: generateUserCreds with \(vaultName)")
         guard let cVaultName = vaultName.cString(using: .utf8) else {
+            print("🦅 Swift: generateUserCreds return #")
             return ""
         }
         
         guard let cString = c_generate_user_creds(cVaultName) else {
+            print("🦅 Swift: generateUserCreds return ##")
             return ""
         }
         
         let resultString = String(cString: cString)
+        print("🦅 Swift: generateUserCreds resultString \(resultString) ")
         c_free_string(cString)
         return resultString
     }
@@ -198,6 +204,49 @@ import Foundation
         
         let status = SecItemDelete(query as CFDictionary)
         return status == errSecSuccess || status == errSecItemNotFound
+    }
+
+    // Mark: - Backuping
+    @objc public func presentBackupPickerWithMessages(
+        initialMessage: String,
+        okTitle: String,
+        warningMessage: String,
+        warningOkTitle: String,
+        warningCancelTitle: String
+    ) {
+        BackupUI.shared.presentBackupPicker(
+            initialMessage: initialMessage,
+            okTitle: okTitle,
+            warningMessage: warningMessage,
+            warningOkTitle: warningOkTitle,
+            warningCancelTitle: warningCancelTitle
+        )
+    }
+
+    @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:)
+    public func presentBackupPickerWithInitialMessage(
+        initialMessage: String,
+        okTitle: String,
+        warningMessage: String,
+        warningOkTitle: String,
+        warningCancelTitle: String
+    ) {
+        BackupUI.shared.presentBackupPicker(
+            initialMessage: initialMessage,
+            okTitle: okTitle,
+            warningMessage: warningMessage,
+            warningOkTitle: warningOkTitle,
+            warningCancelTitle: warningCancelTitle
+        )
+    }
+
+    // MARK: - Backup non-UI helpers
+    @objc public func restoreBackupIfNeeded() {
+        BackupWorker.restoreIfNeeded()
+    }
+
+    @objc public func backupIfChanged() {
+        BackupWorker.backupIfChanged()
     }
 }
 

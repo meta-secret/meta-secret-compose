@@ -23,8 +23,7 @@ import androidx.compose.ui.unit.dp
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.close_blue
 import org.jetbrains.compose.resources.painterResource
-import sharedData.AppColors
-import sharedData.actualHeightFactor
+import core.AppColors
 
 @Composable
 fun InAppNotification(

@@ -33,8 +33,7 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import qrgenerator.qrkitpainter.rememberQrKitPainter
-import sharedData.AppColors
-import sharedData.actualHeightFactor
+import core.AppColors
 
 @Composable
 fun addingDevice(mainDialogVisibility: (Boolean) -> Unit, userName: String) {

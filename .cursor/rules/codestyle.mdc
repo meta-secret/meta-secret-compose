@@ -1,0 +1,135 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+# CODESTYLE
+
+The project is Kotlin-first (KMM) with a minimal Swift proxy and a prebuilt Rust binary accessed via FFI.  
+These rules are **normative**; keep the codebase free of warnings when possible.
+
+---
+
+## Tools (Formatters & Linters)
+
+### Kotlin (KMM)
+- **Formatter**: `ktlint` (or `ktfmt`) — run locally and in CI.
+- **Linter**: `detekt` with a project config.
+- **Gradle** (suggested tasks): `./gradlew ktlintFormat detekt`.
+- Treat most warnings seriously; aim for **zero warnings**, but the build does not hard-fail on warnings.
+
+### Swift (iOS proxy)
+- **Formatter**: `swift-format`.
+- **Linter**: `SwiftLint` (focused rules).
+- Xcode project should compile with minimal/no warnings.
+
+> Note: Rust source is **not** part of this repo (prebuilt binary only), so no Rust style enforcement here.
+
+---
+
+## Architectural Boundaries (enforcement by style)
+- `ui/` depends only on **public APIs** from `core/`.
+- `core/` declares interfaces/ports; platform implementations live outside and are injected.
+- **FFI calls never happen in `ui/`**. They are wrapped by `core/` APIs and bridged on each platform.
+
+---
+
+## Naming
+
+### Kotlin
+- **Packages**: `lowercase.with.dots`.
+- **Classes / Interfaces / Objects**: `PascalCase`.
+- **Functions / Properties / Parameters**: `camelCase`.
+- **Constants**: `UPPER_SNAKE_CASE`.
+- **Use cases / View models**: suffix with `UseCase`, `ViewModel`.
+- **Repositories**: interfaces end with `Repository`, impls with `RepositoryImpl`.
+
+### Swift (proxy)
+- **Types**: `PascalCase`.  
+- Method/variable names: `camelCase`.
+
+---
+
+## Collections & Coding Style (Kotlin)
+- Prefer **imperative** style for clarity in business logic (`for`/`if`), use functional ops (`map`, `filter`) sparingly when it improves readability.
+- Prefer **immutability** (`val`) and small, focused functions.
+- Keep functions typically under ~40 LOC unless there’s a clear reason.
+
+---
+
+## Null-Safety (strict)
+
+### Kotlin
+- **Forbidden**: `!!` (force unwrap).  
+- Always provide explicit checks, default values, or `requireNotNull` with message.
+
+### Swift
+- Prefer `guard` for early exits.
+- **Forbidden**: force unwrap (`!`) and force try (`try!`) in production code.
+
+---
+
+## Equality & Data Types (Kotlin)
+- Value-like types **must** be `data class` (auto `equals/hashCode`).
+- If a non-data class requires equality semantics, implement **both** `equals` and `hashCode`.
+- Avoid relying on reference equality unless intentional and documented.
+
+---
+
+## Errors
+
+### Kotlin
+- Public APIs **do not throw** across module boundaries.
+- Use **sealed classes** for domain errors; UI maps them to user-facing messages.
+- All FFI/native error codes are mapped in `core/` to sealed domain errors (single mapping point).
+
+### Swift
+- SwiftBridge converts native/FFI failures to a Swift enum immediately.
+- UI never handles raw error strings or codes.
+
+---
+
+## Asynchrony & Concurrency
+
+### Kotlin
+- **Only coroutines** (`suspend`, `Flow`/`StateFlow`/`SharedFlow`).
+- Structured concurrency only; no `GlobalScope`.
+- Wrap any potentially blocking FFI call with `withContext(Dispatchers.IO)` (or a dedicated dispatcher).
+- ViewModels expose immutable state/streams; UI collects with lifecycle awareness.
+
+### iOS
+- Do not block the main thread. Dispatch results back to the main queue for UI updates.
+
+---
+
+## SwiftBridge (proxy) Rules
+- The **SwiftBridge file exists only to call library/native APIs**.  
+  - Business logic: **not allowed**.  
+  - If native functionality is needed (e.g., Keychain), create **separate dedicated classes** for it; SwiftBridge only orchestrates calls.
+- Keep the bridge **small and stateless**; convert to Swift-native structs/enums close to the boundary.
+- **No force unwraps**; prefer `guard` and early returns.
+
+---
+
+## Logging
+
+**No comments in code. Only code.** Use logs for debugging.
+
+### Mandatory format
+[emoji][FileName]: [message]
+- The **same emoji** is used consistently **within a given file** (and the paired View/ViewModel of a screen share the same emoji).
+- Errors **must** start with a red `❌`, successful execution with a green `✅`.
+
+**Examples**
+```kotlin
+println("👤ProfileViewModel: ✅ User loaded")
+println("👤ProfileViewModel: ❌ Failed to load user: $reason")
+println("🗝️SwiftBridge: ✅ Keychain item saved")
+
+## DI Binding Location
+  - Register a binding **where the implementation lives**:
+  - `commonMain`: `module { single<Port> { DefaultPortImpl(...) } }`
+  - `androidMain`: `module { single<Port> { AndroidPortImpl(...) } }`
+  - `iosMain`: `module { single<Port> { IosPortImpl(...) } }`
+  - Consumers depend on `Port` (the interface) only; no direct references to `*Impl` outside DI modules.
