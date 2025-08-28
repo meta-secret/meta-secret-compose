@@ -48,7 +48,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import ui.scenes.mainscreen.DevicesTab
 import core.AppColors
 import ui.AddButton
-import ui.dialogs.addsecret.addSecret
+import ui.dialogs.addsecret.AddSecret
 import ui.notifications.InAppNotification
 import ui.screenContent.CommonBackground
 import ui.screenContent.SecretsContent
@@ -79,7 +79,7 @@ class SecretsScreen : Screen {
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 itemsIndexed(secretsList) { index, secret ->
-                    SecretsContent(index, secret)
+                    SecretsContent(index, secret, viewModel.screenMetricsProvider)
                 }
             }
         }
@@ -97,24 +97,26 @@ class SecretsScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            addSecret(dialogVisibility = { isDialogVisible = it })
+            AddSecret(
+                viewModel.screenMetricsProvider,
+                dialogVisibility = { isDialogVisible = it }
+            )
         }
 
+        var message = ""
         if (previousCount < secretsCount) {
-            InAppNotification(
-                true, //TODO if failed
-                stringResource(Res.string.secretAdded),
-                { previousCount = secretsCount }
-            )
-            LaunchedEffect(Unit) { delay(2000); previousCount = secretsCount }
+            message = stringResource(Res.string.secretAdded)
         } else if (previousCount > secretsCount) {
-            InAppNotification(
-                true, //TODO if failed
-                stringResource(Res.string.secretRemoved),
-                { previousCount = secretsCount }
-            )
-            LaunchedEffect(Unit) { delay(2000); previousCount = secretsCount }
+            message = stringResource(Res.string.secretRemoved)
         }
+
+        InAppNotification(
+            viewModel.screenMetricsProvider,
+            true, //TODO if failed
+            message,
+            { previousCount = secretsCount }
+        )
+        LaunchedEffect(Unit) { delay(2000); previousCount = secretsCount }
 
         if (secretsCount < 1) {
             Box(
@@ -137,7 +139,7 @@ class SecretsScreen : Screen {
                             painter = painterResource(Res.drawable.executioner),
                             contentDescription = null,
                             modifier = Modifier
-                                .size((actualHeightFactor() * 220).dp)
+                                .size((viewModel.screenMetricsProvider.heightFactor() * 220).dp)
                                 .align(Alignment.Center),
                             contentScale = ContentScale.Fit
                         )

@@ -29,9 +29,9 @@ import models.appInternalModels.DeviceStatus
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
 import ui.AddButton
-import ui.dialogs.adddevice.addingDevice
-import ui.dialogs.adddevice.joinDevice
-import ui.dialogs.adddevice.popUpDevice
+import ui.dialogs.adddevice.AddingDevice
+import ui.dialogs.adddevice.JoinDevice
+import ui.dialogs.adddevice.PopUpDevice
 import ui.screenContent.CommonBackground
 import ui.screenContent.DeviceContent
 
@@ -60,6 +60,7 @@ class DevicesScreen : Screen {
                 ) {
                     items(devices) { device ->
                         DeviceContent(
+                            viewModel.screenMetricsProvider,
                             device,
                             onClick = {
                                 if (device.status != DeviceStatus.Member) {
@@ -100,7 +101,8 @@ class DevicesScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            popUpDevice(
+            PopUpDevice(
+                viewModel.screenMetricsProvider,
                 dialogVisibility = { isDialogVisible = it },
                 mainDialogVisibility = { isMainDialogVisible = it }
             )
@@ -116,7 +118,11 @@ class DevicesScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            addingDevice ({ isMainDialogVisible = it}, viewModel.vaultName.value ?: "")
+            AddingDevice (
+                viewModel.screenMetricsProvider,
+                { isMainDialogVisible = it},
+                viewModel.vaultName.value ?: ""
+            )
         }
         AnimatedVisibility(
             visible = isJoinRequestVisible,
@@ -129,7 +135,8 @@ class DevicesScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            joinDevice(
+            JoinDevice(
+                viewModel.screenMetricsProvider,
                 onDismiss = {
                     if (it != null) {
                         val action = if (it) {

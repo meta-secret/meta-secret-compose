@@ -300,6 +300,7 @@ class SignInScreen : Screen {
                 Column {
                     Spacer(modifier = Modifier.height(40.dp))
                     InAppNotification(
+                        viewModel.screenMetricsProvider,
                         isSuccessful = !isSnackError,
                         message = snackBarMessage ?: "",
                         onDismiss = {}

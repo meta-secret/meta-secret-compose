@@ -4,15 +4,10 @@ import com.metaSecret.ios.SwiftBridge
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSFileManager
 import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.getString
-import kotlinx.coroutines.runBlocking
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.backup_choose_path_message
-import kotlinproject.composeapp.generated.resources.backup_choose_path_warning
-import kotlinproject.composeapp.generated.resources.ok
 
-class BackupCoordinatorInterfaceIos : BackupCoordinatorInterface {
+class BackupCoordinatorInterfaceIos(
+    private val stringProvider: StringProviderInterface
+) : BackupCoordinatorInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun ensureBackupDestinationSelected() {
         val bridge = SwiftBridge()
@@ -40,9 +35,9 @@ class BackupCoordinatorInterfaceIos : BackupCoordinatorInterface {
 
     @OptIn(ExperimentalResourceApi::class, ExperimentalForeignApi::class)
     private fun presentUsingUIBridge(bridge: SwiftBridge) {
-        val msg = getResString(Res.string.backup_choose_path_message)
-        val warn = getResString(Res.string.backup_choose_path_warning)
-        val okText = getResString(Res.string.ok)
+        val msg = stringProvider.backupChoosePathMessage()
+        val warn = stringProvider.backupChoosePathWarning()
+        val okText = stringProvider.ok()
 
         bridge.presentBackupPickerWithInitialMessage(
             initialMessage = msg,
@@ -53,8 +48,6 @@ class BackupCoordinatorInterfaceIos : BackupCoordinatorInterface {
         )
     }
 
-    @OptIn(ExperimentalResourceApi::class)
-    private fun getResString(resource: StringResource): String = runBlocking { getString(resource) }
 }
 
 

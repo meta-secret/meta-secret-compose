@@ -9,10 +9,19 @@ import core.MetaSecretCoreServiceIos
 import core.metaSecretCore.MetaSecretCoreInterface
 import core.BackupCoordinatorInterface
 import core.BackupCoordinatorInterfaceIos
+import core.StringProviderInterface
+import core.StringProviderIos
+import core.DeviceInfoProviderInterface
+import core.DeviceInfoProviderIos
+import core.ScreenMetricsProviderInterface
+import core.ScreenMetricsProviderIos
 
 val iosPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceIos() }
-    single<BiometricAuthenticatorInterface> { BiometricAuthenticatorIos() }
+    single<StringProviderInterface> { StringProviderIos() }
+    single<DeviceInfoProviderInterface> { DeviceInfoProviderIos() }
+    single<ScreenMetricsProviderInterface> { ScreenMetricsProviderIos() }
+    single<BiometricAuthenticatorInterface> { BiometricAuthenticatorIos(get()) }
     single<KeyChainInterface> { KeyChainManagerIos() }
-    single<BackupCoordinatorInterface> { BackupCoordinatorInterfaceIos() }
+    single<BackupCoordinatorInterface> { BackupCoordinatorInterfaceIos(get()) }
 }

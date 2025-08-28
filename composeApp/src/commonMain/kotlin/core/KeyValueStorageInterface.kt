@@ -3,7 +3,7 @@ package core
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 
-interface KeyValueStorage {
+interface KeyValueStorageInterface {
     var isOnboardingCompleted: Boolean
     var signInInfo: LoginInfo?
     var isWarningVisible: Boolean

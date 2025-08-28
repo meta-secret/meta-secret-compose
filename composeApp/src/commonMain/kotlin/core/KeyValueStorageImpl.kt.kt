@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
 
-
-class KeyValueStorageImpl : KeyValueStorage {
+class KeyValueStorageImpl(
+    private val deviceInfoProvider: DeviceInfoProviderInterface
+): KeyValueStorageInterface {
     private val settings: Settings by lazy { Settings() }
-    //private val observableSettings: ObservableSettings by lazy { settings as ObservableSettings }
 
     override var isOnboardingCompleted: Boolean
         get() = settings.getBoolean(StorageKeys.ONBOARDING_INFO.key, defaultValue = false)
@@ -89,7 +89,7 @@ class KeyValueStorageImpl : KeyValueStorage {
             ListSerializer(Device.serializer()), StorageKeys.DEVICE_DATA.key,
             defaultValue = listOf(
                 Device(
-                    getDeviceMake(),
+                    deviceInfoProvider.getDeviceMake(),
                     signInInfo?.username.toString()
                 )
             )

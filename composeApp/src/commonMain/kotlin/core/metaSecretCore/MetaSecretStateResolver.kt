@@ -9,22 +9,22 @@ class MetaSecretStateResolver(
     override fun startFirstSignUp(
         vaultName: String
     ): AppStateResult {
-        println("\uD83D\uDDFD State Resolver: first sign up")
+        println("✅" + core.LogTags.STATE_RESOLVER + ": first sign up")
 
         val localStateResult = LocalState(vaultName, metaSecretCore).new()
             ?: return AppStateResult(null, AppErrors.CreateLocalError)
 
-        println("\uD83D\uDDFD State Resolver: Local State")
+        println("✅" + core.LogTags.STATE_RESOLVER + ": Local State")
 
         val userCredsResult = localStateResult.generateNewCreds()
             ?: return AppStateResult(null, AppErrors.CredsGenerationError)
 
-        println("\uD83D\uDDFD State Resolver: Vault state")
+        println("✅" + core.LogTags.STATE_RESOLVER + ": Vault state")
 
         val memberResult = userCredsResult.signUp()
             ?:  return AppStateResult(null, AppErrors.SignUpError)
 
-        println("\uD83D\uDDFD State Resolver: Memner State")
+        println("✅" + core.LogTags.STATE_RESOLVER + ": Member State")
 
         return AppStateResult(memberResult, null)
     }

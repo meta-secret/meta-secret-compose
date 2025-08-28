@@ -3,6 +3,7 @@ package ui.scenes.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import core.LogTags
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -10,11 +11,11 @@ import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 import core.metaSecretCore.AuthState
 import core.metaSecretCore.MetaSecretAppManagerInterface
-import core.KeyValueStorage
+import core.KeyValueStorageInterface
 
 
 class OnboardingViewModel(
-    private val keyValueStorage: KeyValueStorage,
+    private val keyValueStorage: KeyValueStorageInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface
 ) : ViewModel(), CommonViewModel {
     val pages = listOf(
@@ -42,11 +43,11 @@ class OnboardingViewModel(
         keyValueStorage.isOnboardingCompleted = true
         when (metaSecretAppManager.checkAuth()) {
             AuthState.COMPLETED -> {
-                println("\uD83D\uDC49 Move to Main")
+                println("✅${LogTags.ONBOARDING_VM}: Move to Main")
                 _currentPage.update { -2 } // TODO: Need to use enum instead of -2 and -1
             }
             AuthState.NOT_YET_COMPLETED -> {
-                println("\uD83D\uDC49 OnboardingVM: Move to Sign Up")
+                println("✅${LogTags.ONBOARDING_VM}: Move to Sign Up")
                 _currentPage.update { -1 } // TODO: Need to use enum instead of -2 and -1
             }
         }

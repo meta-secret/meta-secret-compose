@@ -8,27 +8,26 @@ import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.FragmentActivity
 import di.appModule
+import di.androidPlatformModule
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import platform.App
-import platform.getPlatformModule
 import core.BiometricAuthenticatorAndroid
 import core.BiometricAuthenticatorInterface
 import core.KeyChainInterface
 import core.KeyChainManagerAndroid
 import core.BackupCoordinatorInterface
 import core.BackupCoordinatorInterfaceAndroid
-import core.KeyValueStorage
 import core.KeyValueStorageImpl
+import core.KeyValueStorageInterface
 
 
 class MainActivity : FragmentActivity() {
 
-    private val keyValueStorage: KeyValueStorage by lazy { KeyValueStorageImpl() }
-
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val keyValueStorage: KeyValueStorageInterface = org.koin.java.KoinJavaComponent.getKoin().get()
         keyValueStorage.resetKeyValueStorage()
 
         //Background extension through the status bar
@@ -51,7 +50,11 @@ class MainActivity : FragmentActivity() {
 
         val activityModule = module {
             single<BiometricAuthenticatorInterface> { 
-                BiometricAuthenticatorAndroid(this@MainActivity.applicationContext, this@MainActivity)
+                BiometricAuthenticatorAndroid(
+                    this@MainActivity.applicationContext,
+                    this@MainActivity,
+                    get()
+                )
             }
             single<KeyChainInterface> { 
                 KeyChainManagerAndroid(this@MainActivity.applicationContext)
@@ -65,7 +68,7 @@ class MainActivity : FragmentActivity() {
         startKoin {
             modules(
                 appModule,
-                getPlatformModule(),
+                androidPlatformModule,
                 activityModule
             )
         }

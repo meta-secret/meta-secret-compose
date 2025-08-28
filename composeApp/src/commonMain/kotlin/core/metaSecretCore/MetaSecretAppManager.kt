@@ -12,6 +12,7 @@ import models.apiModels.VaultEvents
 import models.apiModels.VaultFullInfo
 import models.apiModels.VaultSummary
 import core.KeyChainInterface
+import core.LogTags
 
 sealed class InitResult {
     data class Success(val result: String) : InitResult()
@@ -25,20 +26,20 @@ class MetaSecretAppManager(
 
     override suspend fun initWithSavedKey(): InitResult {
         val masterKey = keyChainInterface.getString("master_key")
-        println("\uD83D\uDEE0\uFE0F AppManager: is Master key exist: ${masterKey != null}")
+        println("✅" + LogTags.APP_MANAGER + ": is Master key exist: ${masterKey != null}")
         return if (!masterKey.isNullOrEmpty()) {
             try {
                 val appManagerResult = withContext(Dispatchers.IO) {
                     metaSecretCore.initAppManager(masterKey)
                 }
-                println("\uD83D\uDEE0\uFE0F ✅AppManager: is initiated: $appManagerResult")
+                println("✅" + LogTags.APP_MANAGER + ": is initiated: $appManagerResult")
                 InitResult.Success(appManagerResult)
             } catch (e: Exception) {
-                println("\uD83D\uDEE0\uFE0F ⛔ AppManager: init error: ${e.message}")
+                println("❌" + LogTags.APP_MANAGER + ": init error: ${e.message}")
                 InitResult.Error(e.message ?: "Unknown error")
             }
         } else {
-            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: init error: No master key found")
+            println("❌" + LogTags.APP_MANAGER + ": init error: No master key found")
             keyChainInterface.clearAll(isCleanDB = true)
             InitResult.Error("No master key found")
         }
@@ -48,10 +49,10 @@ class MetaSecretAppManager(
         val stateJson = metaSecretCore.getAppState()
         return try {
             val currentState = AppStateModel.fromJson(stateJson)
-            println("\uD83D\uDEE0\uFE0F AppManager: currentState is $currentState")
+            println("✅" + LogTags.APP_MANAGER + ": currentState is $currentState")
             currentState
         } catch (e: Exception) {
-            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse state JSON: ${e.message}")
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse state JSON: ${e.message}")
             AppStateModel(
                 null,
                 false
@@ -64,10 +65,10 @@ class MetaSecretAppManager(
         return try {
             val currentState = AppStateModel.fromJson(stateJson)
             val vaultState = currentState.getVaultFullInfo()
-            println("\uD83D\uDEE0\uFE0F AppManager: vaultInfo is $vaultState")
+            println("✅" + LogTags.APP_MANAGER + ": vaultInfo is $vaultState")
             vaultState
         } catch (e: Exception) {
-            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse vaultInfo JSON: ${e.message}")
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse vaultInfo JSON: ${e.message}")
             null
         }
     }
@@ -77,10 +78,10 @@ class MetaSecretAppManager(
         return try {
             val currentState = AppStateModel.fromJson(stateJson)
             val vaultEvents = currentState.getVaultEvents()
-            println("\uD83D\uDEE0\uFE0F AppManager: vaultEvents is $vaultEvents")
+            println("✅" + LogTags.APP_MANAGER + ": vaultEvents is $vaultEvents")
             vaultEvents
         } catch (e: Exception) {
-            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse vaultEvents JSON: ${e.message}")
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse vaultEvents JSON: ${e.message}")
             null
         }
     }
@@ -91,10 +92,10 @@ class MetaSecretAppManager(
             val currentState = AppStateModel.fromJson(stateJson)
             val vaultEvents = currentState.getVaultEvents()
             val requestsCount = vaultEvents?.getJoinRequestsCount()
-            println("\uD83D\uDEE0\uFE0F AppManager: requestsCount is $requestsCount")
+            println("✅" + LogTags.APP_MANAGER + ": requestsCount is $requestsCount")
             requestsCount
         } catch (e: Exception) {
-            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse requestsCount JSON: ${e.message}")
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse requestsCount JSON: ${e.message}")
             null
         }
     }
@@ -105,10 +106,10 @@ class MetaSecretAppManager(
             val currentState = AppStateModel.fromJson(stateJson)
             val vaultEvents = currentState.getVaultEvents()
             val requests = vaultEvents?.getJoinRequests()
-            println("\uD83D\uDEE0\uFE0F AppManager: getJoinRequests is $requests")
+            println("✅" + LogTags.APP_MANAGER + ": getJoinRequests is $requests")
             requests
         } catch (e: Exception) {
-            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse getJoinRequests JSON: ${e.message}")
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse getJoinRequests JSON: ${e.message}")
             null
         }
     }
@@ -118,10 +119,10 @@ class MetaSecretAppManager(
         return try {
             val currentState = AppStateModel.fromJson(stateJson)
             val vaultSummary = currentState.getVaultSummary()
-            println("\uD83D\uDEE0\uFE0F AppManager: vaultSummary is $vaultSummary")
+            println("✅" + LogTags.APP_MANAGER + ": vaultSummary is $vaultSummary")
             vaultSummary
         } catch (e: Exception) {
-            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse vaultSummary JSON: ${e.message}")
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse vaultSummary JSON: ${e.message}")
             null
         }
     }
@@ -130,10 +131,10 @@ class MetaSecretAppManager(
         val updateResult = metaSecretCore.updateMembership(candidate, actionUpdate)
         return try {
             val result = CommonResponseModel.fromJson(updateResult)
-            println("\uD83D\uDEE0\uFE0F AppManager: update candidate result is $result")
+            println("✅" + LogTags.APP_MANAGER + ": update candidate result is $result")
             result
         } catch (e: Exception) {
-            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse updatecandidate candidate JSON: ${e.message}")
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse updatecandidate candidate JSON: ${e.message}")
             null
         }
     }
@@ -143,10 +144,10 @@ class MetaSecretAppManager(
         return try {
             val currentState = AppStateModel.fromJson(stateJson)
             val deviceIdResult = currentState.getUserDataByDeviceId(deviceId)
-            println("\uD83D\uDEE0\uFE0F AppManager: getUserDataBy deviceId $deviceId is $deviceIdResult")
+            println("✅" + LogTags.APP_MANAGER + ": getUserDataBy deviceId $deviceId is $deviceIdResult")
             deviceIdResult
         } catch (e: Exception) {
-            println("\uD83D\uDEE0\uFE0F ⛔ AppManager: Failed to parse getUserDataById JSON: ${e.message}")
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse getUserDataById JSON: ${e.message}")
             null
         }
     }

@@ -15,10 +15,13 @@ import models.appInternalModels.SocketRequestModel
 import models.appInternalModels.UpdateMemberActionModel
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import core.LogTags
+import core.ScreenMetricsProviderInterface
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 
 class DevicesScreenViewModel(
+    val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val appManager: MetaSecretAppManagerInterface
 ) : ViewModel(), CommonViewModel {
@@ -35,7 +38,7 @@ class DevicesScreenViewModel(
     private val _currentDeviceId = MutableStateFlow<String?>(null)
 
     init {
-        println("✅ DeviceScreenVM: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
+        println("✅${LogTags.DEVICES_VM}: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN),
             exclude = null
@@ -44,7 +47,7 @@ class DevicesScreenViewModel(
         viewModelScope.launch {
             socketHandler.actionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
-                    println("✅ DeviceScreenVM: New state for Join request has been gotten")
+                    println("✅${LogTags.DEVICES_VM}: New state for Join request has been gotten")
                     loadDevicesList()
                 }
             }
@@ -64,7 +67,7 @@ class DevicesScreenViewModel(
 
     private fun loadDevicesList() {
         viewModelScope.launch {
-            println("✅ DeviceScreenVM: Need to load devices list")
+            println("✅${LogTags.DEVICES_VM}: Need to load devices list")
             try {
                 _isLoading.value = true
 
@@ -95,26 +98,26 @@ class DevicesScreenViewModel(
     }
 
     private fun updateMembership(isJoin: Boolean) {
-        println("✅ DeviceScreenVM: Start Update candidate")
+        println("✅${LogTags.DEVICES_VM}: Start Update candidate")
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val action = if (isJoin) { UpdateMemberActionModel.Accept } else { UpdateMemberActionModel.Decline }
                 val updateResult = withContext(Dispatchers.Default) {
                     val candidate = _currentDeviceId.value?.let { appManager.getUserDataBy(it) }
-                    println("✅ DeviceScreenVM: Update candidate $candidate")
+                    println("✅${LogTags.DEVICES_VM}: Update candidate $candidate")
                     if (candidate != null) {
                         appManager.updateMember(candidate, action.name)
                     } else {
-                        throw IllegalStateException("Candidate not found")
+                        null
                     }
                 }
                 if (updateResult?.success == false) {
-                    println("✅ DeviceScreenVM: Update failed: ${updateResult.error}")
+                    println("❌${LogTags.DEVICES_VM}: Update failed: ${updateResult.error}")
                 }
                 _currentDeviceId.value = null
             } catch (e: Exception) {
-                println("✅ DeviceScreenVM: Update error: ${e.message}")
+                println("❌${LogTags.DEVICES_VM}: Update error: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -122,7 +125,7 @@ class DevicesScreenViewModel(
     }
 
     private fun selectCurrentDevice(deviceId: String?) {
-        println("✅ DeviceScreenVM: Select device with Id: $deviceId")
+        println("✅${LogTags.DEVICES_VM}: Select device with Id: $deviceId")
         _currentDeviceId.value = deviceId
     }
 }

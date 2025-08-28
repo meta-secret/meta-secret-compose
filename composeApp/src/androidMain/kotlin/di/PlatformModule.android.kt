@@ -9,6 +9,12 @@ import core.KeyChainInterface
 import core.KeyChainManagerAndroid
 import core.MetaSecretCoreServiceAndroid
 import core.metaSecretCore.MetaSecretCoreInterface
+import core.StringProviderAndroid
+import core.StringProviderInterface
+import core.DeviceInfoProviderAndroid
+import core.DeviceInfoProviderInterface
+import core.ScreenMetricsProviderAndroid
+import core.ScreenMetricsProviderInterface
 
 val androidPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceAndroid() }
@@ -20,7 +26,12 @@ val androidPlatformModule = module {
     factory<BiometricAuthenticatorInterface> { (activity: FragmentActivity) ->
         BiometricAuthenticatorAndroid(
             context = activity.applicationContext,
-            activity = activity
+            activity = activity,
+            stringProvider = get()
         )
     }
+
+    single<StringProviderInterface> { StringProviderAndroid(get()) }
+    single<DeviceInfoProviderInterface> { DeviceInfoProviderAndroid() }
+    single<ScreenMetricsProviderInterface> { ScreenMetricsProviderAndroid() }
 } 

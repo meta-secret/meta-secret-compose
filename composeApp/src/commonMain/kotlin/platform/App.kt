@@ -7,8 +7,6 @@ import cafe.adriel.voyager.transitions.SlideTransition
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import ui.scenes.splashscreen.SplashScreen
 
-expect fun getPlatformModule(): org.koin.core.module.Module
-
 @Composable
 @Preview
 fun App() {

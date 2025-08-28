@@ -5,173 +5,127 @@ alwaysApply: true
 ---
 
 # ARCHITECTURE
+
 **Scope.** Kotlin-first KMM app with:
-- Android UI: Jetpack Compose.
-- iOS UI: UIKit with a minimal Swift proxy (“SwiftBridge”).
-- A prebuilt native library (“metasecret-mobile”) accessed via FFI:
+- Android UI: Jetpack Compose
+- iOS UI: UIKit with a minimal Swift proxy (“SwiftBridge”)
+- Prebuilt native library (“meta-secret-lib”) over FFI:
   - iOS: `metasecret-mobile.a`, `metasecret-mobile.h`, `MetaSecretCoreLibrary-Bridging-Header.h`
   - Android: `jniLibs/.../libmetasecret_mobile.so`
-  - Architectural style: **MVVM** with unidirectional data flow.
 
-### Interface Ownership & DI
-    - Contracts (interfaces/ports) are defined in `core/`.
-    + Implementations live either in `commonMain` (when 100% platform-agnostic) or in platform adapters under `androidMain/` and `iosMain/`. 
-    + There is no separate `infra` module. Each implementation is registered in a Koin module **inside the same source set** where it lives.
-    - Public APIs, factories, and ViewModels accept **interfaces**; concrete classes are hidden behind DI.
-    - Forbidden: importing or referencing `*Impl` types from `ui/` or `core/` public APIs.
-
-### Implementation Placement Rules
-    - **commonMain (core)**: keep implementations here **only** if they are pure Kotlin and platform-agnostic.  
-    Example: mappers, pure validators, default in-memory caches.
-    - **androidMain / iosMain**: any implementation that touches platform APIs, JNI/NDK, Swift/ObjC, Keychain/Keystore, camera, push, biometrics, or FFI belongs here.
-    - Public APIs (including ViewModels constructors, factories) must accept **interfaces only**; never expose `*Impl` in a public signature.
-    - Construction of implementations happens **only** in Koin modules within the same source set.
-
-### Type-State Guidance
-    - Prefer the **Type-State pattern** for state machines in `core/` when invalid states must be unrepresentable.
-    - Model states as `sealed interface`/`sealed class` types and transitions as functions that return the next typed state.
-    - Avoid boolean flags or ad-hoc enums when they cannot prevent illegal transitions at compile time.
+Architectural style: **MVVM** with unidirectional data flow.
 
 ---
 
-## Module Map (current)
-- `composeApp/`
-  - `src/commonMain/` — shared Kotlin code (models, core, DI, etc.)
-  - `src/androidMain/` — Android-specific adapters (infra) + JNI/NDK bridge
-  - `src/iosMain/` — iOS-specific adapters (infra) + SwiftBridge interop
-- `iosApp/` — Xcode project/target (UIKit + SwiftBridge)
+## Modules & Source Sets
+
+- `core/`
+  - `commonMain` — shared Kotlin code: domain, use-cases, models, interfaces (ports), optional platform-agnostic implementations, DI (`di/KoinModules`)
+  - `androidMain` — platform adapters (Android), FFI/JNI bridge, DI (`di/PlatformModule.android`)
+  - `iosMain` — platform adapters (iOS), Swift/ObjC bridge, DI (`di/PlatformModule.ios`)
+- `composeApp/` — application code (scenes, View, ViewModel, navigation, etc.)
+- `iosApp/` — Xcode target (UIKit + SwiftBridge entrypoint)
+
+> There is **no** separate `infra/` module. Platform adapters live in the platform source sets.
 
 ---
 
 ## Layers & Boundaries
 
 ### ui/
-- **What**: Views and ViewModels per screen (“ui/scenes/…”).  
-  - Android: Jetpack Compose
-  - iOS: UIKit (controllers/views) + a minimal SwiftBridge file strictly for calling shared/core APIs and native adapters
-- **Rules**:
-  - View = rendering only; **no business logic**
-  - ViewModel = presentation logic for its View (MVVM)
-  - May depend on **core** public APIs
-  - **Must not** call FFI or platform code directly
+- Views (Compose/UIKit) and ViewModels grouped by **scenes/**
+- Presentation only; **no business logic**
+- Depends on **core public APIs**; **must not** call FFI or platform APIs directly
 
 ### models/
-- **appInternalModels** — internal, app-level models used across the app
-- **apiModels** — models mapped from JSON produced by **meta-secret-lib**
-- **Rules**:
-  - Mapping between `apiModels` ↔ `appInternalModels` lives in **model**
-  - UI consumes **appInternalModels** only
+- `apiModels/` — JSON/domain coming from `meta-secret-lib`
+- `appInternalModels/` — internal app-level models used by UI and core
+- Mapping `apiModels ↔ appInternalModels` lives in **core**
 
 ### core/
-- **What**:
-  - Domain logic, use-cases, validation, state machines
-  - shared classes for both platforms (primarily services; also shared utilities like `AppColors`)
-  - KeyValue storage abstractions
-  - **metaSecretCore/**: integration with meta-secret-lib
-    - `MetaSecretSocketHandlerInterface` and `MetaSecretSocketHandler` — usable from any ViewModel
-    - `MetaSecretAppManagerInterface` and `MetaSecretAppManager` — façade over meta-secret-lib calls; usable from any ViewModel
-    - `MetaSecretCoreInterface` — **the only** interface allowed to reach platform FFI; **only `MetaSecretAppManager` may use it**
-    - `MetaSecretStateResolverInterface` and `MetaSecretStateResolver` — Type-State helper, **usable only from ViewModels**
-  - **di/**: Koin modules wiring core and adapters
-- **Rules**:
-  - **No `expect/actual`**; platform specifics are modeled as **interfaces** implemented on each platform
-  - All errors exposed as **sealed classes**
-  - Public APIs are **asynchronous** (coroutines) even if the underlying FFI is synchronous
+- Domain logic, use-cases, validation, state machines
+- `shareData/` — shared classes & **interfaces** for platform capabilities (instead of `expect/actual`)
+- `storage/` — KeyValue abstractions (interfaces)
+- `metaSecretCore/` — integration with meta-secret-lib:
+  - `MetaSecretSocketHandlerInterface` / `MetaSecretSocketHandler` — usable from any VM
+  - `MetaSecretAppManagerInterface` / `MetaSecretAppManager` — façade over meta-secret-lib; usable from any VM
+  - `MetaSecretCoreInterface` — the **only** interface allowed to reach FFI; **only** `MetaSecretAppManager` may use it
+  - `MetaSecretStateResolverInterface` / `MetaSecretStateResolver` — Type-State helper; **usable only by VMs**
+- `di/` — Koin modules
 
-### Platform Adapters (source sets)
-  - Location: `composeApp/src/androidMain/...` and `composeApp/src/iosMain/...`
-  - Purpose: implementations of `core` interfaces for platform services (Keychain/Keystore, camera, push, biometrics) and the FFI bridge to `meta-secret-lib`.
-  - No UI code. No business rules. Technical plumbing only.
-  - FFI init/shutdown is owned here and injected into `MetaSecretAppManager` via `MetaSecretCoreInterface`.
+### Platform adapters (source sets)
+- **androidMain / iosMain**: implementations of `core` interfaces for Keychain/Keystore, camera, push, biometrics, and FFI bridges
+- No UI; no business rules; technical plumbing only
 
 ---
+
+## Interface Placement & DI Binding Policy
+
+- **Interfaces live in `core/commonMain`.**
+- Implementations:
+  - If 100% platform-agnostic → keep next to the interface in `commonMain`
+  - If platform-specific / FFI → put in `androidMain` or `iosMain`
+- **Koin registration is mandatory** where the implementation lives:
+  - `commonMain` → `di/KoinModules`
+  - `androidMain` → `di/PlatformModule.android`
+  - `iosMain` → `di/PlatformModule.ios`
+- Public APIs, constructors, and factories expose **interfaces only** (no `*Impl` in signatures)
+
+---
+
+## ViewModel Contract (handle-only)
+
+  - Every ViewModel implements CommonViewModel
+  - UI interacts with VM only via handle(event) + read-only StateFlow<UiState> and optional SharedFlow<NavigationEvent>
+  - Events are scene-specific sealed types implementing CommonViewModelEventsInterface
+  - Internal state machines are private (simple enum or Type-State when safety matters)
 
 ## Allowed Dependencies (one-way)
-  - ui/        → core/
-  - core/      → platform adapters (androidMain/iosMain) **via interfaces only**
-  - adapters   → (implement ports from core; no upward deps)
+  -	ui/ → core/
+  - core/ → platform adapters (androidMain / iosMain) via interfaces only
+  - adapters → (implement core ports; no upward deps)
 
-### Explicit Import Rules
-  - UI **must not** import infra or FFI packages
-  - Only `MetaSecretAppManager` may depend on `MetaSecretCoreInterface`
-  - Only ViewModels may use `MetaSecretStateResolver`
-  - Mapping from `apiModels` to `appInternalModels` is **core-only**
-
----
+## Forbidden:
+	-	UI importing platform adapters or FFI packages directly
+	-	core public APIs exposing types from platform source sets
 
 ## Data Flow (MVVM)
-  View → ViewModel → UseCase (core) → Repository/Adapter (infra) → FFI (native lib)
-  ↑
-  appInternalModels
-  - **State**: `StateFlow` exposed by ViewModels
-  - **One-off events (incl. navigation)**: `SharedFlow`
-  - Recommended: each scene exposes `val navigationEvent: SharedFlow<NavigationEvent>`
-  - `NavigationEvent` is a **sealed interface/enum** per scene (defined in `core` or scene module)
 
----
+View → ViewModel → UseCase (core) → Repository/Adapter (platform source set) → FFI
+                                       ↑
+                               appInternalModels
+  - StateFlow for state; SharedFlow for one-off events (incl. navigation)
+	-	Rust/FFI calls must never block UI threads; wrap in withContext(Dispatchers.IO)
 
-## Asynchrony & Threading
-  - Kotlin **coroutines only** (`suspend`, `StateFlow`/`SharedFlow`)
-  - Wrap any potentially blocking FFI call: `withContext(Dispatchers.IO)`
-  - UI threads must never be blocked
-  - iOS results are dispatched to main queue before touching UIKit
-
----
-
-## Error Model
-  - FFI/native errors are mapped once in **core** to **sealed** domain errors
-  - UI never deals with raw error codes/strings; it renders friendly messages based on sealed errors
-  - No exceptions across module boundaries
+## Errors
+	-	FFI/native errors are mapped once in core to sealed domain errors
+	-	UI never handles raw error strings/codes; it renders friendly text based on sealed errors
+	-	No exceptions across module boundaries
 
 ---
 
 ## Navigation
-  - Android: **Navigation-Compose**
-  - iOS: UIKit push/pop manually (Controller-driven; optional Coordinator pattern later)
+	-	Android: Navigation-Compose
+	-	iOS: UIKit push/pop (Coordinator optional)
 
 ---
 
-## Dependency Injection
-
-- **Koin** as the DI container
-- Composition Root:
-  - **Android**: app module wires Koin (core + platform adapters) and injects into Compose UI
-  - **iOS**: SwiftBridge assembles platform adapters and injects them into shared `core` entry points exposed to UIKit
+## DI (Koin) — composition roots
+	-	Android: app module loads commonModule + PlatformModule.android
+	-	iOS: SwiftBridge loads commonModule + PlatformModule.ios
+	-	ViewModels depend on interfaces; implementations are hidden behind DI
 
 ---
 
-## FFI / Native Library
-  - iOS artifacts: `metasecret-mobile.a`, `metasecret-mobile.h`, `MetaSecretCoreLibrary-Bridging-Header.h`
-  - Android artifact: `jniLibs/.../libmetasecret_mobile.so`
-  - Initialization policy: platform adapters are responsible for any init/deinit and are injected via `MetaSecretCoreInterface` into `MetaSecretAppManager`
-  - Only `MetaSecretAppManager` calls `MetaSecretCoreInterface`
+## Testing
+	-	core/ (commonMain): unit tests for use-cases, mappers, error mapping
+	-	Platform adapters (androidMain / iosMain): when introduced, integration tests for Keychain/Keystore and FFI bridges
+	-	ui/: ViewModel tests with fakes for core interfaces
+	-	Regression tests: on demand (manual decision)
 
 ---
 
-## Testing Strategy (current)
-  - **core/**: unit tests for use-cases, mappers, error mapping
-  - **infra/**: integration tests for storage adapters and basic FFI sanity
-  - **ui/**: ViewModel tests with fakes implementing core interfaces
-  - Regression tests are added **on demand** (manual decision)
-
----
-
-platform adapters live in `androidMain/` and `iosMain/` mirroring the core interfaces.
-
----
-
-### ViewModel Contract (handle-only)
-
-  - Every ViewModel **must implement** `CommonViewModel`
-  - UI interacts with a ViewModel only via handle(event) and read-only state streams (e.g., StateFlow<UiState>) and optional navigation events (SharedFlow<NavigationEvent>).
-  - Events are modeled as scene-specific types that implement CommonViewModelEventsInterface
-  - No other public commands/methods are allowed on ViewModels;
-
----
-
-## Non-Goals (for now)
-- No networking layer
-- No database/SQL
-- No feature flags/config service
-
----
+## Architecture Principles
+	-	SOLID (SRP, OCP via ADRs, LSP via clean contracts, ISP small ports, DIP on interfaces in core)
+	-	Interface-only access to services/managers (no expect/actual)
+	-	Prefer Type-State for flows with illegal transitions

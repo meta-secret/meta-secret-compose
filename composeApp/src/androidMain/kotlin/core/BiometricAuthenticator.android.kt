@@ -11,31 +11,14 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.getString
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.biometric_title
-import kotlinproject.composeapp.generated.resources.biometric_subtitle
-import kotlinproject.composeapp.generated.resources.biometric_description
-import kotlinproject.composeapp.generated.resources.biometric_fallback
-import kotlinproject.composeapp.generated.resources.biometric_not_available
-import kotlinproject.composeapp.generated.resources.biometric_error_no_hardware
-import kotlinproject.composeapp.generated.resources.biometric_error_no_enrolled
-import kotlinproject.composeapp.generated.resources.biometric_permission_required
 
 class BiometricAuthenticatorAndroid (
     private val context: Context,
-    private val activity: FragmentActivity
+    private val activity: FragmentActivity,
+    private val stringProvider: StringProviderInterface
 ) : BiometricAuthenticatorInterface {
 
     private val executor = ContextCompat.getMainExecutor(context)
-
-    @OptIn(ExperimentalResourceApi::class)
-    private fun getStringResource(resource: StringResource): String {
-        return runBlocking { getString(resource) }
-    }
 
     private fun checkBiometricPermissions(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -91,12 +74,12 @@ class BiometricAuthenticatorAndroid (
     ) {
         if (!checkBiometricPermissions()) {
             requestBiometricPermissions()
-            onError(getStringResource(Res.string.biometric_permission_required))
+            onError(stringProvider.biometricPermissionRequired())
             return
         }
 
         if (!isBiometricAvailable()) {
-            onError(getStringResource(Res.string.biometric_not_available))
+            onError(stringProvider.biometricNotAvailable())
             return
         }
 
@@ -130,8 +113,8 @@ class BiometricAuthenticatorAndroid (
                     super.onAuthenticationError(errorCode, errString)
                     when (errorCode) {
                         BiometricPrompt.ERROR_NEGATIVE_BUTTON -> onFallback()
-                        BiometricPrompt.ERROR_HW_NOT_PRESENT -> onError(getStringResource(Res.string.biometric_error_no_hardware))
-                        BiometricPrompt.ERROR_NO_BIOMETRICS -> onError(getStringResource(Res.string.biometric_error_no_enrolled))
+                        BiometricPrompt.ERROR_HW_NOT_PRESENT -> onError(stringProvider.biometricErrorNoHardware())
+                        BiometricPrompt.ERROR_NO_BIOMETRICS -> onError(stringProvider.biometricErrorNoEnrolled())
                         else -> onError(errString.toString())
                     }
                 }
@@ -145,10 +128,10 @@ class BiometricAuthenticatorAndroid (
 
     private fun createPromptInfo(): BiometricPrompt.PromptInfo {
         return BiometricPrompt.PromptInfo.Builder()
-            .setTitle(getStringResource(Res.string.biometric_title))
-            .setSubtitle(getStringResource(Res.string.biometric_subtitle))
-            .setDescription(getStringResource(Res.string.biometric_description))
-            .setNegativeButtonText(getStringResource(Res.string.biometric_fallback))
+            .setTitle(stringProvider.biometricTitle())
+            .setSubtitle(stringProvider.biometricSubtitle())
+            .setDescription(stringProvider.biometricDescription())
+            .setNegativeButtonText(stringProvider.biometricFallback())
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .build()
     }

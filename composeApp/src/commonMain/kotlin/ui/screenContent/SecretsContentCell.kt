@@ -50,14 +50,19 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import ui.scenes.secretsscreen.SecretsScreenViewModel
 import core.AppColors
+import core.ScreenMetricsProviderInterface
 import models.appInternalModels.DevicesQuantity
 import core.Secret
 import ui.SwipeableItem
-import ui.dialogs.removesecret.removeSecret
-import ui.dialogs.showsecret.showSecret
+import ui.dialogs.removesecret.RemoveSecret
+import ui.dialogs.showsecret.ShowSecret
 
 @Composable
-fun SecretsContent(index: Int, secret: Secret) {
+fun SecretsContent(
+    index: Int,
+    secret: Secret,
+    screenMetricsProvider: ScreenMetricsProviderInterface,
+) {
     val viewModel: SecretsScreenViewModel = koinViewModel()
     val devicesCount by viewModel.devicesCount.collectAsState()
     var isRemoveDialogVisible by remember { mutableStateOf(false) }
@@ -85,8 +90,10 @@ fun SecretsContent(index: Int, secret: Secret) {
         }
     }
     SwipeableItem(
+        itemsCount = -1,
         buttonText = stringResource(Res.string.removeSecret),
         isRevealed = isSwiped,
+        screenMetricsProvider,
         action = { isRemoveDialogVisible = it },
         onExpanded = { isSwiped = true },
         onCollapsed = { isSwiped = false },
@@ -162,7 +169,8 @@ fun SecretsContent(index: Int, secret: Secret) {
     )
     if (isRemoveDialogVisible) {
         dialogAnimation({
-            removeSecret(
+            RemoveSecret(
+                viewModel.screenMetricsProvider,
                 viewModel.deleteSecretText(secret.secretName),
                 secret,
                 buttonVisibility = { isSwiped = it },
@@ -171,7 +179,8 @@ fun SecretsContent(index: Int, secret: Secret) {
     }
     if (isShowDialogVisible) {
         dialogAnimation({
-            showSecret(
+            ShowSecret(
+                viewModel.screenMetricsProvider,
                 secret,
                 dialogVisibility = { isShowDialogVisible = it })
         })

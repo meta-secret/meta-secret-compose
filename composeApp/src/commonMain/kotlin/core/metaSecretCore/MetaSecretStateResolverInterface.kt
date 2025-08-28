@@ -24,7 +24,7 @@ open class LocalState(
     private val metaSecretCore: MetaSecretCoreInterface
 ) : AppState {
     fun new(): LocalState? {
-        println("✅ AppState: Start get app state")
+        println("✅" + core.LogTags.STATE_RESOLVER + ": Start get app state")
         val jsonResult = metaSecretCore.getAppState()
         val coreStateModel = AppStateModel.fromJson(jsonResult)
 
@@ -32,10 +32,10 @@ open class LocalState(
         val stateModel = coreStateModel.getAppState()
 
         val result: LocalState? = if (isSuccess && stateModel is State.Local) {
-            println("✅ AppState: Current state is LOCAL")
+            println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is LOCAL")
             LocalState(vaultName, metaSecretCore)
         } else {
-            println("⛔ AppState: SWW with LOCAL state")
+            println("❌" + core.LogTags.STATE_RESOLVER + ": SWW with LOCAL state")
             null
         }
 
@@ -43,7 +43,7 @@ open class LocalState(
     }
 
     fun generateNewCreds(): VaultState? {
-        println("✅ AppState: Start generate new creds")
+        println("✅" + core.LogTags.STATE_RESOLVER + ": Start generate new creds")
         val jsonResult = metaSecretCore.generateUserCreds(vaultName)
         val coreStateModel = AppStateModel.fromJson(jsonResult)
 
@@ -52,28 +52,28 @@ open class LocalState(
         val vaultInfo = coreStateModel.getVaultFullInfo()
 
         val result: VaultState? = if (isSuccess && stateModel is State.Vault) {
-            println("✅ AppState: Current state is VAULT")
+            println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is VAULT")
             VaultState(metaSecretCore)
         } else if (isSuccess && vaultInfo is VaultFullInfo.Outsider) {
-            println("✅ AppState: Current state is OUTSIDER")
+            println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is OUTSIDER")
             when (vaultInfo.outsider.status) {
                 UserDataOutsiderStatus.NON_MEMBER -> {
-                    println("✅ AppState: Current state is NON_MEMBER")
+                    println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is NON_MEMBER")
                     VaultState(metaSecretCore)
                 }
                 UserDataOutsiderStatus.PENDING -> {
-                    println("✅ AppState: Current state is PENDING")
+                    println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is PENDING")
                     // TODO: #47 Show alert that tells user to accept the request
                     null
                 }
                 UserDataOutsiderStatus.DECLINED -> {
-                    println("✅ AppState: Current state is DECLINED")
+                    println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is DECLINED")
                     //  TODO: #47 Show alert that request has been declined
                     null
                 }
             }
         } else {
-            println("⛔AppState: SWW with VAULT state")
+            println("❌" + core.LogTags.STATE_RESOLVER + ": SWW with VAULT state")
             null
         }
 
@@ -85,7 +85,7 @@ class VaultState(
     private val metaSecretCore: MetaSecretCoreInterface
 ) : AppState {
     fun signUp(): AppState? {
-        println("✅ AppState: Start SignUp")
+        println("✅" + core.LogTags.STATE_RESOLVER + ": Start SignUp")
         val jsonResult = metaSecretCore.signUp()
         val coreStateModel = AppStateModel.fromJson(jsonResult)
 
@@ -93,13 +93,13 @@ class VaultState(
         val vaultInfo = coreStateModel.getVaultFullInfo()
 
         val result: AppState? = if (isSuccess && vaultInfo is VaultFullInfo.Member) {
-            println("✅ AppState: Current state is MEMBER")
+            println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is MEMBER")
             MemberState()
         } else if (isSuccess && vaultInfo is VaultFullInfo.Outsider) {
-            println("✅ AppState: Current state is OUTSIDER")
+            println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is OUTSIDER")
             OutsiderState(coreStateModel)
         } else {
-            println("⛔AppState: SWW with MEMBER state")
+            println("❌" + core.LogTags.STATE_RESOLVER + ": SWW with MEMBER state")
             null
         }
 

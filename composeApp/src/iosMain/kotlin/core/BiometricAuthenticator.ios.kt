@@ -6,23 +6,11 @@ import platform.LocalAuthentication.LAContext
 import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthenticationWithBiometrics
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.getString
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.biometric_fallback
-import kotlinproject.composeapp.generated.resources.biometric_not_available
-import kotlinproject.composeapp.generated.resources.biometric_error_no_enrolled
-import kotlinproject.composeapp.generated.resources.biometric_prompt
-import kotlinproject.composeapp.generated.resources.biometric_permission_settings
 
-class BiometricAuthenticatorIos : BiometricAuthenticatorInterface {
-
-    @OptIn(ExperimentalResourceApi::class)
-    private fun getStringResource(resource: StringResource): String {
-        return runBlocking { getString(resource) }
-    }
+class BiometricAuthenticatorIos(
+    private val stringProvider: StringProviderInterface
+) : BiometricAuthenticatorInterface {
 
     @OptIn(ExperimentalForeignApi::class)
     override fun isBiometricAvailable(): Boolean {
@@ -41,16 +29,16 @@ class BiometricAuthenticatorIos : BiometricAuthenticatorInterface {
         onFallback: () -> Unit
     ) {
         if (!isBiometricAvailable()) {
-            onError(getStringResource(Res.string.biometric_not_available))
+            onError(stringProvider.biometricNotAvailable())
             return
         }
         
         val context = LAContext()
-        context.localizedFallbackTitle = getStringResource(Res.string.biometric_fallback)
+        context.localizedFallbackTitle = stringProvider.biometricFallback()
 
         context.evaluatePolicy(
             LAPolicyDeviceOwnerAuthenticationWithBiometrics,
-            localizedReason = getStringResource(Res.string.biometric_prompt)
+            localizedReason = stringProvider.biometricPromptReason()
         ) { success, error ->
             if (success) {
                 onSuccess()
@@ -61,10 +49,10 @@ class BiometricAuthenticatorIos : BiometricAuthenticatorInterface {
                 
                 when {
                     errorDesc.contains("fallback") -> onFallback()
-                    errorDesc.contains("not available") -> onError(getStringResource(Res.string.biometric_not_available))
-                    errorDesc.contains("not enrolled") -> onError(getStringResource(Res.string.biometric_error_no_enrolled))
+                    errorDesc.contains("not available") -> onError(stringProvider.biometricNotAvailable())
+                    errorDesc.contains("not enrolled") -> onError(stringProvider.biometricErrorNoEnrolled())
                     errorDesc.contains("permission") || errorDesc.contains("not authorized") -> 
-                        onError(getStringResource(Res.string.biometric_permission_settings))
+                        onError(stringProvider.biometricPermissionSettings())
                     else -> onError(error.localizedDescription)
                 }
             }

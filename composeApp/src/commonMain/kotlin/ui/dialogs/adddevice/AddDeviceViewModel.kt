@@ -1,8 +1,8 @@
 package ui.dialogs.adddevice
 
 import androidx.lifecycle.ViewModel
-import core.KeyValueStorage
+import core.KeyValueStorageInterface
 
 class AddDeviceViewModel (
-  private val keyValueStorage: KeyValueStorage
+  private val keyValueStorage: KeyValueStorageInterface
 ) : ViewModel()

@@ -47,7 +47,7 @@ class MainScreen : Screen {
         val viewModel: MainScreenViewModel = koinViewModel()
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         val selectedTabIndex by TabStateHolder.selectedTabIndex
-        val tabSize = getScreenWidth() / tabs.size
+        val tabSize = viewModel.screenMetricsProvider.screenWidth() / tabs.size
         val joinRequestsCount by viewModel.joinRequestsCount.collectAsState()
         val devicesCount by viewModel.devicesCount.collectAsState()
         val isWarningShown by viewModel.isWarningShown.collectAsState()

@@ -26,11 +26,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import core.AppColors
-import core.KeyValueStorage
+import core.KeyValueStorageInterface
 import core.Secret
 
 class AddSecretViewModel(
-    private val keyValueStorage: KeyValueStorage
+    private val keyValueStorage: KeyValueStorageInterface
 ) : ViewModel() {
 
     fun addSecret(secretName: String, password: String) {

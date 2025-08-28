@@ -2,14 +2,16 @@ package ui.scenes.profilescreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import core.DeviceInfoProviderInterface
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import core.KeyValueStorage
+import core.KeyValueStorageInterface
 
 class ProfileScreenViewModel(
-    private val keyValueStorage: KeyValueStorage
+    private val keyValueStorage: KeyValueStorageInterface,
+    val deviceInfoProvider: DeviceInfoProviderInterface
 ) : ViewModel() {
 
     val devicesCount: StateFlow<Int> = keyValueStorage.deviceData.map { it.size }

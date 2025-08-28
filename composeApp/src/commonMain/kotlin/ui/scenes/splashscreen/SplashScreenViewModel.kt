@@ -3,24 +3,27 @@ package ui.scenes.splashscreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import core.LogTags
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 import core.BiometricAuthenticatorInterface
-import core.KeyValueStorage
 import core.BiometricState
 import core.KeyChainInterface
 import core.metaSecretCore.AuthState
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.BackupCoordinatorInterface
+import core.KeyValueStorageInterface
+import core.ScreenMetricsProviderInterface
 
 class SplashScreenViewModel(
-    private val keyValueStorage: KeyValueStorage,
+    private val keyValueStorage: KeyValueStorageInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val keyChain: KeyChainInterface,
-    private val backupCoordinatorInterface: BackupCoordinatorInterface
+    private val backupCoordinatorInterface: BackupCoordinatorInterface,
+    val screenMetricsProvider: ScreenMetricsProviderInterface
 ) : ViewModel(), CommonViewModel {
     private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
@@ -50,29 +53,29 @@ class SplashScreenViewModel(
                 authenticateWithBiometrics()
             } else {
                 // TODO: #48 Set pin code
-                println("✅BiometricState NeedRegistration")
+                println("✅${LogTags.SPLASH_VM}: BiometricState NeedRegistration")
                 _biometricState.value = BiometricState.NeedRegistration
             }
         }
     }
 
     private fun checkBiometricAvailability(): Boolean {
-        println("\uD83E\uDEC6 SplashVM: Biometric is available? ${biometricAuthenticator.isBiometricAvailable()}")
+        println("✅${LogTags.SPLASH_VM}: Biometric is available? ${biometricAuthenticator.isBiometricAvailable()}")
         return biometricAuthenticator.isBiometricAvailable()
     }
 
     private fun authenticateWithBiometrics() {
         biometricAuthenticator.authenticate(
             onSuccess = {
-                println("\uD83E\uDEC6 SplashVM: Biometric is approved")
+                println("✅${LogTags.SPLASH_VM}: Biometric is approved")
                 _biometricState.value = BiometricState.Success
             },
             onError = {
-                println("\uD83E\uDEC6 SplashVM: Biometric is failed")
+                println("❌${LogTags.SPLASH_VM}: Biometric is failed")
                 _biometricState.value = BiometricState.Error("")
             },
             onFallback = {
-                println("\uD83E\uDEC6 SplashVM: Biometric is prohibited")
+                println("❌${LogTags.SPLASH_VM}: Biometric is prohibited")
                 _biometricState.value = BiometricState.Error("")
             }
         )
@@ -84,22 +87,22 @@ class SplashScreenViewModel(
                 viewModelScope.launch {
                     when (checkAuth()) {
                         AuthState.COMPLETED -> {
-                            println("\uD83D\uDC49 SplashVM: Move to Main")
+                            println("✅${LogTags.SPLASH_VM}: Move to Main")
                             _navigationEvent.value = SplashNavigationEvent.NavigateToMain
                         }
                         AuthState.NOT_YET_COMPLETED -> {
-                            println("\uD83D\uDC49 SplashVM: Move to Sign up")
+                            println("✅${LogTags.SPLASH_VM}: Move to Sign up")
                             _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
                         }
                     }
                 }
             }
             OnboardingState.NOT_YET_COMPLETED -> {
-                println("\uD83D\uDC49 SplashVM: Move to Onboarding")
+                println("✅${LogTags.SPLASH_VM}: Move to Onboarding")
                 _navigationEvent.value = SplashNavigationEvent.NavigateToOnboarding
             }
         }
-        println("✅BiometricState Success")
+        println("✅${LogTags.SPLASH_VM}: BiometricState Success")
     }
 
     // Different statuses check
@@ -108,7 +111,7 @@ class SplashScreenViewModel(
     }
 
     private suspend fun checkAuth(): AuthState {
-        println("✅SplashVM: Auth check")
+        println("✅${LogTags.SPLASH_VM}: Auth check")
         return metaSecretAppManager.checkAuth()
     }
 }

@@ -34,9 +34,13 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import qrgenerator.qrkitpainter.rememberQrKitPainter
 import core.AppColors
+import core.ScreenMetricsProviderInterface
 
 @Composable
-fun addingDevice(mainDialogVisibility: (Boolean) -> Unit, userName: String) {
+fun AddingDevice(
+    screenMetricsProvider: ScreenMetricsProviderInterface,
+    mainDialogVisibility: (Boolean) -> Unit, userName: String
+) {
     val painter = rememberQrKitPainter(userName)
     Dialog(
         onDismissRequest = {},
@@ -51,7 +55,7 @@ fun addingDevice(mainDialogVisibility: (Boolean) -> Unit, userName: String) {
         ) {
             Box(
                 modifier = Modifier
-                    .height((actualHeightFactor() * 560).dp)
+                    .height((screenMetricsProvider.heightFactor() * 560).dp)
                     .fillMaxWidth()
                     .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)
@@ -87,7 +91,7 @@ fun addingDevice(mainDialogVisibility: (Boolean) -> Unit, userName: String) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height((actualHeightFactor() * 180).dp)
+                                .height((screenMetricsProvider.heightFactor() * 180).dp)
                                 .background(AppColors.White5, RoundedCornerShape(12.dp))
                         )
                         Text(

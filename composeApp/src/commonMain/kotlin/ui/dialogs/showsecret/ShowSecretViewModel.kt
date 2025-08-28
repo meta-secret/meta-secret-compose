@@ -34,10 +34,10 @@ import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.compose.resources.Font
 import core.AppColors
 import core.Device
-import core.KeyValueStorage
+import core.KeyValueStorageInterface
 
 class ShowSecretViewModel(
-    private val keyValueStorage: KeyValueStorage
+    private val keyValueStorage: KeyValueStorageInterface
 ) : ViewModel() {
 
     private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData

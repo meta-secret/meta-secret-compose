@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import models.apiModels.MasterKeyModel
 import core.KeyChainInterface
-import core.KeyValueStorage
+import core.KeyValueStorageInterface
 import core.metaSecretCore.InitResult
 import core.metaSecretCore.MetaSecretCoreInterface
 import core.metaSecretCore.MetaSecretStateResolverInterface
@@ -27,14 +27,17 @@ import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.metaSecretCore.OutsiderState
 import kotlin.properties.Delegates
+import core.LogTags
+import core.ScreenMetricsProviderInterface
 
 class SignInScreenViewModel(
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val metaSecretCore: MetaSecretCoreInterface,
     private val metaSecretStateResolver: MetaSecretStateResolverInterface,
     private val keyChainManager: KeyChainInterface,
-    private val keyValueStorage: KeyValueStorage,
-    private val socketHandler: MetaSecretSocketHandlerInterface
+    private val keyValueStorage: KeyValueStorageInterface,
+    private val socketHandler: MetaSecretSocketHandlerInterface,
+    val screenMetricsProvider: ScreenMetricsProviderInterface,
 ) : ViewModel(), CommonViewModel {
 
     // Properties
@@ -99,7 +102,7 @@ class SignInScreenViewModel(
     // Resolve all states of the screen
     private suspend fun signInStateResolver() {
             when (currentState) {
-                SignInStates.IDLE -> println("\uD83D\uDD10 ✅ SignInVM: Waiting for SignUp")
+                SignInStates.IDLE -> println("✅" + LogTags.SIGNIN_VM + ": Waiting for SignUp")
                 SignInStates.START_SIGN_IN -> {
                     currentName?.let { name ->
                         isNameError(name)
@@ -128,7 +131,7 @@ class SignInScreenViewModel(
 
     private suspend fun showPendingState() {
         _isLoading.value = true
-        println("\uD83D\uDD10 ✅ SignInVM: Start listening for Join accept signal")
+        println("✅" + LogTags.SIGNIN_VM + ": Start listening for Join accept signal")
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE),
             exclude = null
@@ -150,26 +153,26 @@ class SignInScreenViewModel(
         _isLoading.value = true
 
         if (initAppManagerResult()) {
-            println("\uD83D\uDD10 ✅ SignInVM: Start Sign Up")
+            println("✅" + LogTags.SIGNIN_VM + ": Start Sign Up")
             val signUpResult = withContext(Dispatchers.IO) {
                 metaSecretStateResolver.startFirstSignUp(vaultName)
             }
 
             if (signUpResult.error != null) {
-                println("\uD83D\uDD10 ⛔SignInVM:No further actions")
+                println("❌" + LogTags.SIGNIN_VM + ": No further actions")
                 currentState = SignInStates.SIGN_IN_FAILED
             } else {
                 when (signUpResult.appState) {
                     is MemberState -> {
-                        println("\uD83D\uDD10 ✅ SignInVM: Sign up is successfull")
+                        println("✅" + LogTags.SIGNIN_VM + ": Sign up is successfull")
                         currentState = SignInStates.SIGN_IN_COMPLETED
                     }
                     is OutsiderState -> {
-                        println("\uD83D\uDD10 ✅ SignInVM: Start listening for Join accept signal")
+                        println("✅" + LogTags.SIGNIN_VM + ": Start listening for Join accept signal")
                         currentState = SignInStates.SIGN_IN_PENDING
                     }
                     else -> {
-                        println("\uD83D\uDD10 ⛔SignInVM:Unknown state for sign up")
+                        println("❌" + LogTags.SIGNIN_VM + ": Unknown state for sign up")
                         currentState = SignInStates.SIGN_IN_FAILED
                     }
                 }
@@ -187,7 +190,7 @@ class SignInScreenViewModel(
         val model = MasterKeyModel.fromJson(jsonResponse)
 
         if (model.success && !model.masterKey.isNullOrEmpty()) {
-            println("\uD83D\uDD10 ✅ SignInVM: Generated master key: $model")
+            println("✅" + LogTags.SIGNIN_VM + ": Generated master key: $model")
             keyChainManager.saveString("master_key", model.masterKey)
             currentState = SignInStates.MASTER_KEY_GENERATED
         } else {
@@ -200,22 +203,22 @@ class SignInScreenViewModel(
     private fun socketSubscribe() {
         viewModelScope.launch {
             socketHandler.actionType.collect { actionType ->
-                println("\uD83D\uDD10 ✅ SignInVM: Subscribe SignIn screen for Join Response Signal")
+                println("✅" + LogTags.SIGNIN_VM + ": Subscribe SignIn screen for Join Response Signal")
                 when (actionType) {
                     SocketActionModel.JOIN_REQUEST_ACCEPTED -> {
-                        println("\uD83D\uDD10 ✅ SignInVM: Got Accepted signal")
+                        println("✅" + LogTags.SIGNIN_VM + ": Got Accepted signal")
                         currentState = SignInStates.SIGN_IN_COMPLETED
                     }
                     SocketActionModel.JOIN_REQUEST_DECLINED -> {
-                        println("\uD83D\uDD10 ⛔ SignInVM: Got Declined signal")
+                        println("❌" + LogTags.SIGNIN_VM + ": Got Declined signal")
                         currentState = SignInStates.SIGN_IN_REJECTED
                     }
                     SocketActionModel.JOIN_REQUEST_PENDING -> {
-                        println("\uD83D\uDD10 ⏳ SignInVM: Joining still in progress")
+                        println("✅" + LogTags.SIGNIN_VM + ": Joining still in progress")
                         currentState = SignInStates.SIGN_IN_PENDING
                     }
                     else -> {
-                        println("\uD83D\uDD10 ⛔SignInVM: Joining not following yet: $actionType")
+                        println("❌" + LogTags.SIGNIN_VM + ": Joining not following yet: $actionType")
                         currentState = SignInStates.NONE
                     }
                 }
@@ -235,7 +238,7 @@ class SignInScreenViewModel(
                     if ( vaultState is VaultFullInfo.Outsider && outsiderState == UserDataOutsiderStatus.PENDING) {
                         currentState = SignInStates.SIGN_IN_PENDING
                     } else {
-                        println("\uD83D\uDD10 ✅ SignInVM: It's not a pending")
+                        println("✅" + LogTags.SIGNIN_VM + ": It's not a pending")
                     }
                 }
                 else -> {}

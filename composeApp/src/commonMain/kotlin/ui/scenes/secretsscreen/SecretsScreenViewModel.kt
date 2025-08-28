@@ -21,12 +21,14 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
 import core.Device
-import core.KeyValueStorage
+import core.KeyValueStorageInterface
+import core.ScreenMetricsProviderInterface
 import core.Secret
 import ui.TabStateHolder
 
 class SecretsScreenViewModel(
-    keyValueStorage: KeyValueStorage
+    keyValueStorage: KeyValueStorageInterface,
+    val screenMetricsProvider: ScreenMetricsProviderInterface
 ) : ViewModel() {
 
     private val secretsList: StateFlow<List<Secret>> = keyValueStorage.secretData

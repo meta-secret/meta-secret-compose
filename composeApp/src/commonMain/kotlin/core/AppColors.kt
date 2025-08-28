@@ -2,6 +2,17 @@ package core
 
 import androidx.compose.ui.graphics.Color
 
+object LogTags {
+    const val DEVICES_VM = "📱DevicesScreenViewModel"
+    const val SPLASH_VM = "🚀SplashScreenViewModel"
+    const val MAIN_VM = "🧭MainScreenViewModel"
+    const val ONBOARDING_VM = "🎯OnboardingViewModel"
+    const val SIGNIN_VM = "🔐SignInScreenViewModel"
+    const val APP_MANAGER = "🛠️MetaSecretAppManager"
+    const val SOCKET_HANDLER = "🔌MetaSecretSocketHandler"
+    const val STATE_RESOLVER = "🧩MetaSecretStateResolver"
+}
+
 object AppColors {
 
     //White

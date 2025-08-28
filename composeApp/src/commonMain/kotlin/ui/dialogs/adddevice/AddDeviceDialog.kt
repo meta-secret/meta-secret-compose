@@ -34,11 +34,16 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
+import core.ScreenMetricsProviderInterface
 import ui.ClassicButton
 
 
 @Composable
-fun popUpDevice(dialogVisibility: (Boolean) -> Unit, mainDialogVisibility: (Boolean) -> Unit) {
+fun PopUpDevice(
+    screenMetricsProvider: ScreenMetricsProviderInterface,
+    dialogVisibility: (Boolean) -> Unit,
+    mainDialogVisibility: (Boolean) -> Unit
+) {
 
     Dialog(
         onDismissRequest = {},
@@ -53,7 +58,7 @@ fun popUpDevice(dialogVisibility: (Boolean) -> Unit, mainDialogVisibility: (Bool
         ) {
             Box(
                 modifier = Modifier
-                    .height((actualHeightFactor() * 510).dp)
+                    .height((screenMetricsProvider.heightFactor() * 510).dp)
                     .fillMaxWidth()
                     .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)

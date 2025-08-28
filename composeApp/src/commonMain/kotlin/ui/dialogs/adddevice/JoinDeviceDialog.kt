@@ -30,10 +30,12 @@ import kotlinproject.composeapp.generated.resources.wanna_join
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
+import core.ScreenMetricsProviderInterface
 import ui.ClassicButton
 
 @Composable
-fun joinDevice(
+fun JoinDevice(
+    screenMetricsProvider: ScreenMetricsProviderInterface,
     onDismiss: (Boolean?) -> Unit
 ) {
     Dialog(
@@ -51,7 +53,7 @@ fun joinDevice(
         ) {
             Box(
                 modifier = Modifier
-                    .height((actualHeightFactor() * 200).dp)
+                    .height((screenMetricsProvider.screenHeight() * 200).dp)
                     .fillMaxWidth()
                     .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)

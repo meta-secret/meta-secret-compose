@@ -29,7 +29,7 @@ class MetaSecretSocketHandler(
     private val timerScope = CoroutineScope(Dispatchers.Default)
 
     init {
-        println("\uD83D\uDD0C Socket: init")
+        println("✅" + core.LogTags.SOCKET_HANDLER + ": init")
         startFollowing()
     }
 
@@ -37,7 +37,7 @@ class MetaSecretSocketHandler(
         add: List<SocketRequestModel>?,
         exclude: List<SocketRequestModel>?
     ) {
-        println("✅\uD83D\uDD0C Socket: Update actions to follow")
+        println("✅" + core.LogTags.SOCKET_HANDLER + ": Update actions to follow")
 
         exclude?.let { toExclude ->
             actionsToFollow.removeAll(toExclude.toSet())
@@ -47,11 +47,11 @@ class MetaSecretSocketHandler(
             actionsToFollow.addAll(toAdd)
         }
 
-        println("✅\uD83D\uDD0C Socket: Actual actions to follow: $actionsToFollow")
+        println("✅" + core.LogTags.SOCKET_HANDLER + ": Actual actions to follow: $actionsToFollow")
     }
 
     private fun startFollowing() {
-        println("⏱\uFE0F \uD83D\uDD0C Socket: Timer is started")
+        println("✅" + core.LogTags.SOCKET_HANDLER + ": Timer is started")
         stopTimer()
         timerJob = timerScope.launch {
             while (isActive) {
@@ -63,7 +63,7 @@ class MetaSecretSocketHandler(
 
     private fun searchRequest() {
         if (!isLocked && actionsToFollow.isNotEmpty()) {
-            println("\uD83D\uDD0C ✅Socket: Fire the timer!")
+            println("✅" + core.LogTags.SOCKET_HANDLER + ": Fire the timer!")
             isLocked = true
             val stateJson = metaSecretCore.getAppState()
             val currentState = AppStateModel.fromJson(stateJson)
@@ -76,16 +76,16 @@ class MetaSecretSocketHandler(
             if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
                 val state = appManager.getStateModel()
                 val hasJoinRequests = state?.getVaultEvents()?.hasJoinRequests() == true
-                println("✅\uD83D\uDD0C Socket: AppState is $state, hasJoinRequest is $hasJoinRequests")
+                println("✅" + core.LogTags.SOCKET_HANDLER + ": AppState is $state, hasJoinRequest is $hasJoinRequests")
 
                 if (state?.success == true && hasJoinRequests) {
-                    println("\uD83D\uDD0C ✅Socket: Need to show Ask to join pop up")
+                    println("✅" + core.LogTags.SOCKET_HANDLER + ": Need to show Ask to join pop up")
                     _actionType.value = SocketActionModel.ASK_TO_JOIN
                 }
             }
 
             if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)) {
-                println("\uD83D\uDD0C ✅Socket: Waiting for join response")
+                println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for join response")
 
                 when (currentState.getVaultFullInfo()) {
                     is VaultFullInfo.Member -> _actionType.value = SocketActionModel.JOIN_REQUEST_ACCEPTED
@@ -104,12 +104,12 @@ class MetaSecretSocketHandler(
 
             isLocked = false
         } else {
-            println("\uD83D\uDD0C ✅Socket: NO any subscriptions")
+            println("✅" + core.LogTags.SOCKET_HANDLER + ": NO any subscriptions")
         }
     }
 
     private fun stopTimer() {
-        println("⏱\uFE0F \uD83D\uDD0C Socket: Timer is stopped")
+        println("✅" + core.LogTags.SOCKET_HANDLER + ": Timer is stopped")
         timerJob?.cancel()
         timerJob = null
     }

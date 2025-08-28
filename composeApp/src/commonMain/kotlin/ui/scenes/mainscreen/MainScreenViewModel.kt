@@ -12,12 +12,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
-import org.koin.core.component.KoinComponent
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.BackupCoordinatorInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import core.LogTags
 import core.Device
-import core.KeyValueStorage
+import core.KeyValueStorageInterface
+import core.ScreenMetricsProviderInterface
 import ui.TabStateHolder
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -25,9 +26,10 @@ import ui.scenes.common.CommonViewModelEventsInterface
 class MainScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
-    private val keyValueStorage: KeyValueStorage,
+    private val keyValueStorage: KeyValueStorageInterface,
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
-) : ViewModel(), KoinComponent, CommonViewModel {
+    val screenMetricsProvider: ScreenMetricsProviderInterface,
+) : ViewModel(), CommonViewModel {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val _joinRequestsCount = MutableStateFlow<Int?>(null)
@@ -44,7 +46,7 @@ class MainScreenViewModel(
 
     init {
         checkBackup()
-        println("✅ MainScreenVM: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
+        println("✅${LogTags.MAIN_VM}: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN),
             exclude = null
@@ -54,7 +56,7 @@ class MainScreenViewModel(
 
             socketHandler.actionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
-                    println("✅ New state for Join request has been gotten")
+                    println("✅${LogTags.MAIN_VM}: New state for Join request has been gotten")
 
                     _joinRequestsCount.value = metaSecretAppManager.getJoinRequestsCount()
                 }

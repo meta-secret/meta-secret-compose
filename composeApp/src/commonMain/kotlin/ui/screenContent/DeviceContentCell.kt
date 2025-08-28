@@ -35,10 +35,12 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
+import core.ScreenMetricsProviderInterface
 import ui.SwipeableItem
 
 @Composable
 fun DeviceContent(
+    screenMetricsProvider: ScreenMetricsProviderInterface,
     model: DeviceCellModel,
     onClick: ()-> Unit
 ) {
@@ -51,6 +53,7 @@ fun DeviceContent(
         itemsCount = model.devicesCount,
         buttonText = stringResource(Res.string.removeDevice),
         isRevealed = false,
+        screenMetricsProvider,
         action = {},
         onExpanded = { },
         onCollapsed = {},

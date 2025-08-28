@@ -140,7 +140,7 @@ class SplashScreen : Screen {
                             modifier = Modifier
                                 .offset(y = 40.dp)
                                 .fillMaxWidth()
-                                .height((getScreenHeight() * 0.02833).dp),
+                                .height((viewModel.screenMetricsProvider.screenHeight() * 0.02833).dp),
                             contentScale = ContentScale.Fit
                         )
                     }
@@ -151,6 +151,7 @@ class SplashScreen : Screen {
                 Column {
                     Spacer(modifier = Modifier.height(40.dp))
                     InAppNotification(
+                        viewModel.screenMetricsProvider,
                         isSuccessful = false,
                         message = errorMessage,
                         onDismiss = { showErrorNotification = false }

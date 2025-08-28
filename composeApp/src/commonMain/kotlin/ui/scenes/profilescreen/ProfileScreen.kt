@@ -109,7 +109,10 @@ fun ProfileBody() {
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                TextCell((stringResource(Res.string.version) + " " + getAppVersion()), 16)
+                TextCell(
+                    (stringResource(Res.string.version) + " " + viewModel.deviceInfoProvider.getAppVersion()),
+                    16
+                )
                 TextCell(stringResource(Res.string.poweredBy), 0)
             }
         }

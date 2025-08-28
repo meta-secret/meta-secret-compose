@@ -19,18 +19,20 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import core.ScreenMetricsProviderInterface
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
 fun SwipeableItem(
     itemsCount: Int = -1,
+    buttonText: String,
     isRevealed: Boolean,
+    screenMetricsProvider: ScreenMetricsProviderInterface,
     action: (Boolean) -> Unit,
     onExpanded: () -> Unit = {},
     onCollapsed: () -> Unit = {},
     content: @Composable () -> Unit,
-    buttonText: String
 ) {
     var deleteButtonSize by remember {
         mutableFloatStateOf(0f)
@@ -51,7 +53,11 @@ fun SwipeableItem(
         Row(modifier = Modifier.onSizeChanged {
             deleteButtonSize = -it.width.toFloat()
         }.align(Alignment.CenterEnd).padding(end = 16.dp)) {
-            RemoveButton({action(true)}, buttonText)
+            RemoveButton(
+                screenMetricsProvider,
+                {action(true)},
+                buttonText
+            )
         }
         if (itemsCount != 1) {  // Single device swipe behaviour
             Box(modifier = Modifier.offset { IntOffset(offset.value.roundToInt(), 0) }
