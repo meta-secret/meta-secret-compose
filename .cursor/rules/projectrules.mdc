@@ -14,7 +14,7 @@ alwaysApply: true
 ## Stack and Versions
 - Runtime:
   - Kotlin: latest stable (K2.x), JVM 17, Android minSdk as defined in build
-  - Swift: latest stable (Swift 5.x, current Xcode), iOS target per project
+  - Swift: latest stable (Swift 6.x, current Xcode), iOS target per project
   - Rust (prebuilt lib only): stable toolchain
 - Update Policy:
   - Upgrade to latest stable at least once per quarter

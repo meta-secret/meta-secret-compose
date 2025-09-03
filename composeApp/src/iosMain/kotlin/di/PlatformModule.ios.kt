@@ -22,6 +22,6 @@ val iosPlatformModule = module {
     single<DeviceInfoProviderInterface> { DeviceInfoProviderIos() }
     single<ScreenMetricsProviderInterface> { ScreenMetricsProviderIos() }
     single<BiometricAuthenticatorInterface> { BiometricAuthenticatorIos(get()) }
-    single<KeyChainInterface> { KeyChainManagerIos() }
+    single<KeyChainInterface> { KeyChainManagerIos(get()) }
     single<BackupCoordinatorInterface> { BackupCoordinatorInterfaceIos(get()) }
 }

@@ -42,6 +42,25 @@ class BackupCoordinatorInterfaceAndroid(
         // TODO: implement write local DB to URI if changed
     }
 
+    override fun clearAllBackups() {
+        CoroutineScope(Dispatchers.Main).launch {
+            val key = "bdBackUp"
+            val path = keyChain.getString(key)
+            if (!path.isNullOrEmpty()) {
+                try {
+                    val uri = android.net.Uri.parse(path)
+                    val deleted = activity.contentResolver.delete(uri, null, null)
+                    if (deleted >= 1) {
+                        keyChain.removeKey(key)
+                        return@launch
+                    }
+                } catch (e: Exception) {
+                }
+            }
+            showWarningAlert()
+        }
+    }
+
     private fun showInitialAlert() {
         AlertDialog.Builder(activity)
             .setMessage(R.string.backup_choose_path_message)

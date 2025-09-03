@@ -22,7 +22,9 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-class KeyChainManagerAndroid(private val context: Context) : KeyChainInterface {
+class KeyChainManagerAndroid(
+    private val context: Context
+    ) : KeyChainInterface {
     
     companion object {
         private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
@@ -147,7 +149,7 @@ class KeyChainManagerAndroid(private val context: Context) : KeyChainInterface {
                     }
                 }
             }
-            
+
             true
         } catch (e: Exception) {
             e.printStackTrace()

@@ -5,7 +5,9 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class KeyChainManagerIos : KeyChainInterface {
+class KeyChainManagerIos(
+    private val backupCoordinator: BackupCoordinatorInterface
+) : KeyChainInterface {
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun saveString(key: String, value: String): Boolean = withContext(Dispatchers.Main) {
         try {
@@ -57,6 +59,8 @@ class KeyChainManagerIos : KeyChainInterface {
             if (isCleanDB) {
                 SwiftBridge().clearAll()
             }
+
+            backupCoordinator.clearAllBackups()
 
             return@withContext true
         } catch (e: Exception) {

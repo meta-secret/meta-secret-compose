@@ -120,6 +120,7 @@ import ObjectiveC
     private let serviceName: String = "MetaSecret"
     
     @objc public func saveString(key: String, value: String) -> Bool {
+        print("🦅 Swift: saveString key \(key) value: \(value)")
         guard let data = value.data(using: .utf8) else {
             return false
         }
@@ -151,6 +152,7 @@ import ObjectiveC
     }
     
     @objc public func getString(key: String) -> String? {
+        print("🦅 Swift: getString key \(key)")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -170,6 +172,7 @@ import ObjectiveC
     }
     
     @objc public func removeKey(key: String) -> Bool {
+        print("🦅 Swift: removeKey key \(key)")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -181,6 +184,7 @@ import ObjectiveC
     }
     
     @objc public func containsKey(key: String) -> Bool {
+        print("🦅 Swift: containsKey key \(key)")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -190,10 +194,12 @@ import ObjectiveC
         ]
         
         let status = SecItemCopyMatching(query as CFDictionary, nil)
+        print("🦅 Swift: containsKey key \(key) \(status == errSecSuccess)")
         return status == errSecSuccess
     }
     
     @objc public func clearAll() -> Bool {
+        print("🦅 Swift: clearAll keys")
         cleanDB()
         let _ = c_clean_up_database()
 
@@ -207,6 +213,7 @@ import ObjectiveC
     }
 
     // Mark: - Backuping
+    @MainActor
     @objc public func presentBackupPickerWithMessages(
         initialMessage: String,
         okTitle: String,
@@ -214,6 +221,7 @@ import ObjectiveC
         warningOkTitle: String,
         warningCancelTitle: String
     ) {
+        print("🦅 Swift: Present BackUp Alert")
         BackupUI.shared.presentBackupPicker(
             initialMessage: initialMessage,
             okTitle: okTitle,
@@ -223,6 +231,7 @@ import ObjectiveC
         )
     }
 
+    @MainActor
     @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:)
     public func presentBackupPickerWithInitialMessage(
         initialMessage: String,
@@ -231,6 +240,7 @@ import ObjectiveC
         warningOkTitle: String,
         warningCancelTitle: String
     ) {
+        print("🦅 Swift: present Picker")
         BackupUI.shared.presentBackupPicker(
             initialMessage: initialMessage,
             okTitle: okTitle,
@@ -248,11 +258,15 @@ import ObjectiveC
     @objc public func backupIfChanged() {
         BackupWorker.backupIfChanged()
     }
+
+    @objc public func removeBackup() {
+        BackupWorker.removeBackup()
+    }
 }
 
 private extension SwiftBridge {
     func cleanDB() {
-        print("CLEAN DB")
+        print("🦅 Swift: CleanDB")
         let fileManager = FileManager.default
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dbPath = documentsPath.appendingPathComponent("meta-secret.db")

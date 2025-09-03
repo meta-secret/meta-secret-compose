@@ -9,6 +9,7 @@ import Foundation
 import UIKit
 import ObjectiveC
 
+@MainActor
 final class BackupUI: NSObject {
     static let shared = BackupUI()
 
@@ -83,11 +84,13 @@ final class BackupUI: NSObject {
         }
 
         func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            print("🦅❌SwiftUI: document Picker Was Cancelled")
             guard let presenter = (controller.presentingViewController ?? controller.parent) else { return }
             BackupUI.shared.showWarningAlert(from: presenter, warningMessage: warningMessage, warningOkTitle: warningOkTitle, warningCancelTitle: warningCancelTitle)
         }
 
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            print("🦅✅SwiftUI: document Picker Was Chosen")
             guard let url = urls.first else {
                 guard let presenter = (controller.presentingViewController ?? controller.parent) else { return }
                 BackupUI.shared.showWarningAlert(from: presenter, warningMessage: warningMessage, warningOkTitle: warningOkTitle, warningCancelTitle: warningCancelTitle)
@@ -103,38 +106,51 @@ final class BackupUI: NSObject {
 
 final class BackupWorker {
     static func localDBURL() -> URL? {
+        print("🦅👷BackupWorker: localDBURL")
         let fm = FileManager.default
         let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
+        print("🦅👷BackupWorker: localDBURL documentsPath \(documentsPath)")
         return documentsPath?.appendingPathComponent("meta-secret.db")
     }
 
     static func copyLocalDBTo(url: URL) {
+        print("🦅👷BackupWorker: copyLocalDBTo \(url.path)")
         guard let src = localDBURL(), FileManager.default.fileExists(atPath: src.path) else { return }
         let coordinator = NSFileCoordinator(filePresenter: nil)
         var coordinationError: NSError?
         var innerError: NSError?
+        print("🦅👷BackupWorker: copyLocalDBTo coordinator coordinate")
         coordinator.coordinate(writingItemAt: url, options: .forReplacing, error: &coordinationError) { dst in
             do {
                 let tmp = dst.deletingLastPathComponent().appendingPathComponent(UUID().uuidString)
                 if FileManager.default.fileExists(atPath: tmp.path) {
+                    print("🦅👷BackupWorker: copyLocalDBTo removeItem")
                     try? FileManager.default.removeItem(at: tmp)
                 }
                 try FileManager.default.copyItem(at: src, to: tmp)
+                print("🦅👷BackupWorker: copyLocalDBTo writeItem")
                 _ = try FileManager.default.replaceItemAt(dst, withItemAt: tmp)
             } catch let e as NSError {
+                print("🦅👷❌BackupWorker: copyLocalDBTo error \(e)")
                 innerError = e
             }
         }
     }
 
     static func restoreIfNeeded() {
+        print("🦅👷BackupWorker: restoreIfNeeded")
         guard let dst = localDBURL(), !FileManager.default.fileExists(atPath: dst.path) else { return }
         guard let path = SwiftBridge().getString(key: "bdBackUp") else { return }
         let srcURL = URL(fileURLWithPath: path)
-        do { try FileManager.default.copyItem(at: srcURL, to: dst) } catch { /* ignore */ }
+        do {
+            try FileManager.default.copyItem(at: srcURL, to: dst)
+        } catch let e as NSError {
+            print("🦅👷❌BackupWorker: restoreIfNeeded error \(e)")
+        }
     }
 
     static func backupIfChanged() {
+        print("🦅👷BackupWorker: backupIfChanged")
         guard let src = localDBURL(), FileManager.default.fileExists(atPath: src.path) else { return }
         guard let path = SwiftBridge().getString(key: "bdBackUp") else { return }
         let dstURL = URL(fileURLWithPath: path)
@@ -142,6 +158,18 @@ final class BackupWorker {
         let dstDate = (try? dstURL.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
         if srcDate > (dstDate) {
             copyLocalDBTo(url: dstURL)
+        }
+    }
+
+    static func removeBackup() {
+        print("🦅👷BackupWorker: removeBackup")
+        guard let dst = localDBURL(), !FileManager.default.fileExists(atPath: dst.path) else { return }
+        guard let path = SwiftBridge().getString(key: "bdBackUp") else { return }
+        let srcURL = URL(fileURLWithPath: path)
+        do {
+            try FileManager.default.removeItem(at: srcURL)
+        } catch let e as NSError {
+            print("🦅👷❌BackupWorker: removeBackup error \(e)")
         }
     }
 }

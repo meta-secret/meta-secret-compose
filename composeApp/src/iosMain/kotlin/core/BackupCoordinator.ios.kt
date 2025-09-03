@@ -33,6 +33,23 @@ class BackupCoordinatorInterfaceIos(
         SwiftBridge().backupIfChanged()
     }
 
+    @OptIn(ExperimentalForeignApi::class)
+    override fun clearAllBackups() {
+        val bridge = SwiftBridge()
+        val key = "bdBackUp"
+        val path = bridge.getStringWithKey(key)
+        println("\uD83D\uDCE5 BackupCoordinator: iOS: path is $path")
+        if (!path.isNullOrEmpty()) {
+            val exists = NSFileManager.defaultManager.fileExistsAtPath(path)
+            println("\uD83D\uDCE5 BackupCoordinator: iOS: back exists: $exists")
+            if (exists) {
+                NSFileManager.defaultManager.removeItemAtPath(path, null)
+                bridge.removeKeyWithKey(key)
+                return
+            }
+        }
+    }
+
     @OptIn(ExperimentalResourceApi::class, ExperimentalForeignApi::class)
     private fun presentUsingUIBridge(bridge: SwiftBridge) {
         val msg = stringProvider.backupChoosePathMessage()
