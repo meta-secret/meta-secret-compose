@@ -184,7 +184,7 @@ import ObjectiveC
     }
     
     @objc public func containsKey(key: String) -> Bool {
-        print("🦅 Swift: containsKey key \(key)")
+        print("🦅 Swift: containsKey key \(key)?")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -214,12 +214,33 @@ import ObjectiveC
 
     // Mark: - Backuping
     @MainActor
-    @objc public func presentBackupPickerWithMessages(
+    @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:backupKey:)
+    public func presentBackupPickerWithInitialMessage(
         initialMessage: String,
         okTitle: String,
         warningMessage: String,
         warningOkTitle: String,
-        warningCancelTitle: String
+        warningCancelTitle: String,
+        backupKey: String
+    ) {
+        presentBackupPickerWithMessages(
+            initialMessage: initialMessage,
+            okTitle: okTitle,
+            warningMessage: warningMessage,
+            warningOkTitle: warningOkTitle,
+            warningCancelTitle: warningCancelTitle,
+            backupKey: backupKey
+        )
+    }
+
+    @MainActor
+    @objc private func presentBackupPickerWithMessages(
+        initialMessage: String,
+        okTitle: String,
+        warningMessage: String,
+        warningOkTitle: String,
+        warningCancelTitle: String,
+        backupKey: String
     ) {
         print("🦅 Swift: Present BackUp Alert")
         BackupUI.shared.presentBackupPicker(
@@ -227,30 +248,11 @@ import ObjectiveC
             okTitle: okTitle,
             warningMessage: warningMessage,
             warningOkTitle: warningOkTitle,
-            warningCancelTitle: warningCancelTitle
+            warningCancelTitle: warningCancelTitle,
+            backupKey: backupKey
         )
     }
 
-    @MainActor
-    @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:)
-    public func presentBackupPickerWithInitialMessage(
-        initialMessage: String,
-        okTitle: String,
-        warningMessage: String,
-        warningOkTitle: String,
-        warningCancelTitle: String
-    ) {
-        print("🦅 Swift: present Picker")
-        BackupUI.shared.presentBackupPicker(
-            initialMessage: initialMessage,
-            okTitle: okTitle,
-            warningMessage: warningMessage,
-            warningOkTitle: warningOkTitle,
-            warningCancelTitle: warningCancelTitle
-        )
-    }
-
-    // MARK: - Backup non-UI helpers
     @objc public func restoreBackupIfNeeded() {
         BackupWorker.restoreIfNeeded()
     }
