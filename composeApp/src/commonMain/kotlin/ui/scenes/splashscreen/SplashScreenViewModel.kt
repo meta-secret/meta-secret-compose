@@ -31,7 +31,6 @@ class SplashScreenViewModel(
     private val _biometricState = MutableStateFlow<BiometricState>(BiometricState.Idle)
     val biometricState: StateFlow<BiometricState> = _biometricState
 
-    // Public API for View
     override fun handle(event: CommonViewModelEventsInterface) {
         if (event is SplashViewEvents) {
             when (event) {
@@ -45,10 +44,9 @@ class SplashScreenViewModel(
     // All biometric routine
     private fun biometricRoutine() {
         viewModelScope.launch {
-            keyChain.clearAll(isCleanDB = true)
+//            keyChain.clearAll(isCleanDB = true)
 
             if (checkBiometricAvailability()) {
-                // Try restore DB before auth flow
                 backupCoordinatorInterface.restoreIfNeeded()
                 authenticateWithBiometrics()
             } else {

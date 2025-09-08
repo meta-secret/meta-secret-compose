@@ -155,16 +155,16 @@ class MetaSecretAppManager(
     override suspend fun checkAuth(): AuthState {
         return when (initWithSavedKey()) {
             is InitResult.Success -> {
-                when (getStateModel()?.getAppState()) {
+                return when (getStateModel()?.getAppState()) {
                     is State.Vault -> {
                         when (getStateModel()?.getVaultFullInfo()) {
-                            is VaultFullInfo.Member -> return AuthState.COMPLETED
-                            else -> return AuthState.NOT_YET_COMPLETED
+                            is VaultFullInfo.Member -> AuthState.COMPLETED
+                            else -> AuthState.NOT_YET_COMPLETED
                         }
                     }
 
                     else -> {
-                        return AuthState.NOT_YET_COMPLETED
+                        AuthState.NOT_YET_COMPLETED
                     }
                 }
             }
