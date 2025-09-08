@@ -34,13 +34,14 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import sharedData.AppColors
-import sharedData.actualHeightFactor
-import storage.Secret
+import core.AppColors
+import core.ScreenMetricsProviderInterface
+import core.Secret
 import ui.ClassicButton
 
 @Composable
-fun removeSecret(
+fun RemoveSecret(
+    screenMetricsProvider: ScreenMetricsProviderInterface,
     text: AnnotatedString,
     secret: Secret,
     buttonVisibility: (Boolean) -> Unit,
@@ -62,7 +63,7 @@ fun removeSecret(
         ) {
             Box(
                 modifier = Modifier
-                    .height((actualHeightFactor() * 280).dp)
+                    .height((screenMetricsProvider.heightFactor() * 280).dp)
                     .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)
                     .clickable(onClick = {}, enabled = false),
@@ -85,7 +86,7 @@ fun removeSecret(
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy((actualHeightFactor() * 14).dp),
+                    verticalArrangement = Arrangement.spacedBy((screenMetricsProvider.heightFactor() * 14).dp),
                     modifier = Modifier.padding(top = 20.dp, bottom = 30.dp)
                 ) {
                     Text(

@@ -23,14 +23,18 @@ import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.trashbox
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
-import sharedData.AppColors
-import sharedData.actualWidthFactor
+import core.AppColors
+import core.ScreenMetricsProviderInterface
 
 @Composable
-fun RemoveButton(action: (Boolean) -> Unit, description: String) {
+fun RemoveButton(
+    screenMetricsProvider: ScreenMetricsProviderInterface,
+    action: (Boolean) -> Unit,
+    description: String
+) {
     Box(
         modifier = Modifier
-            .width((actualWidthFactor() * 80).dp)
+            .width((screenMetricsProvider.widthFactor() * 80).dp)
             .height(96.dp)
             .background(AppColors.RedError, RoundedCornerShape(12.dp))
             .clickable { action(true) },

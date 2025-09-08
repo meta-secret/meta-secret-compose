@@ -1,0 +1,53 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+# LLM Collaboration Rules
+
+## How to Provide Context
+- Include relevant files/folders/snippets and the intended input/output.
+- Mention architectural boundaries explicitly: `ui/`, `core/commonMain`, and platform adapters in `androidMain` / `iosMain` (including FFI bindings).
+- State the intent (bugfix / feature / refactor / perf).
+
+## How to Request Changes
+- Full file is allowed for new or small files; otherwise prefer unified `diff`.
+- Process:
+  1) AI restates the task in its own words,
+  2) Asks “Can I proceed?”,
+  3) After approval → produce code (diff or full file).
+- No comments in code. Use required logging format only.
+
+## ViewModel Contract (enforced)
+- Do **not** add new public methods to a VM for commands.
+- All interactions go through `handle(event: CommonViewModelEventsInterface)`.
+- Events are scene-specific sealed types implementing `CommonViewModelEventsInterface`.
+- Internal state machines are private (enum or Type-State).
+
+## Interface-first + Koin registration (enforced)
+When adding a capability:
+1) Define an **interface** in `core/commonMain`.
+2) Choose implementation placement:
+   - `commonMain` if platform-agnostic,
+   - `androidMain` / `iosMain` if platform-specific.
+3) **Register Koin binding** where the implementation lives:
+   - `di/KoinModules` (common),
+   - `di/PlatformModule.android`,
+   - `di/PlatformModule.ios`.
+4) Ensure composition root loads both `commonModule` and the platform `platformModule`.
+5) Public APIs must depend on **interfaces only** (no `*Impl` in signatures).
+
+## Callbacks last (signatures)
+- Place all callback/closure/lambda parameters **at the end**.
+- Prefer `suspend` APIs; generate callback adapters only if needed.
+- Ensure callers can use trailing-lambda syntax.
+
+## Glossary
+- **meta-secret-lib** — prebuilt native library
+- **composeApp** — KMM app module
+- **SwiftBridge** — iOS proxy file for calling the library
+- (reserved for additional terms)
+
+## Forbidden Files/Directories
+- (reserved for user)

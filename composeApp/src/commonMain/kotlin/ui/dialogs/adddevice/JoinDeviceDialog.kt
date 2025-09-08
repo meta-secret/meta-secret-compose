@@ -1,6 +1,5 @@
 package ui.dialogs.adddevice
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,12 +29,13 @@ import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.wanna_join
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
-import sharedData.AppColors
-import sharedData.actualHeightFactor
+import core.AppColors
+import core.ScreenMetricsProviderInterface
 import ui.ClassicButton
 
 @Composable
-fun joinDevice(
+fun JoinDevice(
+    screenMetricsProvider: ScreenMetricsProviderInterface,
     onDismiss: (Boolean?) -> Unit
 ) {
     Dialog(
@@ -53,7 +53,7 @@ fun joinDevice(
         ) {
             Box(
                 modifier = Modifier
-                    .height((actualHeightFactor() * 200).dp)
+                    .height((screenMetricsProvider.screenHeight() * 200).dp)
                     .fillMaxWidth()
                     .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)

@@ -1,0 +1,59 @@
+---
+alwaysApply: true
+---
+# Project Rules
+
+## Goals
+- MVP: Distributed secret saver. Serverless. Keeping all data on the device only. No master password. No Auth. Only biometrical checking.
+
+# Project Rules
+
+## Goals
+- (fill in your concrete MVP goals here)
+
+## Stack and Versions
+- Runtime:
+  - Kotlin: latest stable (K2.x), JVM 17, Android minSdk as defined in build
+  - Swift: latest stable (Swift 6.x, current Xcode), iOS target per project
+  - Rust (prebuilt lib only): stable toolchain
+- Update Policy:
+  - Upgrade to latest stable at least once per quarter
+  - Lock files are mandatory for reproducible builds
+
+## Architectural Style
+- **MVVM** with unidirectional data flow
+- Scenes: each screen has View + ViewModel; shared components live outside `scenes/`
+
+## Architecture Principles (SOLID)
+- SRP / OCP (via ADRs) / LSP (clean contracts) / ISP (small ports) / DIP (depend on interfaces in `core`)
+
+## Access Policy (Interface-Only)
+- All services/managers are accessed **only via interfaces** defined in `core/commonMain`
+- Implementations:
+  - `commonMain` if platform-agnostic → bind in `di/KoinModules`
+  - `androidMain` / `iosMain` if platform-specific → bind in `di/PlatformModule.android` / `.ios`
+- Public APIs expose interfaces only (no `*Impl` in signatures)
+- No `expect/actual`; use interfaces
+
+## Performance (guidelines)
+- Do not block UI threads; wrap FFI in IO dispatcher
+- Keep hot allocations out of tight loops; measure before “optimizing”
+
+## Testing (current)
+- `core` unit tests; VM unit with fakes; platform integration tests when adapters appear
+- Regression tests — on demand
+
+## Security (minimum)
+- Secrets only via Keychain (iOS) / Keystore (Android)
+- User-safe error messages; no raw FFI errors in UI
+
+## VM Contract
+```kotlin
+interface CommonViewModel { fun handle(event: CommonViewModelEventsInterface) }
+- UI directly calling Business logic or FFI.
+- Business logic inside ui/.
+- Adding new infra dependencies without ADR.
+- Using `expect/actual`; platform abstractions must be interfaces only.
+
+- All interfaces must have a Koin binding
+- UI talks to VM only via handle(event) + read-only state/optional navigation events

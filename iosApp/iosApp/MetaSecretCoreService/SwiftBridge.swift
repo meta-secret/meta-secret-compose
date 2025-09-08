@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import UIKit
+import ObjectiveC
 
 @objc public class SwiftBridge: NSObject {
     // MARK: - MetaSecretCoreBridge API
@@ -34,8 +36,8 @@ import Foundation
 
     @_silgen_name("clean_up_database")
     private func c_clean_up_database() -> UnsafeMutablePointer<CChar>?
-    // MARK: - MetaSecretCoreBridge
     
+    // MARK: - MetaSecretCoreBridge
     @objc public func generateMasterKey() -> String {
         guard let cString = c_generate_master_key() else {
             return ""
@@ -71,15 +73,19 @@ import Foundation
     }
     
     @objc public func generateUserCreds(vaultName: String) -> String {
+        print("🦅 Swift: generateUserCreds with \(vaultName)")
         guard let cVaultName = vaultName.cString(using: .utf8) else {
+            print("🦅 Swift: generateUserCreds return #")
             return ""
         }
         
         guard let cString = c_generate_user_creds(cVaultName) else {
+            print("🦅 Swift: generateUserCreds return ##")
             return ""
         }
         
         let resultString = String(cString: cString)
+        print("🦅 Swift: generateUserCreds resultString \(resultString) ")
         c_free_string(cString)
         return resultString
     }
@@ -114,6 +120,7 @@ import Foundation
     private let serviceName: String = "MetaSecret"
     
     @objc public func saveString(key: String, value: String) -> Bool {
+        print("🦅 Swift: saveString key \(key) value: \(value)")
         guard let data = value.data(using: .utf8) else {
             return false
         }
@@ -145,6 +152,7 @@ import Foundation
     }
     
     @objc public func getString(key: String) -> String? {
+        print("🦅 Swift: getString key \(key)")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -164,6 +172,7 @@ import Foundation
     }
     
     @objc public func removeKey(key: String) -> Bool {
+        print("🦅 Swift: removeKey key \(key)")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -175,6 +184,7 @@ import Foundation
     }
     
     @objc public func containsKey(key: String) -> Bool {
+        print("🦅 Swift: containsKey key \(key)?")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -184,10 +194,12 @@ import Foundation
         ]
         
         let status = SecItemCopyMatching(query as CFDictionary, nil)
+        print("🦅 Swift: containsKey key \(key) \(status == errSecSuccess)")
         return status == errSecSuccess
     }
     
     @objc public func clearAll() -> Bool {
+        print("🦅 Swift: clearAll keys")
         cleanDB()
         let _ = c_clean_up_database()
 
@@ -199,11 +211,64 @@ import Foundation
         let status = SecItemDelete(query as CFDictionary)
         return status == errSecSuccess || status == errSecItemNotFound
     }
+
+    // Mark: - Backuping
+    @MainActor
+    @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:backupKey:)
+    public func presentBackupPickerWithInitialMessage(
+        initialMessage: String,
+        okTitle: String,
+        warningMessage: String,
+        warningOkTitle: String,
+        warningCancelTitle: String,
+        backupKey: String
+    ) {
+        presentBackupPickerWithMessages(
+            initialMessage: initialMessage,
+            okTitle: okTitle,
+            warningMessage: warningMessage,
+            warningOkTitle: warningOkTitle,
+            warningCancelTitle: warningCancelTitle,
+            backupKey: backupKey
+        )
+    }
+
+    @MainActor
+    @objc private func presentBackupPickerWithMessages(
+        initialMessage: String,
+        okTitle: String,
+        warningMessage: String,
+        warningOkTitle: String,
+        warningCancelTitle: String,
+        backupKey: String
+    ) {
+        print("🦅 Swift: Present BackUp Alert")
+        BackupUI.shared.presentBackupPicker(
+            initialMessage: initialMessage,
+            okTitle: okTitle,
+            warningMessage: warningMessage,
+            warningOkTitle: warningOkTitle,
+            warningCancelTitle: warningCancelTitle,
+            backupKey: backupKey
+        )
+    }
+
+    @objc public func restoreBackupIfNeeded() {
+        BackupWorker.restoreIfNeeded()
+    }
+
+    @objc public func backupIfChanged() {
+        BackupWorker.backupIfChanged()
+    }
+
+    @objc public func removeBackup() {
+        BackupWorker.removeBackup()
+    }
 }
 
 private extension SwiftBridge {
     func cleanDB() {
-        print("CLEAN DB")
+        print("🦅 Swift: CleanDB")
         let fileManager = FileManager.default
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dbPath = documentsPath.appendingPathComponent("meta-secret.db")

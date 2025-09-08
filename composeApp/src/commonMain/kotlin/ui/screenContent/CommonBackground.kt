@@ -20,7 +20,7 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import sharedData.AppColors
+import core.AppColors
 
 @Composable
 fun CommonBackground(text: StringResource, screenContent: @Composable () -> Unit) {

@@ -23,11 +23,12 @@ import androidx.compose.ui.unit.dp
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.close_blue
 import org.jetbrains.compose.resources.painterResource
-import sharedData.AppColors
-import sharedData.actualHeightFactor
+import core.AppColors
+import core.ScreenMetricsProviderInterface
 
 @Composable
 fun InAppNotification(
+    screenMetricsProvider: ScreenMetricsProviderInterface,
     isSuccessful: Boolean,
     message: String,
     onDismiss: () -> Unit
@@ -49,7 +50,7 @@ fun InAppNotification(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = (actualHeightFactor() * 48).dp, max = 200.dp)
+                    .heightIn(min = (screenMetricsProvider.heightFactor() * 48).dp, max = 200.dp)
                     .background(color, RoundedCornerShape(10.dp))
             ) {
                 Row(

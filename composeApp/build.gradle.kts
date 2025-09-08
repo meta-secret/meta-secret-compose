@@ -42,7 +42,6 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.ui.android)
-            implementation(libs.androidx.ui.graphics.android)
             implementation(libs.accompanist.pager)
             implementation(libs.accompanist.pager.indicators)
             implementation(libs.androidx.core)
@@ -87,7 +86,7 @@ kotlin {
 
 android {
     namespace = "metasecret.project.com"
-    compileSdk = 35
+    compileSdk = 36
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].resources.srcDirs("src/commonMain/composeResources")

@@ -1,0 +1,146 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+# CODESTYLE
+
+Kotlin-first (KMM) with a minimal Swift proxy and a prebuilt native library over FFI.  
+Treat warnings seriously; aim for **zero warnings** (the build may not hard-fail on warnings).
+
+---
+
+## Tools
+
+**Kotlin**
+- Formatter: `ktlint` (or `ktfmt`)
+- Linter: `detekt`
+- Suggested tasks: `./gradlew ktlintFormat detekt`
+
+**Swift (proxy)**
+- Formatter: `swift-format`
+- Linter: `SwiftLint`
+
+---
+
+## Architectural Boundaries (style)
+
+- `ui/` depends only on **public** `core` APIs.
+- FFI calls never happen in `ui/`; they are wrapped by `core` and platform adapters.
+- Public signatures use **interfaces** (no `*Impl`).
+
+---
+
+## Naming
+
+**Kotlin**
+- Packages: `lowercase.with.dots`
+- Types: `PascalCase`; members: `camelCase`; constants: `UPPER_SNAKE_CASE`
+- UseCases/ViewModels suffixes: `UseCase`, `ViewModel`
+- Repositories: `XxxRepository` (interface) / `XxxRepositoryImpl` (impl, hidden behind DI)
+
+**Swift**
+- Types: `PascalCase`; members: `camelCase`
+
+---
+
+## Collections & Style
+
+- Prefer **imperative** style for clarity in business logic (`for`/`if`); use functional ops (`map`/`filter`) when they improve readability.
+- Immutability first (`val`); small, focused functions (≈ up to 40 LOC).
+
+---
+
+## Null-safety (strict)
+
+**Kotlin**
+- **Forbidden:** `!!`
+- Use explicit checks, defaults, or `requireNotNull` with a message.
+
+**Swift**
+- Prefer `guard` for early exits; **no** `!` or `try!` in production code.
+
+---
+
+## Errors
+
+**Kotlin**
+- Public APIs **do not throw** across module boundaries.
+- Use **sealed** domain errors; map FFI/native errors in one place in `core`.
+
+**Swift**
+- SwiftBridge converts native/FFI failures to a Swift `enum` immediately at the boundary.
+
+---
+
+## Asynchrony
+
+**Kotlin**
+- **Only coroutines** (`suspend`, `StateFlow` / `SharedFlow`).
+- No `GlobalScope`.
+- Wrap potentially blocking FFI calls with `withContext(Dispatchers.IO)` (or a dedicated dispatcher).
+
+**iOS**
+- Never block the main thread; dispatch results to the main queue before touching UIKit.
+
+---
+
+## SwiftBridge (proxy)
+
+- Purpose: call library/native APIs only.
+- No business logic; minimal argument validation and type bridging.
+- No force unwrap; prefer `guard` and early returns.
+
+---
+
+## Logging
+
+**No comments in code. Only code.** Required debug log format:
+[emoji][FileName]: [message]
+- The **same emoji** is used consistently within a given file (and the paired View/ViewModel of a screen).
+- Errors must start with red `❌`; successful execution with green `✅`.
+
+**Examples**
+```kotlin
+println("👤ProfileViewModel: ✅ User loaded")
+println("👤ProfileViewModel: ❌ Failed to load user: $reason")
+println("🗝️SwiftBridge: ✅ Keychain item saved")
+
+No PII or secrets in logs; mask identifiers/tokens.
+
+## Lightweight Tracing
+	-	Optionally accept a traceId: String in use-cases and propagate it across calls to correlate a single user flow.
+	-	Include traceId in WARN/ERROR logs if present.
+
+## Interfaces & Implementations (placement + Koin)
+	-	Declare interfaces in core/commonMain.
+  -	If the implementation is platform-agnostic, keep it in commonMain and bind in common DI
+  - If the implementation is platform-specific, keep it in the platform source set and bind there
+  -	Do not reference *Impl types outside DI modules.
+	-	Public surfaces (params/returns/fields) use the interface type only.
+	-	Composition root must load both the common module and the platform module
+
+## Function Parameters Ordering (callbacks last)
+	-	Place all callback/closure/lambda parameters at the end of the parameter list.
+	-	Prefer suspend functions over callback-style APIs. If a callback is required (interop), keep it last to enable trailing-lambda syntax.
+	-	Avoid multiple callbacks; if unavoidable, group them at the end.
+
+### ViewModels: Public Surface & Events
+
+## A ViewModel exposes:
+	-	val state: StateFlow<UiState> (read-only to UI)
+	-	optional val navigationEvent: SharedFlow<NavigationEvent>
+	-	fun handle(event: CommonViewModelEventsInterface)
+
+## Rules
+	-	Do not add other public command methods; all inputs go through handle(...).
+	-	Events are scene-specific sealed types implementing CommonViewModelEventsInterface.
+	-	Internal state machines are private (enum) or Type-State when it increases safety.
+	-	Logging follows the required format [emoji][FileName]: [message] with ✅/❌ markers.
+
+## Tests
+	-	core/: unit tests for use-cases, mappers, error mapping.
+	-	Platform adapters (androidMain / iosMain): integration tests for Keychain/Keystore and FFI when available.
+	-	ui/: ViewModel tests using fakes/stubs for core ports; UI instrumentation/snapshot tests optional.
+	-	Regression tests are added on demand (not enforced by policy).

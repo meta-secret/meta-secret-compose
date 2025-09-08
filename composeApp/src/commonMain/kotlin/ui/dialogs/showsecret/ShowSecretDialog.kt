@@ -45,13 +45,14 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import sharedData.AppColors
-import sharedData.actualHeightFactor
-import storage.Secret
+import core.AppColors
+import core.ScreenMetricsProviderInterface
+import core.Secret
 import ui.ClassicButton
 
 @Composable
-fun showSecret(
+fun ShowSecret(
+    screenMetricsProvider: ScreenMetricsProviderInterface,
     secret: Secret,
     dialogVisibility: (Boolean) -> Unit,
 ) {
@@ -80,8 +81,8 @@ fun showSecret(
             Box(
                 modifier = Modifier
                     .heightIn(
-                        min = (actualHeightFactor() * 316).dp,
-                        max = (actualHeightFactor() * 516).dp
+                        min = (screenMetricsProvider.heightFactor() * 316).dp,
+                        max = (screenMetricsProvider.heightFactor() * 516).dp
                     )
                     .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)
