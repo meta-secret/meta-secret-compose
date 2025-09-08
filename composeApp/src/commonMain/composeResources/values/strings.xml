@@ -87,4 +87,5 @@
     <string name = "reject_join">"Registration denied. You may be connecting to the wrong account."</string>
     <string name = "goto_devices_tab">Go to the Devices tab and add the necessary ones to your network</string>
     <string name = "wanna_join">Do you want to join this device to your cluster?</string>
+    
 </resources>
