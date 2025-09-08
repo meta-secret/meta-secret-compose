@@ -17,6 +17,7 @@ class BackupCoordinatorInterfaceIos(
 ) : BackupCoordinatorInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun ensureBackupDestinationSelected() {
+        println("\uD83D\uDCE5\uF8FF BackupCoordinator: iOS: ensureBackupDestinationSelected")
         val bridge = SwiftBridge()
         CoroutineScope(Dispatchers.IO).launch {
             val masterKey = keyChain.getString("master_key")
@@ -44,10 +45,10 @@ class BackupCoordinatorInterfaceIos(
             val masterKey = keyChain.getString("master_key")
             val key = "bdBackUp${masterKey}"
             val path = bridge.getStringWithKey(key)
-            println("\uD83D\uDCE5 BackupCoordinator: iOS: path is $path")
+            println("\uD83D\uDCE5\uF8FF BackupCoordinator: iOS: path is $path")
             if (!path.isNullOrEmpty()) {
                 val exists = NSFileManager.defaultManager.fileExistsAtPath(path)
-                println("\uD83D\uDCE5 BackupCoordinator: iOS: back exists: $exists")
+                println("\uD83D\uDCE5\uF8FF BackupCoordinator: iOS: back exists: $exists")
                 if (exists) {
                     NSFileManager.defaultManager.removeItemAtPath(path, null)
                     bridge.removeKeyWithKey(key)

@@ -4,4 +4,8 @@
     <string name="backup_choose_path_warning">If you do not choose a path, your data may be lost when the app is uninstalled</string>
     <string name="ok">Ok</string>
     <string name="cancel">Cancel</string>
+    <string name="backup_invalid_provider">Please select Google Drive as the backup destination</string>
+    <string name="backup_no_destination">Backup destination is not set. Please select Google Drive location</string>
+    <string name="backup_restore_failed">Failed to restore database from Google Drive</string>
+    <string name="backup_write_failed">Failed to back up database to Google Drive</string>
 </resources>
