@@ -5,6 +5,6 @@ import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 
 interface MetaSecretSocketHandlerInterface {
-    val actionType: StateFlow<SocketActionModel>
+    val socketActionType: StateFlow<SocketActionModel>
     fun actionsToFollow(add: List<SocketRequestModel>?, exclude: List<SocketRequestModel>?)
 }

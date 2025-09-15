@@ -68,7 +68,7 @@ class SecretsScreen : Screen {
         }
         if (isRedirected) {
             LocalTabNavigator.current.current = DevicesTab
-            viewModel.setTabIndex(1)
+            viewModel.handle(SecretsEvents.SetTabIndex(index = 1))
         }
 
         CommonBackground(Res.string.secretsHeader) {

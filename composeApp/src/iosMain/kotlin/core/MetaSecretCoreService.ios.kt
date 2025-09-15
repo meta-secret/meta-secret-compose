@@ -118,4 +118,68 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
             throw e
         }
     }
+
+    override fun splitSecret(secretId: String, secret: String): String {
+        try {
+            println("\uF8FF ✅ iOS: Calling splitSecret with: $secretId")
+            val result = swiftBridge.splitSecret(secretId, secret)
+            println("\uF8FF ✅ iOS: AppManager: splitSecret result $result")
+            return result
+        } catch (e: Exception) {
+            println("\uF8FF ⛔ iOS: AppManager splitSecret error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+    override fun findClaim(secretId: String): String {
+        try {
+            println("\uF8FF ✅ iOS: Calling findClaim with: $secretId")
+            val result = swiftBridge.findClaim(secretId)
+            println("\uF8FF ✅ iOS: AppManager: findClaim result $result")
+            return result
+        } catch (e: Exception) {
+            println("\uF8FF ⛔ iOS: AppManager findClaim error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun recover(secretId: String): String {
+        try {
+            println("\uF8FF ✅ iOS: Calling recover with: $secretId")
+            val result = swiftBridge.recover(secretId)
+            println("\uF8FF ✅ iOS: AppManager: recover result $result")
+            return result
+        } catch (e: Exception) {
+            println("\uF8FF ⛔ iOS: AppManager recover error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun acceptRecover(claimId: String): String {
+        try {
+            println("\uF8FF ✅ iOS: Calling acceptRecover with: $claimId")
+            val result = swiftBridge.acceptRecover(claimId)
+            println("\uF8FF ✅ iOS: AppManager: acceptRecover result $result")
+            return result
+        } catch (e: Exception) {
+            println("\uF8FF ⛔ iOS: AppManager acceptRecover error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun showRecovered(secretId: String): String {
+        try {
+            println("\uF8FF ✅ iOS: Calling showRecovered with: $secretId")
+            val result = swiftBridge.showRecovered(secretId)
+            println("\uF8FF ✅ iOS: AppManager: showRecovered result $result")
+            return result
+        } catch (e: Exception) {
+            println("\uF8FF ⛔ iOS: AppManager showRecovered error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
 }

@@ -13,6 +13,8 @@ import models.apiModels.VaultFullInfo
 import models.apiModels.VaultSummary
 import core.KeyChainInterface
 import core.LogTags
+import models.appInternalModels.ClaimModel
+import models.appInternalModels.SecretModel
 
 sealed class InitResult {
     data class Success(val result: String) : InitResult()
@@ -171,6 +173,37 @@ class MetaSecretAppManager(
 
             else -> AuthState.NOT_YET_COMPLETED
         }
+    }
+
+    override fun splitSecret(secretModel: SecretModel): CommonResponseModel? {
+        if (secretModel.secretId == null || secretModel.secret == null) {
+            return null
+        }
+        val splitResult = metaSecretCore.splitSecret(secretModel.secretId, secretModel.secret)
+        return try {
+            val result = CommonResponseModel.fromJson(splitResult)
+            println("✅" + LogTags.APP_MANAGER + ": split Secret result is $result")
+            result
+        } catch (e: Exception) {
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse split Secret JSON: ${e.message}")
+            null
+        }
+    }
+
+    override fun findClaim(secretModel: SecretModel): ClaimModel? {
+        TODO("Not yet implemented")
+    }
+
+    override fun recover(secretModel: SecretModel): CommonResponseModel? {
+        TODO("Not yet implemented")
+    }
+
+    override fun acceptRecover(claim: ClaimModel): CommonResponseModel? {
+        TODO("Not yet implemented")
+    }
+
+    override fun showRecovered(secretModel: SecretModel): String? {
+        TODO("Not yet implemented")
     }
 }
 

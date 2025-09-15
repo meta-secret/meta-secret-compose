@@ -19,8 +19,8 @@ class MetaSecretSocketHandler(
     private val metaSecretCore: MetaSecretCoreInterface,
     private val appManager: MetaSecretAppManagerInterface
 ): MetaSecretSocketHandlerInterface {
-    private val _actionType = MutableStateFlow(SocketActionModel.NONE)
-    override val actionType: StateFlow<SocketActionModel> = _actionType
+    private val _socketActionType = MutableStateFlow(SocketActionModel.NONE)
+    override val socketActionType: StateFlow<SocketActionModel> = _socketActionType
 
     private var actionsToFollow = mutableSetOf<SocketRequestModel>()
 
@@ -80,7 +80,7 @@ class MetaSecretSocketHandler(
 
                 if (state?.success == true && hasJoinRequests) {
                     println("✅" + core.LogTags.SOCKET_HANDLER + ": Need to show Ask to join pop up")
-                    _actionType.value = SocketActionModel.ASK_TO_JOIN
+                    _socketActionType.value = SocketActionModel.ASK_TO_JOIN
                 }
             }
 
@@ -88,17 +88,17 @@ class MetaSecretSocketHandler(
                 println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for join response")
 
                 when (currentState.getVaultFullInfo()) {
-                    is VaultFullInfo.Member -> _actionType.value = SocketActionModel.JOIN_REQUEST_ACCEPTED
-                    is VaultFullInfo.NotExists -> _actionType.value = SocketActionModel.NONE
+                    is VaultFullInfo.Member -> _socketActionType.value = SocketActionModel.JOIN_REQUEST_ACCEPTED
+                    is VaultFullInfo.NotExists -> _socketActionType.value = SocketActionModel.NONE
                     is VaultFullInfo.Outsider -> {
                         when (currentState.getOutsiderStatus()) {
-                            UserDataOutsiderStatus.NON_MEMBER -> { _actionType.value = SocketActionModel.NONE }
-                            UserDataOutsiderStatus.PENDING -> { _actionType.value = SocketActionModel.JOIN_REQUEST_PENDING }
-                            UserDataOutsiderStatus.DECLINED -> { _actionType.value = SocketActionModel.JOIN_REQUEST_DECLINED }
-                            null -> _actionType.value = SocketActionModel.NONE
+                            UserDataOutsiderStatus.NON_MEMBER -> { _socketActionType.value = SocketActionModel.NONE }
+                            UserDataOutsiderStatus.PENDING -> { _socketActionType.value = SocketActionModel.JOIN_REQUEST_PENDING }
+                            UserDataOutsiderStatus.DECLINED -> { _socketActionType.value = SocketActionModel.JOIN_REQUEST_DECLINED }
+                            null -> _socketActionType.value = SocketActionModel.NONE
                         }
                     }
-                    null -> _actionType.value = SocketActionModel.JOIN_REQUEST_PENDING
+                    null -> _socketActionType.value = SocketActionModel.JOIN_REQUEST_PENDING
                 }
             }
 

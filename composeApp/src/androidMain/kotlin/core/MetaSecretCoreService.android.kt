@@ -126,6 +126,71 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
         }
     }
 
+    override fun splitSecret(secretId: String, secret: String): String {
+        try {
+            println("✅ Calling Android splitSecret")
+            val result = MetaSecretNative.splitSecret(secretId,secret)
+            println("✅ App Android splitSecret result: $result")
+            return result
+        } catch (e: Exception) {
+            println("⛔ AppManager Android splitSecret error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun findClaim(secretId: String): String {
+        try {
+            println("✅ Calling Android findClaim")
+            val result = MetaSecretNative.findClaim(secretId)
+            println("✅ App Android findClaim result: $result")
+            return result
+        } catch (e: Exception) {
+            println("⛔ AppManager Android findClaim error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun recover(secretId: String): String {
+        try {
+            println("✅ Calling Android recover")
+            val result = MetaSecretNative.recover(secretId)
+            println("✅ App Android recover result: $result")
+            return result
+        } catch (e: Exception) {
+            println("⛔ AppManager Android recover error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun acceptRecover(claimId: String): String {
+        try {
+            println("✅ Calling Android acceptRecover")
+            val result = MetaSecretNative.acceptRecover(claimId)
+            println("✅ App Android acceptRecover result: $result")
+            return result
+        } catch (e: Exception) {
+            println("⛔ AppManager Android acceptRecover error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun showRecovered(secretId: String): String {
+        try {
+            println("✅ Calling Android showRecovered")
+            val result = MetaSecretNative.showRecovered(secretId)
+            println("✅ App Android showRecovered result: $result")
+            return result
+        } catch (e: Exception) {
+            println("⛔ AppManager Android showRecovered error: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
+    }
+
     private fun cleanDB() {
         println("CLEAN DB (Android)")
         try {

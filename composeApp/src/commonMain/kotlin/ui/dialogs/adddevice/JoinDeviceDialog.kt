@@ -53,7 +53,7 @@ fun JoinDevice(
         ) {
             Box(
                 modifier = Modifier
-                    .height((screenMetricsProvider.screenHeight() * 200).dp)
+                    .height((screenMetricsProvider.heightFactor() * 200).dp)
                     .fillMaxWidth()
                     .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)
