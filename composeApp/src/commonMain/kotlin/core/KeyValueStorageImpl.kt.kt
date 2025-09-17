@@ -76,8 +76,8 @@ class KeyValueStorageImpl(
     override fun syncSecretsFromVault(apiSecrets: List<SecretApiModel>) {
         val mappedSecrets = apiSecrets.map { apiSecret ->
             Secret(
-                secretName = apiSecret.name,
-                secretId = apiSecret.id
+                secretId = apiSecret.id,
+                secretName = apiSecret.name
             )
         }
         _secretData.value = mappedSecrets

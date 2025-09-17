@@ -65,7 +65,7 @@ fun SecretsContent(
 ) {
     val viewModel: SecretsScreenViewModel = koinViewModel()
     val devicesCount by viewModel.devicesCount.collectAsState()
-    var isRemoveDialogVisible by remember { mutableStateOf(false) }
+//    var isRemoveDialogVisible by remember { mutableStateOf(false) }
     var isShowDialogVisible by remember { mutableStateOf(false) }
     var isSwiped by remember { mutableStateOf(false) }
 
@@ -94,7 +94,7 @@ fun SecretsContent(
         buttonText = stringResource(Res.string.removeSecret),
         isRevealed = isSwiped,
         screenMetricsProvider,
-        action = { isRemoveDialogVisible = it },
+        action = { /*isRemoveDialogVisible = it*/ },
         onExpanded = { isSwiped = true },
         onCollapsed = { isSwiped = false },
         content = {
@@ -167,18 +167,18 @@ fun SecretsContent(
             }
         }
     )
-    if (isRemoveDialogVisible) {
-        dialogAnimation({
-            RemoveSecret(
-                viewModel.screenMetricsProvider,
-                viewModel.deleteSecretText(secret.secretName),
-                secret,
-                buttonVisibility = { isSwiped = it },
-                dialogVisibility = { isRemoveDialogVisible = it })
-        })
-    }
+//    if (isRemoveDialogVisible) {
+//        dialogAnimation({
+//            RemoveSecret(
+//                viewModel.screenMetricsProvider,
+//                viewModel.deleteSecretText(secret.secretName),
+//                secret,
+//                buttonVisibility = { isSwiped = it },
+//                dialogVisibility = { isRemoveDialogVisible = it })
+//        })
+//    }
     if (isShowDialogVisible) {
-        dialogAnimation({
+        DialogAnimation({
             ShowSecret(
                 viewModel.screenMetricsProvider,
                 secret,
@@ -188,7 +188,7 @@ fun SecretsContent(
 }
 
 @Composable
-fun dialogAnimation(action: @Composable () -> Unit) {
+fun DialogAnimation(action: @Composable () -> Unit) {
     AnimatedVisibility(
         visible = true,
         enter = slideInVertically(

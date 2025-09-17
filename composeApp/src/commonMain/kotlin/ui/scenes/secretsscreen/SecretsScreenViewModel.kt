@@ -49,7 +49,7 @@ class SecretsScreenViewModel(
         .stateIn(viewModelScope, SharingStarted.Lazily, 0)
 
     init {
-        // TODO: If needed
+
     }
 
     override fun handle(event: CommonViewModelEventsInterface) {
