@@ -3,6 +3,7 @@ package core.metaSecretCore
 import models.apiModels.AppStateModel
 import models.apiModels.CommonResponseModel
 import models.apiModels.JoinClusterRequest
+import models.apiModels.SecretApiModel
 import models.apiModels.UserData
 import models.apiModels.VaultEvents
 import models.apiModels.VaultFullInfo
@@ -27,4 +28,5 @@ interface MetaSecretAppManagerInterface {
     fun recover(secretModel: SecretModel): CommonResponseModel?
     fun acceptRecover(claim: ClaimModel): CommonResponseModel?
     fun showRecovered(secretModel: SecretModel): String?
+    fun getSecretsFromVault(): List<SecretApiModel>?
 }

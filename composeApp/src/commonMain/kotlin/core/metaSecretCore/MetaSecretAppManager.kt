@@ -176,10 +176,10 @@ class MetaSecretAppManager(
     }
 
     override fun splitSecret(secretModel: SecretModel): CommonResponseModel? {
-        if (secretModel.secretId == null || secretModel.secret == null) {
+        if (secretModel.secretName == null || secretModel.secret == null) {
             return null
         }
-        val splitResult = metaSecretCore.splitSecret(secretModel.secretId, secretModel.secret)
+        val splitResult = metaSecretCore.splitSecret(secretModel.secretName, secretModel.secret)
         return try {
             val result = CommonResponseModel.fromJson(splitResult)
             println("✅" + LogTags.APP_MANAGER + ": split Secret result is $result")
@@ -204,6 +204,23 @@ class MetaSecretAppManager(
 
     override fun showRecovered(secretModel: SecretModel): String? {
         TODO("Not yet implemented")
+    }
+
+    override fun getSecretsFromVault(): List<models.apiModels.SecretApiModel>? {
+        val stateJson = metaSecretCore.getAppState()
+        return try {
+            val currentState = AppStateModel.fromJson(stateJson)
+            val vaultInfo = currentState.getVaultFullInfo()
+            val secrets = when (vaultInfo) {
+                is VaultFullInfo.Member -> vaultInfo.member.member.vault.secrets
+                else -> emptyList()
+            }
+            println("✅" + LogTags.APP_MANAGER + ": getSecretsFromVault result is $secrets")
+            secrets
+        } catch (e: Exception) {
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse getSecretsFromVault JSON: ${e.message}")
+            null
+        }
     }
 }
 

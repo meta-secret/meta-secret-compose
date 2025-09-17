@@ -97,10 +97,16 @@ data class UserMembership(
 )
 
 @Serializable
+data class SecretApiModel(
+    val id: String,
+    val name: String
+)
+
+@Serializable
 data class VaultData(
     val vaultName: String,
     val users: Map<String, UserMembership> = emptyMap(),
-    val secrets: List<String> = emptyList(), // Placeholder for secrets structure
+    val secrets: List<SecretApiModel> = emptyList(),
 )
 
 @Serializable

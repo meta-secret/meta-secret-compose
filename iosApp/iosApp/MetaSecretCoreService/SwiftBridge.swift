@@ -40,8 +40,8 @@ import ObjectiveC
     @_silgen_name("split_secret")
     private func c_split_secret(_ secret_id_ptr: UnsafePointer<CChar>?, _ secret_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
     
-    @_silgen_name("find_claim")
-    private func c_find_claim(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
+    @_silgen_name("find_claim_by")
+    private func c_find_claim_by(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
     
     @_silgen_name("recover")
     private func c_recover(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
@@ -150,7 +150,7 @@ import ObjectiveC
     @objc public func findClaim(_ secretId: String) -> String {
         guard let secretIdString = secretId.cString(using: .utf8) else { return ""}
 
-        guard let resultPtr = c_find_claim(secretIdString) else { return "" }
+        guard let resultPtr = c_find_claim_by(secretIdString) else { return "" }
 
         let resultString = String(cString: resultPtr)
         c_free_string(resultPtr)

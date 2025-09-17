@@ -1,5 +1,13 @@
 package ui.scenes.secretsscreen
 
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -10,6 +18,13 @@ import core.Device
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.Secret
+import core.AppColors
+import kotlinproject.composeapp.generated.resources.Res
+import kotlinproject.composeapp.generated.resources.manrope_bold
+import kotlinproject.composeapp.generated.resources.removeSecretConfirmation
+import kotlinproject.composeapp.generated.resources.fromAllDevices
+import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.stringResource
 import ui.TabStateHolder
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -51,7 +66,7 @@ class SecretsScreenViewModel(
         }
     }
 
-    private fun getSecret(index: Int): Secret {
+    fun getSecret(index: Int): Secret {
         return secretsList.value[index]
     }
 

@@ -62,6 +62,13 @@ class SecretsScreen : Screen {
         val secretsList by viewModel.secrets.collectAsState()
         var isDialogVisible by remember { mutableStateOf(false) }
         val isRedirected by remember { mutableStateOf(false) }
+        var snackMessage: String? by remember { mutableStateOf(null) }
+        var isSnackSuccess by remember { mutableStateOf(true) }
+        
+        val secretAddSuccessText = stringResource(Res.string.secretAdded)
+        val secretAddFailedText = "Failed to add secret"
+        val secretAddedText = stringResource(Res.string.secretAdded)
+        val secretRemovedText = stringResource(Res.string.secretRemoved)
 
         LaunchedEffect(Unit) {
             previousCount = secretsCount
@@ -90,33 +97,46 @@ class SecretsScreen : Screen {
             visible = isDialogVisible,
             enter = slideInVertically(
                 initialOffsetY = { it },
-                animationSpec = tween(durationMillis = 1500)
+                animationSpec = tween(durationMillis = 350)
             ),
             exit = slideOutVertically(
                 targetOffsetY = { it },
-                animationSpec = tween(durationMillis = 1000)
+                animationSpec = tween(durationMillis = 250)
             )
         ) {
             AddSecret(
                 viewModel.screenMetricsProvider,
-                dialogVisibility = { isDialogVisible = it }
+                dialogVisibility = { isDialogVisible = it },
+                onResult = { isSuccess ->
+                    isSnackSuccess = isSuccess
+                    snackMessage = if (isSuccess) {
+                        secretAddSuccessText
+                    } else {
+                        secretAddFailedText
+                    }
+                }
             )
         }
 
-        var message = ""
-        if (previousCount < secretsCount) {
-            message = stringResource(Res.string.secretAdded)
-        } else if (previousCount > secretsCount) {
-            message = stringResource(Res.string.secretRemoved)
+        if (previousCount != secretsCount) {
+            isSnackSuccess = previousCount < secretsCount
+            snackMessage = if (isSnackSuccess) {
+                secretAddedText
+            } else {
+                secretRemovedText
+            }
+            previousCount = secretsCount
         }
 
-        InAppNotification(
-            viewModel.screenMetricsProvider,
-            true, //TODO if failed
-            message,
-            { previousCount = secretsCount }
-        )
-        LaunchedEffect(Unit) { delay(2000); previousCount = secretsCount }
+        if (snackMessage != null) {
+            InAppNotification(
+                viewModel.screenMetricsProvider,
+                isSnackSuccess,
+                snackMessage ?: "",
+                onDismiss = { snackMessage = null }
+            )
+            LaunchedEffect(snackMessage) { delay(2000); snackMessage = null }
+        }
 
         if (secretsCount < 1) {
             Box(

@@ -2,6 +2,7 @@ package core
 
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
+import models.apiModels.SecretApiModel
 
 interface KeyValueStorageInterface {
     var isOnboardingCompleted: Boolean
@@ -15,6 +16,7 @@ interface KeyValueStorageInterface {
     fun resetKeyValueStorage()
     fun addSecret(secret: Secret)
     fun removeSecret(secret: Secret)
+    fun syncSecretsFromVault(apiSecrets: List<SecretApiModel>)
     fun addDevice(device: Device)
     fun removeDevice(index: Int)
 }
@@ -23,7 +25,7 @@ interface KeyValueStorageInterface {
 data class LoginInfo(val username: String, val password: String)
 
 @Serializable
-data class Secret(val secretName: String, val password: String)
+data class Secret(val secretName: String, val secretId: String)
 
 @Serializable
 data class Device(val deviceMake: String, val username: String)

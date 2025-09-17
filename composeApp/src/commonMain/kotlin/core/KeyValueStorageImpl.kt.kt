@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
+import models.apiModels.SecretApiModel
 
 class KeyValueStorageImpl(
     private val deviceInfoProvider: DeviceInfoProviderInterface
@@ -72,6 +73,17 @@ class KeyValueStorageImpl(
         saveToStorage()
     }
 
+    override fun syncSecretsFromVault(apiSecrets: List<SecretApiModel>) {
+        val mappedSecrets = apiSecrets.map { apiSecret ->
+            Secret(
+                secretName = apiSecret.name,
+                secretId = apiSecret.id
+            )
+        }
+        _secretData.value = mappedSecrets
+        saveToStorage()
+    }
+
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     private fun saveToStorage() {
         settings.encodeValue(
@@ -80,8 +92,6 @@ class KeyValueStorageImpl(
             _secretData.value
         )
     }
-
-    /*--- Mutable List of Devices ---*/
 
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     private val _deviceData = MutableStateFlow(
@@ -123,18 +133,6 @@ class KeyValueStorageImpl(
         )
     }
 
-    /*--- ---*/
-
-    // #2 - store/retrive custom types
-    //            else {
-    //              settings.remove(StorageKeys.TOKEN.key)
-    //            }
-
-    // #3 - listen to token value changes
-//    override val observableToken: Flow<String>
-//        get() = observableSettings.getStringFlow(StorageKeys.TOKEN.key, "")
-
-    // clean all the stored values
     override fun cleanStorage() {
         settings.clear()
     }

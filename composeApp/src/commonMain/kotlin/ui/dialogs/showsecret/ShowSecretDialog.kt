@@ -119,8 +119,8 @@ fun ShowSecret(
                     viewModel.textRow(secret.secretName, false)
                     viewModel.textRow(
                         when (isPasswordVisible) {
-                            true -> secret.password
-                            false -> "*".repeat(secret.password.length)
+                            true -> secret.secretId
+                            false -> "*".repeat(secret.secretId.length)
                         }, isPasswordVisible
                     )
 
