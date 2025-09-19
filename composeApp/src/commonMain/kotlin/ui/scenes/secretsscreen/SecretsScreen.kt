@@ -85,7 +85,7 @@ class SecretsScreen : Screen {
                     .padding(bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                itemsIndexed(secretsList) { index, secret ->
+                itemsIndexed(secretsList.sortedBy { it.secretName }) { index, secret ->
                     SecretsContent(index, secret, viewModel.screenMetricsProvider)
                 }
             }

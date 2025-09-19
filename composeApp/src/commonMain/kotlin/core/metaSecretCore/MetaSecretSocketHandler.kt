@@ -5,7 +5,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -22,8 +24,13 @@ class MetaSecretSocketHandler(
     private val _socketActionType = MutableStateFlow(SocketActionModel.NONE)
     override val socketActionType: StateFlow<SocketActionModel> = _socketActionType
 
-    private var actionsToFollow = mutableSetOf<SocketRequestModel>()
+    private val _socketActions = MutableSharedFlow<SocketActionModel>(
+        replay = 0,
+        extraBufferCapacity = 1
+    )
+    override val socketActions: SharedFlow<SocketActionModel> = _socketActions
 
+    private var actionsToFollow = mutableSetOf<SocketRequestModel>()
     private var isLocked = false
     private var timerJob: Job? = null
     private val timerScope = CoroutineScope(Dispatchers.Default)
@@ -100,6 +107,11 @@ class MetaSecretSocketHandler(
                     }
                     null -> _socketActionType.value = SocketActionModel.JOIN_REQUEST_PENDING
                 }
+            }
+
+            if (actionsToFollow.contains(SocketRequestModel.GET_STATE)) {
+                println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for state response")
+                _socketActions.tryEmit(SocketActionModel.UPDATE_SECRETS)
             }
 
             isLocked = false

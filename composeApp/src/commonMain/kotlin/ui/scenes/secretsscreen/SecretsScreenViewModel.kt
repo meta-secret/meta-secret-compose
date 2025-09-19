@@ -19,10 +19,20 @@ import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.Secret
 import core.AppColors
+import core.LogTags
+import core.metaSecretCore.MetaSecretAppManagerInterface
+import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.removeSecretConfirmation
 import kotlinproject.composeapp.generated.resources.fromAllDevices
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import models.appInternalModels.SocketActionModel
+import models.appInternalModels.SocketRequestModel
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import ui.TabStateHolder
@@ -30,17 +40,18 @@ import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 
 class SecretsScreenViewModel(
-    keyValueStorage: KeyValueStorageInterface,
-    val screenMetricsProvider: ScreenMetricsProviderInterface
+    private val keyValueStorage: KeyValueStorageInterface,
+    val screenMetricsProvider: ScreenMetricsProviderInterface,
+    private val socketHandler: MetaSecretSocketHandlerInterface,
+    private val metaSecretAppManager: MetaSecretAppManagerInterface,
 ) : ViewModel(), CommonViewModel {
 
     private val secretsList: StateFlow<List<Secret>> = keyValueStorage.secretData
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val secrets: StateFlow<List<Secret>> = secretsList
 
     private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-    val secrets: StateFlow<List<Secret>> = secretsList
 
     val secretsCount: StateFlow<Int> = secretsList.map { it.size }
         .stateIn(viewModelScope, SharingStarted.Lazily, 0)
@@ -49,7 +60,23 @@ class SecretsScreenViewModel(
         .stateIn(viewModelScope, SharingStarted.Lazily, 0)
 
     init {
+        CoroutineScope(Dispatchers.IO).launch {
+            println("✅${LogTags.SECRETS_VM}: Start to follow UPDATE_SECRETS")
+            socketHandler.actionsToFollow(
+                add = listOf(SocketRequestModel.GET_STATE),
+                exclude = null
+            )
+        }
 
+        viewModelScope.launch {
+            socketHandler.socketActions.collect { actionType ->
+                println("✅${LogTags.SECRETS_VM}: Socket action type is $actionType")
+                if (actionType == SocketActionModel.UPDATE_SECRETS) {
+                    println("✅${LogTags.SECRETS_VM}: New state for secrets been gotten")
+                    loadSecretsFromVault()
+                }
+            }
+        }
     }
 
     override fun handle(event: CommonViewModelEventsInterface) {
@@ -72,6 +99,23 @@ class SecretsScreenViewModel(
 
     private fun setTabIndex(index: Int) {
         TabStateHolder.setTabIndex(index)
+    }
+
+    private fun loadSecretsFromVault() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                println("✅${LogTags.SECRETS_VM}: Loading secrets from vault in background")
+                val secretsFromVault = metaSecretAppManager.getSecretsFromVault()
+                if (secretsFromVault != null) {
+                    keyValueStorage.syncSecretsFromVault(secretsFromVault)
+                    println("✅${LogTags.SECRETS_VM}: Secrets synced successfully")
+                } else {
+                    println("❌${LogTags.SECRETS_VM}: Failed to get secrets from vault")
+                }
+            } catch (e: Exception) {
+                println("❌${LogTags.SECRETS_VM}: Error loading secrets from vault: ${e.message}")
+            }
+        }
     }
 
     // TODO: For the future
