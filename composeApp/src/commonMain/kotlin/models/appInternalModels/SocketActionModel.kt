@@ -5,5 +5,6 @@ enum class SocketActionModel {
     JOIN_REQUEST_ACCEPTED,
     JOIN_REQUEST_DECLINED,
     JOIN_REQUEST_PENDING,
+    UPDATE_SECRETS,
     NONE,
 }

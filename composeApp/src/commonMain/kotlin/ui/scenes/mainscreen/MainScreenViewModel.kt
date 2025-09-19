@@ -54,7 +54,7 @@ class MainScreenViewModel(
         
         viewModelScope.launch {
 
-            socketHandler.actionType.collect { actionType ->
+            socketHandler.socketActionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
                     println("✅${LogTags.MAIN_VM}: New state for Join request has been gotten")
 

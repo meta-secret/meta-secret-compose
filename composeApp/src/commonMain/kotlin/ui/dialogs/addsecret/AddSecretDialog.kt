@@ -1,10 +1,16 @@
 package ui.dialogs.addsecret
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,21 +18,39 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import kotlin.math.max
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addSecret
 import kotlinproject.composeapp.generated.resources.close
@@ -45,14 +69,37 @@ import ui.ClassicButton
 fun AddSecret(
     screenMetricsProvider: ScreenMetricsProviderInterface,
     dialogVisibility: (Boolean) -> Unit,
+    onResult: ((Boolean) -> Unit)? = null,
 ) {
-    var textName by remember { mutableStateOf("") }
-    var textSecret by remember { mutableStateOf("") }
-
-    val density = LocalDensity.current
-    val imeHeight = WindowInsets.ime.getBottom(density)
+    var secretId by remember { mutableStateOf("") }
+    var secret by remember { mutableStateOf("") }
 
     val viewModel: AddSecretViewModel = koinViewModel()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val addState by viewModel.state.collectAsState()
+
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+
+    LaunchedEffect(visible) {
+        if (!visible) {
+            kotlinx.coroutines.delay(250)
+            dialogVisibility(false)
+        }
+    }
+
+    LaunchedEffect(addState) {
+        when (addState) {
+            AddSecretState.ADDED_SUCCESSFULLY -> {
+                visible = false
+                onResult?.invoke(true)
+            }
+            AddSecretState.ADDING_FAILURE, null -> {
+                onResult?.invoke(false)
+            }
+            else -> {}
+        }
+    }
 
     Dialog(
         onDismissRequest = {},
@@ -61,66 +108,157 @@ fun AddSecret(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable { dialogVisibility(false) }
-                .background(AppColors.Black30)
-                .padding(bottom = with(density) { imeHeight.toDp() }),
+                .clickable { visible = false }
+                .background(AppColors.Black30),
             contentAlignment = Alignment.BottomCenter
         ) {
-            Box(
-                modifier = Modifier
-                    .heightIn(
-                        min = (screenMetricsProvider.heightFactor() * 294).dp,
-                        max = (screenMetricsProvider.heightFactor() * 494).dp
-                    )
-                    .fillMaxWidth()
-                    .background(AppColors.PopUp, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 16.dp)
-                    .clickable(onClick = {}, enabled = false),
+            AnimatedVisibility(
+                visible = visible,
+                enter = slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(durationMillis = 350)
+                ),
+                exit = slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(durationMillis = 250)
+                )
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                ) {
-                    Image(
-                        painter = painterResource(Res.drawable.close),
-                        contentDescription = null,
+                BoxWithConstraints {
+                    val density = LocalDensity.current
+                    val imeBottomPx = WindowInsets.ime.getBottom(density)
+                    val imeBottom = with(density) { imeBottomPx.toDp() }
+                    val minHeight = (screenMetricsProvider.heightFactor() * 294).dp
+                    val maxCandidate = maxHeight - imeBottom - 16.dp
+                    val maxHeightForDialog = max(minHeight, maxCandidate)
+
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .clickable { dialogVisibility(false) }
-                    )
-                }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    modifier = Modifier
-                        .padding(vertical = 30.dp)
-                ) {
-                    Text(
-                        text = stringResource(Res.string.addSecret),
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
-                        color = AppColors.White,
-                        modifier = Modifier
-                            .align(Alignment.Start)
-                    )
-                    Column {
-                        viewModel.textInput(stringResource(Res.string.secretName)) { newValue ->
-                            textName = newValue
-                        }
-                        viewModel.textInput(stringResource(Res.string.secretCapital)) { newValue ->
-                            textSecret = newValue
+                            .heightIn(
+                                min = minHeight,
+                                max = maxHeightForDialog
+                            )
+                            .fillMaxWidth()
+                            .background(AppColors.PopUp, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 16.dp)
+                            .clickable(onClick = {}, enabled = false),
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(20.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(vertical = 30.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                            ) {
+                                Image(
+                                    painter = painterResource(Res.drawable.close),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .align(Alignment.CenterEnd)
+                                        .clickable { visible = false }
+                                )
+                            }
+
+                            Text(
+                                text = stringResource(Res.string.addSecret),
+                                fontSize = 24.sp,
+                                fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                                color = AppColors.White,
+                                modifier = Modifier.align(Alignment.Start)
+                            )
+
+                            Column {
+                                TextInput(stringResource(Res.string.secretName)) { newValue ->
+                                    secretId = newValue
+                                }
+                                TextInput(stringResource(Res.string.secretCapital)) { newValue ->
+                                    secret = newValue
+                                }
+                            }
+
+                            ClassicButton(
+                                action = {
+                                    viewModel.handle(AddSecretEvents.AddSecret(secretId, secret))
+                                    dialogVisibility(false)
+                                },
+                                text = stringResource(Res.string.addSecret),
+                                isEnabled = (secretId.isNotEmpty() && secret.isNotEmpty())
+                            )
                         }
                     }
-                    ClassicButton({
-                            viewModel.addSecret(textName, textSecret)
-                            dialogVisibility(false)
-                        },
-                        stringResource(Res.string.addSecret),
-                        (textName.isNotEmpty() && textSecret.isNotEmpty())
-                    )
+                }
+            }
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(AppColors.Black30)
+                        .zIndex(10f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = AppColors.White)
                 }
             }
         }
     }
+}
+
+@Composable
+fun TextInput(
+    placeholderText: String,
+    onTextChange: (String) -> Unit
+) {
+    var text by remember { mutableStateOf("") }
+    val isError by remember { mutableStateOf(false) }
+    var isFocused by remember { mutableStateOf(false) }
+    val focusRequester = FocusRequester()
+
+    TextField(
+        value = text,
+        onValueChange = { newText ->
+            text = newText
+            onTextChange(newText)
+        },
+        shape = RoundedCornerShape(8.dp),
+        placeholder = {
+            Text(
+                fontSize = 16.sp,
+                color = Color.White.copy(alpha = 0.5f),
+                text = placeholderText
+            )
+        },
+        modifier = Modifier
+            .padding(top = 20.dp)
+            .fillMaxWidth()
+            .heightIn(min = 52.dp, max = 200.dp)
+            .border(
+                width = 2.dp,
+                color = if (isError) {
+                    AppColors.RedError
+                } else {
+                    if (isFocused) AppColors.ActionPremium else Color.Transparent
+                },
+                shape = RoundedCornerShape(8.dp)
+            )
+            .focusRequester(focusRequester)
+            .onFocusChanged { focusState -> isFocused = focusState.isFocused },
+        maxLines = Int.MAX_VALUE,
+        singleLine = false,
+        keyboardOptions = KeyboardOptions.Default.copy(
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Done
+        ),
+        textStyle = TextStyle(fontSize = 16.sp, color = Color.White),
+        colors = TextFieldDefaults.textFieldColors(
+            backgroundColor = AppColors.White5,
+            cursorColor = AppColors.White,
+            unfocusedIndicatorColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent
+        )
+    )
 }

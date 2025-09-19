@@ -52,7 +52,9 @@
     <string name = "hide">Hide</string>
     <string name = "secretAdded">A secret successfully added</string>
     <string name = "secretRemoved">A secret successfully removed</string>
-    <string name = "secretNotAdded">We were unable to add secret due to reasons</string>
+    <string name = "secretNotAdded">We were unable to add the secret</string>
+    <string name = "secretAddSuccess">Secret added successfully</string>
+    <string name = "secretAddFailed">Failed to add secret</string>
     <string name = "lackOfDevices">Not having enough devices?</string>
     <string name = "useMetaSecret">MetaSecret Cloud Device - you can use our cloud as a device</string>
     <string name = "lackOfDevices_start">You need to add </string>

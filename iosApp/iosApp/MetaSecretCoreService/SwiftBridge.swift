@@ -37,6 +37,21 @@ import ObjectiveC
     @_silgen_name("clean_up_database")
     private func c_clean_up_database() -> UnsafeMutablePointer<CChar>?
     
+    @_silgen_name("split_secret")
+    private func c_split_secret(_ secret_id_ptr: UnsafePointer<CChar>?, _ secret_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
+    
+    @_silgen_name("find_claim_by")
+    private func c_find_claim_by(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
+    
+    @_silgen_name("recover")
+    private func c_recover(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
+    
+    @_silgen_name("accept_recover")
+    private func c_accept_recover(_ claim_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
+    
+    @_silgen_name("show_recovered")
+    private func c_show_recovered(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
+    
     // MARK: - MetaSecretCoreBridge
     @objc public func generateMasterKey() -> String {
         guard let cString = c_generate_master_key() else {
@@ -110,6 +125,62 @@ import ObjectiveC
         guard let resultPtr = c_update_memberships(candidateString, actionUpdateString) else {
             return ""
         }
+
+        let resultString = String(cString: resultPtr)
+        c_free_string(resultPtr)
+        return resultString
+    }
+    
+    @objc public func splitSecret(_ secretId: String, _ secret: String) -> String {
+        guard let secretIdString = secretId.cString(using: .utf8),
+              let secretString = secret.cString(using: .utf8)
+         else {
+            return ""
+        }
+
+        guard let resultPtr = c_split_secret(secretIdString, secretString) else {
+            return ""
+        }
+
+        let resultString = String(cString: resultPtr)
+        c_free_string(resultPtr)
+        return resultString
+    }
+    
+    @objc public func findClaim(_ secretId: String) -> String {
+        guard let secretIdString = secretId.cString(using: .utf8) else { return ""}
+
+        guard let resultPtr = c_find_claim_by(secretIdString) else { return "" }
+
+        let resultString = String(cString: resultPtr)
+        c_free_string(resultPtr)
+        return resultString
+    }
+    
+    @objc public func recover(_ secretId: String) -> String {
+        guard let secretIdString = secretId.cString(using: .utf8) else { return "" }
+
+        guard let resultPtr = c_recover(secretIdString) else { return "" }
+
+        let resultString = String(cString: resultPtr)
+        c_free_string(resultPtr)
+        return resultString
+    }
+    
+    @objc public func acceptRecover(_ claimId: String) -> String {
+        guard let claimIdString = claimId.cString(using: .utf8) else { return "" }
+
+        guard let resultPtr = c_accept_recover(claimId) else { return "" }
+
+        let resultString = String(cString: resultPtr)
+        c_free_string(resultPtr)
+        return resultString
+    }
+    
+    @objc public func showRecovered(_ secretId: String) -> String {
+        guard let secretIdString = secretId.cString(using: .utf8) else { return "" }
+
+        guard let resultPtr = c_show_recovered(secretIdString) else { return "" }
 
         let resultString = String(cString: resultPtr)
         c_free_string(resultPtr)

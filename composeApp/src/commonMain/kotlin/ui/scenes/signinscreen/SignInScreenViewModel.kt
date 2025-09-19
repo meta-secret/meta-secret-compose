@@ -202,7 +202,7 @@ class SignInScreenViewModel(
     // Socket routine
     private fun socketSubscribe() {
         viewModelScope.launch {
-            socketHandler.actionType.collect { actionType ->
+            socketHandler.socketActionType.collect { actionType ->
                 println("✅" + LogTags.SIGNIN_VM + ": Subscribe SignIn screen for Join Response Signal")
                 when (actionType) {
                     SocketActionModel.JOIN_REQUEST_ACCEPTED -> {
