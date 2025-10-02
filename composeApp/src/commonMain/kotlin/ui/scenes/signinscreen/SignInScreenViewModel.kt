@@ -133,7 +133,7 @@ class SignInScreenViewModel(
         _isLoading.value = true
         println("✅" + LogTags.SIGNIN_VM + ": Start listening for Join accept signal")
         socketHandler.actionsToFollow(
-            add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE),
+            add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE, SocketRequestModel.WAIT_FOR_RECOVER_REQUEST),
             exclude = null
         )
         showErrorSnackBar(SignInSnackMessages.WAIT_JOIN, true, null)

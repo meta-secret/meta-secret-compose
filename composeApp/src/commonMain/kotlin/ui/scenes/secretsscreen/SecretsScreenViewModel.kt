@@ -61,7 +61,7 @@ class SecretsScreenViewModel(
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
-            println("✅${LogTags.SECRETS_VM}: Start to follow UPDATE_SECRETS")
+            println("✅${LogTags.SECRETS_VM}: Start to follow UPDATE_STATE")
             socketHandler.actionsToFollow(
                 add = listOf(SocketRequestModel.GET_STATE),
                 exclude = null
@@ -71,7 +71,7 @@ class SecretsScreenViewModel(
         viewModelScope.launch {
             socketHandler.socketActions.collect { actionType ->
                 println("✅${LogTags.SECRETS_VM}: Socket action type is $actionType")
-                if (actionType == SocketActionModel.UPDATE_SECRETS) {
+                if (actionType == SocketActionModel.UPDATE_STATE) {
                     println("✅${LogTags.SECRETS_VM}: New state for secrets been gotten")
                     loadSecretsFromVault()
                 }

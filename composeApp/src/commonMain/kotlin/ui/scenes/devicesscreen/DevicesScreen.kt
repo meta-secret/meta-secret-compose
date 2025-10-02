@@ -62,6 +62,7 @@ class DevicesScreen : Screen {
                         DeviceContent(
                             viewModel.screenMetricsProvider,
                             device,
+                            viewModel.currentDeviceId,
                             onClick = {
                                 if (device.status != DeviceStatus.Member) {
                                     viewModel.handle(DeviceViewEvents.SelectDevice(device.id))

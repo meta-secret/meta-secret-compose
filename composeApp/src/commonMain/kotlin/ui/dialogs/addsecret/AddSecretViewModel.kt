@@ -64,7 +64,7 @@ class AddSecretViewModel(
         }
     }
 
-    private suspend fun addSecretStateResolver() {
+    private fun addSecretStateResolver() {
         when (currentState) {
             AddSecretState.IDLE -> println("✅" + LogTags.ADD_SECRET_VM + ": Waiting for AddSecret")
             AddSecretState.IN_PROGRESS -> println("✅" + LogTags.ADD_SECRET_VM + ": In progress")

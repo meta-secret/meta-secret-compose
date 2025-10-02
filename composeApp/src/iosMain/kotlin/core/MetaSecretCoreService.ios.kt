@@ -119,10 +119,10 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
         }
     }
 
-    override fun splitSecret(secretId: String, secret: String): String {
+    override fun splitSecret(secretName: String, secret: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling splitSecret with: $secretId")
-            val result = swiftBridge.splitSecret(secretId, secret)
+            println("\uF8FF ✅ iOS: Calling splitSecret with: $secretName")
+            val result = swiftBridge.splitSecret(secretName, secret)
             println("\uF8FF ✅ iOS: AppManager: splitSecret result $result")
             return result
         } catch (e: Exception) {

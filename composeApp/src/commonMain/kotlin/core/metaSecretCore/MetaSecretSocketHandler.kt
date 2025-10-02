@@ -111,7 +111,11 @@ class MetaSecretSocketHandler(
 
             if (actionsToFollow.contains(SocketRequestModel.GET_STATE)) {
                 println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for state response")
-                _socketActions.tryEmit(SocketActionModel.UPDATE_SECRETS)
+                _socketActions.tryEmit(SocketActionModel.UPDATE_STATE)
+            }
+
+            if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST)) {
+                println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for recover request")
             }
 
             isLocked = false

@@ -238,7 +238,17 @@ data class AppStateModel(
 
     fun getCurrentDeviceId(): String? {
         return when (val vaultInfo = getVaultFullInfo()) {
+            is VaultFullInfo.Member -> vaultInfo.member.member.member.userData.device.deviceId
             is VaultFullInfo.Outsider -> vaultInfo.outsider.userData.device.deviceId
+            else -> null
+        }
+    }
+    
+    fun getCurrentVaultName(): String? {
+        return when (val vaultInfo = getVaultFullInfo()) {
+            is VaultFullInfo.Member -> vaultInfo.member.member.member.userData.vaultName
+            is VaultFullInfo.Outsider -> vaultInfo.outsider.userData.vaultName
+            is VaultFullInfo.NotExists -> vaultInfo.notExists.vaultName
             else -> null
         }
     }

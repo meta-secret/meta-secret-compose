@@ -12,6 +12,7 @@ import models.apiModels.VaultEvents
 import models.apiModels.VaultFullInfo
 import models.apiModels.VaultSummary
 import core.KeyChainInterface
+import core.KeyValueStorageInterface
 import core.LogTags
 import models.appInternalModels.ClaimModel
 import models.appInternalModels.SecretModel
@@ -24,6 +25,7 @@ sealed class InitResult {
 class MetaSecretAppManager(
     private val metaSecretCore: MetaSecretCoreInterface,
     private val keyChainInterface: KeyChainInterface,
+    private val keyValueStorage: KeyValueStorageInterface,
 ): MetaSecretAppManagerInterface {
 
     override suspend fun initWithSavedKey(): InitResult {
@@ -52,6 +54,9 @@ class MetaSecretAppManager(
         return try {
             val currentState = AppStateModel.fromJson(stateJson)
             println("✅" + LogTags.APP_MANAGER + ": currentState is $currentState")
+            
+            cacheDeviceAndVaultInfoIfNeeded(currentState)
+            
             currentState
         } catch (e: Exception) {
             println("❌" + LogTags.APP_MANAGER + ": Failed to parse state JSON: ${e.message}")
@@ -59,6 +64,28 @@ class MetaSecretAppManager(
                 null,
                 false
             )
+        }
+    }
+    
+    private fun cacheDeviceAndVaultInfoIfNeeded(appState: AppStateModel) {
+        if (keyValueStorage.cachedDeviceId != null && keyValueStorage.cachedVaultName != null) {
+            return
+        }
+        
+        val vaultInfo = appState.getVaultFullInfo()
+        if (vaultInfo is VaultFullInfo.Member) {
+            val deviceId = vaultInfo.member.member.member.userData.device.deviceId
+            val vaultName = vaultInfo.member.member.member.userData.vaultName
+            
+            if (keyValueStorage.cachedDeviceId == null) {
+                keyValueStorage.cachedDeviceId = deviceId
+                println("✅" + LogTags.APP_MANAGER + ": Cached deviceId: $deviceId")
+            }
+            
+            if (keyValueStorage.cachedVaultName == null) {
+                keyValueStorage.cachedVaultName = vaultName
+                println("✅" + LogTags.APP_MANAGER + ": Cached vaultName: $vaultName")
+            }
         }
     }
 
@@ -191,19 +218,31 @@ class MetaSecretAppManager(
     }
 
     override fun findClaim(secretModel: SecretModel): ClaimModel? {
-        TODO("Not yet implemented")
+        TODO("findClaim Not yet implemented")
     }
 
     override fun recover(secretModel: SecretModel): CommonResponseModel? {
-        TODO("Not yet implemented")
+        if (secretModel.secretName == null) {
+            println("✅" + LogTags.APP_MANAGER + ": recover secret Id is Null")
+            return null
+        }
+        val recoverRequestResult = metaSecretCore.recover(secretModel.secretName)
+        return try {
+            val result = CommonResponseModel.fromJson(recoverRequestResult)
+            println("✅" + LogTags.APP_MANAGER + ": recover request result is $result")
+            result
+        } catch (e: Exception) {
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse recover request JSON: ${e.message}")
+            null
+        }
     }
 
     override fun acceptRecover(claim: ClaimModel): CommonResponseModel? {
-        TODO("Not yet implemented")
+        TODO("acceptRecover Not yet implemented")
     }
 
     override fun showRecovered(secretModel: SecretModel): String? {
-        TODO("Not yet implemented")
+        TODO("showRecovered Not yet implemented")
     }
 
     override fun getSecretsFromVault(): List<models.apiModels.SecretApiModel>? {

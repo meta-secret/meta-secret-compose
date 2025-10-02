@@ -3,28 +3,85 @@ package ui.scenes.profilescreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import core.DeviceInfoProviderInterface
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import core.KeyValueStorageInterface
+import core.LogTags
+import kotlinx.coroutines.flow.MutableStateFlow
+import ui.scenes.common.CommonViewModel
+import ui.scenes.common.CommonViewModelEventsInterface
+import core.metaSecretCore.MetaSecretAppManagerInterface
+import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import models.appInternalModels.SocketActionModel
+import models.appInternalModels.SocketRequestModel
 
 class ProfileScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
-    val deviceInfoProvider: DeviceInfoProviderInterface
-) : ViewModel() {
+    val deviceInfoProvider: DeviceInfoProviderInterface,
+    private val appManager: MetaSecretAppManagerInterface,
+    private val socketHandler: MetaSecretSocketHandlerInterface
+) : ViewModel(), CommonViewModel {
 
-    val devicesCount: StateFlow<Int> = keyValueStorage.deviceData.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+    private val _vaultName = MutableStateFlow<String?>(null)
+    val vaultName: StateFlow<String?> = _vaultName
 
-    val secretsCount: StateFlow<Int> = keyValueStorage.secretData.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+    private val _devicesCount = MutableStateFlow(0)
+    val devicesCount: StateFlow<Int> = _devicesCount
 
-    fun completeSignIn(state: Boolean) {
-//        keyValueStorage.isSignInCompleted = state
+    private val _secretsCount = MutableStateFlow(0)
+    val secretsCount: StateFlow<Int> = _secretsCount
+
+    init {
+        println("✅${LogTags.PROFILE_VM}: Start to follow GET_STATE for profile updates")
+        socketHandler.actionsToFollow(
+            add = listOf(SocketRequestModel.GET_STATE),
+            exclude = null
+        )
+
+        viewModelScope.launch {
+            socketHandler.socketActions.collect { actionType ->
+                println("✅${LogTags.PROFILE_VM}: Socket action type is $actionType")
+                if (actionType == SocketActionModel.UPDATE_STATE) {
+                    println("✅${LogTags.PROFILE_VM}: New state received, refreshing profile data")
+                    loadProfileData()
+                }
+            }
+        }
     }
 
-    fun getNickName(): String? {
-        return keyValueStorage.signInInfo?.username
+    override fun handle(event: CommonViewModelEventsInterface) {
+        if (event is ProfileEvents) {
+            when (event) {
+                ProfileEvents.LoadProfileData -> {
+                    loadProfileData()
+                }
+            }
+        }
     }
+
+    private fun loadProfileData() {
+        println("✅${LogTags.PROFILE_VM}: loadProfileData")
+        viewModelScope.launch {
+            _vaultName.value = keyValueStorage.cachedVaultName
+            println("✅${LogTags.PROFILE_VM}: vaultName = ${_vaultName.value}")
+            
+            val vaultSummary = withContext(Dispatchers.Default) {
+                appManager.getVaultSummary()
+            }
+            
+            if (vaultSummary != null) {
+                _secretsCount.value = vaultSummary.secretsCount
+                _devicesCount.value = vaultSummary.users.size
+                println("✅${LogTags.PROFILE_VM}: secretsCount = ${_secretsCount.value}, devicesCount = ${_devicesCount.value}")
+            } else {
+                println("❌${LogTags.PROFILE_VM}: vaultSummary is null")
+            }
+        }
+    }
+}
+
+sealed class ProfileEvents : CommonViewModelEventsInterface {
+    data object LoadProfileData : ProfileEvents()
 }

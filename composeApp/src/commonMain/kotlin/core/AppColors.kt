@@ -11,9 +11,10 @@ object LogTags {
     const val APP_MANAGER = "🛠️MetaSecretAppManager"
     const val SOCKET_HANDLER = "🔌MetaSecretSocketHandler"
     const val STATE_RESOLVER = "🧩MetaSecretStateResolver"
-
     const val ADD_SECRET_VM = "➕AddSecretViewModel"
     const val SECRETS_VM = "🔐SecretsScreenViewModel"
+    const val SHOW_SECRET_VM = "👀ShowSecretViewModel"
+    const val PROFILE_VM = "\uD83D\uDC64 ProfileScreenViewModel"
 }
 
 object AppColors {

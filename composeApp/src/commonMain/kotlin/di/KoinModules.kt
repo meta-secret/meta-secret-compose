@@ -23,7 +23,7 @@ import ui.scenes.splashscreen.SplashScreenViewModel
 
 val appModule = module {
     single<KeyValueStorageInterface> { KeyValueStorageImpl(get()) }
-    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get()) }
+    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get()) }
     single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get()) }
     single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get()) }
 
@@ -31,11 +31,11 @@ val appModule = module {
     factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
-    factory { ProfileScreenViewModel(get(), get()) }
-    factory { DevicesScreenViewModel(get(), get(), get()) }
+    factory { ProfileScreenViewModel(get(), get(), get(), get()) }
+    factory { DevicesScreenViewModel(get(), get(), get(), get()) }
     factory { SecretsScreenViewModel(get(), get(), get(), get()) }
     factory { AddSecretViewModel(get(), get()) }
     factory { RemoveSecretViewModel(get()) }
     factory { AddDeviceViewModel(get()) }
-    factory { ShowSecretViewModel(get()) }
+    factory { ShowSecretViewModel(get(), get(), get()) }
 }

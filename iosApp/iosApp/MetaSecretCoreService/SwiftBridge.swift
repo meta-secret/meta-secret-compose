@@ -131,14 +131,14 @@ import ObjectiveC
         return resultString
     }
     
-    @objc public func splitSecret(_ secretId: String, _ secret: String) -> String {
-        guard let secretIdString = secretId.cString(using: .utf8),
+    @objc public func splitSecret(_ secretName: String, _ secret: String) -> String {
+        guard let secretNameString = secretName.cString(using: .utf8),
               let secretString = secret.cString(using: .utf8)
          else {
             return ""
         }
 
-        guard let resultPtr = c_split_secret(secretIdString, secretString) else {
+        guard let resultPtr = c_split_secret(secretNameString, secretString) else {
             return ""
         }
 
@@ -158,6 +158,7 @@ import ObjectiveC
     }
     
     @objc public func recover(_ secretId: String) -> String {
+        print("🦅 Swift: recover secret ID \(secretId)")
         guard let secretIdString = secretId.cString(using: .utf8) else { return "" }
 
         guard let resultPtr = c_recover(secretIdString) else { return "" }
@@ -170,7 +171,7 @@ import ObjectiveC
     @objc public func acceptRecover(_ claimId: String) -> String {
         guard let claimIdString = claimId.cString(using: .utf8) else { return "" }
 
-        guard let resultPtr = c_accept_recover(claimId) else { return "" }
+        guard let resultPtr = c_accept_recover(claimIdString) else { return "" }
 
         let resultString = String(cString: resultPtr)
         c_free_string(resultPtr)
