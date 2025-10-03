@@ -149,8 +149,36 @@ data class VaultEvents(
 }
 
 @Serializable
+data class PassId(
+    val id: String,
+    val name: String
+)
+
+@Serializable
+data class DistClaimId(
+    val id: String,
+    val passId: PassId
+)
+
+@Serializable
+data class ClaimStatusInfo(
+    val statuses: Map<String, String> = emptyMap()
+)
+
+@Serializable
+data class ClaimObject(
+    val distClaimId: DistClaimId,
+    val distributionType: String,
+    val id: String,
+    val receivers: List<String> = emptyList(),
+    val sender: String,
+    val status: ClaimStatusInfo,
+    val vaultName: String
+)
+
+@Serializable
 data class SsClaims(
-    val claims: Map<String, String> = emptyMap()
+    val claims: Map<String, ClaimObject> = emptyMap()
 )
 
 @Serializable

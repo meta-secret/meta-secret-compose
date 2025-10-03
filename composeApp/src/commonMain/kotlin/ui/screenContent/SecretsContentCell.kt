@@ -1,9 +1,5 @@
 package ui.screenContent
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,11 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -40,43 +31,31 @@ import kotlinproject.composeapp.generated.resources.level_2
 import kotlinproject.composeapp.generated.resources.level_3
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
-import kotlinproject.composeapp.generated.resources.removeSecret
 import kotlinproject.composeapp.generated.resources.shield_l1
 import kotlinproject.composeapp.generated.resources.shield_l2
 import kotlinproject.composeapp.generated.resources.shield_l3
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-import ui.scenes.secretsscreen.SecretsScreenViewModel
 import core.AppColors
 import core.ScreenMetricsProviderInterface
 import models.appInternalModels.DevicesQuantity
 import core.Secret
-import ui.SwipeableItem
-import ui.dialogs.removesecret.RemoveSecret
-import ui.dialogs.showsecret.ShowSecret
 
 @Composable
 fun SecretsContent(
-    index: Int,
     secret: Secret,
-    screenMetricsProvider: ScreenMetricsProviderInterface,
+    devicesCount: Int,
+    onClick: () -> Unit
 ) {
-    val viewModel: SecretsScreenViewModel = koinViewModel()
-    val devicesCount by viewModel.devicesCount.collectAsState()
-//    var isRemoveDialogVisible by remember { mutableStateOf(false) }
-    var isShowDialogVisible by remember { mutableStateOf(false) }
-    var isSwiped by remember { mutableStateOf(false) }
-
     val deviceText = when {
         devicesCount == 0 || devicesCount > 4 -> stringResource(Res.string.devices_5)
         devicesCount in 2..4 -> stringResource(Res.string.devices_4)
         else -> stringResource(Res.string.device)
     }
 
-    var protectionLevelShield = painterResource(Res.drawable.shield_l3)
-    var protectionLevelText = stringResource(Res.string.level_3)
+    var protectionLevelShield = painterResource(Res.drawable.shield_l1)
+    var protectionLevelText = stringResource(Res.string.level_1)
 
     when (devicesCount) {
         DevicesQuantity.OneDevice.amount -> {
@@ -88,25 +67,27 @@ fun SecretsContent(
             protectionLevelShield = painterResource(Res.drawable.shield_l2)
             protectionLevelText = stringResource(Res.string.level_2)
         }
+
+        DevicesQuantity.ThreeDevices.amount -> {
+            protectionLevelShield = painterResource(Res.drawable.shield_l3)
+            protectionLevelText = stringResource(Res.string.level_3)
+        }
     }
-    SwipeableItem(
-        itemsCount = -1,
-        buttonText = stringResource(Res.string.removeSecret),
-        isRevealed = isSwiped,
-        screenMetricsProvider,
-        action = { /*isRemoveDialogVisible = it*/ },
-        onExpanded = { isSwiped = true },
-        onCollapsed = { isSwiped = false },
-        content = {
+    // TODO: We don't have secret deletion functionality. I'm gonna uncomment it later.
+//    SwipeableItem(
+//        itemsCount = -1,
+//        buttonText = stringResource(Res.string.removeSecret),
+//        isRevealed = false,
+//        screenMetricsProvider,
+//        action = {},
+//        onExpanded = {},
+//        onCollapsed = {},
+//        content = {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     .background(AppColors.White5, RoundedCornerShape(12.dp)).height(96.dp)
                     .clickable {
-                        if (!isSwiped) {
-                            isShowDialogVisible = true
-                        } else {
-                            isSwiped = false
-                        }
+                        onClick()
                     }
             ) {
                 Row(
@@ -119,7 +100,7 @@ fun SecretsContent(
                     ) {
                         Text(
                             modifier = Modifier.height(22.dp),
-                            text = viewModel.getSecret(index).secretName,
+                            text = secret.secretName,
                             style = TextStyle(
                                 fontSize = 18.sp,
                                 fontFamily = FontFamily(Font(Res.font.manrope_bold)),
@@ -165,41 +146,6 @@ fun SecretsContent(
                     }
                 }
             }
-        }
-    )
-//    if (isRemoveDialogVisible) {
-//        dialogAnimation({
-//            RemoveSecret(
-//                viewModel.screenMetricsProvider,
-//                viewModel.deleteSecretText(secret.secretName),
-//                secret,
-//                buttonVisibility = { isSwiped = it },
-//                dialogVisibility = { isRemoveDialogVisible = it })
-//        })
-//    }
-    if (isShowDialogVisible) {
-        DialogAnimation({
-            ShowSecret(
-                viewModel.screenMetricsProvider,
-                secret,
-                dialogVisibility = { isShowDialogVisible = it })
-        })
-    }
-}
-
-@Composable
-fun DialogAnimation(action: @Composable () -> Unit) {
-    AnimatedVisibility(
-        visible = true,
-        enter = slideInVertically(
-            initialOffsetY = { it },
-            animationSpec = tween(durationMillis = 1500)
-        ),
-        exit = slideOutVertically(
-            targetOffsetY = { it },
-            animationSpec = tween(durationMillis = 1000)
-        )
-    ) {
-        action()
-    }
+//        }
+//    )
 }

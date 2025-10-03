@@ -60,7 +60,10 @@ class SecretsScreen : Screen {
         val secretsCount by viewModel.secretsCount.collectAsState()
         var previousCount by remember { mutableStateOf(secretsCount) }
         val secretsList by viewModel.secrets.collectAsState()
-        var isDialogVisible by remember { mutableStateOf(false) }
+        val devicesCount by viewModel.devicesCount.collectAsState()
+        var isAddSecretDialogVisible by remember { mutableStateOf(false) }
+        var isShowSecretDialogVisible by remember { mutableStateOf(false) }
+        var selectedSecret: core.Secret? by remember { mutableStateOf(null) }
         val isRedirected by remember { mutableStateOf(false) }
         var snackMessage: String? by remember { mutableStateOf(null) }
         var isSnackSuccess by remember { mutableStateOf(true) }
@@ -86,15 +89,22 @@ class SecretsScreen : Screen {
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 itemsIndexed(secretsList.sortedBy { it.secretName }) { index, secret ->
-                    SecretsContent(index, secret, viewModel.screenMetricsProvider)
+                    SecretsContent(
+                        secret = secret,
+                        devicesCount = devicesCount,
+                        onClick = {
+                            selectedSecret = secret
+                            isShowSecretDialogVisible = true
+                        }
+                    )
                 }
             }
         }
 
-        AddButton { isDialogVisible = it }
+        AddButton { isAddSecretDialogVisible = it }
 
         AnimatedVisibility(
-            visible = isDialogVisible,
+            visible = isAddSecretDialogVisible,
             enter = slideInVertically(
                 initialOffsetY = { it },
                 animationSpec = tween(durationMillis = 350)
@@ -106,7 +116,7 @@ class SecretsScreen : Screen {
         ) {
             AddSecret(
                 viewModel.screenMetricsProvider,
-                dialogVisibility = { isDialogVisible = it },
+                dialogVisibility = { isAddSecretDialogVisible = it },
                 onResult = { isSuccess ->
                     isSnackSuccess = isSuccess
                     snackMessage = if (isSuccess) {
@@ -116,6 +126,26 @@ class SecretsScreen : Screen {
                     }
                 }
             )
+        }
+
+        if (isShowSecretDialogVisible && selectedSecret != null) {
+            AnimatedVisibility(
+                visible = true,
+                enter = slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(durationMillis = 1500)
+                ),
+                exit = slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(durationMillis = 1000)
+                )
+            ) {
+                ui.dialogs.showsecret.ShowSecret(
+                    viewModel.screenMetricsProvider,
+                    selectedSecret!!,
+                    dialogVisibility = { isShowSecretDialogVisible = it }
+                )
+            }
         }
 
         if (previousCount != secretsCount) {

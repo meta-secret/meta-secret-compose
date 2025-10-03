@@ -37,13 +37,14 @@ class AddSecretViewModel(
         if (event is AddSecretEvents) {
             when (event) {
                 is AddSecretEvents.AddSecret -> {
-                    addSecret(secretName = event.secretId, secret = event.secret)
+                    addSecret(secretName = event.secretName, secret = event.secret)
                 }
             }
         }
     }
 
     private fun addSecret(secretName: String, secret: String) {
+        println("✅" + LogTags.ADD_SECRET_VM + ": Starting add secret")
         viewModelScope.launch {
             _isLoading.value = true
             currentState = AddSecretState.IN_PROGRESS
@@ -76,7 +77,7 @@ class AddSecretViewModel(
 }
 
 sealed class AddSecretEvents : CommonViewModelEventsInterface {
-    data class AddSecret(val secretId: String, val secret: String) : AddSecretEvents()
+    data class AddSecret(val secretName: String, val secret: String) : AddSecretEvents()
 }
 
 enum class AddSecretState {

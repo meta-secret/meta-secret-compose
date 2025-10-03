@@ -203,6 +203,7 @@ class MetaSecretAppManager(
     }
 
     override fun splitSecret(secretModel: SecretModel): CommonResponseModel? {
+        println("✅" + LogTags.APP_MANAGER + ": split Secret started")
         if (secretModel.secretName == null || secretModel.secret == null) {
             return null
         }

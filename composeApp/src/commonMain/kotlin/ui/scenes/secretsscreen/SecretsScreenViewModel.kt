@@ -10,11 +10,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import core.Device
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.Secret
@@ -50,13 +51,10 @@ class SecretsScreenViewModel(
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val secrets: StateFlow<List<Secret>> = secretsList
 
-    private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    private val _devicesCount = MutableStateFlow(0)
+    val devicesCount: StateFlow<Int> = _devicesCount.asStateFlow()
 
     val secretsCount: StateFlow<Int> = secretsList.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
-
-    val devicesCount: StateFlow<Int> = devicesList.map { it.size }
         .stateIn(viewModelScope, SharingStarted.Lazily, 0)
 
     init {
@@ -77,6 +75,8 @@ class SecretsScreenViewModel(
                 }
             }
         }
+        
+        loadSecretsFromVault()
     }
 
     override fun handle(event: CommonViewModelEventsInterface) {
@@ -111,6 +111,17 @@ class SecretsScreenViewModel(
                     println("✅${LogTags.SECRETS_VM}: Secrets synced successfully")
                 } else {
                     println("❌${LogTags.SECRETS_VM}: Failed to get secrets from vault")
+                }
+                
+                val vaultSummary = withContext(Dispatchers.Default) {
+                    metaSecretAppManager.getVaultSummary()
+                }
+                
+                if (vaultSummary != null) {
+                    _devicesCount.value = vaultSummary.users.size
+                    println("✅${LogTags.SECRETS_VM}: Devices count updated to ${_devicesCount.value}")
+                } else {
+                    println("❌${LogTags.SECRETS_VM}: VaultSummary is null")
                 }
             } catch (e: Exception) {
                 println("❌${LogTags.SECRETS_VM}: Error loading secrets from vault: ${e.message}")
