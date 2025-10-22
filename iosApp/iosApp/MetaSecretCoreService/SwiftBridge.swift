@@ -271,9 +271,13 @@ import ObjectiveC
     }
     
     @objc public func clearAll() -> Bool {
-        print("🦅 Swift: clearAll keys")
-        cleanDB()
+        print("🦅 Swift: clearAll keys - Starting cleanup process")
+        
         let _ = c_clean_up_database()
+        
+        cleanDB()
+        
+        removeBackup()
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -281,10 +285,30 @@ import ObjectiveC
         ]
         
         let status = SecItemDelete(query as CFDictionary)
-        return status == errSecSuccess || status == errSecItemNotFound
+        let keychainCleared = status == errSecSuccess || status == errSecItemNotFound
+        
+        print("🦅 Swift: Step 5 - Verifying cleanup")
+        let verificationResult = verifyCleanup()
+        
+        if verificationResult.allCleared {
+            print("🦅 Swift: ✅ clearAll completed successfully - All data cleared")
+        } else {
+            print("🦅 Swift: ⚠️ clearAll completed with warnings - Some data may remain")
+            if !verificationResult.keychainCleared {
+                print("🦅 Swift: ⚠️ KeyChain items may still exist")
+            }
+            if !verificationResult.dbCleared {
+                print("🦅 Swift: ⚠️ Local DB file may still exist")
+            }
+            if !verificationResult.backupCleared {
+                print("🦅 Swift: ⚠️ Backup files may still exist")
+            }
+        }
+        
+        return keychainCleared
     }
 
-    // Mark: - Backuping
+    // MARK: - Backuping
     @MainActor
     @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:backupKey:)
     public func presentBackupPickerWithInitialMessage(
@@ -346,8 +370,44 @@ private extension SwiftBridge {
         let dbPath = documentsPath.appendingPathComponent("meta-secret.db")
         let isExists = fileManager.fileExists(atPath: dbPath.path)
 
+        print("🦅 Swift: is DB exists: \(isExists)")
         if isExists {
             _ = try? fileManager.removeItem(at: dbPath)
         }
     }
+    
+    func verifyCleanup() -> CleanupVerificationResult {
+        print("🦅 Swift: Verifying cleanup results")
+        
+        // Check KeyChain
+        let keychainCleared = !containsKey(key: "master_key")
+        print("🦅 Swift: KeyChain cleared: \(keychainCleared)")
+        
+        // Check local DB
+        let fileManager = FileManager.default
+        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let dbPath = documentsPath.appendingPathComponent("meta-secret.db")
+        let dbCleared = !fileManager.fileExists(atPath: dbPath.path)
+        print("🦅 Swift: Local DB cleared: \(dbCleared)")
+        
+        // Check backups
+        let backupCleared = !BackupWorker.hasICloudBackup()
+        print("🦅 Swift: Backups cleared: \(backupCleared)")
+        
+        let allCleared = keychainCleared && dbCleared && backupCleared
+        
+        return CleanupVerificationResult(
+            keychainCleared: keychainCleared,
+            dbCleared: dbCleared,
+            backupCleared: backupCleared,
+            allCleared: allCleared
+        )
+    }
+}
+
+struct CleanupVerificationResult {
+    let keychainCleared: Bool
+    let dbCleared: Bool
+    let backupCleared: Bool
+    let allCleared: Bool
 }

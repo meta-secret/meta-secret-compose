@@ -44,7 +44,9 @@ class SplashScreenViewModel(
     // All biometric routine
     private fun biometricRoutine() {
         viewModelScope.launch {
-//            keyChain.clearAll(isCleanDB = true)
+//            println("🔄${LogTags.SPLASH_VM}: Starting complete data cleanup")
+//            val clearResult = keyChain.clearAll(isCleanDB = true)
+//            println("🔄${LogTags.SPLASH_VM}: Data cleanup completed with result: $clearResult")
 
             if (checkBiometricAvailability()) {
                 backupCoordinatorInterface.restoreIfNeeded()

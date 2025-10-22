@@ -206,57 +206,7 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
 final class BackupWorker {
     private static let containerId = "iCloud.metasecret.project.com.KotlinProject"
 
-    private static func iCloudAvailable() -> Bool {
-        return FileManager.default.ubiquityIdentityToken != nil
-    }
 
-    private static func iCloudBackupURL() -> URL? {
-        print("🦅👷 BackupWorker: iCloudBackupURL")
-        
-        // Detailed iCloud diagnostics
-        let hasToken = FileManager.default.ubiquityIdentityToken != nil
-        print("🦅👷 iCloud identity token available: \(hasToken)")
-        
-        if !hasToken {
-            print("🦅👷❌ iCloud unavailable - user not logged in or iCloud Drive disabled")
-            print("🦅👷❌ Check: Settings → [Your Name] → iCloud → iCloud Drive")
-            return nil
-        }
-
-        let fm = FileManager.default
-        print("🦅👷 Trying container ID: \(containerId)")
-        guard let container = fm.url(forUbiquityContainerIdentifier: containerId) else {
-            print("🦅👷❌ iCloud container '\(containerId)' not available")
-            print("🦅👷❌ Possible causes:")
-            print("🦅👷❌ 1) App entitlements missing iCloud capability")
-            print("🦅👷❌ 2) Container ID not configured in Apple Developer Console")
-            print("🦅👷❌ 3) Settings → [Your Name] → iCloud → Apps Using iCloud → MetaSecret disabled")
-            print("🦅👷❌ 4) iCloud storage full")
-            return nil
-        }
-        
-        print("🦅👷✅ iCloud container URL: \(container)")
-        let docs = container.appendingPathComponent("Documents", isDirectory: true)
-        print("🦅👷 Target docs path: \(docs.path)")
-
-        if !fm.fileExists(atPath: docs.path) {
-            print("🦅👷 BackupWorker: createDirectory \(docs.path)")
-            do { 
-                try fm.createDirectory(at: docs, withIntermediateDirectories: true)
-                print("🦅👷✅ Documents directory created")
-            }
-            catch { 
-                print("🦅👷❌ createDirectory error: \(error)")
-                return nil 
-            }
-        } else {
-            print("🦅👷✅ Documents directory already exists")
-        }
-        
-        let dbURL = docs.appendingPathComponent("meta-secret.db", isDirectory: false)
-        print("🦅👷 Final DB URL: \(dbURL.path)")
-        return dbURL
-    }
 
     static func isInICloudContainer(url: URL) -> Bool {
         print("🦅👷 BackupWorker: isInICloudContainer url: \(url)")
@@ -273,87 +223,17 @@ final class BackupWorker {
         return false
     }
 
-    private static func localDBURL() -> URL? {
-        print("🦅👷BackupWorker: localDBURL")
-        let fm = FileManager.default
-        let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
-        print("🦅👷BackupWorker: localDBURL documentsPath \(String(describing: documentsPath))")
-        return documentsPath?.appendingPathComponent("meta-secret.db")
-    }
 
-    private static func copyLocalDBTo(url: URL) {
-        print("🦅👷BackupWorker: copyLocalDBTo \(url.path)")
-        guard let src = localDBURL(), FileManager.default.fileExists(atPath: src.path) else { return }
 
-        let needsScope = url.startAccessingSecurityScopedResource()
-        defer { if needsScope { url.stopAccessingSecurityScopedResource() } }
-
-        let coordinator = NSFileCoordinator(filePresenter: nil)
-        var coordinationError: NSError?
-
-        let exists = (try? url.checkResourceIsReachable()) ?? false
-        let options: NSFileCoordinator.WritingOptions = exists ? .forReplacing : []
-
-        coordinator.coordinate(writingItemAt: url, options: options, error: &coordinationError) { dst in
-            do {
-                let parent = dst.deletingLastPathComponent()
-                let tmp = parent.appendingPathComponent(UUID().uuidString)
-                if FileManager.default.fileExists(atPath: tmp.path) { try? FileManager.default.removeItem(at: tmp) }
-                try FileManager.default.copyItem(at: src, to: tmp)
-
-                if exists {
-                    _ = try FileManager.default.replaceItemAt(dst, withItemAt: tmp)
-                } else {
-                    try FileManager.default.moveItem(at: tmp, to: dst)
-                }
-            } catch let e as NSError {
-                print("🦅👷❌BackupWorker: copyLocalDBTo error \(e)")
-            }
-        }
-        if let e = coordinationError {
-            print("🦅👷❌BackupWorker: copyLocalDBTo coordination error \(e)")
-        }
-    }
-
-    private static func copyLocalDBToICloud() {
-        print("🦅👷BackupWorker: copyLocalDBToICloud")
-        guard let src = localDBURL(), FileManager.default.fileExists(atPath: src.path) else { return }
-        guard let dst = iCloudBackupURL() else { return }
-
-        let coordinator = NSFileCoordinator(filePresenter: nil)
-        var coordinationError: NSError?
-
-        let exists = (try? dst.checkResourceIsReachable()) ?? false
-        let options: NSFileCoordinator.WritingOptions = exists ? .forReplacing : []
-
-        coordinator.coordinate(writingItemAt: dst, options: options, error: &coordinationError) { dstURL in
-            do {
-                let tmp = dstURL.deletingLastPathComponent().appendingPathComponent(UUID().uuidString)
-                if FileManager.default.fileExists(atPath: tmp.path) { try? FileManager.default.removeItem(at: tmp) }
-                try FileManager.default.copyItem(at: src, to: tmp)
-                if exists {
-                    _ = try FileManager.default.replaceItemAt(dstURL, withItemAt: tmp)
-                } else {
-                    try FileManager.default.moveItem(at: tmp, to: dstURL)
-                }
-                print("🦅👷 DB has been written to iCloud")
-            } catch let e as NSError {
-                print("🦅👷❌BackupWorker: copyLocalDBToICloud error \(e)")
-            }
-        }
-        if let e = coordinationError {
-            print("🦅👷❌BackupWorker: copyLocalDBToICloud coordination error \(e)")
-        }
-    }
 
     static func restoreIfNeeded() {
         print("🦅👷BackupWorker: restoreIfNeeded")
-        guard let dst = localDBURL() else {
+        let fm = FileManager.default
+        let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
+        guard let dst = documentsPath?.appendingPathComponent("meta-secret.db") else {
             print("🦅👷❌BackupWorker: restoreIfNeeded - localDBURL is nil")
             return
         }
-
-        let fm = FileManager.default
         let fileExists = fm.fileExists(atPath: dst.path)
         print("🦅👷BackupWorker: File exists: \(fileExists)")
         
@@ -378,7 +258,9 @@ final class BackupWorker {
             if FileManager.default.fileExists(atPath: dst.path) { return }
         }
 
-        guard let srcURL = iCloudBackupURL() else { return }
+        guard let container = fm.url(forUbiquityContainerIdentifier: containerId) else { return }
+        let docs = container.appendingPathComponent("Documents", isDirectory: true)
+        let srcURL = docs.appendingPathComponent("meta-secret.db", isDirectory: false)
         _ = ensureDownloadedIfUbiquitous(srcURL)
 
         let coordinator = NSFileCoordinator(filePresenter: nil)
@@ -391,8 +273,18 @@ final class BackupWorker {
     }
 
     static func backupIfChanged() {
-        print("🦅👷BackupWorker: backupIfChanged")
-        guard let src = localDBURL(), FileManager.default.fileExists(atPath: src.path) else { return }
+        print("🦅👷BackupWorker: backupIfChanged - Local DB updated, starting backup")
+        let fm = FileManager.default
+        let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
+        guard let src = documentsPath?.appendingPathComponent("meta-secret.db"), fm.fileExists(atPath: src.path) else { 
+            print("🦅👷❌BackupWorker: Local DB not found, skipping backup")
+            return 
+        }
+
+        // Log DB modification time
+        if let modificationDate = try? src.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate {
+            print("🦅👷📅BackupWorker: Local DB last modified: \(modificationDate)")
+        }
 
         if let dstURL = resolveBookmark() {
             let needs = dstURL.startAccessingSecurityScopedResource()
@@ -401,15 +293,114 @@ final class BackupWorker {
 
             let srcDate = (try? src.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
             let dstDate = (try? dstURL.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-            if srcDate > dstDate { copyLocalDBTo(url: dstURL) }
+            
+            if srcDate > dstDate {
+                print("🦅👷🔄BackupWorker: Local DB is newer, copying to bookmark location")
+                copyLocalDBTo(url: dstURL)
+            } else {
+                print("🦅👷✅BackupWorker: Bookmark backup is up to date")
+            }
             return
         }
 
-        guard let dstURL = iCloudBackupURL() else { return }
+        guard let container = fm.url(forUbiquityContainerIdentifier: containerId) else { 
+            print("🦅👷❌BackupWorker: iCloud container not available")
+            return 
+        }
+        let docs = container.appendingPathComponent("Documents", isDirectory: true)
+        let dstURL = docs.appendingPathComponent("meta-secret.db", isDirectory: false)
         _ = ensureDownloadedIfUbiquitous(dstURL)
+        
         let srcDate = (try? src.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
         let dstDate = (try? dstURL.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-        if srcDate > dstDate { copyLocalDBToICloud() }
+        
+        if srcDate > dstDate {
+            print("🦅👷🔄BackupWorker: Local DB is newer, copying to iCloud")
+            copyLocalDBToICloud()
+        } else {
+            print("🦅👷✅BackupWorker: iCloud backup is up to date")
+        }
+    }
+
+    private static func copyLocalDBTo(url: URL) {
+        print("🦅👷BackupWorker: copyLocalDBTo \(url.path)")
+        let fm = FileManager.default
+        let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
+        guard let src = documentsPath?.appendingPathComponent("meta-secret.db"), fm.fileExists(atPath: src.path) else { 
+            print("🦅👷❌BackupWorker: Source DB not found")
+            return 
+        }
+
+        let needsScope = url.startAccessingSecurityScopedResource()
+        defer { if needsScope { url.stopAccessingSecurityScopedResource() } }
+
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        var coordinationError: NSError?
+
+        let exists = (try? url.checkResourceIsReachable()) ?? false
+        let options: NSFileCoordinator.WritingOptions = exists ? .forReplacing : []
+
+        coordinator.coordinate(writingItemAt: url, options: options, error: &coordinationError) { dst in
+            do {
+                let parent = dst.deletingLastPathComponent()
+                let tmp = parent.appendingPathComponent(UUID().uuidString)
+                if fm.fileExists(atPath: tmp.path) { try? fm.removeItem(at: tmp) }
+                try fm.copyItem(at: src, to: tmp)
+
+                if exists {
+                    _ = try fm.replaceItemAt(dst, withItemAt: tmp)
+                } else {
+                    try fm.moveItem(at: tmp, to: dst)
+                }
+                print("🦅👷✅BackupWorker: DB copied to bookmark location successfully")
+            } catch let e as NSError {
+                print("🦅👷❌BackupWorker: copyLocalDBTo error \(e)")
+            }
+        }
+        if let e = coordinationError {
+            print("🦅👷❌BackupWorker: copyLocalDBTo coordination error \(e)")
+        }
+    }
+
+    private static func copyLocalDBToICloud() {
+        print("🦅👷BackupWorker: copyLocalDBToICloud")
+        let fm = FileManager.default
+        let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
+        guard let src = documentsPath?.appendingPathComponent("meta-secret.db"), fm.fileExists(atPath: src.path) else { 
+            print("🦅👷❌BackupWorker: Source DB not found")
+            return 
+        }
+        guard let container = fm.url(forUbiquityContainerIdentifier: containerId) else { 
+            print("🦅👷❌BackupWorker: iCloud container not available")
+            return 
+        }
+        let docs = container.appendingPathComponent("Documents", isDirectory: true)
+        let dst = docs.appendingPathComponent("meta-secret.db", isDirectory: false)
+
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        var coordinationError: NSError?
+
+        let exists = (try? dst.checkResourceIsReachable()) ?? false
+        let options: NSFileCoordinator.WritingOptions = exists ? .forReplacing : []
+
+        coordinator.coordinate(writingItemAt: dst, options: options, error: &coordinationError) { dstURL in
+            do {
+                let tmp = dstURL.deletingLastPathComponent().appendingPathComponent(UUID().uuidString)
+                if fm.fileExists(atPath: tmp.path) { try? fm.removeItem(at: tmp) }
+                try fm.copyItem(at: src, to: tmp)
+                if exists {
+                    _ = try fm.replaceItemAt(dstURL, withItemAt: tmp)
+                } else {
+                    try fm.moveItem(at: tmp, to: dstURL)
+                }
+                print("🦅👷✅BackupWorker: DB copied to iCloud successfully")
+            } catch let e as NSError {
+                print("🦅👷❌BackupWorker: copyLocalDBToICloud error \(e)")
+            }
+        }
+        if let e = coordinationError {
+            print("🦅👷❌BackupWorker: copyLocalDBToICloud coordination error \(e)")
+        }
     }
 
     static func removeBackup() {
@@ -428,7 +419,10 @@ final class BackupWorker {
             if let e = coordError { print("🦅👷❌BackupWorker: removeBackup (bookmark) coordination error \(e)") }
         }
 
-        if let srcURL = iCloudBackupURL() {
+        let fm = FileManager.default
+        if let container = fm.url(forUbiquityContainerIdentifier: containerId) {
+            let docs = container.appendingPathComponent("Documents", isDirectory: true)
+            let srcURL = docs.appendingPathComponent("meta-secret.db", isDirectory: false)
             let coordinator = NSFileCoordinator(filePresenter: nil)
             var coordError: NSError?
             coordinator.coordinate(writingItemAt: srcURL, options: .forDeleting, error: &coordError) { delURL in

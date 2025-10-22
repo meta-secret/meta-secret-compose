@@ -11,6 +11,11 @@ import core.KeyValueStorageInterface
 import core.LogTags
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import models.appInternalModels.SecretModel
 import models.appInternalModels.SocketRequestModel
 import ui.scenes.common.CommonViewModel
@@ -28,6 +33,9 @@ class ShowSecretViewModel(
     val devicesCount: StateFlow<Int> = devicesList.map { it.size }
         .stateIn(viewModelScope, SharingStarted.Lazily, 0)
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     override fun handle(event: CommonViewModelEventsInterface) {
         println("✅" + LogTags.SHOW_SECRET_VM + ": need handle event $event")
         if (event is ShowSecretEvents) {
@@ -41,9 +49,22 @@ class ShowSecretViewModel(
     }
 
     private fun recoverSecret(secretId: String) {
+        _isLoading.value = true
         println("✅" + LogTags.SHOW_SECRET_VM + ": Start recovering process")
-        socketHandler.actionsToFollow(null, listOf(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST))
-        metaSecretAppManager.recover(secretModel = SecretModel(secretId, null))
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    socketHandler.actionsToFollow(
+                        null,
+                        listOf(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST)
+                    )
+                    metaSecretAppManager.recover(secretModel = SecretModel(secretId, null))
+                }
+            } catch (t: Throwable) {
+                println("❌${LogTags.SHOW_SECRET_VM}: recover failed: ${t.message}")
+                _isLoading.value = false
+            }
+        }
     }
 }
 

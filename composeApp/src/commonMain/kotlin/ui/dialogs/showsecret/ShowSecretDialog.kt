@@ -149,7 +149,7 @@ fun ShowSecret(
                     }
                     ClassicButton(
                         {
-                            viewModel.handle(ShowSecretEvents.ShowSecret("NyeiNSbLBXs"))
+                            viewModel.handle(ShowSecretEvents.ShowSecret(secret.secretName))
                         },
                         when (isPasswordVisible) {
                             true -> stringResource(Res.string.hide)

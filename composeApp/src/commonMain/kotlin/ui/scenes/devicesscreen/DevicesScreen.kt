@@ -28,9 +28,11 @@ import kotlinproject.composeapp.generated.resources.devicesList
 import models.appInternalModels.DeviceStatus
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
+import kotlinproject.composeapp.generated.resources.wanna_join
+import org.jetbrains.compose.resources.stringResource
 import ui.AddButton
 import ui.dialogs.adddevice.AddingDevice
-import ui.dialogs.adddevice.JoinDevice
+import ui.dialogs.YesNoDialog
 import ui.dialogs.adddevice.PopUpDevice
 import ui.screenContent.CommonBackground
 import ui.screenContent.DeviceContent
@@ -136,7 +138,8 @@ class DevicesScreen : Screen {
                 animationSpec = tween(durationMillis = 1000)
             )
         ) {
-            JoinDevice(
+            YesNoDialog(
+                stringResource(Res.string.wanna_join),
                 viewModel.screenMetricsProvider,
                 onDismiss = {
                     if (it != null) {

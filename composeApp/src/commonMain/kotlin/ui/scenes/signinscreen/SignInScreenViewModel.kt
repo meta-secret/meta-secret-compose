@@ -81,14 +81,25 @@ class SignInScreenViewModel(
             metaSecretAppManager.getStateModel()?.getAppState()?.let { state ->
                 when (state) {
                     is State.Vault -> {
-                        currentState = when (metaSecretAppManager.getVaultFullInfoModel()) {
+                        val vaultInfo = metaSecretAppManager.getVaultFullInfoModel()
+                        println("✅${LogTags.SIGNIN_VM}: Vault state detected: $vaultInfo")
+                        currentState = when (vaultInfo) {
                             is VaultFullInfo.Outsider -> {
+                                println("✅${LogTags.SIGNIN_VM}: User is outsider, waiting for approval")
                                 SignInStates.SIGN_IN_PENDING
                             }
-                            null -> {
+                            is VaultFullInfo.Member -> {
+                                println("✅${LogTags.SIGNIN_VM}: User is already a member, sign in completed")
+                                SignInStates.SIGN_IN_COMPLETED
+                            }
+                            is VaultFullInfo.NotExists -> {
+                                println("✅${LogTags.SIGNIN_VM}: No vault info, going to idle")
                                 SignInStates.IDLE
                             }
-                            else -> error("Critical error! Impossible state")
+                            null -> {
+                                println("✅${LogTags.SIGNIN_VM}: No vault info, going to idle")
+                                SignInStates.IDLE
+                            }
                         }
                     }
                     else -> {}
@@ -133,14 +144,14 @@ class SignInScreenViewModel(
         _isLoading.value = true
         println("✅" + LogTags.SIGNIN_VM + ": Start listening for Join accept signal")
         socketHandler.actionsToFollow(
-            add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE, SocketRequestModel.WAIT_FOR_RECOVER_REQUEST),
+            add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE),
             exclude = null
         )
         showErrorSnackBar(SignInSnackMessages.WAIT_JOIN, true, null)
     }
 
     private fun isNameError(string: String) {
-        val regex = "^[A-Za-z0-9_]{2,10}$"
+        val regex = "^[A-Za-z0-9_]{2,20}$"
         val isNameError = !(string.matches(regex.toRegex()) && string != keyValueStorage.signInInfo?.username)
         currentState = if (isNameError) {
             SignInStates.NAME_INCORRECT

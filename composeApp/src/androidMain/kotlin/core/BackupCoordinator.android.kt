@@ -91,6 +91,7 @@ class BackupCoordinatorInterfaceAndroid(
     override fun backupIfChanged() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: backupIfChanged - Local DB updated, starting backup")
                 val path = keyChain.getString("bdBackUp")
                 if (path.isNullOrEmpty()) {
                     println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ no backup URI set")
@@ -110,11 +111,15 @@ class BackupCoordinatorInterfaceAndroid(
                     return@launch
                 }
 
+                // Log DB modification time
+                val lastModified = dbFile.lastModified()
+                println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: 📅 Local DB last modified: ${java.util.Date(lastModified)}")
+
                 activity.contentResolver.openOutputStream(uri, "w")?.use { output ->
                     FileInputStream(dbFile).use { input ->
                         input.copyTo(output)
                     }
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ✅ backup completed")
+                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ✅ backup completed successfully")
                 } ?: run {
                     println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ backup failed: openOutputStream null")
                     withContext(Dispatchers.Main) { showErrorAlert(R.string.backup_write_failed) }

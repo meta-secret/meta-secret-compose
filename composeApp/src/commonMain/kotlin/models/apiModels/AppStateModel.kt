@@ -149,6 +149,26 @@ data class VaultEvents(
 }
 
 @Serializable
+enum class DistributionType {
+    @SerialName("split")
+    SPLIT,
+    @SerialName("recover")
+    RECOVER
+}
+
+@Serializable
+enum class ClaimStatus {
+    @SerialName("pending")
+    PENDING,
+    @SerialName("sent")
+    SENT,
+    @SerialName("accepted")
+    ACCEPTED,
+    @SerialName("declined")
+    DECLINED
+}
+
+@Serializable
 data class PassId(
     val id: String,
     val name: String
@@ -162,13 +182,13 @@ data class DistClaimId(
 
 @Serializable
 data class ClaimStatusInfo(
-    val statuses: Map<String, String> = emptyMap()
+    val statuses: Map<String, ClaimStatus> = emptyMap()
 )
 
 @Serializable
 data class ClaimObject(
     val distClaimId: DistClaimId,
-    val distributionType: String,
+    val distributionType: DistributionType,
     val id: String,
     val receivers: List<String> = emptyList(),
     val sender: String,

@@ -14,6 +14,8 @@ import models.apiModels.VaultSummary
 import core.KeyChainInterface
 import core.KeyValueStorageInterface
 import core.LogTags
+import models.apiModels.RecoveredSecretModel
+import models.apiModels.SearchClaimModel
 import models.appInternalModels.ClaimModel
 import models.appInternalModels.SecretModel
 
@@ -218,8 +220,20 @@ class MetaSecretAppManager(
         }
     }
 
-    override fun findClaim(secretModel: SecretModel): ClaimModel? {
-        TODO("findClaim Not yet implemented")
+    override fun findClaim(secretId: String): ClaimModel? {
+        println("✅" + LogTags.APP_MANAGER + ": find claim started")
+        val searchResult = metaSecretCore.findClaim(secretId)
+        return try {
+            val result = SearchClaimModel.fromJson(searchResult)
+            println("✅" + LogTags.APP_MANAGER + ": find Claim result is $result")
+            if (result.claimId == null) {
+                return null
+            }
+            ClaimModel(result.claimId)
+        } catch (e: Exception) {
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse find claim JSON: ${e.message}")
+            null
+        }
     }
 
     override fun recover(secretModel: SecretModel): CommonResponseModel? {
@@ -239,11 +253,35 @@ class MetaSecretAppManager(
     }
 
     override fun acceptRecover(claim: ClaimModel): CommonResponseModel? {
-        TODO("acceptRecover Not yet implemented")
+        println("✅" + LogTags.APP_MANAGER + ": Accept recover started")
+        if (claim.claimId == null) {
+            return null
+        }
+        val acceptResult = metaSecretCore.acceptRecover(claim.claimId)
+        return try {
+            val result = CommonResponseModel.fromJson(acceptResult)
+            println("✅" + LogTags.APP_MANAGER + ": Accept recover result is $result")
+            result
+        } catch (e: Exception) {
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse Accept Recover JSON: ${e.message}")
+            null
+        }
     }
 
     override fun showRecovered(secretModel: SecretModel): String? {
-        TODO("showRecovered Not yet implemented")
+        println("✅" + LogTags.APP_MANAGER + ": showRecovered")
+        if (secretModel.secretName == null) {
+            return null
+        }
+        val showRecoveredResult = metaSecretCore.showRecovered(secretModel.secretName)
+        return try {
+            val result = RecoveredSecretModel.fromJson(showRecoveredResult)
+            println("✅" + LogTags.APP_MANAGER + ": find Claim result is $result")
+            result.secret
+        } catch (e: Exception) {
+            println("❌" + LogTags.APP_MANAGER + ": Failed to parse find claim JSON: ${e.message}")
+            null
+        }
     }
 
     override fun getSecretsFromVault(): List<models.apiModels.SecretApiModel>? {

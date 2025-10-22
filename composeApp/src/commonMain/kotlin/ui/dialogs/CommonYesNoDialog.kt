@@ -1,4 +1,4 @@
-package ui.dialogs.adddevice
+package ui.dialogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,7 +34,8 @@ import core.ScreenMetricsProviderInterface
 import ui.ClassicButton
 
 @Composable
-fun JoinDevice(
+fun YesNoDialog(
+    title: String,
     screenMetricsProvider: ScreenMetricsProviderInterface,
     onDismiss: (Boolean?) -> Unit
 ) {
@@ -53,7 +54,7 @@ fun JoinDevice(
         ) {
             Box(
                 modifier = Modifier
-                    .height((screenMetricsProvider.heightFactor() * 200).dp)
+                    .height((screenMetricsProvider.heightFactor() * 250).dp)
                     .fillMaxWidth()
                     .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)
@@ -67,7 +68,7 @@ fun JoinDevice(
                         .padding(horizontal = 16.dp)
                 ) {
                     Text(
-                        text = stringResource(Res.string.wanna_join),
+                        text = title,
                         fontSize = 24.sp,
                         fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
                         color = AppColors.White,

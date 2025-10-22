@@ -130,6 +130,7 @@ class KeyChainManagerAndroid(
     
     override suspend fun clearAll(isCleanDB: Boolean): Boolean = withContext(Dispatchers.IO) {
         try {
+            println("🗝️KeyChainManager: Android: Starting clearAll process (isCleanDB: $isCleanDB)")
             val masterKey = getString("master_key")
             if (masterKey != null) {
                 removeKey(masterKey)
@@ -142,16 +143,21 @@ class KeyChainManagerAndroid(
                 }
 
                 val aliases = keyStore.aliases()
+                var deletedCount = 0
                 while (aliases.hasMoreElements()) {
                     val alias = aliases.nextElement()
                     if (alias.startsWith(KEY_ALIAS_PREFIX)) {
                         keyStore.deleteEntry(alias)
+                        deletedCount++
                     }
                 }
+                println("🗝️KeyChainManager: Android: Deleted $deletedCount keystore entries")
             }
 
+            println("🗝️KeyChainManager: Android: ✅ clearAll completed successfully")
             true
         } catch (e: Exception) {
+            println("🗝️KeyChainManager: Android: ❌ Error clearing KeyChain: ${e.message}")
             e.printStackTrace()
             false
         }

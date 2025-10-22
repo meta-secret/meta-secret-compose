@@ -1,6 +1,10 @@
 package ui.scenes.mainscreen
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +21,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -38,7 +45,10 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
+import kotlinproject.composeapp.generated.resources.wanna_join
+import kotlinproject.composeapp.generated.resources.wanna_recover
 import ui.TabStateHolder
+import ui.dialogs.YesNoDialog
 import ui.notifications.warningContent
 
 class MainScreen : Screen {
@@ -51,6 +61,7 @@ class MainScreen : Screen {
         val joinRequestsCount by viewModel.joinRequestsCount.collectAsState()
         val devicesCount by viewModel.devicesCount.collectAsState()
         val isWarningShown by viewModel.isWarningShown.collectAsState()
+        val recoverDialog by viewModel.recoverDialog.collectAsState()
 
         TabNavigator(tabs[selectedTabIndex]) {
             val tabNavigator = LocalTabNavigator.current
@@ -140,6 +151,30 @@ class MainScreen : Screen {
                 }
             }
         }
+
+        AnimatedVisibility(
+            visible = recoverDialog != null,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(durationMillis = 1500)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(durationMillis = 1000)
+            )
+        ) {
+            YesNoDialog(
+                stringResource(Res.string.wanna_recover),
+                viewModel.screenMetricsProvider,
+                onDismiss = {
+                    if (it != null) {
+                        viewModel.handle(MainViewEvents.RecoverDecision(it))
+                    } else {
+                        viewModel.handle(MainViewEvents.DismissRecoverDialog)
+                    }
+                }
+            )
+        }
     }
 
     @Composable
@@ -165,4 +200,6 @@ class MainScreen : Screen {
             }
         }
     }
+
+
 }

@@ -25,7 +25,7 @@ char *update_membership(const char *candidate_ptr, const char *action_update_ptr
 
 char *clean_up_database(void);
 
-char *split_secret(const char *secret_name_ptr, const char *secret_ptr);
+char *split_secret(const char *secret_id_ptr, const char *secret_ptr);
 
 char *find_claim_by(const char *secret_id_ptr);
 

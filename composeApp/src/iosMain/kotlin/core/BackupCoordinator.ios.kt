@@ -1,6 +1,5 @@
 package core
 
-import androidx.lifecycle.viewModelScope
 import com.metaSecret.ios.SwiftBridge
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope

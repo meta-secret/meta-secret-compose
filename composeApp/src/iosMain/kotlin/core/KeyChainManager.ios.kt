@@ -50,6 +50,7 @@ class KeyChainManagerIos : KeyChainInterface {
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun clearAll(isCleanDB: Boolean): Boolean = withContext(Dispatchers.Main) {
         try {
+            println("🗝️KeyChainManager: Starting clearAll process (isCleanDB: $isCleanDB)")
             val masterKey = getString("master_key")
             if (masterKey != null) {
                 removeKey("bdBackUp${masterKey}")
@@ -59,9 +60,10 @@ class KeyChainManagerIos : KeyChainInterface {
                 SwiftBridge().clearAll()
             }
 
+            println("🗝️KeyChainManager: ✅ clearAll completed successfully")
             return@withContext true
         } catch (e: Exception) {
-            println("Error clearing KeyChain: ${e.message}")
+            println("🗝️KeyChainManager: ❌ Error clearing KeyChain: ${e.message}")
             false
         }
     }
