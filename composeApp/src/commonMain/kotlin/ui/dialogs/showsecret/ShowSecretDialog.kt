@@ -20,13 +20,8 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -62,7 +57,7 @@ fun ShowSecret(
 ) {
     val viewModel: ShowSecretViewModel = koinViewModel()
     val devicesCount by viewModel.devicesCount.collectAsState()
-    var isPasswordVisible by remember { mutableStateOf(false) }
+    val recoveredSecret by viewModel.recoveredSecret.collectAsState()
 
     val deviceText = when {
         devicesCount == 0 || devicesCount > 4 -> stringResource(Res.string.devices_5)
@@ -77,7 +72,10 @@ fun ShowSecret(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable { dialogVisibility(false) }
+                .clickable {
+                    viewModel.handle(ShowSecretEvents.HideSecret)
+                    dialogVisibility(false)
+                }
                 .padding(horizontal = 16.dp)
                 .background(AppColors.Black30),
             contentAlignment = Alignment.Center
@@ -103,6 +101,7 @@ fun ShowSecret(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .clickable {
+                                viewModel.handle(ShowSecretEvents.HideSecret)
                                 dialogVisibility(false)
                             }
                     )
@@ -122,9 +121,9 @@ fun ShowSecret(
                     )
                     TextRow(secret.secretName)
                     TextRow(
-                        when (isPasswordVisible) {
-                            true -> secret.secretId
-                            false -> "*".repeat(secret.secretId.length)
+                        when {
+                            recoveredSecret != null -> recoveredSecret!!
+                            else -> "*".repeat(secret.secretId.length)
                         }
                     )
 
@@ -149,11 +148,15 @@ fun ShowSecret(
                     }
                     ClassicButton(
                         {
-                            viewModel.handle(ShowSecretEvents.ShowSecret(secret.secretName))
+                            if (recoveredSecret == null) {
+                                viewModel.handle(ShowSecretEvents.ShowSecret(secret.secretName))
+                            } else {
+                                viewModel.handle(ShowSecretEvents.HideSecret)
+                            }
                         },
-                        when (isPasswordVisible) {
-                            true -> stringResource(Res.string.hide)
-                            false -> stringResource(Res.string.show)
+                        when {
+                            recoveredSecret != null -> stringResource(Res.string.hide)
+                            else -> stringResource(Res.string.show)
                         }
                     )
                 }

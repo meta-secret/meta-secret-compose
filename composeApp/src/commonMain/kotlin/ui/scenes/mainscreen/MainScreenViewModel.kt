@@ -44,10 +44,12 @@ class MainScreenViewModel(
     private val _isWarningShown = MutableStateFlow(false)
     val isWarningShown: StateFlow<Boolean> = _isWarningShown
 
-
     private val recoverQueue: ArrayDeque<RestoreData> = ArrayDeque()
     private val _recoverDialog = MutableStateFlow<RestoreData?>(null)
     val recoverDialog: StateFlow<RestoreData?> = _recoverDialog
+    
+    private val _secretIdToShow = MutableStateFlow<String?>(null)
+    val secretIdToShow: StateFlow<String?> = _secretIdToShow
 
     private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -59,7 +61,8 @@ class MainScreenViewModel(
         checkBackup()
         println("✅${LogTags.MAIN_VM}: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
         socketHandler.actionsToFollow(
-            add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN, SocketRequestModel.WAIT_FOR_RECOVER_REQUEST),
+            add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN, SocketRequestModel.WAIT_FOR_RECOVER_REQUEST,
+                SocketRequestModel.SHOW_SECRET),
             exclude = null
         )
 
@@ -78,11 +81,6 @@ class MainScreenViewModel(
                     is SocketActionModel.READY_TO_RECOVER -> {
                         val restoreData = a.restoreData
                         println("✅${LogTags.MAIN_VM}: READY_TO_RECOVER signal has been caught $restoreData")
-
-//                        for (data in restoreData) {
-//                            val result = metaSecretAppManager.findClaim(data.secretId)
-//                            println("✅${LogTags.MAIN_VM}: READY_TO_RECOVER FIND CLAIM $result")
-//                        }
 
                         val secrets = metaSecretAppManager.getSecretsFromVault()
                         val existingSecretsIds = secrets?.map { it.name }?.toSet()
@@ -104,6 +102,10 @@ class MainScreenViewModel(
                                 showNextRecoverPrompt()
                             }
                         }
+                    }
+                    is SocketActionModel.RECOVER_SENT -> {
+                        _secretIdToShow.value = a.secretId
+                        println("✅${LogTags.MAIN_VM}: READY_TO_SHOW secret by secretId ${a.secretId}")
                     }
                     else -> { /* ignore */ }
                 }
@@ -160,6 +162,11 @@ class MainScreenViewModel(
 
     private fun checkBackup() {
         backupCoordinatorInterface.ensureBackupDestinationSelected()
+    }
+
+    fun clearSecretIdToShow() {
+        println("✅${LogTags.MAIN_VM}: Clearing secretIdToShow")
+        _secretIdToShow.value = null
     }
 
     private fun setTabIndex(index: Int) {

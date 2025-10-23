@@ -5,5 +5,6 @@ enum class SocketRequestModel {
     RESPONSIBLE_TO_ACCEPT_JOIN,
     GET_STATE,
     WAIT_FOR_RECOVER_REQUEST,
+    SHOW_SECRET,
     NONE,
 }

@@ -37,5 +37,5 @@ val appModule = module {
     factory { AddSecretViewModel(get(), get()) }
     factory { RemoveSecretViewModel(get()) }
     factory { AddDeviceViewModel(get()) }
-    factory { ShowSecretViewModel(get(), get(), get()) }
+    factory { ShowSecretViewModel(get(), get(), get(), get()) }
 }
