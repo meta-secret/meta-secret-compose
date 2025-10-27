@@ -72,10 +72,6 @@ fun ShowSecret(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable {
-                    viewModel.handle(ShowSecretEvents.HideSecret)
-                    dialogVisibility(false)
-                }
                 .padding(horizontal = 16.dp)
                 .background(AppColors.Black30),
             contentAlignment = Alignment.Center
@@ -88,7 +84,10 @@ fun ShowSecret(
                     )
                     .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)
-                    .clickable(onClick = {}, enabled = false),
+                    .clickable(
+                        indication = null,
+                        interactionSource = androidx.compose.foundation.interaction.MutableInteractionSource()
+                    ) { /* consume clicks inside dialog */ },
             ) {
                 Box(
                     modifier = Modifier
@@ -121,10 +120,8 @@ fun ShowSecret(
                     )
                     TextRow(secret.secretName)
                     TextRow(
-                        when {
-                            recoveredSecret != null -> recoveredSecret!!
-                            else -> "*".repeat(secret.secretId.length)
-                        }
+                        if (recoveredSecret != null) recoveredSecret!!
+                        else "••••••••"
                     )
 
                     Row(

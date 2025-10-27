@@ -272,8 +272,10 @@ import ObjectiveC
     
     @objc public func clearAll() -> Bool {
         print("🦅 Swift: clearAll keys - Starting cleanup process")
-        
-        let _ = c_clean_up_database()
+
+        if let ptr = c_clean_up_database() {
+            c_free_string(ptr)
+        }
         
         cleanDB()
         

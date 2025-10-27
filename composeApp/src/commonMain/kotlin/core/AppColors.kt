@@ -14,7 +14,7 @@ object LogTags {
     const val ADD_SECRET_VM = "➕AddSecretViewModel"
     const val SECRETS_VM = "🔐SecretsScreenViewModel"
     const val SHOW_SECRET_VM = "👀ShowSecretViewModel"
-    const val PROFILE_VM = "\uD83D\uDC64 ProfileScreenViewModel"
+    const val PROFILE_VM = "👤ProfileScreenViewModel"
 }
 
 object AppColors {

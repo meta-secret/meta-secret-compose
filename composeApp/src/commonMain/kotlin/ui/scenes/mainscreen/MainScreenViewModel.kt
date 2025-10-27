@@ -20,8 +20,6 @@ import core.Device
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import models.appInternalModels.ClaimModel
 import models.appInternalModels.RestoreData
@@ -96,9 +94,9 @@ class MainScreenViewModel(
                             return@collect
                         }
 
-                        recoverQueue.addAll(newRequests)
-                        if (_recoverDialog.value == null) {
-                            withContext(Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
+                            recoverQueue.addAll(newRequests)
+                            if (_recoverDialog.value == null) {
                                 showNextRecoverPrompt()
                             }
                         }

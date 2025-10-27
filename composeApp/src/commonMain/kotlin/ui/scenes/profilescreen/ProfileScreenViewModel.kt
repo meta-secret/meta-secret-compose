@@ -64,19 +64,23 @@ class ProfileScreenViewModel(
     private fun loadProfileData() {
         println("✅${LogTags.PROFILE_VM}: loadProfileData")
         viewModelScope.launch {
-            _vaultName.value = keyValueStorage.cachedVaultName
-            println("✅${LogTags.PROFILE_VM}: vaultName = ${_vaultName.value}")
-            
-            val vaultSummary = withContext(Dispatchers.Default) {
-                appManager.getVaultSummary()
-            }
-            
-            if (vaultSummary != null) {
-                _secretsCount.value = vaultSummary.secretsCount
-                _devicesCount.value = vaultSummary.users.size
-                println("✅${LogTags.PROFILE_VM}: secretsCount = ${_secretsCount.value}, devicesCount = ${_devicesCount.value}")
-            } else {
-                println("❌${LogTags.PROFILE_VM}: vaultSummary is null")
+            try {
+                _vaultName.value = keyValueStorage.cachedVaultName
+                println("✅${LogTags.PROFILE_VM}: vaultName = ${_vaultName.value}")
+
+                val vaultSummary = withContext(Dispatchers.Default) {
+                    appManager.getVaultSummary()
+                }
+
+                if (vaultSummary != null) {
+                    _secretsCount.value = vaultSummary.secretsCount
+                    _devicesCount.value = vaultSummary.users.size
+                    println("✅${LogTags.PROFILE_VM}: secretsCount = ${_secretsCount.value}, devicesCount = ${_devicesCount.value}")
+                } else {
+                    println("❌${LogTags.PROFILE_VM}: vaultSummary is null")
+                }
+            } catch (t: Throwable) {
+                println("❌${LogTags.PROFILE_VM}: loadProfileData failed: ${t.message}")
             }
         }
     }

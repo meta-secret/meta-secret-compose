@@ -1,5 +1,6 @@
 package models.appInternalModels
-
+import kotlinx.serialization.Serializable
+@Serializable
 sealed class SocketActionModel {
     data object NONE : SocketActionModel()
     data object ASK_TO_JOIN : SocketActionModel()
@@ -11,4 +12,5 @@ sealed class SocketActionModel {
     data class RECOVER_SENT(val secretId: String) : SocketActionModel()
 }
 
+@Serializable
 data class RestoreData(val claimId: String, val secretId: String)

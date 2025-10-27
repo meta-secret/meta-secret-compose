@@ -44,7 +44,6 @@ class ShowSecretViewModel(
         viewModelScope.launch {
             mainScreenViewModel.secretIdToShow.collect { secretId ->
                 if (secretId != null) {
-                    println("✅" + LogTags.SHOW_SECRET_VM + ": Received secretIdToShow: $secretId")
                     showRecoveredSecret(secretId)
                 }
             }
@@ -90,6 +89,7 @@ class ShowSecretViewModel(
                 }
             } catch (t: Throwable) {
                 println("❌${LogTags.SHOW_SECRET_VM}: recover failed: ${t.message}")
+            } finally {
                 _isLoading.value = false
             }
         }
@@ -112,6 +112,8 @@ class ShowSecretViewModel(
                 }
             } catch (t: Throwable) {
                 println("❌${LogTags.SHOW_SECRET_VM}: showRecovered failed: ${t.message}")
+            } finally {
+                _isLoading.value = false
             }
         }
     }

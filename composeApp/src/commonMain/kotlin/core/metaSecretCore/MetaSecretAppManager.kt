@@ -275,9 +275,9 @@ class MetaSecretAppManager(
         }
         val showRecoveredResult = metaSecretCore.showRecovered(secretModel.secretName)
         return try {
-            val result = RecoveredSecretModel.fromJson(showRecoveredResult)
-            println("✅" + LogTags.APP_MANAGER + ": showRecovered result is $result")
-            result.message?.secret
+            val parsed = RecoveredSecretModel.fromJson(showRecoveredResult)
+            println("✅" + LogTags.APP_MANAGER + ": showRecovered success=${parsed.success} hasSecret=${parsed.message?.secret != null}")
+            parsed.message?.secret
         } catch (e: Exception) {
             println("❌" + LogTags.APP_MANAGER + ": Failed to parse showRecovered JSON: ${e.message}")
             null

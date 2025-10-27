@@ -140,11 +140,13 @@ class SecretsScreen : Screen {
                     animationSpec = tween(durationMillis = 1000)
                 )
             ) {
-                ui.dialogs.showsecret.ShowSecret(
-                    viewModel.screenMetricsProvider,
-                    selectedSecret!!,
-                    dialogVisibility = { isShowSecretDialogVisible = it }
-                )
+                selectedSecret?.let { nonNull ->
+                    ui.dialogs.showsecret.ShowSecret(
+                        viewModel.screenMetricsProvider,
+                        nonNull,
+                        dialogVisibility = { isShowSecretDialogVisible = it }
+                    )
+                }
             }
         }
 

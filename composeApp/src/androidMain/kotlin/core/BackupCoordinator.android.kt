@@ -111,9 +111,8 @@ class BackupCoordinatorInterfaceAndroid(
                     return@launch
                 }
 
-                // Log DB modification time
                 val lastModified = dbFile.lastModified()
-                println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: 📅 Local DB last modified: ${java.util.Date(lastModified)}")
+                println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: Local DB last modified: ${java.util.Date(lastModified)}")
 
                 activity.contentResolver.openOutputStream(uri, "w")?.use { output ->
                     FileInputStream(dbFile).use { input ->

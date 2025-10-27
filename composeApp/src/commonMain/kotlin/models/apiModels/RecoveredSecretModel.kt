@@ -1,6 +1,5 @@
 package models.apiModels
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
