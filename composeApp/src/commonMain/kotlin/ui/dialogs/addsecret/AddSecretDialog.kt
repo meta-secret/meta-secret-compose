@@ -71,14 +71,14 @@ fun AddSecret(
     dialogVisibility: (Boolean) -> Unit,
     onResult: ((Boolean) -> Unit)? = null,
 ) {
-    var secretId by remember { mutableStateOf("") }
+    var secretName by remember { mutableStateOf("") }
     var secret by remember { mutableStateOf("") }
+    var visible by remember { mutableStateOf(false) }
 
     val viewModel: AddSecretViewModel = koinViewModel()
     val isLoading by viewModel.isLoading.collectAsState()
     val addState by viewModel.state.collectAsState()
 
-    var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
 
     LaunchedEffect(visible) {
@@ -172,21 +172,25 @@ fun AddSecret(
                             )
 
                             Column {
-                                TextInput(stringResource(Res.string.secretName)) { newValue ->
-                                    secretId = newValue
+                                TextInput(
+                                    stringResource(Res.string.secretName)
+                                ) { newValue ->
+                                    secretName = newValue
                                 }
-                                TextInput(stringResource(Res.string.secretCapital)) { newValue ->
+                                TextInput(
+                                    stringResource(Res.string.secretCapital)
+                                ) { newValue ->
                                     secret = newValue
                                 }
                             }
 
                             ClassicButton(
                                 action = {
-                                    viewModel.handle(AddSecretEvents.AddSecret(secretId, secret))
+                                    viewModel.handle(AddSecretEvents.AddSecret(secretName, secret))
                                     dialogVisibility(false)
                                 },
                                 text = stringResource(Res.string.addSecret),
-                                isEnabled = (secretId.isNotEmpty() && secret.isNotEmpty())
+                                isEnabled = (secretName.isNotEmpty() && secret.isNotEmpty())
                             )
                         }
                     }

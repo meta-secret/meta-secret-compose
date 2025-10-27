@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinproject.composeapp.generated.resources.Res
+import kotlinproject.composeapp.generated.resources.currentDevice
 import kotlinproject.composeapp.generated.resources.devices
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
@@ -42,6 +43,7 @@ import ui.SwipeableItem
 fun DeviceContent(
     screenMetricsProvider: ScreenMetricsProviderInterface,
     model: DeviceCellModel,
+    currentDeviceId: String?,
     onClick: ()-> Unit
 ) {
     val secretText = when {
@@ -49,15 +51,16 @@ fun DeviceContent(
         model.secretsCount in 2..4 -> stringResource(Res.string.secrets_4)
         else -> stringResource(Res.string.secret)
     }
-    SwipeableItem(
-        itemsCount = model.devicesCount,
-        buttonText = stringResource(Res.string.removeDevice),
-        isRevealed = false,
-        screenMetricsProvider,
-        action = {},
-        onExpanded = { },
-        onCollapsed = {},
-        content = {
+    // TODO: We don't have device deletion functionality. I'm gonna uncomment it later.
+//    SwipeableItem(
+//        itemsCount = model.devicesCount,
+//        buttonText = stringResource(Res.string.removeDevice),
+//        isRevealed = false,
+//        screenMetricsProvider,
+//        action = {},
+//        onExpanded = { },
+//        onCollapsed = {},
+//        content = {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     .background(AppColors.White5, RoundedCornerShape(12.dp)).height(96.dp)
@@ -88,14 +91,22 @@ fun DeviceContent(
                             )
                         )
                         Text(
-                            text = model.status.value,
+                            text = if (model.id == currentDeviceId) {
+                                stringResource(Res.string.currentDevice)
+                            } else {
+                                model.status.value
+                            },
                             style = TextStyle(
                                 fontSize = 11.sp,
                                 fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                                color = when (model.status) {
-                                    DeviceStatus.Member -> AppColors.White30
-                                    DeviceStatus.Pending -> AppColors.Warning
-                                    DeviceStatus.Unknown -> AppColors.RedError
+                                color = if (model.id == currentDeviceId) {
+                                    AppColors.White30
+                                } else {
+                                    when (model.status) {
+                                        DeviceStatus.Member -> AppColors.White30
+                                        DeviceStatus.Pending -> AppColors.Warning
+                                        DeviceStatus.Unknown -> AppColors.RedError
+                                    }
                                 }
                             )
                         )
@@ -110,6 +121,6 @@ fun DeviceContent(
                     }
                 }
             }
-        }
-    )
+//        }
+//    )
 }

@@ -60,8 +60,6 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
             println("\uF8FF ✅ iOS: Calling generateUserCreds")
             val result = swiftBridge.generateUserCredsWithVaultName(vaultName)
             println("\uF8FF ✅ iOS: App generateUserCreds: $result")
-            // Trigger backup after DB modification
-            swiftBridge.backupIfChanged()
             return result
         } catch (e: Exception) {
             println("\uF8FF ⛔ iOS: AppManager generateUserCreds error: ${e.message}")
@@ -76,7 +74,6 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
             println("\uF8FF ✅ iOS: Calling signUp")
             val result = swiftBridge.signUp()
             println("\uF8FF ✅ iOS: SignUp result: $result")
-            swiftBridge.backupIfChanged()
             return result
         } catch (e: Exception) {
             println("\uF8FF ⛔ iOS: SignUp error: ${e.message}")
@@ -110,7 +107,6 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
 
             val result = swiftBridge.updateMembership(userDataJson, jsonActionUpdate)
             println("\uF8FF ✅ iOS: updateMembership result: $result")
-            swiftBridge.backupIfChanged()
             return result
         } catch (e: Exception) {
             println("\uF8FF ⛔ iOS: updateMembership error: ${e.message}")
@@ -119,10 +115,10 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
         }
     }
 
-    override fun splitSecret(secretId: String, secret: String): String {
+    override fun splitSecret(secretName: String, secret: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling splitSecret with: $secretId")
-            val result = swiftBridge.splitSecret(secretId, secret)
+            println("\uF8FF ✅ iOS: Calling splitSecret with: $secretName")
+            val result = swiftBridge.splitSecret(secretName, secret)
             println("\uF8FF ✅ iOS: AppManager: splitSecret result $result")
             return result
         } catch (e: Exception) {

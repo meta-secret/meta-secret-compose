@@ -1,44 +1,32 @@
 package ui.dialogs.showsecret
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import org.jetbrains.compose.resources.Font
-import core.AppColors
 import core.Device
 import core.KeyValueStorageInterface
+import core.LogTags
+import core.metaSecretCore.MetaSecretAppManagerInterface
+import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import models.appInternalModels.SecretModel
+import models.appInternalModels.SocketRequestModel
+import ui.scenes.common.CommonViewModel
+import ui.scenes.common.CommonViewModelEventsInterface
 
 class ShowSecretViewModel(
-    private val keyValueStorage: KeyValueStorageInterface
-) : ViewModel() {
+    private val keyValueStorage: KeyValueStorageInterface,
+    private val metaSecretAppManager: MetaSecretAppManagerInterface,
+    private val socketHandler: MetaSecretSocketHandlerInterface,
+    private val mainScreenViewModel: ui.scenes.mainscreen.MainScreenViewModel
+) : ViewModel(), CommonViewModel {
 
     private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -46,40 +34,92 @@ class ShowSecretViewModel(
     val devicesCount: StateFlow<Int> = devicesList.map { it.size }
         .stateIn(viewModelScope, SharingStarted.Lazily, 0)
 
-    @Composable
-    fun textRow(text: String, isPasswordVisible: Boolean) {
-        val scrollState = rememberScrollState()
-        var copyTriggered by remember { mutableStateOf(false) }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = AppColors.TextField,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(horizontal = 16.dp)
-                .heightIn(min = 48.dp, max = 200.dp)
-                .verticalScroll(scrollState)
-                .clickable { if(isPasswordVisible){ copyTriggered = true }},
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                color = AppColors.White,
-                textAlign = TextAlign.Center
-            )
-        }
-        if (copyTriggered) {
-            copyToClipboard(text)
-            copyTriggered = false
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _recoveredSecret = MutableStateFlow<String?>(null)
+    val recoveredSecret: StateFlow<String?> = _recoveredSecret
+
+    init {
+        viewModelScope.launch {
+            mainScreenViewModel.secretIdToShow.collect { secretId ->
+                if (secretId != null) {
+                    showRecoveredSecret(secretId)
+                }
+            }
         }
     }
 
-    @Composable
-    fun copyToClipboard(textToCopy: String) {
-        val clipboardManager = LocalClipboardManager.current
-        clipboardManager.setText(AnnotatedString(textToCopy))
+    override fun handle(event: CommonViewModelEventsInterface) {
+        println("✅" + LogTags.SHOW_SECRET_VM + ": need handle event $event")
+        if (event is ShowSecretEvents) {
+            when (event) {
+                is ShowSecretEvents.ShowSecret -> {
+                    println("✅" + LogTags.SHOW_SECRET_VM + ": recover secretId ${event.secretId}")
+                    val currentSecretIdToShow = mainScreenViewModel.secretIdToShow.value
+                    if (currentSecretIdToShow == event.secretId) {
+                        println("✅" + LogTags.SHOW_SECRET_VM + ": SecretId matches secretIdToShow, showing recovered secret")
+                        showRecoveredSecret(event.secretId)
+                    } else {
+                        println("✅" + LogTags.SHOW_SECRET_VM + ": SecretId does not match secretIdToShow, starting recover process")
+                        recoverSecret(event.secretId)
+                    }
+                }
+
+                ShowSecretEvents.HideSecret -> {
+                    println("✅" + LogTags.SHOW_SECRET_VM + ": hide secret")
+                    _recoveredSecret.value = null
+                    mainScreenViewModel.clearSecretIdToShow()
+                }
+            }
+        }
     }
+
+    private fun recoverSecret(secretId: String) {
+        _isLoading.value = true
+        println("✅" + LogTags.SHOW_SECRET_VM + ": Start recovering process")
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    socketHandler.actionsToFollow(
+                        null,
+                        listOf(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST)
+                    )
+                    metaSecretAppManager.recover(secretModel = SecretModel(secretId, null))
+                }
+            } catch (t: Throwable) {
+                println("❌${LogTags.SHOW_SECRET_VM}: recover failed: ${t.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private fun showRecoveredSecret(secretId: String) {
+        println("✅" + LogTags.SHOW_SECRET_VM + ": Start showing recovered secret")
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val recoveredSecretValue = metaSecretAppManager.showRecovered(SecretModel(secretId, null))
+                    withContext(Dispatchers.Main) {
+                        if (recoveredSecretValue != null) {
+                            _recoveredSecret.value = recoveredSecretValue
+                            println("✅" + LogTags.SHOW_SECRET_VM + ": Recovered secret loaded successfully")
+                        } else {
+                            println("❌" + LogTags.SHOW_SECRET_VM + ": Failed to recover secret")
+                        }
+                    }
+                }
+            } catch (t: Throwable) {
+                println("❌${LogTags.SHOW_SECRET_VM}: showRecovered failed: ${t.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+}
+
+sealed class ShowSecretEvents : CommonViewModelEventsInterface {
+    data class ShowSecret(val secretId: String) : ShowSecretEvents()
+    object HideSecret: ShowSecretEvents()
 }

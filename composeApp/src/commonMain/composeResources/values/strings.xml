@@ -92,4 +92,6 @@
     <string name = "backup_choose_path_message">Choose a path to back up your database</string>
     <string name = "backup_choose_path_warning">If you do not choose a path, your data may be lost when the app is uninstalled</string>
     <string name = "ok">Ok</string>
+    <string name = "currentDevice">Current device</string>
+    <string name = "wanna_recover">Wanna show the secret?</string>
 </resources>

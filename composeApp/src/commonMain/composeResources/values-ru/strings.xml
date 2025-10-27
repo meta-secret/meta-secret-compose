@@ -92,4 +92,6 @@
     <string name = "backup_choose_path_message">Выберите путь, для сохранения Базы Данных</string>
     <string name = "backup_choose_path_warning">Если вы не укажите путь, ваши данные будут утеряны при деинсталяции приложения</string>
     <string name = "ok">Ок</string>
+    <string name = "currentDevice">Текущее устройство</string>
+    <string name = "wanna_recover">Показать ваш секрет?</string>
 </resources>

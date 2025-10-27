@@ -9,7 +9,7 @@ interface MetaSecretCoreInterface {
     fun generateUserCreds(vaultName: String): String
     fun signUp(): String
     fun updateMembership(candidate: UserData, actionUpdate: String): String
-    fun splitSecret(secretId: String, secret: String): String
+    fun splitSecret(secretName: String, secret: String): String
     fun findClaim(secretId: String): String
     fun recover(secretId: String): String
     fun acceptRecover(claimId: String): String

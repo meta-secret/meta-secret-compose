@@ -15,6 +15,7 @@ import models.appInternalModels.SocketRequestModel
 import models.appInternalModels.UpdateMemberActionModel
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import core.KeyValueStorageInterface
 import core.LogTags
 import core.ScreenMetricsProviderInterface
 import ui.scenes.common.CommonViewModel
@@ -23,7 +24,8 @@ import ui.scenes.common.CommonViewModelEventsInterface
 class DevicesScreenViewModel(
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
-    private val appManager: MetaSecretAppManagerInterface
+    private val appManager: MetaSecretAppManagerInterface,
+    private val keyValueStorage: KeyValueStorageInterface
 ) : ViewModel(), CommonViewModel {
 
     private val _devicesList = MutableStateFlow<List<DeviceCellModel>>(emptyList())
@@ -36,6 +38,9 @@ class DevicesScreenViewModel(
     val isLoading = _isLoading.asStateFlow()
 
     private val _currentDeviceId = MutableStateFlow<String?>(null)
+    
+    val currentDeviceId: String?
+        get() = keyValueStorage.cachedDeviceId
 
     init {
         println("✅${LogTags.DEVICES_VM}: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")

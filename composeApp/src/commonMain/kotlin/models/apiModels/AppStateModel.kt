@@ -149,8 +149,56 @@ data class VaultEvents(
 }
 
 @Serializable
+enum class DistributionType {
+    @SerialName("split")
+    SPLIT,
+    @SerialName("recover")
+    RECOVER
+}
+
+@Serializable
+enum class ClaimStatus {
+    @SerialName("pending")
+    PENDING,
+    @SerialName("sent")
+    SENT,
+    @SerialName("accepted")
+    ACCEPTED,
+    @SerialName("declined")
+    DECLINED
+}
+
+@Serializable
+data class PassId(
+    val id: String,
+    val name: String
+)
+
+@Serializable
+data class DistClaimId(
+    val id: String,
+    val passId: PassId
+)
+
+@Serializable
+data class ClaimStatusInfo(
+    val statuses: Map<String, ClaimStatus> = emptyMap()
+)
+
+@Serializable
+data class ClaimObject(
+    val distClaimId: DistClaimId,
+    val distributionType: DistributionType,
+    val id: String,
+    val receivers: List<String> = emptyList(),
+    val sender: String,
+    val status: ClaimStatusInfo,
+    val vaultName: String
+)
+
+@Serializable
 data class SsClaims(
-    val claims: Map<String, String> = emptyMap()
+    val claims: Map<String, ClaimObject> = emptyMap()
 )
 
 @Serializable
@@ -238,7 +286,17 @@ data class AppStateModel(
 
     fun getCurrentDeviceId(): String? {
         return when (val vaultInfo = getVaultFullInfo()) {
+            is VaultFullInfo.Member -> vaultInfo.member.member.member.userData.device.deviceId
             is VaultFullInfo.Outsider -> vaultInfo.outsider.userData.device.deviceId
+            else -> null
+        }
+    }
+    
+    fun getCurrentVaultName(): String? {
+        return when (val vaultInfo = getVaultFullInfo()) {
+            is VaultFullInfo.Member -> vaultInfo.member.member.member.userData.vaultName
+            is VaultFullInfo.Outsider -> vaultInfo.outsider.userData.vaultName
+            is VaultFullInfo.NotExists -> vaultInfo.notExists.vaultName
             else -> null
         }
     }

@@ -126,10 +126,10 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
         }
     }
 
-    override fun splitSecret(secretId: String, secret: String): String {
+    override fun splitSecret(secretName: String, secret: String): String {
         try {
             println("✅ Calling Android splitSecret")
-            val result = MetaSecretNative.splitSecret(secretId,secret)
+            val result = MetaSecretNative.splitSecret(secretName,secret)
             println("✅ App Android splitSecret result: $result")
             return result
         } catch (e: Exception) {

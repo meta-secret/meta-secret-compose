@@ -11,9 +11,13 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import models.apiModels.AppStateModel
+import models.apiModels.ClaimStatus
+import models.apiModels.DistributionType
 import models.apiModels.UserDataOutsiderStatus
 import models.apiModels.VaultFullInfo
+import models.appInternalModels.RestoreData
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 
@@ -21,7 +25,7 @@ class MetaSecretSocketHandler(
     private val metaSecretCore: MetaSecretCoreInterface,
     private val appManager: MetaSecretAppManagerInterface
 ): MetaSecretSocketHandlerInterface {
-    private val _socketActionType = MutableStateFlow(SocketActionModel.NONE)
+    private val _socketActionType = MutableStateFlow<SocketActionModel>(SocketActionModel.NONE)
     override val socketActionType: StateFlow<SocketActionModel> = _socketActionType
 
     private val _socketActions = MutableSharedFlow<SocketActionModel>(
@@ -111,12 +115,99 @@ class MetaSecretSocketHandler(
 
             if (actionsToFollow.contains(SocketRequestModel.GET_STATE)) {
                 println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for state response")
-                _socketActions.tryEmit(SocketActionModel.UPDATE_SECRETS)
+                _socketActions.tryEmit(SocketActionModel.UPDATE_STATE)
+            }
+
+            if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST)) {
+                println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for recover")
+                timerScope.launch {
+                    checkRecoverRequest(currentState)
+                }
+            }
+
+            if (actionsToFollow.contains(SocketRequestModel.SHOW_SECRET)) {
+                println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for show secret")
+                timerScope.launch {
+                    checkRecoverSentStatus(currentState)
+                }
             }
 
             isLocked = false
         } else {
             println("✅" + core.LogTags.SOCKET_HANDLER + ": NO any subscriptions")
+        }
+    }
+
+    private suspend fun checkRecoverRequest(currentState: AppStateModel) {
+        withContext(Dispatchers.Default) {
+            println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for recover request")
+            
+            val currentDeviceId = currentState.getCurrentDeviceId()
+            val vaultFullInfo = currentState.getVaultFullInfo()
+            
+            if (currentDeviceId != null && vaultFullInfo is VaultFullInfo.Member) {
+                val ssClaims = vaultFullInfo.member.ssClaims
+                val claims = ssClaims?.claims
+                
+                if (claims != null && claims.isNotEmpty()) {
+                    println("✅" + core.LogTags.SOCKET_HANDLER + ": Found ${claims.size} claims")
+
+                    val recoverClaimIds: List<RestoreData> = claims.values
+                        .filter { claim ->
+                            val isRecoverType = claim.distributionType == DistributionType.RECOVER
+                            val isReceiverForThisDevice = claim.receivers.contains(currentDeviceId)
+                            val isPending = claim.status.statuses[currentDeviceId] == ClaimStatus.PENDING
+                            isRecoverType && isReceiverForThisDevice && isPending
+                        }
+                        .map { claim ->
+                            RestoreData(claim.distClaimId.id, claim.distClaimId.passId.name)
+                        }
+
+                    if (recoverClaimIds.isNotEmpty()) {
+                        println("✅" + core.LogTags.SOCKET_HANDLER + ": Ready to recover for passIds: $recoverClaimIds")
+                        _socketActionType.value = SocketActionModel.READY_TO_RECOVER(
+                            restoreData = recoverClaimIds
+                        )
+                    }
+                } else {
+                    println("✅" + core.LogTags.SOCKET_HANDLER + ": No claims found")
+                }
+            }
+        }
+    }
+
+    private suspend fun checkRecoverSentStatus(currentState: AppStateModel) {
+        withContext(Dispatchers.Default) {
+            println("✅" + core.LogTags.SOCKET_HANDLER + ": Checking recover sent status")
+            
+            val currentDeviceId = currentState.getCurrentDeviceId()
+            val vaultFullInfo = currentState.getVaultFullInfo()
+            
+            if (currentDeviceId != null && vaultFullInfo is VaultFullInfo.Member) {
+                val ssClaims = vaultFullInfo.member.ssClaims
+                val claims = ssClaims?.claims
+                
+                if (claims != null && claims.isNotEmpty()) {
+                    println("✅" + core.LogTags.SOCKET_HANDLER + ": Checking recover sent status claims: ${claims.values}")
+                    val sentRecoverClaims = claims.values
+                        .filter { claim ->
+                            val isRecoverType = claim.distributionType == DistributionType.RECOVER
+                            val isSenderForThisDevice = claim.sender == currentDeviceId
+                            val isSent = claim.receivers.any { receiverId ->
+                                claim.status.statuses[receiverId] == ClaimStatus.SENT
+                            }
+                            println("✅" + core.LogTags.SOCKET_HANDLER + ": Checking recover sent status isRecoverType: $isRecoverType, isSenderForThisDevice: $isSenderForThisDevice, isSent: $isSent")
+                            isRecoverType && isSenderForThisDevice && isSent
+                        }
+
+                    println("✅" + core.LogTags.SOCKET_HANDLER + ": Checking recover sent status sentRecoverClaims: $sentRecoverClaims")
+                    if (sentRecoverClaims.isNotEmpty()) {
+                        val secretId = sentRecoverClaims.first().distClaimId.passId.name
+                        println("✅" + core.LogTags.SOCKET_HANDLER + ": Recover sent for secretId: $secretId")
+                        _socketActionType.value = SocketActionModel.RECOVER_SENT(secretId)
+                    }
+                }
+            }
         }
     }
 

@@ -11,6 +11,8 @@ interface KeyValueStorageInterface {
     var secretData: StateFlow<List<Secret>>
     var deviceData: StateFlow<List<Device>>
     var isBiometricEnabled: Boolean
+    var cachedDeviceId: String?
+    var cachedVaultName: String?
 
     fun cleanStorage()
     fun resetKeyValueStorage()
@@ -36,7 +38,9 @@ enum class StorageKeys {
     WARNING_INFO,
     SECRET_DATA,
     DEVICE_DATA,
-    BIOMETRIC_ENABLED;
+    BIOMETRIC_ENABLED,
+    CACHED_DEVICE_ID,
+    CACHED_VAULT_NAME;
 
     val key get() = name
 }

@@ -24,7 +24,7 @@ interface MetaSecretAppManagerInterface {
     fun updateMember(candidate: UserData, actionUpdate: String): CommonResponseModel?
     fun getUserDataBy(deviceId: String): UserData?
     fun splitSecret(secretModel: SecretModel): CommonResponseModel?
-    fun findClaim(secretModel: SecretModel): ClaimModel?
+    fun findClaim(secretId: String): ClaimModel?
     fun recover(secretModel: SecretModel): CommonResponseModel?
     fun acceptRecover(claim: ClaimModel): CommonResponseModel?
     fun showRecovered(secretModel: SecretModel): String?

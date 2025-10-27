@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -52,14 +53,19 @@ class ProfileScreen : Screen {
 
 @Composable
 fun ProfileBody() {
-    val viewModel: ProfileScreenViewModel = koinViewModel()
     val navigator = LocalNavigator.currentOrThrow
-    val secrets = stringResource(Res.string.secretsHeader)
-    val devices = stringResource(Res.string.devicesList)
+    val viewModel: ProfileScreenViewModel = koinViewModel()
     val secretsCount by viewModel.secretsCount.collectAsState()
     val devicesCount by viewModel.devicesCount.collectAsState()
+    val secrets = stringResource(Res.string.secretsHeader)
+    val devices = stringResource(Res.string.devicesList)
     val nickname = stringResource(Res.string.nickname)
-    val nicknameField = viewModel.getNickName().toString()
+    val vaultName by viewModel.vaultName.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.handle(ProfileEvents.LoadProfileData)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -70,7 +76,7 @@ fun ProfileBody() {
                 .padding(vertical = 15.dp)
                 .fillMaxSize()
         ) {
-            ProfileTextCell(nickname, nicknameField, Alignment.Start)
+            ProfileTextCell(nickname, vaultName ?: "n/a", Alignment.Start)
             DrawBoxLine(20)
             Row(
                 modifier = Modifier
@@ -97,13 +103,13 @@ fun ProfileBody() {
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 90.dp),
         ) {
-            ClassicButton({
-                    viewModel.completeSignIn(false)
-                    navigator.popUntilRoot()
-                },
-                stringResource(Res.string.signOut),
-                color = AppColors.RedError
-            )
+//            ClassicButton({
+//                    viewModel.completeSignIn(false)
+//                    navigator.popUntilRoot()
+//                },
+//                stringResource(Res.string.signOut),
+//                color = AppColors.RedError
+//            )
             Column(
                 modifier = Modifier
                     .fillMaxWidth(),

@@ -36,6 +36,26 @@ class KeyValueStorageImpl(
             settings[StorageKeys.BIOMETRIC_ENABLED.key] = value
         }
 
+    override var cachedDeviceId: String?
+        get() = settings.getStringOrNull(StorageKeys.CACHED_DEVICE_ID.key)
+        set(value) {
+            if (value != null) {
+                settings[StorageKeys.CACHED_DEVICE_ID.key] = value
+            } else {
+                settings.remove(StorageKeys.CACHED_DEVICE_ID.key)
+            }
+        }
+
+    override var cachedVaultName: String?
+        get() = settings.getStringOrNull(StorageKeys.CACHED_VAULT_NAME.key)
+        set(value) {
+            if (value != null) {
+                settings[StorageKeys.CACHED_VAULT_NAME.key] = value
+            } else {
+                settings.remove(StorageKeys.CACHED_VAULT_NAME.key)
+            }
+        }
+
     @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
     override var signInInfo: LoginInfo?
         get() = settings.decodeValueOrNull(LoginInfo.serializer(), StorageKeys.LOGIN_INFO.key)

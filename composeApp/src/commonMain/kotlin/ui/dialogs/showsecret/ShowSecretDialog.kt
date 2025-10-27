@@ -12,15 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -58,7 +57,7 @@ fun ShowSecret(
 ) {
     val viewModel: ShowSecretViewModel = koinViewModel()
     val devicesCount by viewModel.devicesCount.collectAsState()
-    var isPasswordVisible by remember { mutableStateOf(false) }
+    val recoveredSecret by viewModel.recoveredSecret.collectAsState()
 
     val deviceText = when {
         devicesCount == 0 || devicesCount > 4 -> stringResource(Res.string.devices_5)
@@ -73,7 +72,6 @@ fun ShowSecret(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable { dialogVisibility(false) }
                 .padding(horizontal = 16.dp)
                 .background(AppColors.Black30),
             contentAlignment = Alignment.Center
@@ -86,7 +84,10 @@ fun ShowSecret(
                     )
                     .background(AppColors.PopUp, RoundedCornerShape(12.dp))
                     .padding(horizontal = 16.dp)
-                    .clickable(onClick = {}, enabled = false),
+                    .clickable(
+                        indication = null,
+                        interactionSource = androidx.compose.foundation.interaction.MutableInteractionSource()
+                    ) { /* consume clicks inside dialog */ },
             ) {
                 Box(
                     modifier = Modifier
@@ -99,6 +100,7 @@ fun ShowSecret(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .clickable {
+                                viewModel.handle(ShowSecretEvents.HideSecret)
                                 dialogVisibility(false)
                             }
                     )
@@ -116,12 +118,10 @@ fun ShowSecret(
                         color = AppColors.White,
                         textAlign = TextAlign.Center
                     )
-                    viewModel.textRow(secret.secretName, false)
-                    viewModel.textRow(
-                        when (isPasswordVisible) {
-                            true -> secret.secretId
-                            false -> "*".repeat(secret.secretId.length)
-                        }, isPasswordVisible
+                    TextRow(secret.secretName)
+                    TextRow(
+                        if (recoveredSecret != null) recoveredSecret!!
+                        else "••••••••"
                     )
 
                     Row(
@@ -143,18 +143,48 @@ fun ShowSecret(
                                 .height(20.dp)
                         )
                     }
-                    ClassicButton({
-                        isPasswordVisible = when (isPasswordVisible) {
-                                true -> false
-                                false -> true
-                        }},
-                        when (isPasswordVisible) {
-                            true -> stringResource(Res.string.hide)
-                            false -> stringResource(Res.string.show)
+                    ClassicButton(
+                        {
+                            if (recoveredSecret == null) {
+                                viewModel.handle(ShowSecretEvents.ShowSecret(secret.secretName))
+                            } else {
+                                viewModel.handle(ShowSecretEvents.HideSecret)
+                            }
+                        },
+                        when {
+                            recoveredSecret != null -> stringResource(Res.string.hide)
+                            else -> stringResource(Res.string.show)
                         }
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+fun TextRow(text: String) {
+    val scrollState = rememberScrollState()
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = AppColors.TextField,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 16.dp)
+            .heightIn(min = 48.dp, max = 200.dp)
+            .verticalScroll(scrollState)
+            .clickable { },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+            color = AppColors.White,
+            textAlign = TextAlign.Center
+        )
     }
 }
