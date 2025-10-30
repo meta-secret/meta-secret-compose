@@ -77,7 +77,10 @@ class OnboardingScreen : Screen {
             }
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
             Image(
                 painter = backgroundMain,
                 contentDescription = null,

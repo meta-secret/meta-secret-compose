@@ -1,5 +1,9 @@
 package ui.notifications
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,19 +34,29 @@ import org.jetbrains.compose.resources.painterResource
 import core.AppColors
 
 @Composable
-fun warningContent(
+fun WarningContent(
     text: AnnotatedString,
     mainAction: () -> Unit?,
-    closeAction: () -> Unit
+    closeAction: () -> Unit,
+    isVisible: Boolean = true
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 14.dp)
-            .background(AppColors.White5, RoundedCornerShape(10.dp))
-            .height(92.dp)
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = slideInVertically(
+            initialOffsetY = { -it },
+            animationSpec = tween(durationMillis = 300)
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = { -it },
+            animationSpec = tween(durationMillis = 200)
+        )
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(AppColors.White5, RoundedCornerShape(10.dp))
+                .height(92.dp)
+        ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -89,5 +103,6 @@ fun warningContent(
                     }
             )
         }
+    }
     }
 }

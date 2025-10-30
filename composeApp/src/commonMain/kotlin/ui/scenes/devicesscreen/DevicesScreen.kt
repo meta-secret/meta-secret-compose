@@ -81,80 +81,77 @@ class DevicesScreen : Screen {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .zIndex(10f),
+                    .zIndex(1f),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    color = AppColors.White,
+                    color = AppColors.ActionMain,
                     modifier = Modifier.padding(16.dp)
                 )
             }
         }
-        
-        AddButton { isDialogVisible = it }
+
+        AddButton { isMainDialogVisible = it }
+
+        AnimatedVisibility(
+            visible = isMainDialogVisible,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(durationMillis = 350)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(durationMillis = 250)
+            )
+        ) {
+            AddingDevice(
+                viewModel.screenMetricsProvider,
+                mainDialogVisibility = { isMainDialogVisible = it },
+                userName = ""
+            )
+        }
 
         AnimatedVisibility(
             visible = isDialogVisible,
             enter = slideInVertically(
                 initialOffsetY = { it },
-                animationSpec = tween(durationMillis = 1500)
+                animationSpec = tween(durationMillis = 350)
             ),
             exit = slideOutVertically(
                 targetOffsetY = { it },
-                animationSpec = tween(durationMillis = 1000)
+                animationSpec = tween(durationMillis = 250)
             )
         ) {
             PopUpDevice(
                 viewModel.screenMetricsProvider,
-                dialogVisibility = { isDialogVisible = it },
-                mainDialogVisibility = { isMainDialogVisible = it }
+                mainDialogVisibility = { isDialogVisible = it },
+                dialogVisibility = { isDialogVisible = it }
             )
         }
-        AnimatedVisibility(
-            visible = isMainDialogVisible,
-            enter = slideInVertically(
-                initialOffsetY = { it },
-                animationSpec = tween(durationMillis = 1500)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(durationMillis = 1000)
-            )
-        ) {
-            AddingDevice (
-                viewModel.screenMetricsProvider,
-                { isMainDialogVisible = it},
-                viewModel.vaultName.value ?: ""
-            )
-        }
+
         AnimatedVisibility(
             visible = isJoinRequestVisible,
             enter = slideInVertically(
                 initialOffsetY = { it },
-                animationSpec = tween(durationMillis = 1500)
+                animationSpec = tween(durationMillis = 350)
             ),
             exit = slideOutVertically(
                 targetOffsetY = { it },
-                animationSpec = tween(durationMillis = 1000)
+                animationSpec = tween(durationMillis = 250)
             )
         ) {
             YesNoDialog(
                 stringResource(Res.string.wanna_join),
                 viewModel.screenMetricsProvider,
-                onDismiss = {
-                    if (it != null) {
-                        val action = if (it) {
-                            DeviceViewEvents.Accept
+                onDismiss = { isAccepted ->
+                    if (isAccepted != null) {
+                        if (isAccepted) {
+                            viewModel.handle(DeviceViewEvents.Accept)
                         } else {
-                            DeviceViewEvents.Decline
+                            viewModel.handle(DeviceViewEvents.Decline)
                         }
-
-                        viewModel.handle(action)
-                        isJoinRequestVisible = false
-                    } else {
-                        viewModel.handle(DeviceViewEvents.SelectDevice(null))
-                        isJoinRequestVisible = false
                     }
+                    isJoinRequestVisible = false
                 }
             )
         }

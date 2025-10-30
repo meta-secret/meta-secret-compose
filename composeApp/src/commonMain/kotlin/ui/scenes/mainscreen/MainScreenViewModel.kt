@@ -41,6 +41,9 @@ class MainScreenViewModel(
 
     private val _isWarningShown = MutableStateFlow(false)
     val isWarningShown: StateFlow<Boolean> = _isWarningShown
+    
+    private val _isWarningDismissedByUser = MutableStateFlow(false)
+    val isWarningDismissedByUser: StateFlow<Boolean> = _isWarningDismissedByUser
 
     private val recoverQueue: ArrayDeque<RestoreData> = ArrayDeque()
     private val _recoverDialog = MutableStateFlow<RestoreData?>(null)
@@ -72,6 +75,9 @@ class MainScreenViewModel(
                     val count = metaSecretAppManager.getJoinRequestsCount()
                     withContext(Dispatchers.Main) {
                         _joinRequestsCount.value = count
+                        if (count != null && count > 0) {
+                            _isWarningDismissedByUser.value = false
+                        }
                     }
                 }
 
@@ -172,7 +178,14 @@ class MainScreenViewModel(
     }
 
     private fun changeWarningVisibilityTo(state: Boolean) {
-        _isWarningShown.value = state
+        if (state) {
+            if (!_isWarningDismissedByUser.value) {
+                _isWarningShown.value = true
+            }
+        } else {
+            _isWarningDismissedByUser.value = true
+            _isWarningShown.value = false
+        }
     }
 }
 

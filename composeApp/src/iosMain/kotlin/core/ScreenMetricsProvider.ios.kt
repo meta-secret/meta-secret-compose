@@ -3,6 +3,8 @@ package core
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
 import platform.UIKit.UIScreen
+import platform.UIKit.UIApplication
+import platform.UIKit.UIWindow
 
 class ScreenMetricsProviderIos : ScreenMetricsProviderInterface {
     @OptIn(ExperimentalForeignApi::class)
@@ -22,6 +24,18 @@ class ScreenMetricsProviderIos : ScreenMetricsProviderInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun screenHeight(): Int {
         return UIScreen.mainScreen.bounds.useContents { size.height.toInt() }
+    }
+    
+    @OptIn(ExperimentalForeignApi::class)
+    override fun topSafeAreaInset(): Int {
+        val window = UIApplication.sharedApplication.keyWindow
+        return window?.safeAreaInsets?.useContents { top.toInt() } ?: 0
+    }
+    
+    @OptIn(ExperimentalForeignApi::class)
+    override fun bottomSafeAreaInset(): Int {
+        val window = UIApplication.sharedApplication.keyWindow
+        return window?.safeAreaInsets?.useContents { bottom.toInt() } ?: 0
     }
 }
 
