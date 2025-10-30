@@ -50,11 +50,19 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.compose.koinInject
 import core.AppColors
+<<<<<<< HEAD
+import core.AlertCoordinatorInterface
+=======
+>>>>>>> cfb58df ([Mobile][UI] Fix for vertical coordinates for iOS devices)
 import kotlinproject.composeapp.generated.resources.wanna_recover
 import ui.TabStateHolder
 import ui.AlertProvider
 import ui.dialogs.YesNoDialog
+<<<<<<< HEAD
+import ui.notifications.WarningBubble
+=======
 import ui.notifications.WarningContent
+>>>>>>> cfb58df ([Mobile][UI] Fix for vertical coordinates for iOS devices)
 
 class MainScreen : Screen {
     @Composable
@@ -144,16 +152,33 @@ class MainScreen : Screen {
                         viewModel.handle(MainViewEvents.ShowWarning(false))
                     }
 
+<<<<<<< HEAD
+                    val computedWarningText = if (selectedTabIndex == 1 && joinRequestsCount != null && joinRequestsCount!! > 0) {
+                        null
+                    } else {
+                        getWarningText(joinRequestsCount, devicesCount)
+                    }
+
+                    computedWarningText?.let { warningText ->
+=======
                     getWarningText(joinRequestsCount, devicesCount)?.let { warningText ->
+>>>>>>> cfb58df ([Mobile][UI] Fix for vertical coordinates for iOS devices)
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
                                 .padding(horizontal = 16.dp)
+<<<<<<< HEAD
+                                .padding(top = 0.dp)
+                                .padding(bottom = 14.dp)
+                        ) {
+                            WarningBubble(
+=======
                                 .padding(top = 20.dp)
                                 .padding(bottom = 14.dp)
                         ) {
                             WarningContent(
+>>>>>>> cfb58df ([Mobile][UI] Fix for vertical coordinates for iOS devices)
                                 text = warningText,
                                 mainAction = {
                                     viewModel.handle(MainViewEvents.SetTabIndex(1))

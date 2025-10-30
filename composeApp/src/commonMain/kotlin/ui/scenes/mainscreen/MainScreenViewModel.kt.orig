@@ -47,7 +47,10 @@ class MainScreenViewModel(
     val isWarningShown: StateFlow<Boolean> = _isWarningShown
     
     private val _isWarningDismissedByUser = MutableStateFlow(false)
+<<<<<<< HEAD
+=======
     val isWarningDismissedByUser: StateFlow<Boolean> = _isWarningDismissedByUser
+>>>>>>> cfb58df ([Mobile][UI] Fix for vertical coordinates for iOS devices)
 
     private val recoverQueue: ArrayDeque<RestoreData> = ArrayDeque()
     private val _recoverDialog = MutableStateFlow<RestoreData?>(null)
@@ -76,6 +79,8 @@ class MainScreenViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             socketHandler.socketActionType.collect { actionType ->
+<<<<<<< HEAD
+=======
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
                     println("✅${LogTags.MAIN_VM}: New state for Join request has been gotten")
 
@@ -88,6 +93,7 @@ class MainScreenViewModel(
                     }
                 }
 
+>>>>>>> cfb58df ([Mobile][UI] Fix for vertical coordinates for iOS devices)
                 when (val a = actionType) {
                     is SocketActionModel.READY_TO_RECOVER -> {
                         val restoreData = a.restoreData

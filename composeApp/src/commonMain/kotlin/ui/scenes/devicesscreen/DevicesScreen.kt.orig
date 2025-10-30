@@ -137,6 +137,9 @@ class DevicesScreen : Screen {
             )
         }
 
+<<<<<<< HEAD
+
+=======
         AnimatedVisibility(
             visible = isJoinRequestVisible,
             enter = slideInVertically(
@@ -163,7 +166,6 @@ class DevicesScreen : Screen {
                 }
             )
         }
-
-
+>>>>>>> cfb58df ([Mobile][UI] Fix for vertical coordinates for iOS devices)
     }
 }
