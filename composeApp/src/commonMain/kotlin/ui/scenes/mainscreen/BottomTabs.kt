@@ -46,7 +46,6 @@ object SecretsTab : Tab {
             val title = stringResource(Res.string.secretsHeader)
             val index: UShort = 0U
 
-
             return TabOptions(
                 index, title, icon
             )
@@ -74,7 +73,7 @@ object DevicesTab : Tab{
         }
         
     @Composable
-    fun tabWithBadge(hasJoinRequests: Boolean) {
+    fun TabWithBadge(hasJoinRequests: Boolean) {
         Box {
             val icon = painterResource(Res.drawable.devices_logo)
             Icon(

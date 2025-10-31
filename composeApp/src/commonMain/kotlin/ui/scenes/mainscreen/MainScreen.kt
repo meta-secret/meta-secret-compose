@@ -105,7 +105,7 @@ class MainScreen : Screen {
                                     },
                                     icon = {
                                         if (index == 1 && joinRequestsCount != null) {
-                                            DevicesTab.tabWithBadge(hasJoinRequests = true)
+                                            DevicesTab.TabWithBadge(hasJoinRequests = true)
                                         } else {
                                             tab.options.icon?.let { icon ->
                                                 Icon(

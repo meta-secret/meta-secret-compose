@@ -18,6 +18,7 @@ import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.KeyValueStorageInterface
 import core.LogTags
 import core.ScreenMetricsProviderInterface
+import core.VaultStatsProviderInterface
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 
@@ -25,14 +26,14 @@ class DevicesScreenViewModel(
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val appManager: MetaSecretAppManagerInterface,
-    private val keyValueStorage: KeyValueStorageInterface
+    private val keyValueStorage: KeyValueStorageInterface,
+    private val vaultStatsProvider: VaultStatsProviderInterface,
 ) : ViewModel(), CommonViewModel {
 
     private val _devicesList = MutableStateFlow<List<DeviceCellModel>>(emptyList())
     val devicesList = _devicesList.asStateFlow()
 
-    private val _vaultName = MutableStateFlow<String?>(null)
-    val vaultName = _vaultName.asStateFlow()
+    val vaultName = vaultStatsProvider.vaultName
     
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -55,6 +56,22 @@ class DevicesScreenViewModel(
                     println("✅${LogTags.DEVICES_VM}: New state for Join request has been gotten")
                     loadDevicesList()
                 }
+            }
+        }
+
+        viewModelScope.launch {
+            vaultStatsProvider.secretsCount.collect { count ->
+                _devicesList.value = _devicesList.value.map { it.copy(secretsCount = count) }
+            }
+        }
+        viewModelScope.launch {
+            vaultStatsProvider.devicesCount.collect { count ->
+                _devicesList.value = _devicesList.value.map { it.copy(devicesCount = count) }
+            }
+        }
+        viewModelScope.launch {
+            vaultStatsProvider.vaultName.collect { name ->
+                _devicesList.value = _devicesList.value.map { it.copy(vaultName = name ?: it.vaultName) }
             }
         }
     }
@@ -88,14 +105,13 @@ class DevicesScreenViewModel(
                             UserStatus.PENDING -> DeviceStatus.Pending
                             else -> DeviceStatus.Unknown
                         },
-                        secretsCount = vaultSummary.secretsCount,
-                        devicesCount = vaultSummary.users.size,
-                        vaultName = vaultSummary.vaultName
+                        secretsCount = vaultStatsProvider.secretsCount.value,
+                        devicesCount = vaultStatsProvider.devicesCount.value,
+                        vaultName = vaultStatsProvider.vaultName.value ?: vaultSummary.vaultName
                     )
                 } ?: emptyList()
 
                 _devicesList.value = devices
-                _vaultName.value = vaultSummary?.vaultName
             } finally {
                 _isLoading.value = false
             }

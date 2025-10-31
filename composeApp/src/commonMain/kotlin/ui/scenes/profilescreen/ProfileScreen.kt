@@ -101,7 +101,7 @@ fun ProfileBody() {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 90.dp),
+                .padding(bottom = 60.dp),
         ) {
 //            ClassicButton({
 //                    viewModel.completeSignIn(false)

@@ -19,6 +19,7 @@ import core.LogTags
 import core.Device
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
+import core.VaultStatsProviderInterface
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.appInternalModels.ClaimModel
@@ -33,6 +34,7 @@ class MainScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
+    private val vaultStatsProvider: VaultStatsProviderInterface,
 ) : ViewModel(), CommonViewModel {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -52,11 +54,7 @@ class MainScreenViewModel(
     private val _secretIdToShow = MutableStateFlow<String?>(null)
     val secretIdToShow: StateFlow<String?> = _secretIdToShow
 
-    private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-    val devicesCount: StateFlow<Int> = devicesList.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+    val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
 
     init {
         checkBackup()
