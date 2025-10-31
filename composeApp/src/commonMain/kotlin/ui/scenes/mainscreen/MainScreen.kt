@@ -104,7 +104,7 @@ class MainScreen : Screen {
                                         tabNavigator.current = tab
                                     },
                                     icon = {
-                                        if (index == 1 && joinRequestsCount != null) {
+                                        if (index == 1 && joinRequestsCount != null && joinRequestsCount!! > 0) {
                                             DevicesTab.TabWithBadge(hasJoinRequests = true)
                                         } else {
                                             tab.options.icon?.let { icon ->
@@ -192,7 +192,7 @@ class MainScreen : Screen {
 
     @Composable
     fun getWarningText(joinRequestsCount: Int? = null, devicesCount: Int? = null): AnnotatedString? {
-        if (joinRequestsCount != null) {
+        if (joinRequestsCount != null && joinRequestsCount > 0) {
             return buildAnnotatedString {
                 append(stringResource(Res.string.goto_devices_tab))
             }
