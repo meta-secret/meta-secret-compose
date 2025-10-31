@@ -48,11 +48,9 @@ import kotlinproject.composeapp.generated.resources.manrope_regular
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.compose.koinInject
 import core.AppColors
 import kotlinproject.composeapp.generated.resources.wanna_recover
 import ui.TabStateHolder
-import ui.AlertProvider
 import ui.dialogs.YesNoDialog
 import ui.notifications.WarningContent
 
@@ -60,12 +58,10 @@ class MainScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: MainScreenViewModel = koinViewModel()
-        val alertCoordinator: AlertCoordinatorInterface = koinInject()
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         val selectedTabIndex by TabStateHolder.selectedTabIndex
         val tabSize = viewModel.screenMetricsProvider.screenWidth() / tabs.size
         val joinRequestsCount by viewModel.joinRequestsCount.collectAsState()
-        val hasJoinRequestsBadge by viewModel.hasJoinRequestsBadge.collectAsState()
         val devicesCount by viewModel.devicesCount.collectAsState()
         val isWarningShown by viewModel.isWarningShown.collectAsState()
         val recoverDialog by viewModel.recoverDialog.collectAsState()
@@ -108,7 +104,7 @@ class MainScreen : Screen {
                                         tabNavigator.current = tab
                                     },
                                     icon = {
-                                        if (index == 1 && hasJoinRequestsBadge && selectedTabIndex != index) {
+                                        if (index == 1 && joinRequestsCount != null) {
                                             DevicesTab.TabWithBadge(hasJoinRequests = true)
                                         } else {
                                             tab.options.icon?.let { icon ->
@@ -138,7 +134,7 @@ class MainScreen : Screen {
                     .fillMaxSize()) {
                     CurrentTab()
 
-                    if (devicesCount < 3 || (joinRequestsCount != null && selectedTabIndex != 1)) {
+                    if (devicesCount < 3 || joinRequestsCount != null) {
                         viewModel.handle(MainViewEvents.ShowWarning(true))
                     } else {
                         viewModel.handle(MainViewEvents.ShowWarning(false))
@@ -169,10 +165,6 @@ class MainScreen : Screen {
             }
         }
 
-        AlertProvider(
-            alertCoordinator = alertCoordinator
-        )
-
         AnimatedVisibility(
             visible = recoverDialog != null,
             enter = slideInVertically(
@@ -186,21 +178,21 @@ class MainScreen : Screen {
         ) {
             YesNoDialog(
                 stringResource(Res.string.wanna_recover),
+                viewModel.screenMetricsProvider,
                 onDismiss = {
                     if (it != null) {
                         viewModel.handle(MainViewEvents.RecoverDecision(it))
                     } else {
                         viewModel.handle(MainViewEvents.DismissRecoverDialog)
                     }
-                },
-                isVisible = recoverDialog != null
+                }
             )
         }
     }
 
     @Composable
     fun getWarningText(joinRequestsCount: Int? = null, devicesCount: Int? = null): AnnotatedString? {
-        if (joinRequestsCount != null && joinRequestsCount > 0) {
+        if (joinRequestsCount != null) {
             return buildAnnotatedString {
                 append(stringResource(Res.string.goto_devices_tab))
             }

@@ -7,7 +7,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -21,7 +20,6 @@ import core.Device
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
-import core.BiometricAuthenticatorInterface
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.appInternalModels.ClaimModel
@@ -33,8 +31,8 @@ import ui.scenes.common.CommonViewModelEventsInterface
 class MainScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
+    private val keyValueStorage: KeyValueStorageInterface,
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
-    private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
 ) : ViewModel(), CommonViewModel {
@@ -57,13 +55,6 @@ class MainScreenViewModel(
     val secretIdToShow: StateFlow<String?> = _secretIdToShow
 
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
-
-    private val _isJoinBadgeDismissed = MutableStateFlow(false)
-    val hasJoinRequestsBadge: StateFlow<Boolean> = vaultStatsProvider.joinRequestsCount
-        .combine(_isJoinBadgeDismissed) { count, dismissed ->
-            (count ?: 0) > 0 && !dismissed
-        }
-        .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     init {
         checkBackup()
@@ -122,17 +113,6 @@ class MainScreenViewModel(
                 }
             }
         }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            vaultStatsProvider.joinRequestsCount.collect { count ->
-                withContext(Dispatchers.Main) {
-                    _joinRequestsCount.value = count
-                    if (count != null && count > 0) {
-                        _isWarningDismissedByUser.value = false
-                    }
-                }
-            }
-        }
     }
 
     override fun handle(event: CommonViewModelEventsInterface) {
@@ -168,31 +148,18 @@ class MainScreenViewModel(
         }
 
         println("✅${LogTags.MAIN_VM}: Recover is accepted")
-        biometricAuthenticator.authenticate(
-            onSuccess = {
-                println("✅${LogTags.MAIN_VM}: Biometric authentication successful")
-                viewModelScope.launch(Dispatchers.IO) {
-                    try {
-                        println("✅${LogTags.MAIN_VM}: acceptRecover called for claimId = ${current.claimId}")
-                        metaSecretAppManager.acceptRecover(ClaimModel(current.claimId))
-                    } catch (t: Throwable) {
-                        println("❌${LogTags.MAIN_VM}: acceptRecover failed for claimId = ${current.claimId}: $t")
-                    } finally {
-                        withContext(Dispatchers.Main) {
-                            showNextRecoverPrompt()
-                        }
-                    }
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                println("✅${LogTags.MAIN_VM}: acceptRecover called for claimId = ${current.claimId}")
+                metaSecretAppManager.acceptRecover(ClaimModel(current.claimId))
+            } catch (t: Throwable) {
+                println("❌${LogTags.MAIN_VM}: acceptRecover failed for claimId = ${current.claimId}: $t")
+            } finally {
+                withContext(Dispatchers.Main) {
+                    showNextRecoverPrompt()
                 }
-            },
-            onError = { error ->
-                println("❌${LogTags.MAIN_VM}: Biometric authentication failed: $error")
-                showNextRecoverPrompt()
-            },
-            onFallback = {
-                println("❌${LogTags.MAIN_VM}: Biometric authentication fallback")
-                showNextRecoverPrompt()
             }
-        )
+        }
     }
 
     private fun checkBackup() {
@@ -206,14 +173,6 @@ class MainScreenViewModel(
 
     private fun setTabIndex(index: Int) {
         TabStateHolder.setTabIndex(index)
-        if (index == 1) {
-            val currentJoinRequests = _joinRequestsCount.value ?: 0
-            if (currentJoinRequests > 0) {
-                _isWarningDismissedByUser.value = true
-                _isWarningShown.value = false
-                _isJoinBadgeDismissed.value = true
-            }
-        }
     }
 
     private fun changeWarningVisibilityTo(state: Boolean) {
