@@ -45,7 +45,6 @@ class MainScreenViewModel(
     val isWarningShown: StateFlow<Boolean> = _isWarningShown
     
     private val _isWarningDismissedByUser = MutableStateFlow(false)
-    val isWarningDismissedByUser: StateFlow<Boolean> = _isWarningDismissedByUser
 
     private val recoverQueue: ArrayDeque<RestoreData> = ArrayDeque()
     private val _recoverDialog = MutableStateFlow<RestoreData?>(null)
@@ -67,18 +66,6 @@ class MainScreenViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             socketHandler.socketActionType.collect { actionType ->
-                if (actionType == SocketActionModel.ASK_TO_JOIN) {
-                    println("✅${LogTags.MAIN_VM}: New state for Join request has been gotten")
-
-                    val count = metaSecretAppManager.getJoinRequestsCount()
-                    withContext(Dispatchers.Main) {
-                        _joinRequestsCount.value = count
-                        if (count != null && count > 0) {
-                            _isWarningDismissedByUser.value = false
-                        }
-                    }
-                }
-
                 when (val a = actionType) {
                     is SocketActionModel.READY_TO_RECOVER -> {
                         val restoreData = a.restoreData
@@ -110,6 +97,17 @@ class MainScreenViewModel(
                         println("✅${LogTags.MAIN_VM}: READY_TO_SHOW secret by secretId ${a.secretId}")
                     }
                     else -> { /* ignore */ }
+                }
+            }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            vaultStatsProvider.joinRequestsCount.collect { count ->
+                withContext(Dispatchers.Main) {
+                    _joinRequestsCount.value = count
+                    if (count != null && count > 0) {
+                        _isWarningDismissedByUser.value = false
+                    }
                 }
             }
         }

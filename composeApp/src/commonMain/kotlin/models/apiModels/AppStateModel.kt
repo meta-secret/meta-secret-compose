@@ -133,7 +133,7 @@ data class VaultRequest(
 @Serializable
 data class VaultEvents(
     val requests: List<VaultRequest> = emptyList(),
-    val updates: List<String> = emptyList() // Placeholder for updates structure
+    val updates: List<String> = emptyList()
 ) {
     fun hasJoinRequests(): Boolean {
         return requests.any { it.joinCluster != null }

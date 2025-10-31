@@ -44,12 +44,6 @@ class DevicesScreenViewModel(
         get() = keyValueStorage.cachedDeviceId
 
     init {
-        println("✅${LogTags.DEVICES_VM}: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
-        socketHandler.actionsToFollow(
-            add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN),
-            exclude = null
-        )
-
         viewModelScope.launch {
             socketHandler.socketActionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
