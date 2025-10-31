@@ -55,13 +55,13 @@ fun WarningContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(AppColors.White5, RoundedCornerShape(10.dp))
-                .height(92.dp)
+                .height(85.dp)
         ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .height(60.dp)
-                .padding(16.dp),
+                .padding(10.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Image(

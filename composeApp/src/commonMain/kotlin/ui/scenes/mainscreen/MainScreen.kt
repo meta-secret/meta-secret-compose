@@ -62,6 +62,7 @@ class MainScreen : Screen {
         val selectedTabIndex by TabStateHolder.selectedTabIndex
         val tabSize = viewModel.screenMetricsProvider.screenWidth() / tabs.size
         val joinRequestsCount by viewModel.joinRequestsCount.collectAsState()
+        val hasJoinRequestsBadge by viewModel.hasJoinRequestsBadge.collectAsState()
         val devicesCount by viewModel.devicesCount.collectAsState()
         val isWarningShown by viewModel.isWarningShown.collectAsState()
         val recoverDialog by viewModel.recoverDialog.collectAsState()
@@ -104,7 +105,7 @@ class MainScreen : Screen {
                                         tabNavigator.current = tab
                                     },
                                     icon = {
-                                        if (index == 1 && joinRequestsCount != null && joinRequestsCount!! > 0) {
+                                        if (index == 1 && hasJoinRequestsBadge && selectedTabIndex != index) {
                                             DevicesTab.TabWithBadge(hasJoinRequests = true)
                                         } else {
                                             tab.options.icon?.let { icon ->
@@ -134,19 +135,25 @@ class MainScreen : Screen {
                     .fillMaxSize()) {
                     CurrentTab()
 
-                    if (devicesCount < 3 || joinRequestsCount != null) {
+                    if (devicesCount < 3 || (joinRequestsCount != null && selectedTabIndex != 1)) {
                         viewModel.handle(MainViewEvents.ShowWarning(true))
                     } else {
                         viewModel.handle(MainViewEvents.ShowWarning(false))
                     }
 
-                    getWarningText(joinRequestsCount, devicesCount)?.let { warningText ->
+                    val computedWarningText = if (selectedTabIndex == 1 && joinRequestsCount != null && joinRequestsCount!! > 0) {
+                        null
+                    } else {
+                        getWarningText(joinRequestsCount, devicesCount)
+                    }
+
+                    computedWarningText?.let { warningText ->
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
                                 .padding(horizontal = 16.dp)
-                                .padding(top = 20.dp)
+                                .padding(top = 0.dp)
                                 .padding(bottom = 14.dp)
                         ) {
                             WarningContent(
