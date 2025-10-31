@@ -30,7 +30,7 @@ val appModule = module {
     single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get()) }
     single<VaultStatsProviderInterface> { VaultStatsProvider(get(), get()) }
 
-    factory { MainScreenViewModel(get(), get(), get(), get(), get(), get()) }
+    factory { MainScreenViewModel(get(), get(), get(), get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }

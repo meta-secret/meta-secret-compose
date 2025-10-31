@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
+import models.apiModels.UserStatus
 
 class VaultStatsProvider(
     private val appManager: MetaSecretAppManagerInterface,
@@ -66,10 +67,10 @@ class VaultStatsProvider(
                 val vaultSummary = appManager.getVaultSummary()
                 if (vaultSummary != null) {
                     _secretsCount.value = vaultSummary.secretsCount
-                    _devicesCount.value = vaultSummary.users.size
+                    _devicesCount.value = vaultSummary.users.values.count { it.status == UserStatus.MEMBER }
                     _vaultName.value = vaultSummary.vaultName
                     _joinRequestsCount.value = appManager.getJoinRequestsCount()
-                    println("✅" + LogTags.VAULT_STATS_PROVIDER + ": Stats updated: secrets=${_secretsCount.value}, devices=${_devicesCount.value}, vaultName=${_vaultName.value}, joinRequestsCount = ${_joinRequestsCount.value}")
+                    println("✅" + LogTags.VAULT_STATS_PROVIDER + ": Stats updated: secrets=${_secretsCount.value}, devices(MEMBER)=${_devicesCount.value}, vaultName=${_vaultName.value}, joinRequestsCount = ${_joinRequestsCount.value}")
                 } else {
                     println("❌" + LogTags.VAULT_STATS_PROVIDER + ": VaultSummary is null during stats refresh")
                 }

@@ -7,6 +7,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -31,7 +32,6 @@ import ui.scenes.common.CommonViewModelEventsInterface
 class MainScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
-    private val keyValueStorage: KeyValueStorageInterface,
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
@@ -54,6 +54,13 @@ class MainScreenViewModel(
     val secretIdToShow: StateFlow<String?> = _secretIdToShow
 
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
+
+    private val _isJoinBadgeDismissed = MutableStateFlow(false)
+    val hasJoinRequestsBadge: StateFlow<Boolean> = vaultStatsProvider.joinRequestsCount
+        .combine(_isJoinBadgeDismissed) { count, dismissed ->
+            (count ?: 0) > 0 && !dismissed
+        }
+        .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     init {
         checkBackup()
@@ -171,6 +178,14 @@ class MainScreenViewModel(
 
     private fun setTabIndex(index: Int) {
         TabStateHolder.setTabIndex(index)
+        if (index == 1) {
+            val currentJoinRequests = _joinRequestsCount.value ?: 0
+            if (currentJoinRequests > 0) {
+                _isWarningDismissedByUser.value = true
+                _isWarningShown.value = false
+                _isJoinBadgeDismissed.value = true
+            }
+        }
     }
 
     private fun changeWarningVisibilityTo(state: Boolean) {
