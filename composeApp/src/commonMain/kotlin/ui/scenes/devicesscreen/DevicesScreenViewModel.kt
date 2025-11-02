@@ -19,6 +19,7 @@ import core.KeyValueStorageInterface
 import core.LogTags
 import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
+import core.AlertCoordinatorInterface
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 
@@ -28,6 +29,7 @@ class DevicesScreenViewModel(
     private val appManager: MetaSecretAppManagerInterface,
     private val keyValueStorage: KeyValueStorageInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
+    private val alertCoordinator: AlertCoordinatorInterface,
 ) : ViewModel(), CommonViewModel {
 
     private val _devicesList = MutableStateFlow<List<DeviceCellModel>>(emptyList())
@@ -39,11 +41,18 @@ class DevicesScreenViewModel(
     val isLoading = _isLoading.asStateFlow()
 
     private val _currentDeviceId = MutableStateFlow<String?>(null)
-    
     val currentDeviceId: String?
         get() = keyValueStorage.cachedDeviceId
-
+    
     init {
+        alertCoordinator.setJoinRequestHandler { isAccepted ->
+            if (isAccepted) {
+                handle(DeviceViewEvents.Accept)
+            } else {
+                handle(DeviceViewEvents.Decline)
+            }
+        }
+        
         viewModelScope.launch {
             socketHandler.socketActionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
@@ -76,7 +85,12 @@ class DevicesScreenViewModel(
                 DeviceViewEvents.OnAppear -> loadDevicesList()
                 DeviceViewEvents.Accept -> updateMembership(true)
                 DeviceViewEvents.Decline -> updateMembership(false)
-                is DeviceViewEvents.SelectDevice -> selectCurrentDevice(event.deviceId)
+                is DeviceViewEvents.SelectDevice -> {
+                    selectCurrentDevice(event.deviceId)
+                    event.deviceId?.let { deviceId ->
+                        alertCoordinator.showJoinRequest(deviceId)
+                    }
+                }
             }
         }
     }
@@ -131,6 +145,7 @@ class DevicesScreenViewModel(
                     println("❌${LogTags.DEVICES_VM}: Update failed: ${updateResult.error}")
                 }
                 _currentDeviceId.value = null
+                alertCoordinator.dismissJoinRequest()
             } catch (e: Exception) {
                 println("❌${LogTags.DEVICES_VM}: Update error: ${e.message}")
             } finally {

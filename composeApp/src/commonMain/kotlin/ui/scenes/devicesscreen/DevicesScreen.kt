@@ -137,33 +137,6 @@ class DevicesScreen : Screen {
             )
         }
 
-        AnimatedVisibility(
-            visible = isJoinRequestVisible,
-            enter = slideInVertically(
-                initialOffsetY = { it },
-                animationSpec = tween(durationMillis = 350)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(durationMillis = 250)
-            )
-        ) {
-            YesNoDialog(
-                stringResource(Res.string.wanna_join),
-                viewModel.screenMetricsProvider,
-                onDismiss = { isAccepted ->
-                    if (isAccepted != null) {
-                        if (isAccepted) {
-                            viewModel.handle(DeviceViewEvents.Accept)
-                        } else {
-                            viewModel.handle(DeviceViewEvents.Decline)
-                        }
-                    }
-                    isJoinRequestVisible = false
-                }
-            )
-        }
-
 
     }
 }

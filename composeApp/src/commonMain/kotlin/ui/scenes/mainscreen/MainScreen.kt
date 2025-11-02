@@ -48,16 +48,20 @@ import kotlinproject.composeapp.generated.resources.manrope_regular
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 import core.AppColors
+import core.AlertCoordinatorInterface
 import kotlinproject.composeapp.generated.resources.wanna_recover
 import ui.TabStateHolder
+import ui.AlertProvider
 import ui.dialogs.YesNoDialog
-import ui.notifications.WarningContent
+import ui.notifications.WarningBubble
 
 class MainScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: MainScreenViewModel = koinViewModel()
+        val alertCoordinator: AlertCoordinatorInterface = koinInject()
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         val selectedTabIndex by TabStateHolder.selectedTabIndex
         val tabSize = viewModel.screenMetricsProvider.screenWidth() / tabs.size
@@ -156,7 +160,7 @@ class MainScreen : Screen {
                                 .padding(top = 0.dp)
                                 .padding(bottom = 14.dp)
                         ) {
-                            WarningContent(
+                            WarningBubble(
                                 text = warningText,
                                 mainAction = {
                                     viewModel.handle(MainViewEvents.SetTabIndex(1))
@@ -172,6 +176,10 @@ class MainScreen : Screen {
             }
         }
 
+        AlertProvider(
+            alertCoordinator = alertCoordinator
+        )
+
         AnimatedVisibility(
             visible = recoverDialog != null,
             enter = slideInVertically(
@@ -185,14 +193,14 @@ class MainScreen : Screen {
         ) {
             YesNoDialog(
                 stringResource(Res.string.wanna_recover),
-                viewModel.screenMetricsProvider,
                 onDismiss = {
                     if (it != null) {
                         viewModel.handle(MainViewEvents.RecoverDecision(it))
                     } else {
                         viewModel.handle(MainViewEvents.DismissRecoverDialog)
                     }
-                }
+                },
+                isVisible = recoverDialog != null
             )
         }
     }
