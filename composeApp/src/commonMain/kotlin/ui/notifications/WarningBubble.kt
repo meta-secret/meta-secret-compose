@@ -34,7 +34,7 @@ import org.jetbrains.compose.resources.painterResource
 import core.AppColors
 
 @Composable
-fun WarningContent(
+fun WarningBubble(
     text: AnnotatedString,
     mainAction: () -> Unit?,
     closeAction: () -> Unit,
@@ -48,7 +48,7 @@ fun WarningContent(
         ),
         exit = slideOutVertically(
             targetOffsetY = { -it },
-            animationSpec = tween(durationMillis = 200)
+            animationSpec = tween(durationMillis = 300)
         )
     ) {
         Box(
@@ -57,52 +57,52 @@ fun WarningContent(
                 .background(AppColors.White5, RoundedCornerShape(10.dp))
                 .height(85.dp)
         ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .height(60.dp)
-                .padding(10.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Image(
-                painter = painterResource(Res.drawable.warning),
-                contentDescription = null,
-                contentScale = ContentScale.FillBounds
-            )
-            ClickableText(
-                text = text,
-                style = TextStyle(
-                    fontSize = 15.sp,
-                    fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                    color = AppColors.White75
-                ),
-                onClick = { offset ->
-                    text.getStringAnnotations("addText", offset, offset)
-                        .firstOrNull()
-                        ?.let {
-                            mainAction()
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .height(60.dp)
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.warning),
+                    contentDescription = null,
+                    contentScale = ContentScale.FillBounds
+                )
+                ClickableText(
+                    text = text,
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        color = AppColors.White75
+                    ),
+                    onClick = { offset ->
+                        text.getStringAnnotations("addText", offset, offset)
+                            .firstOrNull()
+                            ?.let {
+                                mainAction()
+                            }
+                    },
+                    modifier = Modifier
+                        .padding(end = 30.dp)
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .padding(end = 12.dp)
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.close),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .clickable {
+                            closeAction()
                         }
-                },
-                modifier = Modifier
-                    .padding(end = 30.dp)
-            )
+                )
+            }
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
-                .padding(end = 12.dp)
-        ) {
-            Image(
-                painter = painterResource(Res.drawable.close),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .clickable {
-                        closeAction()
-                    }
-            )
-        }
-    }
     }
 }
