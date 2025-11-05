@@ -33,7 +33,7 @@ val appModule = module {
     single<VaultStatsProviderInterface> { VaultStatsProvider(get(), get()) }
     single<AlertCoordinatorInterface> { AlertCoordinator() }
 
-    factory { MainScreenViewModel(get(), get(), get(), get(), get()) }
+    factory { MainScreenViewModel(get(), get(), get(), get(), get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
