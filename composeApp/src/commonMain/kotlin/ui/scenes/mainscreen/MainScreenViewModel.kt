@@ -21,6 +21,7 @@ import core.Device
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
+import core.BiometricAuthenticatorInterface
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.appInternalModels.ClaimModel
@@ -33,6 +34,7 @@ class MainScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
+    private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
 ) : ViewModel(), CommonViewModel {
@@ -153,18 +155,31 @@ class MainScreenViewModel(
         }
 
         println("✅${LogTags.MAIN_VM}: Recover is accepted")
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                println("✅${LogTags.MAIN_VM}: acceptRecover called for claimId = ${current.claimId}")
-                metaSecretAppManager.acceptRecover(ClaimModel(current.claimId))
-            } catch (t: Throwable) {
-                println("❌${LogTags.MAIN_VM}: acceptRecover failed for claimId = ${current.claimId}: $t")
-            } finally {
-                withContext(Dispatchers.Main) {
-                    showNextRecoverPrompt()
+        biometricAuthenticator.authenticate(
+            onSuccess = {
+                println("✅${LogTags.MAIN_VM}: Biometric authentication successful")
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        println("✅${LogTags.MAIN_VM}: acceptRecover called for claimId = ${current.claimId}")
+                        metaSecretAppManager.acceptRecover(ClaimModel(current.claimId))
+                    } catch (t: Throwable) {
+                        println("❌${LogTags.MAIN_VM}: acceptRecover failed for claimId = ${current.claimId}: $t")
+                    } finally {
+                        withContext(Dispatchers.Main) {
+                            showNextRecoverPrompt()
+                        }
+                    }
                 }
+            },
+            onError = { error ->
+                println("❌${LogTags.MAIN_VM}: Biometric authentication failed: $error")
+                showNextRecoverPrompt()
+            },
+            onFallback = {
+                println("❌${LogTags.MAIN_VM}: Biometric authentication fallback")
+                showNextRecoverPrompt()
             }
-        }
+        )
     }
 
     private fun checkBackup() {
