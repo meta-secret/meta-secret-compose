@@ -87,6 +87,7 @@
     <string name = "accept_request_on_other_device">Accept the request on your other device</string>
     <string name = "unexpected_login">"Unexpected loading state"</string>
     <string name = "reject_join">"Registration denied. You may be connecting to the wrong account."</string>
+    <string name = "biometric_error">Biometric authentification error. Please, try again later</string>
     <string name = "goto_devices_tab">Go to the Devices tab and add the necessary ones to your network</string>
     <string name = "wanna_join">Do you want to join this device to your cluster?</string>
     <string name = "backup_choose_path_message">Choose a path to back up your database</string>

@@ -15,6 +15,8 @@ import core.DeviceInfoProviderInterface
 import core.DeviceInfoProviderIos
 import core.ScreenMetricsProviderInterface
 import core.ScreenMetricsProviderIos
+import core.DatabasePathProviderInterface
+import core.DatabasePathProviderIos
 
 val iosPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceIos() }
@@ -22,6 +24,7 @@ val iosPlatformModule = module {
     single<DeviceInfoProviderInterface> { DeviceInfoProviderIos() }
     single<ScreenMetricsProviderInterface> { ScreenMetricsProviderIos() }
     single<BiometricAuthenticatorInterface> { BiometricAuthenticatorIos(get()) }
-    single<KeyChainInterface> { KeyChainManagerIos() }
-    single<BackupCoordinatorInterface> { BackupCoordinatorInterfaceIos(get(), get()) }
+    single<KeyChainInterface> { KeyChainManagerIos(get()) }
+    single<BackupCoordinatorInterface> { BackupCoordinatorInterfaceIos(get(), get(), get()) }
+    single<DatabasePathProviderInterface> { DatabasePathProviderIos(get(), get()) }
 }

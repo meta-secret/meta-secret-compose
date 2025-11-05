@@ -270,27 +270,27 @@ import ObjectiveC
         return status == errSecSuccess
     }
     
-    @objc public func clearAll() -> Bool {
+    @objc public func clearAll(dbFileName: String) -> Bool {
         print("🦅 Swift: clearAll keys - Starting cleanup process")
 
         if let ptr = c_clean_up_database() {
             c_free_string(ptr)
         }
         
-        cleanDB()
+        cleanDB(dbFileName: dbFileName)
         
-        removeBackup()
+        removeBackup(dbFileName: dbFileName)
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName
         ]
-        
+
         let status = SecItemDelete(query as CFDictionary)
         let keychainCleared = status == errSecSuccess || status == errSecItemNotFound
-        
+
         print("🦅 Swift: Step 5 - Verifying cleanup")
-        let verificationResult = verifyCleanup()
+        let verificationResult = verifyCleanup(dbFileName: dbFileName)
         
         if verificationResult.allCleared {
             print("🦅 Swift: ✅ clearAll completed successfully - All data cleared")
@@ -312,14 +312,15 @@ import ObjectiveC
 
     // MARK: - Backuping
     @MainActor
-    @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:backupKey:)
+    @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:backupKey:dbFileName:)
     public func presentBackupPickerWithInitialMessage(
         initialMessage: String,
         okTitle: String,
         warningMessage: String,
         warningOkTitle: String,
         warningCancelTitle: String,
-        backupKey: String
+        backupKey: String,
+        dbFileName: String
     ) {
         presentBackupPickerWithMessages(
             initialMessage: initialMessage,
@@ -327,7 +328,8 @@ import ObjectiveC
             warningMessage: warningMessage,
             warningOkTitle: warningOkTitle,
             warningCancelTitle: warningCancelTitle,
-            backupKey: backupKey
+            backupKey: backupKey,
+            dbFileName: dbFileName
         )
     }
 
@@ -338,7 +340,8 @@ import ObjectiveC
         warningMessage: String,
         warningOkTitle: String,
         warningCancelTitle: String,
-        backupKey: String
+        backupKey: String,
+        dbFileName: String
     ) {
         print("🦅 Swift: Present BackUp Alert")
         BackupUI.shared.presentBackupPicker(
@@ -347,29 +350,30 @@ import ObjectiveC
             warningMessage: warningMessage,
             warningOkTitle: warningOkTitle,
             warningCancelTitle: warningCancelTitle,
-            backupKey: backupKey
+            backupKey: backupKey,
+            dbFileName: dbFileName
         )
     }
 
-    @objc public func restoreBackupIfNeeded() {
-        BackupWorker.restoreIfNeeded()
+    @objc public func restoreBackupIfNeeded(dbFileName: String) {
+        BackupWorker.restoreIfNeeded(dbFileName: dbFileName)
     }
 
-    @objc public func backupIfChanged() {
-        BackupWorker.backupIfChanged()
+    @objc public func backupIfChanged(dbFileName: String) {
+        BackupWorker.backupIfChanged(dbFileName: dbFileName)
     }
 
-    @objc public func removeBackup() {
-        BackupWorker.removeBackup()
+    @objc public func removeBackup(dbFileName: String) {
+        BackupWorker.removeBackup(dbFileName: dbFileName)
     }
 }
 
 private extension SwiftBridge {
-    func cleanDB() {
+    func cleanDB(dbFileName: String) {
         print("🦅 Swift: CleanDB")
         let fileManager = FileManager.default
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let dbPath = documentsPath.appendingPathComponent("meta-secret.db")
+        let dbPath = documentsPath.appendingPathComponent(dbFileName)
         let isExists = fileManager.fileExists(atPath: dbPath.path)
 
         print("🦅 Swift: is DB exists: \(isExists)")
@@ -378,7 +382,7 @@ private extension SwiftBridge {
         }
     }
     
-    func verifyCleanup() -> CleanupVerificationResult {
+    func verifyCleanup(dbFileName: String) -> CleanupVerificationResult {
         print("🦅 Swift: Verifying cleanup results")
         
         // Check KeyChain
@@ -388,12 +392,12 @@ private extension SwiftBridge {
         // Check local DB
         let fileManager = FileManager.default
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let dbPath = documentsPath.appendingPathComponent("meta-secret.db")
+        let dbPath = documentsPath.appendingPathComponent(dbFileName)
         let dbCleared = !fileManager.fileExists(atPath: dbPath.path)
         print("🦅 Swift: Local DB cleared: \(dbCleared)")
         
         // Check backups
-        let backupCleared = !BackupWorker.hasICloudBackup()
+        let backupCleared = !BackupWorker.hasICloudBackup(dbFileName: dbFileName)
         print("🦅 Swift: Backups cleared: \(backupCleared)")
         
         let allCleared = keychainCleared && dbCleared && backupCleared

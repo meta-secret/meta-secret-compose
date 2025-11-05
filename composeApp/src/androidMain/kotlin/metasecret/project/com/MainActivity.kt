@@ -60,7 +60,7 @@ class MainActivity : FragmentActivity() {
                 KeyChainManagerAndroid(this@MainActivity.applicationContext)
             }
             single<BackupCoordinatorInterface> {
-                BackupCoordinatorInterfaceAndroid(this@MainActivity, get())
+                BackupCoordinatorInterfaceAndroid(this@MainActivity, get(), get())
             }
         }
 

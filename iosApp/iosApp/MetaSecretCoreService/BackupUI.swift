@@ -19,9 +19,10 @@ final class BackupUI: NSObject {
         warningMessage: String,
         warningOkTitle: String,
         warningCancelTitle: String,
-        backupKey: String
+        backupKey: String,
+        dbFileName: String
     ) {
-        let backupExists = BackupWorker.hasICloudBackup()
+        let backupExists = BackupWorker.hasICloudBackup(dbFileName: dbFileName)
         guard !backupExists else {
             print("🦅 Swift: iCloud backup Exists. Alert doesn't need")
             return
@@ -36,7 +37,8 @@ final class BackupUI: NSObject {
                 warningMessage: warningMessage,
                 warningOkTitle: warningOkTitle,
                 warningCancelTitle: warningCancelTitle,
-                backupKey: backupKey
+                backupKey: backupKey,
+                dbFileName: dbFileName
             )
         })
         presenter.present(alert, animated: true)
@@ -47,11 +49,12 @@ final class BackupUI: NSObject {
         warningMessage: String,
         warningOkTitle: String,
         warningCancelTitle: String,
-        backupKey: String
+        backupKey: String,
+        dbFileName: String
     ) {
         let fm = FileManager.default
         let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let src = documentsPath.appendingPathComponent("meta-secret.db")
+        let src = documentsPath.appendingPathComponent(dbFileName)
 
         let picker: UIDocumentPickerViewController
         if #available(iOS 14.0, *) {
@@ -69,7 +72,8 @@ final class BackupUI: NSObject {
             warningMessage: warningMessage,
             warningOkTitle: warningOkTitle,
             warningCancelTitle: warningCancelTitle,
-            backupKey: backupKey
+            backupKey: backupKey,
+            dbFileName: dbFileName
         )
         picker.delegate = delegate
         objc_setAssociatedObject(picker, Unmanaged.passUnretained(picker).toOpaque(), delegate, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
@@ -81,7 +85,8 @@ final class BackupUI: NSObject {
         warningMessage: String,
         warningOkTitle: String,
         warningCancelTitle: String,
-        backupKey: String
+        backupKey: String,
+        dbFileName: String
     ) {
         let alert = UIAlertController(title: nil, message: warningMessage, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: warningOkTitle, style: .default) { _ in })
@@ -91,7 +96,8 @@ final class BackupUI: NSObject {
                 warningMessage: warningMessage,
                 warningOkTitle: warningOkTitle,
                 warningCancelTitle: warningCancelTitle,
-                backupKey: backupKey
+                backupKey: backupKey,
+                dbFileName: dbFileName
             )
         })
         presenter.present(alert, animated: true)
@@ -129,17 +135,20 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
     let warningOkTitle: String
     let warningCancelTitle: String
     let backupKey: String
+    let dbFileName: String
 
     init(
         warningMessage: String,
         warningOkTitle: String,
         warningCancelTitle: String,
-        backupKey: String
+        backupKey: String,
+        dbFileName: String
     ) {
         self.warningMessage = warningMessage
         self.warningOkTitle = warningOkTitle
         self.warningCancelTitle = warningCancelTitle
         self.backupKey = backupKey
+        self.dbFileName = dbFileName
     }
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
@@ -150,7 +159,8 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
             warningMessage: warningMessage,
             warningOkTitle: warningOkTitle,
             warningCancelTitle: warningCancelTitle,
-            backupKey: backupKey
+            backupKey: backupKey,
+            dbFileName: dbFileName
         )
     }
 
@@ -163,7 +173,8 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
                 warningMessage: warningMessage,
                 warningOkTitle: warningOkTitle,
                 warningCancelTitle: warningCancelTitle,
-                backupKey: backupKey
+                backupKey: backupKey,
+                dbFileName: dbFileName
             )
             return
         }
@@ -177,7 +188,8 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
                 warningMessage: warningMessage,
                 warningOkTitle: warningOkTitle,
                 warningCancelTitle: warningCancelTitle,
-                backupKey: backupKey
+                backupKey: backupKey,
+                dbFileName: dbFileName
             )
             return
         }
@@ -226,11 +238,11 @@ final class BackupWorker {
 
 
 
-    static func restoreIfNeeded() {
+    static func restoreIfNeeded(dbFileName: String) {
         print("🦅👷BackupWorker: restoreIfNeeded")
         let fm = FileManager.default
         let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
-        guard let dst = documentsPath?.appendingPathComponent("meta-secret.db") else {
+        guard let dst = documentsPath?.appendingPathComponent(dbFileName) else {
             print("🦅👷❌BackupWorker: restoreIfNeeded - localDBURL is nil")
             return
         }
@@ -260,7 +272,7 @@ final class BackupWorker {
 
         guard let container = fm.url(forUbiquityContainerIdentifier: containerId) else { return }
         let docs = container.appendingPathComponent("Documents", isDirectory: true)
-        let srcURL = docs.appendingPathComponent("meta-secret.db", isDirectory: false)
+        let srcURL = docs.appendingPathComponent(dbFileName, isDirectory: false)
         _ = ensureDownloadedIfUbiquitous(srcURL)
 
         let coordinator = NSFileCoordinator(filePresenter: nil)
@@ -272,11 +284,11 @@ final class BackupWorker {
         if let e = coordError { print("🦅👷❌ restoreIfNeeded coordination error \(e)") }
     }
 
-    static func backupIfChanged() {
+    static func backupIfChanged(dbFileName: String) {
         print("🦅👷BackupWorker: backupIfChanged - Local DB updated, starting backup")
         let fm = FileManager.default
         let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
-        guard let src = documentsPath?.appendingPathComponent("meta-secret.db"), fm.fileExists(atPath: src.path) else { 
+        guard let src = documentsPath?.appendingPathComponent(dbFileName), fm.fileExists(atPath: src.path) else { 
             print("🦅👷❌BackupWorker: Local DB not found, skipping backup")
             return 
         }
@@ -296,7 +308,7 @@ final class BackupWorker {
             
             if srcDate > dstDate {
                 print("🦅👷🔄BackupWorker: Local DB is newer, copying to bookmark location")
-                copyLocalDBTo(url: dstURL)
+                copyLocalDBTo(url: dstURL, dbFileName: dbFileName)
             } else {
                 print("🦅👷✅BackupWorker: Bookmark backup is up to date")
             }
@@ -308,7 +320,7 @@ final class BackupWorker {
             return 
         }
         let docs = container.appendingPathComponent("Documents", isDirectory: true)
-        let dstURL = docs.appendingPathComponent("meta-secret.db", isDirectory: false)
+        let dstURL = docs.appendingPathComponent(dbFileName, isDirectory: false)
         _ = ensureDownloadedIfUbiquitous(dstURL)
         
         let srcDate = (try? src.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
@@ -316,17 +328,17 @@ final class BackupWorker {
         
         if srcDate > dstDate {
             print("🦅👷🔄BackupWorker: Local DB is newer, copying to iCloud")
-            copyLocalDBToICloud()
+            copyLocalDBToICloud(dbFileName: dbFileName)
         } else {
             print("🦅👷✅BackupWorker: iCloud backup is up to date")
         }
     }
 
-    private static func copyLocalDBTo(url: URL) {
+    private static func copyLocalDBTo(url: URL, dbFileName: String) {
         print("🦅👷BackupWorker: copyLocalDBTo \(url.path)")
         let fm = FileManager.default
         let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
-        guard let src = documentsPath?.appendingPathComponent("meta-secret.db"), fm.fileExists(atPath: src.path) else { 
+        guard let src = documentsPath?.appendingPathComponent(dbFileName), fm.fileExists(atPath: src.path) else { 
             print("🦅👷❌BackupWorker: Source DB not found")
             return 
         }
@@ -362,11 +374,11 @@ final class BackupWorker {
         }
     }
 
-    private static func copyLocalDBToICloud() {
+    private static func copyLocalDBToICloud(dbFileName: String) {
         print("🦅👷BackupWorker: copyLocalDBToICloud")
         let fm = FileManager.default
         let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
-        guard let src = documentsPath?.appendingPathComponent("meta-secret.db"), fm.fileExists(atPath: src.path) else { 
+        guard let src = documentsPath?.appendingPathComponent(dbFileName), fm.fileExists(atPath: src.path) else { 
             print("🦅👷❌BackupWorker: Source DB not found")
             return 
         }
@@ -375,7 +387,7 @@ final class BackupWorker {
             return 
         }
         let docs = container.appendingPathComponent("Documents", isDirectory: true)
-        let dst = docs.appendingPathComponent("meta-secret.db", isDirectory: false)
+        let dst = docs.appendingPathComponent(dbFileName, isDirectory: false)
 
         let coordinator = NSFileCoordinator(filePresenter: nil)
         var coordinationError: NSError?
@@ -403,7 +415,7 @@ final class BackupWorker {
         }
     }
 
-    static func removeBackup() {
+    static func removeBackup(dbFileName: String) {
         print("🦅👷BackupWorker: removeBackup")
 
         if let url = resolveBookmark() {
@@ -422,7 +434,7 @@ final class BackupWorker {
         let fm = FileManager.default
         if let container = fm.url(forUbiquityContainerIdentifier: containerId) {
             let docs = container.appendingPathComponent("Documents", isDirectory: true)
-            let srcURL = docs.appendingPathComponent("meta-secret.db", isDirectory: false)
+            let srcURL = docs.appendingPathComponent(dbFileName, isDirectory: false)
             let coordinator = NSFileCoordinator(filePresenter: nil)
             var coordError: NSError?
             coordinator.coordinate(writingItemAt: srcURL, options: .forDeleting, error: &coordError) { delURL in
@@ -520,7 +532,7 @@ final class BackupWorker {
         }
     }
 
-    static func hasICloudBackup() -> Bool {
+    static func hasICloudBackup(dbFileName: String) -> Bool {
         print("🦅👷 BackupWorker: hasICloudBackup")
         let fm = FileManager.default
 
@@ -540,7 +552,7 @@ final class BackupWorker {
 
         if let container = fm.url(forUbiquityContainerIdentifier: containerId) {
             let docs = container.appendingPathComponent("Documents", isDirectory: true)
-            let iCloudDB = docs.appendingPathComponent("meta-secret.db")
+            let iCloudDB = docs.appendingPathComponent(dbFileName)
             let exists = ((try? iCloudDB.checkResourceIsReachable()) ?? false) || fm.fileExists(atPath: iCloudDB.path)
             if exists {
                 printFileDetails(url: iCloudDB, source: "app container")

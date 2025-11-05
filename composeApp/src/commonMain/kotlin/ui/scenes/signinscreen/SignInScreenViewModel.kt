@@ -29,6 +29,7 @@ import core.metaSecretCore.OutsiderState
 import kotlin.properties.Delegates
 import core.LogTags
 import core.ScreenMetricsProviderInterface
+import core.BiometricAuthenticatorInterface
 
 class SignInScreenViewModel(
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
@@ -37,18 +38,19 @@ class SignInScreenViewModel(
     private val keyChainManager: KeyChainInterface,
     private val keyValueStorage: KeyValueStorageInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
+    private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
 ) : ViewModel(), CommonViewModel {
 
     // Properties
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading // TODO: #49 Need to be able to edit entered name
+    val isLoading: StateFlow<Boolean> = _isLoading
     private val _snackBarMessage = MutableStateFlow<SignInSnackMessages?>(null)
     val snackBarMessage: StateFlow<SignInSnackMessages?> = _snackBarMessage
     private val _navigationEvent = MutableStateFlow(false)
     val navigationEvent: StateFlow<Boolean> = _navigationEvent
-
-    private var currentName: String? = null
+    private val _nameText = MutableStateFlow("")
+    val nameText: StateFlow<String> = _nameText
     private var currentState: SignInStates? by Delegates.observable(null) { _, _, _ ->
         viewModelScope.launch {
             signInStateResolver()
@@ -68,8 +70,11 @@ class SignInScreenViewModel(
         if (event is SignInViewEvents) {
             when (event) {
                 is SignInViewEvents.StartSignInProcess -> {
-                    currentName = event.name
+                    _nameText.value = event.name
                     currentState = SignInStates.START_SIGN_IN
+                }
+                is SignInViewEvents.UpdateName -> {
+                    _nameText.value = event.name
                 }
             }
         }
@@ -115,24 +120,30 @@ class SignInScreenViewModel(
             when (currentState) {
                 SignInStates.IDLE -> println("✅" + LogTags.SIGNIN_VM + ": Waiting for SignUp")
                 SignInStates.START_SIGN_IN -> {
-                    currentName?.let { name ->
+                    val name = _nameText.value
+                    if (name.isNotEmpty()) {
                         isNameError(name)
-                    } ?: run {
+                    } else {
                         currentState = SignInStates.NAME_INCORRECT
                     }
                 }
                 SignInStates.NAME_INCORRECT -> showErrorSnackBar(SignInSnackMessages.INCORRECT_NAME)
                 SignInStates.NAME_SUCCEEDED -> generateMasterKey()
                 SignInStates.MASTER_KEY_GENERATED -> {
-                    currentName?.let { name ->
+                    val name = _nameText.value
+                    if (name.isNotEmpty()) {
                         firstSignUp(name)
-                    } ?: run {
+                    } else {
                         currentState = SignInStates.NAME_INCORRECT
                     }
                 }
                 SignInStates.MASTER_KEY_FAILED -> showErrorSnackBar(SignInSnackMessages.SIGN_IN_ERROR)
                 SignInStates.SIGN_IN_PENDING -> viewModelScope.launch { showPendingState() }
-                SignInStates.SIGN_IN_REJECTED -> showErrorSnackBar(SignInSnackMessages.REJECT)
+                SignInStates.SIGN_IN_REJECTED -> {
+                    _isLoading.value = false
+                    _nameText.value = ""
+                    showErrorSnackBar(SignInSnackMessages.REJECT)
+                }
                 SignInStates.SIGN_IN_COMPLETED -> _navigationEvent.value = true
                 SignInStates.SIGN_IN_FAILED -> showErrorSnackBar(SignInSnackMessages.SIGN_IN_ERROR)
                 SignInStates.NONE -> showErrorSnackBar(SignInSnackMessages.NONE)
@@ -217,8 +228,7 @@ class SignInScreenViewModel(
                 println("✅" + LogTags.SIGNIN_VM + ": Subscribe SignIn screen for Join Response Signal")
                 when (actionType) {
                     SocketActionModel.JOIN_REQUEST_ACCEPTED -> {
-                        println("✅" + LogTags.SIGNIN_VM + ": Got Accepted signal")
-                        currentState = SignInStates.SIGN_IN_COMPLETED
+                        handleJoinRequestAccepted()
                     }
                     SocketActionModel.JOIN_REQUEST_DECLINED -> {
                         println("❌" + LogTags.SIGNIN_VM + ": Got Declined signal")
@@ -235,6 +245,32 @@ class SignInScreenViewModel(
                 }
             }
         }
+    }
+
+    private fun handleJoinRequestAccepted() {
+        biometricAuthenticator.authenticate(
+            onSuccess = {
+                println("✅" + LogTags.SIGNIN_VM + ": Biometric authentication successful")
+                println("✅" + LogTags.SIGNIN_VM + ": Got Accepted signal")
+                viewModelScope.launch {
+                    currentState = SignInStates.SIGN_IN_COMPLETED
+                }
+            },
+            onError = { error ->
+                println("❌" + LogTags.SIGNIN_VM + ": Biometric authentication failed: $error")
+                viewModelScope.launch {
+                    showErrorSnackBar(SignInSnackMessages.BIOMETRIC_ERROR)
+                    currentState = SignInStates.IDLE
+                }
+            },
+            onFallback = {
+                println("❌" + LogTags.SIGNIN_VM + ": Biometric authentication fallback")
+                viewModelScope.launch {
+                    showErrorSnackBar(SignInSnackMessages.BIOMETRIC_ERROR)
+                    currentState = SignInStates.IDLE
+                }
+            }
+        )
     }
 
     private fun addSubscriptionToSocket() {
@@ -280,11 +316,13 @@ enum class SignInSnackMessages {
     INCORRECT_NAME,
     SIGN_IN_ERROR,
     REJECT,
+    BIOMETRIC_ERROR,
     NONE,
 }
 
 sealed class SignInViewEvents : CommonViewModelEventsInterface {
     data class StartSignInProcess(val name: String) : SignInViewEvents()
+    data class UpdateName(val name: String) : SignInViewEvents()
 }
 
 private enum class SignInStates {
