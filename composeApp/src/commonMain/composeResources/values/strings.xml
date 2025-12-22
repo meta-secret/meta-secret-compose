@@ -18,7 +18,7 @@
     <string name = "placeholder">Choose unique nickname</string>
     <string name = "advice">Choose unique nickname - the one you will be using in the future on other devices or log in using the QR code</string>
     <string name = "start">Let's start</string>
-    <string name = "nicknameError">This username contains prohibited characters. Or has been already taken Please try a different one.</string>
+    <string name = "nicknameError">This username contains prohibited characters. Please try a different one.</string>
     <string name = "secretsHeader">Secrets</string>
     <string name = "secret">secret</string>
     <string name = "secretCapital">Secret</string>
@@ -67,7 +67,6 @@
     <string name = "biometric_title">Biometric Authentication</string>
     <string name = "biometric_subtitle">Sign in using biometrics</string>
     <string name = "biometric_description">Please authenticate to access the app</string>
-    <string name = "biometric_error">Authentication failed</string>
     <string name = "biometric_not_available">Biometric authentication is not available</string>
     <string name = "biometric_error_no_hardware">This device doesn't have biometric hardware</string>
     <string name = "biometric_error_no_enrolled">No biometric credentials are enrolled</string>

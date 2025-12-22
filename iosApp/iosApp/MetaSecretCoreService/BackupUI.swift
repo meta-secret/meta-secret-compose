@@ -31,9 +31,11 @@ final class BackupUI: NSObject {
 
         guard let presenter = self.topMostViewController() else { return }
         let alert = UIAlertController(title: nil, message: initialMessage, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: okTitle, style: .default) { _ in
-            self.presentSystemPicker(
-                from: presenter,
+        alert.addAction(UIAlertAction(title: okTitle, style: .default) { [weak self] _ in
+            guard let strongSelf = self else { return }
+            guard let currentPresenter = strongSelf.topMostViewController() else { return }
+            strongSelf.presentSystemPicker(
+                from: currentPresenter,
                 warningMessage: warningMessage,
                 warningOkTitle: warningOkTitle,
                 warningCancelTitle: warningCancelTitle,
