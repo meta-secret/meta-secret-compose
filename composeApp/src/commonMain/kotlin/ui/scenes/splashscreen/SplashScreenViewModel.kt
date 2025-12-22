@@ -16,6 +16,7 @@ import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.BackupCoordinatorInterface
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
+import core.VaultStatsProviderInterface
 
 class SplashScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
@@ -23,7 +24,8 @@ class SplashScreenViewModel(
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val keyChain: KeyChainInterface,
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
-    val screenMetricsProvider: ScreenMetricsProviderInterface
+    val screenMetricsProvider: ScreenMetricsProviderInterface,
+    private val vaultStatsProvider: VaultStatsProviderInterface
 ) : ViewModel(), CommonViewModel {
     private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
@@ -87,6 +89,10 @@ class SplashScreenViewModel(
                 viewModelScope.launch {
                     when (checkAuth()) {
                         AuthState.COMPLETED -> {
+                            // Preload vault stats before navigating to Main
+                            try {
+                                vaultStatsProvider.refresh()
+                            } catch (_: Throwable) {}
                             println("✅${LogTags.SPLASH_VM}: Move to Main")
                             _navigationEvent.value = SplashNavigationEvent.NavigateToMain
                         }

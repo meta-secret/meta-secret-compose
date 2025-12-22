@@ -13,6 +13,7 @@ import java.io.File
 class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
 
     private val context: Context by inject(Context::class.java)
+    private val databasePathProvider: DatabasePathProviderInterface by inject(DatabasePathProviderInterface::class.java)
     
     companion object {
         init {
@@ -194,7 +195,8 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     private fun cleanDB() {
         println("CLEAN DB (Android)")
         try {
-            val dbFile = File(context.getDatabasePath("meta-secret.db").path)
+            val dbFileName = databasePathProvider.getDatabaseFileName()
+            val dbFile = File(context.getDatabasePath(dbFileName).path)
             if (dbFile.exists()) {
                 val deleted = dbFile.delete()
                 MetaSecretNative.cleanUpDatabase()

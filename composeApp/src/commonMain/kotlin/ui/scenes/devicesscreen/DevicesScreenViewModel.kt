@@ -18,6 +18,8 @@ import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.KeyValueStorageInterface
 import core.LogTags
 import core.ScreenMetricsProviderInterface
+import core.VaultStatsProviderInterface
+import core.AlertCoordinatorInterface
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 
@@ -25,36 +27,54 @@ class DevicesScreenViewModel(
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val appManager: MetaSecretAppManagerInterface,
-    private val keyValueStorage: KeyValueStorageInterface
+    private val keyValueStorage: KeyValueStorageInterface,
+    private val vaultStatsProvider: VaultStatsProviderInterface,
+    private val alertCoordinator: AlertCoordinatorInterface,
 ) : ViewModel(), CommonViewModel {
 
     private val _devicesList = MutableStateFlow<List<DeviceCellModel>>(emptyList())
     val devicesList = _devicesList.asStateFlow()
 
-    private val _vaultName = MutableStateFlow<String?>(null)
-    val vaultName = _vaultName.asStateFlow()
+    val vaultName = vaultStatsProvider.vaultName
     
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
     private val _currentDeviceId = MutableStateFlow<String?>(null)
-    
     val currentDeviceId: String?
         get() = keyValueStorage.cachedDeviceId
-
+    
     init {
-        println("✅${LogTags.DEVICES_VM}: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
-        socketHandler.actionsToFollow(
-            add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN),
-            exclude = null
-        )
-
+        alertCoordinator.setJoinRequestHandler { isAccepted ->
+            if (isAccepted) {
+                handle(DeviceViewEvents.Accept)
+            } else {
+                handle(DeviceViewEvents.Decline)
+            }
+        }
+        
         viewModelScope.launch {
             socketHandler.socketActionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
                     println("✅${LogTags.DEVICES_VM}: New state for Join request has been gotten")
                     loadDevicesList()
                 }
+            }
+        }
+
+        viewModelScope.launch {
+            vaultStatsProvider.secretsCount.collect { count ->
+                _devicesList.value = _devicesList.value.map { it.copy(secretsCount = count) }
+            }
+        }
+        viewModelScope.launch {
+            vaultStatsProvider.devicesCount.collect { count ->
+                _devicesList.value = _devicesList.value.map { it.copy(devicesCount = count) }
+            }
+        }
+        viewModelScope.launch {
+            vaultStatsProvider.vaultName.collect { name ->
+                _devicesList.value = _devicesList.value.map { it.copy(vaultName = name ?: it.vaultName) }
             }
         }
     }
@@ -65,7 +85,12 @@ class DevicesScreenViewModel(
                 DeviceViewEvents.OnAppear -> loadDevicesList()
                 DeviceViewEvents.Accept -> updateMembership(true)
                 DeviceViewEvents.Decline -> updateMembership(false)
-                is DeviceViewEvents.SelectDevice -> selectCurrentDevice(event.deviceId)
+                is DeviceViewEvents.SelectDevice -> {
+                    selectCurrentDevice(event.deviceId)
+                    event.deviceId?.let { deviceId ->
+                        alertCoordinator.showJoinRequest(deviceId)
+                    }
+                }
             }
         }
     }
@@ -88,14 +113,13 @@ class DevicesScreenViewModel(
                             UserStatus.PENDING -> DeviceStatus.Pending
                             else -> DeviceStatus.Unknown
                         },
-                        secretsCount = vaultSummary.secretsCount,
-                        devicesCount = vaultSummary.users.size,
-                        vaultName = vaultSummary.vaultName
+                        secretsCount = vaultStatsProvider.secretsCount.value,
+                        devicesCount = vaultStatsProvider.devicesCount.value,
+                        vaultName = vaultStatsProvider.vaultName.value ?: vaultSummary.vaultName
                     )
                 } ?: emptyList()
 
                 _devicesList.value = devices
-                _vaultName.value = vaultSummary?.vaultName
             } finally {
                 _isLoading.value = false
             }
@@ -121,6 +145,7 @@ class DevicesScreenViewModel(
                     println("❌${LogTags.DEVICES_VM}: Update failed: ${updateResult.error}")
                 }
                 _currentDeviceId.value = null
+                alertCoordinator.dismissJoinRequest()
             } catch (e: Exception) {
                 println("❌${LogTags.DEVICES_VM}: Update error: ${e.message}")
             } finally {

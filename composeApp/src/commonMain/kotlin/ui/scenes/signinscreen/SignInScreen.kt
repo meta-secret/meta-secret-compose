@@ -61,6 +61,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import ui.scenes.mainscreen.MainScreen
 import core.AppColors
+import kotlinproject.composeapp.generated.resources.biometric_error
 import ui.ClassicButton
 import ui.dialogs.qrscanning.scanQRCode
 import ui.notifications.InAppNotification
@@ -77,6 +78,7 @@ class SignInScreen : Screen {
         var isSnackError by remember { mutableStateOf(false) }
         var isFocused by remember { mutableStateOf(false) }
         var isScanning by remember { mutableStateOf(false) }
+        val nameText by viewModel.nameText.collectAsState()
         var scannedText by remember { mutableStateOf("") }
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
@@ -85,6 +87,7 @@ class SignInScreen : Screen {
         val waitForJoinMessage = stringResource(Res.string.accept_request_on_other_device)
         val nameErrorMessage = stringResource(Res.string.nicknameError)
         val rejectedJoinMessage = stringResource(Res.string.reject_join)
+        val biometricError = stringResource(Res.string.biometric_error)
 
         val snackBarMessageType by viewModel.snackBarMessage.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
@@ -118,6 +121,10 @@ class SignInScreen : Screen {
                 SignInSnackMessages.REJECT -> {
                     isSnackError = true
                     snackBarMessage = rejectedJoinMessage
+                }
+                SignInSnackMessages.BIOMETRIC_ERROR -> {
+                    isSnackError = true
+                    snackBarMessage = biometricError
                 }
                 null -> {
                     snackBarMessage = null
@@ -213,9 +220,18 @@ class SignInScreen : Screen {
                             isVisible = { isScanning = it },
                             scannedText = { scannedText = it })
                     }
+                    LaunchedEffect(nameText) {
+                        if (scannedText != nameText) {
+                            scannedText = nameText
+                        }
+                    }
+                    
                     TextField(
                         value = scannedText,
-                        onValueChange = { newText -> scannedText = newText },
+                        onValueChange = { newText -> 
+                            scannedText = newText
+                            viewModel.handle(SignInViewEvents.UpdateName(newText))
+                        },
                         shape = RoundedCornerShape(8.dp),
                         placeholder = {
                             Text(

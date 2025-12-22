@@ -4,11 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import core.Device
 import core.KeyValueStorageInterface
 import core.LogTags
+import core.VaultStatsProviderInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import kotlinx.coroutines.Dispatchers
@@ -25,14 +24,11 @@ class ShowSecretViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
-    private val mainScreenViewModel: ui.scenes.mainscreen.MainScreenViewModel
+    private val mainScreenViewModel: ui.scenes.mainscreen.MainScreenViewModel,
+    private val vaultStatsProvider: VaultStatsProviderInterface,
 ) : ViewModel(), CommonViewModel {
 
-    private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-
-    val devicesCount: StateFlow<Int> = devicesList.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+    val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading

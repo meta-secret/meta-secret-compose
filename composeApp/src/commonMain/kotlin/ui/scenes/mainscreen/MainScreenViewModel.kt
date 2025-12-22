@@ -7,6 +7,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -19,6 +20,8 @@ import core.LogTags
 import core.Device
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
+import core.VaultStatsProviderInterface
+import core.BiometricAuthenticatorInterface
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.appInternalModels.ClaimModel
@@ -30,9 +33,10 @@ import ui.scenes.common.CommonViewModelEventsInterface
 class MainScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
-    private val keyValueStorage: KeyValueStorageInterface,
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
+    private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
+    private val vaultStatsProvider: VaultStatsProviderInterface,
 ) : ViewModel(), CommonViewModel {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -41,6 +45,8 @@ class MainScreenViewModel(
 
     private val _isWarningShown = MutableStateFlow(false)
     val isWarningShown: StateFlow<Boolean> = _isWarningShown
+    
+    private val _isWarningDismissedByUser = MutableStateFlow(false)
 
     private val recoverQueue: ArrayDeque<RestoreData> = ArrayDeque()
     private val _recoverDialog = MutableStateFlow<RestoreData?>(null)
@@ -49,11 +55,14 @@ class MainScreenViewModel(
     private val _secretIdToShow = MutableStateFlow<String?>(null)
     val secretIdToShow: StateFlow<String?> = _secretIdToShow
 
-    private val devicesList: StateFlow<List<Device>> = keyValueStorage.deviceData
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
 
-    val devicesCount: StateFlow<Int> = devicesList.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+    private val _isJoinBadgeDismissed = MutableStateFlow(false)
+    val hasJoinRequestsBadge: StateFlow<Boolean> = vaultStatsProvider.joinRequestsCount
+        .combine(_isJoinBadgeDismissed) { count, dismissed ->
+            (count ?: 0) > 0 && !dismissed
+        }
+        .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     init {
         checkBackup()
@@ -66,15 +75,6 @@ class MainScreenViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             socketHandler.socketActionType.collect { actionType ->
-                if (actionType == SocketActionModel.ASK_TO_JOIN) {
-                    println("✅${LogTags.MAIN_VM}: New state for Join request has been gotten")
-
-                    val count = metaSecretAppManager.getJoinRequestsCount()
-                    withContext(Dispatchers.Main) {
-                        _joinRequestsCount.value = count
-                    }
-                }
-
                 when (val a = actionType) {
                     is SocketActionModel.READY_TO_RECOVER -> {
                         val restoreData = a.restoreData
@@ -106,6 +106,17 @@ class MainScreenViewModel(
                         println("✅${LogTags.MAIN_VM}: READY_TO_SHOW secret by secretId ${a.secretId}")
                     }
                     else -> { /* ignore */ }
+                }
+            }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            vaultStatsProvider.joinRequestsCount.collect { count ->
+                withContext(Dispatchers.Main) {
+                    _joinRequestsCount.value = count
+                    if (count != null && count > 0) {
+                        _isWarningDismissedByUser.value = false
+                    }
                 }
             }
         }
@@ -144,18 +155,31 @@ class MainScreenViewModel(
         }
 
         println("✅${LogTags.MAIN_VM}: Recover is accepted")
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                println("✅${LogTags.MAIN_VM}: acceptRecover called for claimId = ${current.claimId}")
-                metaSecretAppManager.acceptRecover(ClaimModel(current.claimId))
-            } catch (t: Throwable) {
-                println("❌${LogTags.MAIN_VM}: acceptRecover failed for claimId = ${current.claimId}: $t")
-            } finally {
-                withContext(Dispatchers.Main) {
-                    showNextRecoverPrompt()
+        biometricAuthenticator.authenticate(
+            onSuccess = {
+                println("✅${LogTags.MAIN_VM}: Biometric authentication successful")
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        println("✅${LogTags.MAIN_VM}: acceptRecover called for claimId = ${current.claimId}")
+                        metaSecretAppManager.acceptRecover(ClaimModel(current.claimId))
+                    } catch (t: Throwable) {
+                        println("❌${LogTags.MAIN_VM}: acceptRecover failed for claimId = ${current.claimId}: $t")
+                    } finally {
+                        withContext(Dispatchers.Main) {
+                            showNextRecoverPrompt()
+                        }
+                    }
                 }
+            },
+            onError = { error ->
+                println("❌${LogTags.MAIN_VM}: Biometric authentication failed: $error")
+                showNextRecoverPrompt()
+            },
+            onFallback = {
+                println("❌${LogTags.MAIN_VM}: Biometric authentication fallback")
+                showNextRecoverPrompt()
             }
-        }
+        )
     }
 
     private fun checkBackup() {
@@ -169,10 +193,25 @@ class MainScreenViewModel(
 
     private fun setTabIndex(index: Int) {
         TabStateHolder.setTabIndex(index)
+        if (index == 1) {
+            val currentJoinRequests = _joinRequestsCount.value ?: 0
+            if (currentJoinRequests > 0) {
+                _isWarningDismissedByUser.value = true
+                _isWarningShown.value = false
+                _isJoinBadgeDismissed.value = true
+            }
+        }
     }
 
     private fun changeWarningVisibilityTo(state: Boolean) {
-        _isWarningShown.value = state
+        if (state) {
+            if (!_isWarningDismissedByUser.value) {
+                _isWarningShown.value = true
+            }
+        } else {
+            _isWarningDismissedByUser.value = true
+            _isWarningShown.value = false
+        }
     }
 }
 

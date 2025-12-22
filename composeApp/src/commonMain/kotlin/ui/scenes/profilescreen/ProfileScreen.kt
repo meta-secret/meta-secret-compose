@@ -33,14 +33,14 @@ import kotlinproject.composeapp.generated.resources.nickname
 import kotlinproject.composeapp.generated.resources.poweredBy
 import kotlinproject.composeapp.generated.resources.profile
 import kotlinproject.composeapp.generated.resources.secretsHeader
-import kotlinproject.composeapp.generated.resources.signOut
 import kotlinproject.composeapp.generated.resources.version
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
-import ui.ClassicButton
 import ui.screenContent.CommonBackground
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 
 class ProfileScreen : Screen {
     @Composable
@@ -101,7 +101,7 @@ fun ProfileBody() {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 90.dp),
+                .padding(bottom = 60.dp),
         ) {
 //            ClassicButton({
 //                    viewModel.completeSignIn(false)

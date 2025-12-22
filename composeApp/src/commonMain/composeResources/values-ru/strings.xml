@@ -18,7 +18,7 @@
     <string name = "placeholder">Выберите уникальный никнэйм</string>
     <string name = "advice">Выберите уникальный никнейм - который вы будете использовать в дальнейшем на других устройствах или войдите по QR коду</string>
     <string name = "start">Начать работу</string>
-    <string name = "nicknameError">Данный никнейм содержит запрещенные символы. Или уже занят. Попробуйте другой</string>
+    <string name = "nicknameError">Данный никнейм содержит запрещенные символы. Попробуйте другой</string>
     <string name = "secretsHeader">Секреты</string>
     <string name = "secret">секрет</string>
     <string name = "secretCapital">Секрет</string>
@@ -67,7 +67,6 @@
     <string name = "biometric_title">Биометрическая аутентификация</string>
     <string name = "biometric_subtitle">Войдите с помощью биометрии</string>
     <string name = "biometric_description">Пожалуйста, пройдите аутентификацию для доступа к приложению</string>
-    <string name = "biometric_error">Ошибка аутентификации</string>
     <string name = "biometric_not_available">Биометрическая аутентификация недоступна</string>
     <string name = "biometric_error_no_hardware">На этом устройстве нет биометрического оборудования</string>
     <string name = "biometric_error_no_enrolled">Биометрические данные не зарегистрированы</string>
@@ -87,6 +86,7 @@
     <string name = "accept_request_on_other_device">Примите запрос на другом вашем девайсе</string>
     <string name = "unexpected_login">"Неизвестная ошибка при логине"</string>
     <string name = "reject_join">"Отказано в регистрации. Возможно вы присоединяетесь не к своему аккаунту."</string>
+    <string name = "biometric_error">Ошибка авторизации. Попробуйте позже</string>
     <string name = "goto_devices_tab">Перейдите во вкладку Устройства и добавьте необходимые в вашу сеть</string>
     <string name = "wanna_join">Вы хотите добавить это устройство?</string>
     <string name = "backup_choose_path_message">Выберите путь, для сохранения Базы Данных</string>

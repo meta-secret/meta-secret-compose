@@ -23,6 +23,7 @@ import core.AppColors
 import core.LogTags
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import core.VaultStatsProviderInterface
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.removeSecretConfirmation
@@ -45,17 +46,16 @@ class SecretsScreenViewModel(
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
+    private val vaultStatsProvider: VaultStatsProviderInterface,
 ) : ViewModel(), CommonViewModel {
 
     private val secretsList: StateFlow<List<Secret>> = keyValueStorage.secretData
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val secrets: StateFlow<List<Secret>> = secretsList
 
-    private val _devicesCount = MutableStateFlow(0)
-    val devicesCount: StateFlow<Int> = _devicesCount.asStateFlow()
+    val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
 
-    val secretsCount: StateFlow<Int> = secretsList.map { it.size }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0)
+    val secretsCount: StateFlow<Int> = vaultStatsProvider.secretsCount
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
@@ -113,16 +113,7 @@ class SecretsScreenViewModel(
                     println("❌${LogTags.SECRETS_VM}: Failed to get secrets from vault")
                 }
                 
-                val vaultSummary = withContext(Dispatchers.Default) {
-                    metaSecretAppManager.getVaultSummary()
-                }
-                
-                if (vaultSummary != null) {
-                    _devicesCount.value = vaultSummary.users.size
-                    println("✅${LogTags.SECRETS_VM}: Devices count updated to ${_devicesCount.value}")
-                } else {
-                    println("❌${LogTags.SECRETS_VM}: VaultSummary is null")
-                }
+                vaultStatsProvider.refresh()
             } catch (e: Exception) {
                 println("❌${LogTags.SECRETS_VM}: Error loading secrets from vault: ${e.message}")
             }

@@ -17,7 +17,8 @@ import metasecret.project.com.R
 
 class BackupCoordinatorInterfaceAndroid(
     private val activity: FragmentActivity,
-    private val keyChain: KeyChainInterface
+    private val keyChain: KeyChainInterface,
+    private val databasePathProvider: DatabasePathProviderInterface
 ) : BackupCoordinatorInterface {
 
     private var createDocLauncher: ActivityResultLauncher<String>? = null
@@ -54,7 +55,8 @@ class BackupCoordinatorInterfaceAndroid(
     override fun restoreIfNeeded() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val dbFile = File(activity.applicationContext.getDatabasePath("meta-secret.db").path)
+                val dbFileName = databasePathProvider.getDatabaseFileName()
+                val dbFile = File(activity.applicationContext.getDatabasePath(dbFileName).path)
                 if (dbFile.exists()) {
                     println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ✅ local DB exists, skipping restore")
                     return@launch
@@ -105,7 +107,8 @@ class BackupCoordinatorInterfaceAndroid(
                     return@launch
                 }
 
-                val dbFile = File(activity.applicationContext.getDatabasePath("meta-secret.db").path)
+                val dbFileName = databasePathProvider.getDatabaseFileName()
+                val dbFile = File(activity.applicationContext.getDatabasePath(dbFileName).path)
                 if (!dbFile.exists()) {
                     println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ local DB does not exist")
                     return@launch
@@ -205,7 +208,8 @@ class BackupCoordinatorInterfaceAndroid(
     }
 
     private fun openPicker() {
-        createDocLauncher?.launch("meta-secret.db")
+        val dbFileName = databasePathProvider.getDatabaseFileName()
+        createDocLauncher?.launch(dbFileName)
     }
 
     private fun isGoogleDriveUri(uri: Uri): Boolean {

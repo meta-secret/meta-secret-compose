@@ -5,6 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,7 +28,10 @@ import org.jetbrains.compose.resources.stringResource
 import core.AppColors
 
 @Composable
-fun CommonBackground(text: StringResource, screenContent: @Composable () -> Unit) {
+fun CommonBackground(
+    text: StringResource, 
+    screenContent: @Composable () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -35,11 +43,18 @@ fun CommonBackground(text: StringResource, screenContent: @Composable () -> Unit
                 .fillMaxSize(),
             contentScale = ContentScale.FillBounds
         )
-        Column {
+        Column(
+            modifier = Modifier
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+        ) {
             Text(
                 modifier = Modifier
                     .align(Alignment.Start)
-                    .padding(top = 50.dp, bottom = 30.dp, start = 16.dp),
+                    .padding(
+                        top = 20.dp, 
+                        bottom = 30.dp, 
+                        start = 16.dp
+                    ),
                 text = stringResource(text),
                 color = AppColors.White,
                 fontFamily = FontFamily(Font(Res.font.manrope_bold)),

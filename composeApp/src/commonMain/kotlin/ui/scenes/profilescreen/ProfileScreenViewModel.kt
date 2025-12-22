@@ -3,6 +3,7 @@ package ui.scenes.profilescreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import core.DeviceInfoProviderInterface
+import core.VaultStatsProviderInterface
 import kotlinx.coroutines.flow.StateFlow
 import core.KeyValueStorageInterface
 import core.LogTags
@@ -21,17 +22,13 @@ class ProfileScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     val deviceInfoProvider: DeviceInfoProviderInterface,
     private val appManager: MetaSecretAppManagerInterface,
-    private val socketHandler: MetaSecretSocketHandlerInterface
+    private val socketHandler: MetaSecretSocketHandlerInterface,
+    private val vaultStatsProvider: VaultStatsProviderInterface
 ) : ViewModel(), CommonViewModel {
 
-    private val _vaultName = MutableStateFlow<String?>(null)
-    val vaultName: StateFlow<String?> = _vaultName
-
-    private val _devicesCount = MutableStateFlow(0)
-    val devicesCount: StateFlow<Int> = _devicesCount
-
-    private val _secretsCount = MutableStateFlow(0)
-    val secretsCount: StateFlow<Int> = _secretsCount
+    val vaultName: StateFlow<String?> = vaultStatsProvider.vaultName
+    val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
+    val secretsCount: StateFlow<Int> = vaultStatsProvider.secretsCount
 
     init {
         println("✅${LogTags.PROFILE_VM}: Start to follow GET_STATE for profile updates")
@@ -65,20 +62,7 @@ class ProfileScreenViewModel(
         println("✅${LogTags.PROFILE_VM}: loadProfileData")
         viewModelScope.launch {
             try {
-                _vaultName.value = keyValueStorage.cachedVaultName
-                println("✅${LogTags.PROFILE_VM}: vaultName = ${_vaultName.value}")
-
-                val vaultSummary = withContext(Dispatchers.Default) {
-                    appManager.getVaultSummary()
-                }
-
-                if (vaultSummary != null) {
-                    _secretsCount.value = vaultSummary.secretsCount
-                    _devicesCount.value = vaultSummary.users.size
-                    println("✅${LogTags.PROFILE_VM}: secretsCount = ${_secretsCount.value}, devicesCount = ${_devicesCount.value}")
-                } else {
-                    println("❌${LogTags.PROFILE_VM}: vaultSummary is null")
-                }
+                vaultStatsProvider.refresh()
             } catch (t: Throwable) {
                 println("❌${LogTags.PROFILE_VM}: loadProfileData failed: ${t.message}")
             }

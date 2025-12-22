@@ -1,5 +1,9 @@
 package ui.notifications
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,64 +34,75 @@ import org.jetbrains.compose.resources.painterResource
 import core.AppColors
 
 @Composable
-fun warningContent(
+fun WarningBubble(
     text: AnnotatedString,
     mainAction: () -> Unit?,
-    closeAction: () -> Unit
+    closeAction: () -> Unit,
+    isVisible: Boolean = true
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 14.dp)
-            .background(AppColors.White5, RoundedCornerShape(10.dp))
-            .height(92.dp)
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = slideInVertically(
+            initialOffsetY = { -it },
+            animationSpec = tween(durationMillis = 300)
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = { -it },
+            animationSpec = tween(durationMillis = 300)
+        )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .height(60.dp)
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Image(
-                painter = painterResource(Res.drawable.warning),
-                contentDescription = null,
-                contentScale = ContentScale.FillBounds
-            )
-            ClickableText(
-                text = text,
-                style = TextStyle(
-                    fontSize = 15.sp,
-                    fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                    color = AppColors.White75
-                ),
-                onClick = { offset ->
-                    text.getStringAnnotations("addText", offset, offset)
-                        .firstOrNull()
-                        ?.let {
-                            mainAction()
-                        }
-                },
-                modifier = Modifier
-                    .padding(end = 30.dp)
-            )
-        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp)
-                .padding(end = 12.dp)
+                .background(AppColors.White5, RoundedCornerShape(10.dp))
+                .height(85.dp)
         ) {
-            Image(
-                painter = painterResource(Res.drawable.close),
-                contentDescription = null,
+            Row(
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .clickable {
-                        closeAction()
-                    }
-            )
+                    .fillMaxSize()
+                    .height(60.dp)
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.warning),
+                    contentDescription = null,
+                    contentScale = ContentScale.FillBounds
+                )
+                ClickableText(
+                    text = text,
+                    style = TextStyle(
+                        fontSize = 15.sp,
+                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        color = AppColors.White75
+                    ),
+                    onClick = { offset ->
+                        text.getStringAnnotations("addText", offset, offset)
+                            .firstOrNull()
+                            ?.let {
+                                mainAction()
+                            }
+                    },
+                    modifier = Modifier
+                        .padding(end = 30.dp)
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .padding(end = 12.dp)
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.close),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .clickable {
+                            closeAction()
+                        }
+                )
+            }
         }
     }
 }

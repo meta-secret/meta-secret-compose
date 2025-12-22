@@ -12,7 +12,8 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 class BackupCoordinatorInterfaceIos(
     private val keyChain: KeyChainInterface,
-    private val stringProvider: StringProviderInterface
+    private val stringProvider: StringProviderInterface,
+    private val databasePathProvider: DatabasePathProviderInterface
 ) : BackupCoordinatorInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun ensureBackupDestinationSelected() {
@@ -21,20 +22,23 @@ class BackupCoordinatorInterfaceIos(
         CoroutineScope(Dispatchers.IO).launch {
             val masterKey = keyChain.getString("master_key")
             val backupKey = "bdBackUp${masterKey}"
+            val dbFileName = databasePathProvider.getDatabaseFileName()
             withContext(Dispatchers.Main) {
-                presentUsingUIBridge(bridge, backupKey)
+                presentUsingUIBridge(bridge, backupKey, dbFileName)
             }
         }
     }
 
     @OptIn(ExperimentalForeignApi::class)
     override fun restoreIfNeeded() {
-        SwiftBridge().restoreBackupIfNeeded()
+        val dbFileName = databasePathProvider.getDatabaseFileName()
+        SwiftBridge().restoreBackupIfNeededWithDbFileName(dbFileName)
     }
 
     @OptIn(ExperimentalForeignApi::class)
     override fun backupIfChanged() {
-        SwiftBridge().backupIfChanged()
+        val dbFileName = databasePathProvider.getDatabaseFileName()
+        SwiftBridge().backupIfChangedWithDbFileName(dbFileName)
     }
 
     @OptIn(ExperimentalForeignApi::class)
@@ -58,7 +62,7 @@ class BackupCoordinatorInterfaceIos(
     }
 
     @OptIn(ExperimentalResourceApi::class, ExperimentalForeignApi::class)
-    private fun presentUsingUIBridge(bridge: SwiftBridge, backupKey: String) {
+    private fun presentUsingUIBridge(bridge: SwiftBridge, backupKey: String, dbFileName: String) {
         val msg = stringProvider.backupChoosePathMessage()
         val warn = stringProvider.backupChoosePathWarning()
         val okText = stringProvider.ok()
@@ -69,7 +73,8 @@ class BackupCoordinatorInterfaceIos(
             warningMessage = warn,
             warningOkTitle = okText,
             warningCancelTitle = okText,
-            backupKey = backupKey
+            backupKey = backupKey,
+            dbFileName = dbFileName
         )
     }
 

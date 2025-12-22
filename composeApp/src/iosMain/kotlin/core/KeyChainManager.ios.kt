@@ -5,7 +5,9 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class KeyChainManagerIos : KeyChainInterface {
+class KeyChainManagerIos(
+    private val databasePathProvider: DatabasePathProviderInterface
+) : KeyChainInterface {
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun saveString(key: String, value: String): Boolean = withContext(Dispatchers.Main) {
         try {
@@ -57,7 +59,8 @@ class KeyChainManagerIos : KeyChainInterface {
                 removeKey(masterKey)
             }
             if (isCleanDB) {
-                SwiftBridge().clearAll()
+                val dbFileName = databasePathProvider.getDatabaseFileName()
+                SwiftBridge().clearAllWithDbFileName(dbFileName)
             }
 
             println("🗝️KeyChainManager: ✅ clearAll completed successfully")
