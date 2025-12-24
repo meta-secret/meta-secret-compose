@@ -1,6 +1,5 @@
 package ui.scenes.mainscreen
 
-import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,7 +36,7 @@ class MainScreenViewModel(
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
-) : ViewModel(), CommonViewModel {
+) : CommonViewModel() {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val _joinRequestsCount = MutableStateFlow<Int?>(null)

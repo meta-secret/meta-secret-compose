@@ -1,6 +1,5 @@
 package ui.scenes.signinscreen
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +39,7 @@ class SignInScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
-) : ViewModel(), CommonViewModel {
+) : CommonViewModel() {
 
     // Properties
     private val _isLoading = MutableStateFlow(false)

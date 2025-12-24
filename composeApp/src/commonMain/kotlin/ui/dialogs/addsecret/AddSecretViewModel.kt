@@ -1,6 +1,5 @@
 package ui.dialogs.addsecret
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -18,7 +17,7 @@ import kotlin.properties.Delegates
 class AddSecretViewModel(
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val keyValueStorage: KeyValueStorageInterface,
-) : ViewModel(), CommonViewModel {
+) : CommonViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading

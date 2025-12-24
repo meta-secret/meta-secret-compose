@@ -1,6 +1,5 @@
 package ui.scenes.profilescreen
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import core.DeviceInfoProviderInterface
 import core.VaultStatsProviderInterface
@@ -24,7 +23,7 @@ class ProfileScreenViewModel(
     private val appManager: MetaSecretAppManagerInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface
-) : ViewModel(), CommonViewModel {
+) : CommonViewModel() {
 
     val vaultName: StateFlow<String?> = vaultStatsProvider.vaultName
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount

@@ -8,7 +8,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,7 +46,7 @@ class SecretsScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
-) : ViewModel(), CommonViewModel {
+) : CommonViewModel() {
 
     private val secretsList: StateFlow<List<Secret>> = keyValueStorage.secretData
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())

@@ -1,9 +1,8 @@
 package ui.scenes.splashscreen
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import core.LogTags
+import core.LogTag
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import ui.scenes.common.CommonViewModel
@@ -26,7 +25,7 @@ class SplashScreenViewModel(
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface
-) : ViewModel(), CommonViewModel {
+) : CommonViewModel() {
     private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
 
@@ -46,23 +45,21 @@ class SplashScreenViewModel(
     // All biometric routine
     private fun biometricRoutine() {
         viewModelScope.launch {
-            println("🔄${LogTags.SPLASH_VM}: Starting complete data cleanup")
+            logger.log(LogTag.SplashVM.Message.DataCleanupStart)
             val clearResult = keyChain.clearAll(isCleanDB = true)
-            println("🔄${LogTags.SPLASH_VM}: Data cleanup completed with result: $clearResult")
+            logger.log(LogTag.SplashVM.Message.DataCleanupCompleted, " $clearResult")
 
             if (checkBiometricAvailability()) {
                 backupCoordinatorInterface.restoreIfNeeded()
                 authenticateWithBiometrics()
             } else {
                 // TODO: #48 Set pin code
-                println("✅${LogTags.SPLASH_VM}: BiometricState NeedRegistration")
-                _biometricState.value = BiometricState.NeedRegistration
             }
         }
     }
 
     private fun checkBiometricAvailability(): Boolean {
-        println("✅${LogTags.SPLASH_VM}: Biometric is available? ${biometricAuthenticator.isBiometricAvailable()}")
+        logger.log(LogTag.SplashVM.Message.BiometricAvailable, "${biometricAuthenticator.isBiometricAvailable()}")
         return biometricAuthenticator.isBiometricAvailable()
     }
 

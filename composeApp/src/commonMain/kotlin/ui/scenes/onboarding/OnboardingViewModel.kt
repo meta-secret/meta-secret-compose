@@ -1,6 +1,5 @@
 package ui.scenes.onboarding
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import core.LogTags
@@ -17,7 +16,7 @@ import core.KeyValueStorageInterface
 class OnboardingViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface
-) : ViewModel(), CommonViewModel {
+) : CommonViewModel() {
     val pages = listOf(
         OnBoardingPage.First,
         OnBoardingPage.Second,

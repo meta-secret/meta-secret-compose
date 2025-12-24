@@ -1,6 +1,5 @@
 package ui.dialogs.showsecret
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +25,7 @@ class ShowSecretViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val mainScreenViewModel: ui.scenes.mainscreen.MainScreenViewModel,
     private val vaultStatsProvider: VaultStatsProviderInterface,
-) : ViewModel(), CommonViewModel {
+) : CommonViewModel() {
 
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
 

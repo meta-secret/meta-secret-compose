@@ -1,6 +1,5 @@
 package ui.scenes.devicesscreen
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,7 +29,7 @@ class DevicesScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
     private val alertCoordinator: AlertCoordinatorInterface,
-) : ViewModel(), CommonViewModel {
+) : CommonViewModel() {
 
     private val _devicesList = MutableStateFlow<List<DeviceCellModel>>(emptyList())
     val devicesList = _devicesList.asStateFlow()
