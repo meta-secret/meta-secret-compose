@@ -24,6 +24,8 @@ import core.VaultStatsProvider
 import core.VaultStatsProviderInterface
 import core.AlertCoordinator
 import core.AlertCoordinatorInterface
+import core.DebugLogger
+import core.DebugLoggerInterface
 
 val appModule = module {
     single<KeyValueStorageInterface> { KeyValueStorageImpl(get()) }
@@ -32,11 +34,12 @@ val appModule = module {
     single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get()) }
     single<VaultStatsProviderInterface> { VaultStatsProvider(get(), get()) }
     single<AlertCoordinatorInterface> { AlertCoordinator() }
+    single<DebugLoggerInterface> { DebugLogger() }
 
     factory { MainScreenViewModel(get(), get(), get(), get(), get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
-    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { ProfileScreenViewModel(get(), get(), get(), get(), get()) }
     factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get()) }
     factory { SecretsScreenViewModel(get(), get(), get(), get(), get()) }
