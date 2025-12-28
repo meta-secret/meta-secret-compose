@@ -82,7 +82,11 @@ class SignInScreenViewModel(
     // Check Initial state
     private suspend fun initialState() {
         if (initAppManagerResult()) {
-            metaSecretAppManager.getStateModel()?.getAppState()?.let { state ->
+            val stateModel = metaSecretAppManager.getStateModel()
+            val appState = stateModel?.getAppState()
+            logger.setVaultState(appState?.description())
+            
+            appState?.let { state ->
                 when (state) {
                     is State.Vault -> {
                         val vaultInfo = metaSecretAppManager.getVaultFullInfoModel()
@@ -110,6 +114,7 @@ class SignInScreenViewModel(
                 }
             }
         } else {
+            logger.setVaultState(null)
             currentState = SignInStates.IDLE
         }
     }
@@ -280,6 +285,9 @@ class SignInScreenViewModel(
             when (metaSecretAppManager.initWithSavedKey()) {
                 is InitResult.Success -> {
                     val appState = metaSecretAppManager.getStateModel()
+                    val state = appState?.getAppState()
+                    logger.setVaultState(state?.description())
+                    
                     val vaultState = appState?.getVaultFullInfo()
                     val outsiderState = appState?.getOutsiderStatus()
 
@@ -289,7 +297,9 @@ class SignInScreenViewModel(
                         logger.log(LogTag.SignInVM.Message.NotPending, success = true)
                     }
                 }
-                else -> {}
+                else -> {
+                    logger.setVaultState(null)
+                }
             }
         }
     }

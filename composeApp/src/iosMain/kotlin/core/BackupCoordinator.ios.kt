@@ -86,7 +86,11 @@ class BackupCoordinatorInterfaceIos(
             warningOkTitle = okText,
             warningCancelTitle = okText,
             backupKey = backupKey,
-            dbFileName = dbFileName
+            dbFileName = dbFileName,
+            completion = {
+                val isDataBaseExists = bridge.hasDatabaseFile(dbFileName)
+                logger.setBackupDbExists(isDataBaseExists)
+            }
         )
     }
 

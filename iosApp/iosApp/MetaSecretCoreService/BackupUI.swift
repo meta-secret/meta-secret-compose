@@ -20,16 +20,21 @@ final class BackupUI: NSObject {
         warningOkTitle: String,
         warningCancelTitle: String,
         backupKey: String,
-        dbFileName: String
+        dbFileName: String,
+        completion: @escaping (Bool) -> Void = { _ in }
     ) {
         let backupExists = BackupWorker.hasICloudBackup(dbFileName: dbFileName)
         guard !backupExists else {
             SwiftLogger.shared.logInfo(tag: .backupUI, message: "iCloud backup Exists. Alert doesn't need")
+            completion(true)
             return
         }
         SwiftLogger.shared.logInfo(tag: .backupUI, message: "iCloud backup Not Exists")
 
-        guard let presenter = self.topMostViewController() else { return }
+        guard let presenter = self.topMostViewController() else {
+            completion(false)
+            return
+        }
         let alert = UIAlertController(title: nil, message: initialMessage, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: okTitle, style: .default) { [weak self] _ in
             guard let strongSelf = self else { return }
@@ -40,7 +45,8 @@ final class BackupUI: NSObject {
                 warningOkTitle: warningOkTitle,
                 warningCancelTitle: warningCancelTitle,
                 backupKey: backupKey,
-                dbFileName: dbFileName
+                dbFileName: dbFileName,
+                completion: completion
             )
         })
         presenter.present(alert, animated: true)
@@ -52,11 +58,13 @@ final class BackupUI: NSObject {
         warningOkTitle: String,
         warningCancelTitle: String,
         backupKey: String,
-        dbFileName: String
+        dbFileName: String,
+        completion: @escaping (Bool) -> Void
     ) {
         let fm = FileManager.default
         guard let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first else {
             SwiftLogger.shared.logError(tag: .backupUI, message: "Documents directory not found")
+            completion(false)
             return
         }
         let src = documentsPath.appendingPathComponent(dbFileName)
@@ -70,6 +78,7 @@ final class BackupUI: NSObject {
             )
             alert.addAction(UIAlertAction(title: warningOkTitle, style: .default))
             presenter.present(alert, animated: true)
+            completion(false)
             return
         }
 
@@ -90,7 +99,8 @@ final class BackupUI: NSObject {
             warningOkTitle: warningOkTitle,
             warningCancelTitle: warningCancelTitle,
             backupKey: backupKey,
-            dbFileName: dbFileName
+            dbFileName: dbFileName,
+            completion: completion
         )
         picker.delegate = delegate
         objc_setAssociatedObject(picker, Unmanaged.passUnretained(picker).toOpaque(), delegate, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
@@ -114,7 +124,8 @@ final class BackupUI: NSObject {
                 warningOkTitle: warningOkTitle,
                 warningCancelTitle: warningCancelTitle,
                 backupKey: backupKey,
-                dbFileName: dbFileName
+                dbFileName: dbFileName,
+                completion: { _ in }
             )
         })
         presenter.present(alert, animated: true)
@@ -153,23 +164,28 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
     let warningCancelTitle: String
     let backupKey: String
     let dbFileName: String
+    private let completion: (Bool) -> Void
+    private var completed = false
 
     init(
         warningMessage: String,
         warningOkTitle: String,
         warningCancelTitle: String,
         backupKey: String,
-        dbFileName: String
+        dbFileName: String,
+        completion: @escaping (Bool) -> Void
     ) {
         self.warningMessage = warningMessage
         self.warningOkTitle = warningOkTitle
         self.warningCancelTitle = warningCancelTitle
         self.backupKey = backupKey
         self.dbFileName = dbFileName
+        self.completion = completion
     }
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
         SwiftLogger.shared.logError(tag: .backupUI, message: "document Picker Was Cancelled")
+        finish(false)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self, weak controller] in
             guard let self = self else { return }
             controller?.dismiss(animated: true) {
@@ -199,6 +215,7 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
                 backupKey: backupKey,
                 dbFileName: dbFileName
             )
+            finish(false)
             return
         }
 
@@ -214,6 +231,7 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
                 backupKey: backupKey,
                 dbFileName: dbFileName
             )
+            finish(false)
             return
         }
 
@@ -233,6 +251,13 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
 
         _ = SwiftBridge().saveString(key: backupKey, value: url.path)
         SwiftLogger.shared.logSuccess(tag: .backupUI, message: "stored path for UI: \(url.path)")
+        finish(true)
+    }
+
+    private func finish(_ result: Bool) {
+        guard !completed else { return }
+        completed = true
+        completion(result)
     }
 }
 

@@ -254,6 +254,13 @@ sealed class State {
     data class Vault(
         val vault: VaultFullInfo
     ) : State()
+    
+    fun description(): String {
+        return when (this) {
+            is Local -> "Local"
+            is Vault -> "Vault"
+        }
+    }
 }
 
 @Serializable

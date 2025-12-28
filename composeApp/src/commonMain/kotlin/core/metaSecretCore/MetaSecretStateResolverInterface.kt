@@ -31,6 +31,7 @@ open class LocalState(
 
         val isSuccess = coreStateModel.success
         val stateModel = coreStateModel.getAppState()
+        logger.setVaultState(stateModel?.description())
 
         val result: LocalState? = if (isSuccess && stateModel is State.Local) {
             logger.log(core.LogTag.StateResolver.Message.CurrentStateIsLocal, success = true)
@@ -51,6 +52,7 @@ open class LocalState(
         val isSuccess = coreStateModel.success
         val stateModel = coreStateModel.getAppState()
         val vaultInfo = coreStateModel.getVaultFullInfo()
+        logger.setVaultState(stateModel?.description())
 
         val result: VaultState? = if (isSuccess && stateModel is State.Vault) {
             logger.log(core.LogTag.StateResolver.Message.CurrentStateIsVault, success = true)
@@ -93,6 +95,8 @@ class VaultState(
 
         val isSuccess = coreStateModel.success
         val vaultInfo = coreStateModel.getVaultFullInfo()
+        val stateModel = coreStateModel.getAppState()
+        logger.setVaultState(stateModel?.description())
 
         val result: AppState? = if (isSuccess && vaultInfo is VaultFullInfo.Member) {
             logger.log(core.LogTag.StateResolver.Message.CurrentStateIsMember, success = true)

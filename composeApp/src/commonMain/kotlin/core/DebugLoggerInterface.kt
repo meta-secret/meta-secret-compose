@@ -355,17 +355,19 @@ sealed class LogTag(val displayName: String) {
 data class CriticalComponentsState(
     val backupDbExists: Boolean = false,
     val appManagerCreated: Boolean = false,
-    val masterKeyGenerated: Boolean = false
+    val masterKeyGenerated: Boolean = false,
+    val vaultState: String? = null
 )
 
 interface DebugLoggerInterface {
-    fun <T : LogTag> log(message: LogTag.Message<T>, extra: String? = null, success: Boolean? = null, )
+    fun <T : LogTag> log(message: LogTag.Message<T>, extra: String? = null, success: Boolean? = null)
 
     fun setLoggerVisibility()
     fun testInfo()
     fun setBackupDbExists(exists: Boolean)
     fun setAppManagerCreated(created: Boolean)
     fun setMasterKeyGenerated(generated: Boolean)
+    fun setVaultState(state: String?)
     fun setOuterLoggerVisibility(isVisible: Boolean)
 }
 
@@ -407,18 +409,25 @@ open class DebugLogger : DebugLoggerInterface {
         testInfo()
     }
 
+    override fun setVaultState(state: String?) {
+        criticalState = criticalState.copy(vaultState = state)
+        testInfo()
+    }
+
     override fun testInfo() {
         if (!isCriticalInfoLogsActive) { return }
         
         val backupStatus = if (criticalState.backupDbExists) "Enable" else "False"
         val appManagerStatus = if (criticalState.appManagerCreated) "True" else "False"
         val masterKeyStatus = if (criticalState.masterKeyGenerated) "True" else "False"
+        val vaultStateStatus = criticalState.vaultState ?: "null"
 
         println("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F")
         println("  Critical Components State:")
         println("  BackUpDB => $backupStatus")
         println("  MetaSecretAppManager => $appManagerStatus")
         println("  MasterKey => $masterKeyStatus")
+        println("  VaultState => $vaultStateStatus")
         println("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F")
     }
     override fun setOuterLoggerVisibility(isVisible: Boolean) { }

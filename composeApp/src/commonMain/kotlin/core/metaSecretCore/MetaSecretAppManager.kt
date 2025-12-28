@@ -42,7 +42,7 @@ class MetaSecretAppManager(
                 val appManagerResult = withContext(Dispatchers.IO) {
                     metaSecretCore.initAppManager(masterKey)
                 }
-                logger.log(LogTag.AppManager.Message.IsInitiated, "$appManagerResult", success = true)
+                logger.log(LogTag.AppManager.Message.IsInitiated, appManagerResult, success = true)
                 logger.setAppManagerCreated(true)
                 InitResult.Success(appManagerResult)
             } catch (e: Exception) {
@@ -64,11 +64,15 @@ class MetaSecretAppManager(
             val currentState = AppStateModel.fromJson(stateJson, logger)
             logger.log(LogTag.AppManager.Message.CurrentState, "$currentState", success = true)
             
+            val appState = currentState.getAppState()
+            logger.setVaultState(appState?.description())
+            
             cacheDeviceAndVaultInfoIfNeeded(currentState)
             
             currentState
         } catch (e: Exception) {
             logger.log(LogTag.AppManager.Message.FailedToParseStateJson, "${e.message}", success = false)
+            logger.setVaultState(null)
             AppStateModel(
                 null,
                 false
@@ -88,12 +92,12 @@ class MetaSecretAppManager(
             
             if (keyValueStorage.cachedDeviceId == null) {
                 keyValueStorage.cachedDeviceId = deviceId
-                logger.log(LogTag.AppManager.Message.CachedDeviceId, "$deviceId", success = true)
+                logger.log(LogTag.AppManager.Message.CachedDeviceId, deviceId, success = true)
             }
             
             if (keyValueStorage.cachedVaultName == null) {
                 keyValueStorage.cachedVaultName = vaultName
-                logger.log(LogTag.AppManager.Message.CachedVaultName, "$vaultName", success = true)
+                logger.log(LogTag.AppManager.Message.CachedVaultName, vaultName, success = true)
             }
         }
     }
@@ -193,9 +197,13 @@ class MetaSecretAppManager(
     override suspend fun checkAuth(): AuthState {
         return when (initWithSavedKey()) {
             is InitResult.Success -> {
-                return when (getStateModel()?.getAppState()) {
+                val stateModel = getStateModel()
+                val appState = stateModel?.getAppState()
+                logger.setVaultState(appState?.description())
+                
+                return when (appState) {
                     is State.Vault -> {
-                        when (getStateModel()?.getVaultFullInfo()) {
+                        when (stateModel.getVaultFullInfo()) {
                             is VaultFullInfo.Member -> AuthState.COMPLETED
                             else -> AuthState.NOT_YET_COMPLETED
                         }
@@ -207,7 +215,10 @@ class MetaSecretAppManager(
                 }
             }
 
-            else -> AuthState.NOT_YET_COMPLETED
+            else -> {
+                logger.setVaultState(null)
+                AuthState.NOT_YET_COMPLETED
+            }
         }
     }
 
@@ -295,8 +306,7 @@ class MetaSecretAppManager(
         val stateJson = metaSecretCore.getAppState()
         return try {
             val currentState = AppStateModel.fromJson(stateJson, logger)
-            val vaultInfo = currentState.getVaultFullInfo()
-            val secrets = when (vaultInfo) {
+            val secrets = when (val vaultInfo = currentState.getVaultFullInfo()) {
                 is VaultFullInfo.Member -> vaultInfo.member.member.vault.secrets
                 else -> emptyList()
             }

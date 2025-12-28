@@ -312,7 +312,7 @@ import ObjectiveC
 
     // MARK: - Backuping
     @MainActor
-    @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:backupKey:dbFileName:)
+    @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:backupKey:dbFileName:completion:)
     public func presentBackupPickerWithInitialMessage(
         initialMessage: String,
         okTitle: String,
@@ -320,7 +320,8 @@ import ObjectiveC
         warningOkTitle: String,
         warningCancelTitle: String,
         backupKey: String,
-        dbFileName: String
+        dbFileName: String,
+        completion: @escaping (Bool) -> Void
     ) {
         presentBackupPickerWithMessages(
             initialMessage: initialMessage,
@@ -329,7 +330,8 @@ import ObjectiveC
             warningOkTitle: warningOkTitle,
             warningCancelTitle: warningCancelTitle,
             backupKey: backupKey,
-            dbFileName: dbFileName
+            dbFileName: dbFileName,
+            completion: completion
         )
     }
 
@@ -341,7 +343,8 @@ import ObjectiveC
         warningOkTitle: String,
         warningCancelTitle: String,
         backupKey: String,
-        dbFileName: String
+        dbFileName: String,
+        completion: @escaping (Bool) -> Void = { _ in }
     ) {
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Present BackUp Alert")
         BackupUI.shared.presentBackupPicker(
@@ -351,7 +354,8 @@ import ObjectiveC
             warningOkTitle: warningOkTitle,
             warningCancelTitle: warningCancelTitle,
             backupKey: backupKey,
-            dbFileName: dbFileName
+            dbFileName: dbFileName,
+            completion: completion
         )
     }
 
