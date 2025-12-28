@@ -74,7 +74,7 @@ class SplashScreen : Screen {
                 is BiometricState.Error -> {
                     errorMessage = biometricError
                     showErrorNotification = true
-                    delay(3000)
+                    delay(5000)
                     showErrorNotification = false
                 }
 
@@ -147,14 +147,16 @@ class SplashScreen : Screen {
                 }
             }
             
-            if (showErrorNotification) {
+            val currentBiometricState = biometricState
+            if (currentBiometricState is BiometricState.Error) {
                 Column {
                     Spacer(modifier = Modifier.height(40.dp))
                     InAppNotification(
-                        viewModel.screenMetricsProvider,
+                        screenMetricsProvider = viewModel.screenMetricsProvider,
                         isSuccessful = false,
                         message = errorMessage,
-                        onDismiss = { showErrorNotification = false }
+                        onDismiss = { showErrorNotification = false },
+                        visible = showErrorNotification
                     )
                     Spacer(modifier = Modifier.fillMaxHeight())
                 }

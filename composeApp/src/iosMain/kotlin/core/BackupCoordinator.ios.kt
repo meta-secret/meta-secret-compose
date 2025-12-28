@@ -13,16 +13,17 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 class BackupCoordinatorInterfaceIos(
     private val keyChain: KeyChainInterface,
     private val stringProvider: StringProviderInterface,
-    private val databasePathProvider: DatabasePathProviderInterface
+    private val databasePathProvider: DatabasePathProviderInterface,
+    private val logger: DebugLoggerInterface
 ) : BackupCoordinatorInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun ensureBackupDestinationSelected() {
-        println("\uD83D\uDCE5\uF8FF BackupCoordinator: iOS: ensureBackupDestinationSelected")
+        logger.log(LogTag.BackupCoordinator.Message.EnsureBackupDestinationSelected, success = true)
         val bridge = SwiftBridge()
         CoroutineScope(Dispatchers.IO).launch {
-            val masterKey = keyChain.getString("master_key")
+            val masterKey = keyChain.getString("master_key") ?: return@launch
             val backupKey = "bdBackUp${masterKey}"
-            val dbFileName = databasePathProvider.getDatabaseFileName()
+            val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@launch
             withContext(Dispatchers.Main) {
                 presentUsingUIBridge(bridge, backupKey, dbFileName)
             }
@@ -30,15 +31,19 @@ class BackupCoordinatorInterfaceIos(
     }
 
     @OptIn(ExperimentalForeignApi::class)
-    override fun restoreIfNeeded() {
-        val dbFileName = databasePathProvider.getDatabaseFileName()
-        SwiftBridge().restoreBackupIfNeededWithDbFileName(dbFileName)
+    override suspend fun restoreIfNeeded() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@launch
+            SwiftBridge().restoreBackupIfNeededWithDbFileName(dbFileName)
+        }
     }
 
     @OptIn(ExperimentalForeignApi::class)
-    override fun backupIfChanged() {
-        val dbFileName = databasePathProvider.getDatabaseFileName()
-        SwiftBridge().backupIfChangedWithDbFileName(dbFileName)
+    override suspend fun backupIfChanged() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@launch
+            SwiftBridge().backupIfChangedWithDbFileName(dbFileName)
+        }
     }
 
     @OptIn(ExperimentalForeignApi::class)
@@ -48,10 +53,10 @@ class BackupCoordinatorInterfaceIos(
             val masterKey = keyChain.getString("master_key")
             val key = "bdBackUp${masterKey}"
             val path = bridge.getStringWithKey(key)
-            println("\uD83D\uDCE5\uF8FF BackupCoordinator: iOS: path is $path")
+            logger.log(LogTag.BackupCoordinator.Message.PathIs, path ?: "null", success = path != null)
             if (!path.isNullOrEmpty()) {
                 val exists = NSFileManager.defaultManager.fileExistsAtPath(path)
-                println("\uD83D\uDCE5\uF8FF BackupCoordinator: iOS: back exists: $exists")
+                logger.log(LogTag.BackupCoordinator.Message.BackExists, "$exists", success = exists)
                 if (exists) {
                     NSFileManager.defaultManager.removeItemAtPath(path, null)
                     bridge.removeKeyWithKey(key)
@@ -59,6 +64,13 @@ class BackupCoordinatorInterfaceIos(
                 }
             }
         }
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    override suspend fun hasDatabaseFile(): Boolean = withContext(Dispatchers.IO) {
+        val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@withContext false
+        val bridge = SwiftBridge()
+        bridge.hasDatabaseFile(dbFileName)
     }
 
     @OptIn(ExperimentalResourceApi::class, ExperimentalForeignApi::class)

@@ -23,7 +23,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 class KeyChainManagerAndroid(
-    private val context: Context
+    private val context: Context,
+    private val logger: DebugLoggerInterface
     ) : KeyChainInterface {
     
     companion object {
@@ -130,7 +131,7 @@ class KeyChainManagerAndroid(
     
     override suspend fun clearAll(isCleanDB: Boolean): Boolean = withContext(Dispatchers.IO) {
         try {
-            println("🗝️KeyChainManager: Android: Starting clearAll process (isCleanDB: $isCleanDB)")
+            logger.log(LogTag.KeyChainManager.Message.StartingClearAll, "isCleanDB: $isCleanDB", success = true)
             val masterKey = getString("master_key")
             if (masterKey != null) {
                 removeKey(masterKey)
@@ -151,13 +152,13 @@ class KeyChainManagerAndroid(
                         deletedCount++
                     }
                 }
-                println("🗝️KeyChainManager: Android: Deleted $deletedCount keystore entries")
+                logger.log(LogTag.KeyChainManager.Message.DeletedKeystoreEntries, "$deletedCount", success = true)
             }
 
-            println("🗝️KeyChainManager: Android: ✅ clearAll completed successfully")
+            logger.log(LogTag.KeyChainManager.Message.ClearAllCompleted, success = true)
             true
         } catch (e: Exception) {
-            println("🗝️KeyChainManager: Android: ❌ Error clearing KeyChain: ${e.message}")
+            logger.log(LogTag.KeyChainManager.Message.ErrorClearing, "${e.message}", success = false)
             e.printStackTrace()
             false
         }

@@ -1,6 +1,6 @@
 package core
 
 interface DatabasePathProviderInterface {
-    fun getDatabaseFileName(): String
+    suspend fun getDatabaseFileName(): String?
 }
 

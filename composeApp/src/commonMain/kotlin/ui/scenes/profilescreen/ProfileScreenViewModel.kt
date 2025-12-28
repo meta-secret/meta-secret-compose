@@ -5,7 +5,7 @@ import core.DeviceInfoProviderInterface
 import core.VaultStatsProviderInterface
 import kotlinx.coroutines.flow.StateFlow
 import core.KeyValueStorageInterface
-import core.LogTags
+import core.LogTag
 import kotlinx.coroutines.flow.MutableStateFlow
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -30,7 +30,7 @@ class ProfileScreenViewModel(
     val secretsCount: StateFlow<Int> = vaultStatsProvider.secretsCount
 
     init {
-        println("✅${LogTags.PROFILE_VM}: Start to follow GET_STATE for profile updates")
+        logger.log(LogTag.ProfileVM.Message.FollowGetState, success = true)
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.GET_STATE),
             exclude = null
@@ -38,9 +38,9 @@ class ProfileScreenViewModel(
 
         viewModelScope.launch {
             socketHandler.socketActions.collect { actionType ->
-                println("✅${LogTags.PROFILE_VM}: Socket action type is $actionType")
+                logger.log(LogTag.ProfileVM.Message.SocketActionType, "$actionType", success = true)
                 if (actionType == SocketActionModel.UPDATE_STATE) {
-                    println("✅${LogTags.PROFILE_VM}: New state received, refreshing profile data")
+                    logger.log(LogTag.ProfileVM.Message.NewStateReceived, success = true)
                     loadProfileData()
                 }
             }
@@ -58,12 +58,12 @@ class ProfileScreenViewModel(
     }
 
     private fun loadProfileData() {
-        println("✅${LogTags.PROFILE_VM}: loadProfileData")
+        logger.log(LogTag.ProfileVM.Message.LoadProfileData, success = true)
         viewModelScope.launch {
             try {
                 vaultStatsProvider.refresh()
             } catch (t: Throwable) {
-                println("❌${LogTags.PROFILE_VM}: loadProfileData failed: ${t.message}")
+                logger.log(LogTag.ProfileVM.Message.LoadProfileDataFailed, "${t.message}", success = false)
             }
         }
     }

@@ -21,21 +21,22 @@ interface AppState
 
 open class LocalState(
     private val vaultName: String,
-    private val metaSecretCore: MetaSecretCoreInterface
+    private val metaSecretCore: MetaSecretCoreInterface,
+    private val logger: core.DebugLoggerInterface
 ) : AppState {
     fun new(): LocalState? {
-        println("✅" + core.LogTags.STATE_RESOLVER + ": Start get app state")
+        logger.log(core.LogTag.StateResolver.Message.StartGetAppState, success = true)
         val jsonResult = metaSecretCore.getAppState()
-        val coreStateModel = AppStateModel.fromJson(jsonResult)
+        val coreStateModel = AppStateModel.fromJson(jsonResult, logger)
 
         val isSuccess = coreStateModel.success
         val stateModel = coreStateModel.getAppState()
 
         val result: LocalState? = if (isSuccess && stateModel is State.Local) {
-            println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is LOCAL")
-            LocalState(vaultName, metaSecretCore)
+            logger.log(core.LogTag.StateResolver.Message.CurrentStateIsLocal, success = true)
+            LocalState(vaultName, metaSecretCore, logger)
         } else {
-            println("❌" + core.LogTags.STATE_RESOLVER + ": SWW with LOCAL state")
+            logger.log(core.LogTag.StateResolver.Message.SwwWithLocalState, success = false)
             null
         }
 
@@ -43,37 +44,37 @@ open class LocalState(
     }
 
     fun generateNewCreds(): VaultState? {
-        println("✅" + core.LogTags.STATE_RESOLVER + ": Start generate new creds")
+        logger.log(core.LogTag.StateResolver.Message.StartGenerateNewCreds, success = true)
         val jsonResult = metaSecretCore.generateUserCreds(vaultName)
-        val coreStateModel = AppStateModel.fromJson(jsonResult)
+        val coreStateModel = AppStateModel.fromJson(jsonResult, logger)
 
         val isSuccess = coreStateModel.success
         val stateModel = coreStateModel.getAppState()
         val vaultInfo = coreStateModel.getVaultFullInfo()
 
         val result: VaultState? = if (isSuccess && stateModel is State.Vault) {
-            println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is VAULT")
-            VaultState(metaSecretCore)
+            logger.log(core.LogTag.StateResolver.Message.CurrentStateIsVault, success = true)
+            VaultState(metaSecretCore, logger)
         } else if (isSuccess && vaultInfo is VaultFullInfo.Outsider) {
-            println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is OUTSIDER")
+            logger.log(core.LogTag.StateResolver.Message.CurrentStateIsOutsider, success = true)
             when (vaultInfo.outsider.status) {
                 UserDataOutsiderStatus.NON_MEMBER -> {
-                    println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is NON_MEMBER")
-                    VaultState(metaSecretCore)
+                    logger.log(core.LogTag.StateResolver.Message.CurrentStateIsNonMember, success = true)
+                    VaultState(metaSecretCore, logger)
                 }
                 UserDataOutsiderStatus.PENDING -> {
-                    println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is PENDING")
+                    logger.log(core.LogTag.StateResolver.Message.CurrentStateIsPending, success = true)
                     // TODO: #47 Show alert that tells user to accept the request
                     null
                 }
                 UserDataOutsiderStatus.DECLINED -> {
-                    println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is DECLINED")
+                    logger.log(core.LogTag.StateResolver.Message.CurrentStateIsDeclined, success = true)
                     //  TODO: #47 Show alert that request has been declined
                     null
                 }
             }
         } else {
-            println("❌" + core.LogTags.STATE_RESOLVER + ": SWW with VAULT state")
+            logger.log(core.LogTag.StateResolver.Message.SwwWithVaultState, success = false)
             null
         }
 
@@ -82,24 +83,25 @@ open class LocalState(
 }
 
 class VaultState(
-    private val metaSecretCore: MetaSecretCoreInterface
+    private val metaSecretCore: MetaSecretCoreInterface,
+    private val logger: core.DebugLoggerInterface
 ) : AppState {
     fun signUp(): AppState? {
-        println("✅" + core.LogTags.STATE_RESOLVER + ": Start SignUp")
+        logger.log(core.LogTag.StateResolver.Message.StartSignUp, success = true)
         val jsonResult = metaSecretCore.signUp()
-        val coreStateModel = AppStateModel.fromJson(jsonResult)
+        val coreStateModel = AppStateModel.fromJson(jsonResult, logger)
 
         val isSuccess = coreStateModel.success
         val vaultInfo = coreStateModel.getVaultFullInfo()
 
         val result: AppState? = if (isSuccess && vaultInfo is VaultFullInfo.Member) {
-            println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is MEMBER")
+            logger.log(core.LogTag.StateResolver.Message.CurrentStateIsMember, success = true)
             MemberState()
         } else if (isSuccess && vaultInfo is VaultFullInfo.Outsider) {
-            println("✅" + core.LogTags.STATE_RESOLVER + ": Current state is OUTSIDER")
+            logger.log(core.LogTag.StateResolver.Message.CurrentStateIsOutsider, success = true)
             OutsiderState(coreStateModel)
         } else {
-            println("❌" + core.LogTags.STATE_RESOLVER + ": SWW with MEMBER state")
+            logger.log(core.LogTag.StateResolver.Message.SwwWithMemberState, success = false)
             null
         }
 

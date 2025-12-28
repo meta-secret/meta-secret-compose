@@ -14,11 +14,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import metasecret.project.com.R
+import androidx.core.net.toUri
 
 class BackupCoordinatorInterfaceAndroid(
     private val activity: FragmentActivity,
     private val keyChain: KeyChainInterface,
-    private val databasePathProvider: DatabasePathProviderInterface
+    private val databasePathProvider: DatabasePathProviderInterface,
+    private val logger: DebugLoggerInterface
 ) : BackupCoordinatorInterface {
 
     private var createDocLauncher: ActivityResultLauncher<String>? = null
@@ -36,11 +38,11 @@ class BackupCoordinatorInterfaceAndroid(
                     val flags = (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                     activity.contentResolver.takePersistableUriPermission(uri, flags)
                 } catch (e: Exception) {
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android:  ❌ takePersistableUriPermission failed: ${e.message}")
+                    logger.log(LogTag.BackupCoordinator.Message.TakePersistableUriPermissionFailed, "${e.message}", success = false)
                 }
                 CoroutineScope(Dispatchers.Main).launch {
                     val saved = keyChain.saveString("bdBackUp", uri.toString())
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ✅ backup URI saved: $saved")
+                    logger.log(LogTag.BackupCoordinator.Message.BackupUriSaved, "$saved", success = saved)
                 }
             } else {
                 showWarningAlert()
@@ -52,57 +54,58 @@ class BackupCoordinatorInterfaceAndroid(
         showInitialAlert()
     }
 
-    override fun restoreIfNeeded() {
-        CoroutineScope(Dispatchers.IO).launch {
+    override suspend fun restoreIfNeeded() {
+        logger.log(LogTag.BackupCoordinator.Message.RestoreIfNeeded, success = true)
+        withContext(Dispatchers.IO) {
             try {
                 val dbFileName = databasePathProvider.getDatabaseFileName()
                 val dbFile = File(activity.applicationContext.getDatabasePath(dbFileName).path)
                 if (dbFile.exists()) {
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ✅ local DB exists, skipping restore")
-                    return@launch
+                    logger.log(LogTag.BackupCoordinator.Message.LocalDbExists, success = true)
+                    return@withContext
                 }
                 val path = keyChain.getString("bdBackUp")
                 if (path.isNullOrEmpty()) {
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ no backup URI set")
+                    logger.log(LogTag.BackupCoordinator.Message.NoBackupUriSet, success = false)
                     withContext(Dispatchers.Main) { showNoDestinationAlert() }
-                    return@launch
+                    return@withContext
                 }
-                val uri = Uri.parse(path)
+                val uri = path.toUri()
                 if (!isGoogleDriveUri(uri)) {
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ backup URI is not Google Drive")
+                    logger.log(LogTag.BackupCoordinator.Message.BackupUriNotGoogleDrive, success = false)
                     withContext(Dispatchers.Main) { showProviderInvalidAlert() }
-                    return@launch
+                    return@withContext
                 }
                 activity.contentResolver.openInputStream(uri)?.use { input ->
                     dbFile.parentFile?.mkdirs()
                     FileOutputStream(dbFile).use { output ->
                         input.copyTo(output)
                     }
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ✅ restore completed")
+                    logger.log(LogTag.BackupCoordinator.Message.RestoreCompleted, success = true)
                 } ?: run {
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ restore failed: openInputStream null")
+                    logger.log(LogTag.BackupCoordinator.Message.RestoreFailed, "openInputStream null", success = false)
                     withContext(Dispatchers.Main) { showErrorAlert(R.string.backup_restore_failed) }
                 }
             } catch (e: Exception) {
-                println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ restore exception: ${e.message}")
+                logger.log(LogTag.BackupCoordinator.Message.RestoreException, "${e.message}", success = false)
                 withContext(Dispatchers.Main) { showErrorAlert(R.string.backup_restore_failed) }
             }
         }
     }
 
-    override fun backupIfChanged() {
+    override suspend fun backupIfChanged() {
+        logger.log(LogTag.BackupCoordinator.Message.BackupIfChanged, success = true)
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: backupIfChanged - Local DB updated, starting backup")
                 val path = keyChain.getString("bdBackUp")
                 if (path.isNullOrEmpty()) {
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ no backup URI set")
+                    logger.log(LogTag.BackupCoordinator.Message.NoBackupUriSet, success = false)
                     withContext(Dispatchers.Main) { showNoDestinationAlert() }
                     return@launch
                 }
-                val uri = Uri.parse(path)
+                val uri = path.toUri()
                 if (!isGoogleDriveUri(uri)) {
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ backup URI is not Google Drive")
+                    logger.log(LogTag.BackupCoordinator.Message.BackupUriNotGoogleDrive, success = false)
                     withContext(Dispatchers.Main) { showProviderInvalidAlert() }
                     return@launch
                 }
@@ -110,24 +113,24 @@ class BackupCoordinatorInterfaceAndroid(
                 val dbFileName = databasePathProvider.getDatabaseFileName()
                 val dbFile = File(activity.applicationContext.getDatabasePath(dbFileName).path)
                 if (!dbFile.exists()) {
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ local DB does not exist")
+                    logger.log(LogTag.BackupCoordinator.Message.LocalDbNotExist, success = false)
                     return@launch
                 }
 
                 val lastModified = dbFile.lastModified()
-                println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: Local DB last modified: ${java.util.Date(lastModified)}")
+                logger.log(LogTag.BackupCoordinator.Message.LocalDbLastModified, "${java.util.Date(lastModified)}", success = true)
 
                 activity.contentResolver.openOutputStream(uri, "w")?.use { output ->
                     FileInputStream(dbFile).use { input ->
                         input.copyTo(output)
                     }
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ✅ backup completed successfully")
+                    logger.log(LogTag.BackupCoordinator.Message.BackupCompleted, success = true)
                 } ?: run {
-                    println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ backup failed: openOutputStream null")
+                    logger.log(LogTag.BackupCoordinator.Message.BackupFailed, "openOutputStream null", success = false)
                     withContext(Dispatchers.Main) { showErrorAlert(R.string.backup_write_failed) }
                 }
             } catch (e: Exception) {
-                println("\uD83D\uDCE5\uD83E\uDD16 BackupCoordinator: Android: ❌ backup exception: ${e.message}")
+                logger.log(LogTag.BackupCoordinator.Message.BackupException, "${e.message}", success = false)
                 withContext(Dispatchers.Main) { showErrorAlert(R.string.backup_write_failed) }
             }
         }
@@ -139,17 +142,24 @@ class BackupCoordinatorInterfaceAndroid(
             val path = keyChain.getString(key)
             if (!path.isNullOrEmpty()) {
                 try {
-                    val uri = android.net.Uri.parse(path)
+                    val uri = path.toUri()
                     val deleted = activity.contentResolver.delete(uri, null, null)
                     if (deleted >= 1) {
                         keyChain.removeKey(key)
                         return@launch
                     }
                 } catch (e: Exception) {
+                    logger.log(LogTag.BackupCoordinator.Message.BackupUriSaved, "${e.message}", success = false)
                 }
             }
             showWarningAlert()
         }
+    }
+
+    override suspend fun hasDatabaseFile(): Boolean = withContext(Dispatchers.IO) {
+        val dbFileName = databasePathProvider.getDatabaseFileName()
+        val dbFile = File(activity.applicationContext.getDatabasePath(dbFileName).path)
+        dbFile.exists()
     }
 
     private fun showInitialAlert() {
@@ -208,8 +218,10 @@ class BackupCoordinatorInterfaceAndroid(
     }
 
     private fun openPicker() {
-        val dbFileName = databasePathProvider.getDatabaseFileName()
-        createDocLauncher?.launch(dbFileName)
+        CoroutineScope(Dispatchers.Main).launch {
+            val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@launch
+            createDocLauncher?.launch(dbFileName)
+        }
     }
 
     private fun isGoogleDriveUri(uri: Uri): Boolean {

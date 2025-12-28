@@ -38,7 +38,7 @@
 - User remains on the authentication screen
 
 ---
-
+!!!!!!!!
 ## TC-AUTH-003 — Username is already taken, join request pending
 
 **Preconditions:**

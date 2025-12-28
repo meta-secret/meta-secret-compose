@@ -29,10 +29,10 @@ import core.DebugLoggerInterface
 
 val appModule = module {
     single<KeyValueStorageInterface> { KeyValueStorageImpl(get()) }
-    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get()) }
-    single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get()) }
-    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get()) }
-    single<VaultStatsProviderInterface> { VaultStatsProvider(get(), get()) }
+    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get(), get()) }
+    single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get(), get()) }
+    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get(), get()) }
+    single<VaultStatsProviderInterface> { VaultStatsProvider(get(), get(), get()) }
     single<AlertCoordinatorInterface> { AlertCoordinator() }
     single<DebugLoggerInterface> { DebugLogger() }
 

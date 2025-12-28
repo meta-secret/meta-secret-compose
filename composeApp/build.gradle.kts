@@ -46,8 +46,8 @@ kotlin {
             implementation(libs.accompanist.pager.indicators)
             implementation(libs.androidx.core)
             implementation(libs.androidx.biometric)
-            implementation("io.insert-koin:koin-android:3.6.0-wasm-alpha2")
-            implementation("io.insert-koin:koin-android-compat:3.6.0-wasm-alpha2")
+            implementation(libs.koin.android)
+            implementation(libs.koin.android.compat)
             runtimeOnly(libs.androidx.ui)
         }
 
@@ -65,7 +65,7 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             
-            implementation(project.dependencies.platform("io.insert-koin:koin-bom:3.6.0-wasm-alpha2"))
+            implementation(platform("io.insert-koin:koin-bom:${libs.versions.koin.get()}"))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.composeVM)

@@ -15,7 +15,7 @@ import models.appInternalModels.SocketRequestModel
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.BackupCoordinatorInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
-import core.LogTags
+import core.LogTag
 import core.Device
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
@@ -65,7 +65,7 @@ class MainScreenViewModel(
 
     init {
         checkBackup()
-        println("✅${LogTags.MAIN_VM}: Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
+        logger.log(LogTag.MainVM.Message.FollowResponsibleToAcceptJoin, success = true)
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN, SocketRequestModel.WAIT_FOR_RECOVER_REQUEST,
                 SocketRequestModel.SHOW_SECRET),
@@ -77,19 +77,19 @@ class MainScreenViewModel(
                 when (val a = actionType) {
                     is SocketActionModel.READY_TO_RECOVER -> {
                         val restoreData = a.restoreData
-                        println("✅${LogTags.MAIN_VM}: READY_TO_RECOVER signal has been caught $restoreData")
+                        logger.log(LogTag.MainVM.Message.ReadyToRecoverSignal, "$restoreData", success = true)
 
                         val secrets = metaSecretAppManager.getSecretsFromVault()
                         val existingSecretsIds = secrets?.map { it.name }?.toSet()
-                        println("✅${LogTags.MAIN_VM}: READY_TO_RECOVER existingSecretsIds $existingSecretsIds")
+                        logger.log(LogTag.MainVM.Message.ReadyToRecoverExistingSecrets, "$existingSecretsIds", success = true)
 
                         val newRequests = restoreData.filter { restoreData ->
                             existingSecretsIds?.contains(restoreData.secretId) == true
                         }
-                        println("✅${LogTags.MAIN_VM}: READY_TO_RECOVER newRequests $newRequests")
+                        logger.log(LogTag.MainVM.Message.ReadyToRecoverNewRequests, "$newRequests", success = true)
 
                         if (newRequests.isEmpty()) {
-                            println("✅${LogTags.MAIN_VM}: READY_TO_RECOVER nothing to handle")
+                            logger.log(LogTag.MainVM.Message.ReadyToRecoverNothing, success = true)
                             return@collect
                         }
 
@@ -102,7 +102,7 @@ class MainScreenViewModel(
                     }
                     is SocketActionModel.RECOVER_SENT -> {
                         _secretIdToShow.value = a.secretId
-                        println("✅${LogTags.MAIN_VM}: READY_TO_SHOW secret by secretId ${a.secretId}")
+                        logger.log(LogTag.MainVM.Message.ReadyToShowSecret, "${a.secretId}", success = true)
                     }
                     else -> { /* ignore */ }
                 }
@@ -136,33 +136,33 @@ class MainScreenViewModel(
     }
 
     private fun showNextRecoverPrompt() {
-        println("✅${LogTags.MAIN_VM}: showNextRecoverPrompt")
+        logger.log(LogTag.MainVM.Message.ShowNextRecoverPrompt, success = true)
         _recoverDialog.value = if (recoverQueue.isNotEmpty()) recoverQueue.removeFirst() else null
     }
 
     private fun onRecoverDecision(accept: Boolean) {
-        println("✅${LogTags.MAIN_VM}: onRecoverDecision $accept")
+        logger.log(LogTag.MainVM.Message.ShowNextRecoverPrompt, "$accept", success = true)
         val current = _recoverDialog.value ?: run {
             showNextRecoverPrompt()
             return
         }
 
         if (!accept) {
-            println("✅${LogTags.MAIN_VM}: Recover is declined")
+            logger.log(LogTag.MainVM.Message.RecoverDeclined, success = true)
             showNextRecoverPrompt()
             return
         }
 
-        println("✅${LogTags.MAIN_VM}: Recover is accepted")
+        logger.log(LogTag.MainVM.Message.RecoverAccepted, success = true)
         biometricAuthenticator.authenticate(
             onSuccess = {
-                println("✅${LogTags.MAIN_VM}: Biometric authentication successful")
+                logger.log(LogTag.MainVM.Message.BiometricAuthSuccess, success = true)
                 viewModelScope.launch(Dispatchers.IO) {
                     try {
-                        println("✅${LogTags.MAIN_VM}: acceptRecover called for claimId = ${current.claimId}")
+                        logger.log(LogTag.MainVM.Message.AcceptRecoverCalled, "claimId = ${current.claimId}", success = true)
                         metaSecretAppManager.acceptRecover(ClaimModel(current.claimId))
                     } catch (t: Throwable) {
-                        println("❌${LogTags.MAIN_VM}: acceptRecover failed for claimId = ${current.claimId}: $t")
+                        logger.log(LogTag.MainVM.Message.AcceptRecoverFailed, "claimId = ${current.claimId}: $t", success = false)
                     } finally {
                         withContext(Dispatchers.Main) {
                             showNextRecoverPrompt()
@@ -171,11 +171,11 @@ class MainScreenViewModel(
                 }
             },
             onError = { error ->
-                println("❌${LogTags.MAIN_VM}: Biometric authentication failed: $error")
+                logger.log(LogTag.MainVM.Message.BiometricAuthFailed, error, success = false)
                 showNextRecoverPrompt()
             },
             onFallback = {
-                println("❌${LogTags.MAIN_VM}: Biometric authentication fallback")
+                logger.log(LogTag.MainVM.Message.BiometricAuthFallback, success = false)
                 showNextRecoverPrompt()
             }
         )
@@ -186,7 +186,7 @@ class MainScreenViewModel(
     }
 
     fun clearSecretIdToShow() {
-        println("✅${LogTags.MAIN_VM}: Clearing secretIdToShow")
+        logger.log(LogTag.MainVM.Message.ClearingSecretId, success = true)
         _secretIdToShow.value = null
     }
 

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import core.KeyValueStorageInterface
-import core.LogTags
+import core.LogTag
 import core.VaultStatsProviderInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
@@ -46,23 +46,23 @@ class ShowSecretViewModel(
     }
 
     override fun handle(event: CommonViewModelEventsInterface) {
-        println("✅" + LogTags.SHOW_SECRET_VM + ": need handle event $event")
+        logger.log(LogTag.ShowSecretVM.Message.HandleEvent, "$event", success = true)
         if (event is ShowSecretEvents) {
             when (event) {
                 is ShowSecretEvents.ShowSecret -> {
-                    println("✅" + LogTags.SHOW_SECRET_VM + ": recover secretId ${event.secretId}")
+                    logger.log(LogTag.ShowSecretVM.Message.RecoverSecretId, "${event.secretId}", success = true)
                     val currentSecretIdToShow = mainScreenViewModel.secretIdToShow.value
                     if (currentSecretIdToShow == event.secretId) {
-                        println("✅" + LogTags.SHOW_SECRET_VM + ": SecretId matches secretIdToShow, showing recovered secret")
+                        logger.log(LogTag.ShowSecretVM.Message.SecretIdMatches, success = true)
                         showRecoveredSecret(event.secretId)
                     } else {
-                        println("✅" + LogTags.SHOW_SECRET_VM + ": SecretId does not match secretIdToShow, starting recover process")
+                        logger.log(LogTag.ShowSecretVM.Message.SecretIdNotMatches, success = true)
                         recoverSecret(event.secretId)
                     }
                 }
 
                 ShowSecretEvents.HideSecret -> {
-                    println("✅" + LogTags.SHOW_SECRET_VM + ": hide secret")
+                    logger.log(LogTag.ShowSecretVM.Message.HideSecret, success = true)
                     _recoveredSecret.value = null
                     mainScreenViewModel.clearSecretIdToShow()
                 }
@@ -72,7 +72,7 @@ class ShowSecretViewModel(
 
     private fun recoverSecret(secretId: String) {
         _isLoading.value = true
-        println("✅" + LogTags.SHOW_SECRET_VM + ": Start recovering process")
+        logger.log(LogTag.ShowSecretVM.Message.StartRecovering, success = true)
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
@@ -83,7 +83,7 @@ class ShowSecretViewModel(
                     metaSecretAppManager.recover(secretModel = SecretModel(secretId, null))
                 }
             } catch (t: Throwable) {
-                println("❌${LogTags.SHOW_SECRET_VM}: recover failed: ${t.message}")
+                logger.log(LogTag.ShowSecretVM.Message.RecoverFailed, "${t.message}", success = false)
             } finally {
                 _isLoading.value = false
             }
@@ -91,7 +91,7 @@ class ShowSecretViewModel(
     }
 
     private fun showRecoveredSecret(secretId: String) {
-        println("✅" + LogTags.SHOW_SECRET_VM + ": Start showing recovered secret")
+        logger.log(LogTag.ShowSecretVM.Message.StartShowingRecovered, success = true)
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
@@ -99,14 +99,14 @@ class ShowSecretViewModel(
                     withContext(Dispatchers.Main) {
                         if (recoveredSecretValue != null) {
                             _recoveredSecret.value = recoveredSecretValue
-                            println("✅" + LogTags.SHOW_SECRET_VM + ": Recovered secret loaded successfully")
+                            logger.log(LogTag.ShowSecretVM.Message.RecoveredSecretLoaded, success = true)
                         } else {
-                            println("❌" + LogTags.SHOW_SECRET_VM + ": Failed to recover secret")
+                            logger.log(LogTag.ShowSecretVM.Message.FailedToRecoverSecret, success = false)
                         }
                     }
                 }
             } catch (t: Throwable) {
-                println("❌${LogTags.SHOW_SECRET_VM}: showRecovered failed: ${t.message}")
+                logger.log(LogTag.ShowSecretVM.Message.ShowRecoveredFailed, "${t.message}", success = false)
             } finally {
                 _isLoading.value = false
             }

@@ -2,7 +2,8 @@ package core
 
 interface BackupCoordinatorInterface {
     fun ensureBackupDestinationSelected()
-    fun restoreIfNeeded()
-    fun backupIfChanged()
+    suspend fun restoreIfNeeded()
+    suspend fun backupIfChanged()
     fun clearAllBackups()
+    suspend fun hasDatabaseFile(): Boolean
 }

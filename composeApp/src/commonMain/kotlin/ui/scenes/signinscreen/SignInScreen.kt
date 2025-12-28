@@ -275,17 +275,15 @@ class SignInScreen : Screen {
                             focusedIndicatorColor = Color.Transparent
                         )
                     )
-                }
-
-                if (isNameError) {
-                    Text(
-                        text = nameErrorMessage,
-                        color = AppColors.RedError,
-                        fontSize = 13.sp,
-                        modifier = Modifier
-                            .align(Alignment.Start)
-                            .padding(top = 4.dp)
-                    )
+                    if (isNameError) {
+                        Text(
+                            text = nameErrorMessage,
+                            color = AppColors.RedError,
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .align(Alignment.Start)
+                        )
+                    }
                 }
 
                 ClassicButton(

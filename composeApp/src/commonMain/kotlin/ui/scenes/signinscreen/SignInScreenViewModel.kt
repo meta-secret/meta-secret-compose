@@ -26,7 +26,7 @@ import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.metaSecretCore.OutsiderState
 import kotlin.properties.Delegates
-import core.LogTags
+import core.LogTag
 import core.ScreenMetricsProviderInterface
 import core.BiometricAuthenticatorInterface
 
@@ -86,22 +86,22 @@ class SignInScreenViewModel(
                 when (state) {
                     is State.Vault -> {
                         val vaultInfo = metaSecretAppManager.getVaultFullInfoModel()
-                        println("✅${LogTags.SIGNIN_VM}: Vault state detected: $vaultInfo")
+                        logger.log(LogTag.SignInVM.Message.VaultStateDetected, "$vaultInfo", success = true)
                         currentState = when (vaultInfo) {
                             is VaultFullInfo.Outsider -> {
-                                println("✅${LogTags.SIGNIN_VM}: User is outsider, waiting for approval")
+                                logger.log(LogTag.SignInVM.Message.UserIsOutsider, success = true)
                                 SignInStates.SIGN_IN_PENDING
                             }
                             is VaultFullInfo.Member -> {
-                                println("✅${LogTags.SIGNIN_VM}: User is already a member, sign in completed")
+                                logger.log(LogTag.SignInVM.Message.UserIsMember, success = true)
                                 SignInStates.SIGN_IN_COMPLETED
                             }
                             is VaultFullInfo.NotExists -> {
-                                println("✅${LogTags.SIGNIN_VM}: No vault info, going to idle")
+                                logger.log(LogTag.SignInVM.Message.NoVaultInfoIdle, success = true)
                                 SignInStates.IDLE
                             }
                             null -> {
-                                println("✅${LogTags.SIGNIN_VM}: No vault info, going to idle")
+                                logger.log(LogTag.SignInVM.Message.NoVaultInfoIdle, success = true)
                                 SignInStates.IDLE
                             }
                         }
@@ -117,7 +117,7 @@ class SignInScreenViewModel(
     // Resolve all states of the screen
     private suspend fun signInStateResolver() {
             when (currentState) {
-                SignInStates.IDLE -> println("✅" + LogTags.SIGNIN_VM + ": Waiting for SignUp")
+                SignInStates.IDLE -> logger.log(LogTag.SignInVM.Message.WaitingForSignUp, success = true)
                 SignInStates.START_SIGN_IN -> {
                     val name = _nameText.value
                     if (name.isNotEmpty()) {
@@ -152,7 +152,7 @@ class SignInScreenViewModel(
 
     private suspend fun showPendingState() {
         _isLoading.value = true
-        println("✅" + LogTags.SIGNIN_VM + ": Start listening for Join accept signal")
+        logger.log(LogTag.SignInVM.Message.StartListeningJoinAccept, success = true)
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE),
             exclude = null
@@ -174,26 +174,26 @@ class SignInScreenViewModel(
         _isLoading.value = true
 
         if (initAppManagerResult()) {
-            println("✅" + LogTags.SIGNIN_VM + ": Start Sign Up")
+            logger.log(LogTag.SignInVM.Message.StartSignUp, success = true)
             val signUpResult = withContext(Dispatchers.IO) {
                 metaSecretStateResolver.startFirstSignUp(vaultName)
             }
 
             if (signUpResult.error != null) {
-                println("❌" + LogTags.SIGNIN_VM + ": No further actions")
+                logger.log(LogTag.SignInVM.Message.SignUpUnknownState, success = false)
                 currentState = SignInStates.SIGN_IN_FAILED
             } else {
                 when (signUpResult.appState) {
                     is MemberState -> {
-                        println("✅" + LogTags.SIGNIN_VM + ": Sign up is successfull")
+                        logger.log(LogTag.SignInVM.Message.SignUpSuccess, success = true)
                         currentState = SignInStates.SIGN_IN_COMPLETED
                     }
                     is OutsiderState -> {
-                        println("✅" + LogTags.SIGNIN_VM + ": Start listening for Join accept signal")
+                        logger.log(LogTag.SignInVM.Message.StartListeningJoinAccept, success = true)
                         currentState = SignInStates.SIGN_IN_PENDING
                     }
                     else -> {
-                        println("❌" + LogTags.SIGNIN_VM + ": Unknown state for sign up")
+                        logger.log(LogTag.SignInVM.Message.SignUpUnknownState, success = false)
                         currentState = SignInStates.SIGN_IN_FAILED
                     }
                 }
@@ -211,10 +211,12 @@ class SignInScreenViewModel(
         val model = MasterKeyModel.fromJson(jsonResponse)
 
         if (model.success && !model.masterKey.isNullOrEmpty()) {
-            println("✅" + LogTags.SIGNIN_VM + ": Generated master key: $model")
+            logger.log(LogTag.SignInVM.Message.GeneratedMasterKey, "$model", success = true)
             keyChainManager.saveString("master_key", model.masterKey)
+            logger.setMasterKeyGenerated(true)
             currentState = SignInStates.MASTER_KEY_GENERATED
         } else {
+            logger.setMasterKeyGenerated(false)
             currentState = SignInStates.MASTER_KEY_FAILED
         }
         _isLoading.value = false
@@ -224,21 +226,21 @@ class SignInScreenViewModel(
     private fun socketSubscribe() {
         viewModelScope.launch {
             socketHandler.socketActionType.collect { actionType ->
-                println("✅" + LogTags.SIGNIN_VM + ": Subscribe SignIn screen for Join Response Signal")
+                logger.log(LogTag.SignInVM.Message.SubscribeJoinResponse, success = true)
                 when (actionType) {
                     SocketActionModel.JOIN_REQUEST_ACCEPTED -> {
                         handleJoinRequestAccepted()
                     }
                     SocketActionModel.JOIN_REQUEST_DECLINED -> {
-                        println("❌" + LogTags.SIGNIN_VM + ": Got Declined signal")
+                        logger.log(LogTag.SignInVM.Message.GotDeclinedSignal, success = false)
                         currentState = SignInStates.SIGN_IN_REJECTED
                     }
                     SocketActionModel.JOIN_REQUEST_PENDING -> {
-                        println("✅" + LogTags.SIGNIN_VM + ": Joining still in progress")
+                        logger.log(LogTag.SignInVM.Message.JoiningInProgress, success = true)
                         currentState = SignInStates.SIGN_IN_PENDING
                     }
                     else -> {
-                        println("❌" + LogTags.SIGNIN_VM + ": Joining not following yet: $actionType")
+                        logger.log(LogTag.SignInVM.Message.JoiningNotFollowing, "$actionType", success = false)
                         currentState = SignInStates.NONE
                     }
                 }
@@ -249,21 +251,21 @@ class SignInScreenViewModel(
     private fun handleJoinRequestAccepted() {
         biometricAuthenticator.authenticate(
             onSuccess = {
-                println("✅" + LogTags.SIGNIN_VM + ": Biometric authentication successful")
-                println("✅" + LogTags.SIGNIN_VM + ": Got Accepted signal")
+                logger.log(LogTag.SignInVM.Message.BiometricAuthSuccess, success = true)
+                logger.log(LogTag.SignInVM.Message.GotAcceptedSignal, success = true)
                 viewModelScope.launch {
                     currentState = SignInStates.SIGN_IN_COMPLETED
                 }
             },
             onError = { error ->
-                println("❌" + LogTags.SIGNIN_VM + ": Biometric authentication failed: $error")
+                logger.log(LogTag.SignInVM.Message.BiometricAuthFailed, error, success = false)
                 viewModelScope.launch {
                     showErrorSnackBar(SignInSnackMessages.BIOMETRIC_ERROR)
                     currentState = SignInStates.IDLE
                 }
             },
             onFallback = {
-                println("❌" + LogTags.SIGNIN_VM + ": Biometric authentication fallback")
+                logger.log(LogTag.SignInVM.Message.BiometricAuthFallback, success = false)
                 viewModelScope.launch {
                     showErrorSnackBar(SignInSnackMessages.BIOMETRIC_ERROR)
                     currentState = SignInStates.IDLE
@@ -284,7 +286,7 @@ class SignInScreenViewModel(
                     if ( vaultState is VaultFullInfo.Outsider && outsiderState == UserDataOutsiderStatus.PENDING) {
                         currentState = SignInStates.SIGN_IN_PENDING
                     } else {
-                        println("✅" + LogTags.SIGNIN_VM + ": It's not a pending")
+                        logger.log(LogTag.SignInVM.Message.NotPending, success = true)
                     }
                 }
                 else -> {}

@@ -1,8 +1,11 @@
 package ui.notifications
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +34,8 @@ fun InAppNotification(
     screenMetricsProvider: ScreenMetricsProviderInterface,
     isSuccessful: Boolean,
     message: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    visible: Boolean = true
 ) {
     val color = when (isSuccessful) {
         true -> AppColors.ActionMain
@@ -39,9 +43,19 @@ fun InAppNotification(
     }
 
     AnimatedVisibility(
-        visible = true,
-        enter = fadeIn(),
-        exit = fadeOut()
+        visible = visible,
+        enter = slideInVertically(
+            initialOffsetY = { -it },
+            animationSpec = tween(durationMillis = 300)
+        ) + fadeIn(
+            animationSpec = tween(durationMillis = 300)
+        ),
+        exit = slideOutVertically(
+            targetOffsetY = { -it },
+            animationSpec = tween(durationMillis = 300)
+        ) + fadeOut(
+            animationSpec = tween(durationMillis = 300)
+        )
     ) {
         Box(
             modifier = Modifier

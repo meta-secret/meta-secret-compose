@@ -19,7 +19,7 @@ import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.Secret
 import core.AppColors
-import core.LogTags
+import core.LogTag
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.VaultStatsProviderInterface
@@ -58,7 +58,7 @@ class SecretsScreenViewModel(
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
-            println("✅${LogTags.SECRETS_VM}: Start to follow UPDATE_STATE")
+            logger.log(LogTag.SecretsVM.Message.FollowUpdateState, success = true)
             socketHandler.actionsToFollow(
                 add = listOf(SocketRequestModel.GET_STATE),
                 exclude = null
@@ -67,9 +67,9 @@ class SecretsScreenViewModel(
 
         viewModelScope.launch {
             socketHandler.socketActions.collect { actionType ->
-                println("✅${LogTags.SECRETS_VM}: Socket action type is $actionType")
+                logger.log(LogTag.SecretsVM.Message.SocketActionType, "$actionType", success = true)
                 if (actionType == SocketActionModel.UPDATE_STATE) {
-                    println("✅${LogTags.SECRETS_VM}: New state for secrets been gotten")
+                    logger.log(LogTag.SecretsVM.Message.NewStateForSecrets, success = true)
                     loadSecretsFromVault()
                 }
             }
@@ -103,18 +103,18 @@ class SecretsScreenViewModel(
     private fun loadSecretsFromVault() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                println("✅${LogTags.SECRETS_VM}: Loading secrets from vault in background")
+                logger.log(LogTag.SecretsVM.Message.LoadingSecretsFromVault, success = true)
                 val secretsFromVault = metaSecretAppManager.getSecretsFromVault()
                 if (secretsFromVault != null) {
                     keyValueStorage.syncSecretsFromVault(secretsFromVault)
-                    println("✅${LogTags.SECRETS_VM}: Secrets synced successfully")
+                    logger.log(LogTag.SecretsVM.Message.SecretsSyncedSuccess, success = true)
                 } else {
-                    println("❌${LogTags.SECRETS_VM}: Failed to get secrets from vault")
+                    logger.log(LogTag.SecretsVM.Message.FailedToGetSecrets, success = false)
                 }
                 
                 vaultStatsProvider.refresh()
             } catch (e: Exception) {
-                println("❌${LogTags.SECRETS_VM}: Error loading secrets from vault: ${e.message}")
+                logger.log(LogTag.SecretsVM.Message.ErrorLoadingSecrets, "${e.message}", success = false)
             }
         }
     }

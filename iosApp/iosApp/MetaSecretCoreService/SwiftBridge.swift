@@ -88,19 +88,19 @@ import ObjectiveC
     }
     
     @objc public func generateUserCreds(vaultName: String) -> String {
-        print("🦅 Swift: generateUserCreds with \(vaultName)")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "generateUserCreds with \(vaultName)")
         guard let cVaultName = vaultName.cString(using: .utf8) else {
-            print("🦅 Swift: generateUserCreds return #")
+            SwiftLogger.shared.logError(tag: .swiftBridge, message: "generateUserCreds return #")
             return ""
         }
         
         guard let cString = c_generate_user_creds(cVaultName) else {
-            print("🦅 Swift: generateUserCreds return ##")
+            SwiftLogger.shared.logError(tag: .swiftBridge, message: "generateUserCreds return ##")
             return ""
         }
         
         let resultString = String(cString: cString)
-        print("🦅 Swift: generateUserCreds resultString \(resultString) ")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "generateUserCreds resultString \(resultString)")
         c_free_string(cString)
         return resultString
     }
@@ -158,7 +158,7 @@ import ObjectiveC
     }
     
     @objc public func recover(_ secretId: String) -> String {
-        print("🦅 Swift: recover secret ID \(secretId)")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "recover secret ID \(secretId)")
         guard let secretIdString = secretId.cString(using: .utf8) else { return "" }
 
         guard let resultPtr = c_recover(secretIdString) else { return "" }
@@ -192,7 +192,7 @@ import ObjectiveC
     private let serviceName: String = "MetaSecret"
     
     @objc public func saveString(key: String, value: String) -> Bool {
-        print("🦅 Swift: saveString key \(key) value: \(value)")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "saveString key \(key) value: \(value)")
         guard let data = value.data(using: .utf8) else {
             return false
         }
@@ -224,7 +224,7 @@ import ObjectiveC
     }
     
     @objc public func getString(key: String) -> String? {
-        print("🦅 Swift: getString key \(key)")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "getString key \(key)")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -244,7 +244,7 @@ import ObjectiveC
     }
     
     @objc public func removeKey(key: String) -> Bool {
-        print("🦅 Swift: removeKey key \(key)")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "removeKey key \(key)")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -256,7 +256,7 @@ import ObjectiveC
     }
     
     @objc public func containsKey(key: String) -> Bool {
-        print("🦅 Swift: containsKey key \(key)?")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "containsKey key \(key)?")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -266,12 +266,12 @@ import ObjectiveC
         ]
         
         let status = SecItemCopyMatching(query as CFDictionary, nil)
-        print("🦅 Swift: containsKey key \(key) \(status == errSecSuccess)")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "containsKey key \(key) \(status == errSecSuccess)")
         return status == errSecSuccess
     }
     
     @objc public func clearAll(dbFileName: String) -> Bool {
-        print("🦅 Swift: clearAll keys - Starting cleanup process")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "clearAll keys - Starting cleanup process")
 
         if let ptr = c_clean_up_database() {
             c_free_string(ptr)
@@ -289,21 +289,21 @@ import ObjectiveC
         let status = SecItemDelete(query as CFDictionary)
         let keychainCleared = status == errSecSuccess || status == errSecItemNotFound
 
-        print("🦅 Swift: Step 5 - Verifying cleanup")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Step 5 - Verifying cleanup")
         let verificationResult = verifyCleanup(dbFileName: dbFileName)
         
         if verificationResult.allCleared {
-            print("🦅 Swift: ✅ clearAll completed successfully - All data cleared")
+            SwiftLogger.shared.logSuccess(tag: .swiftBridge, message: "clearAll completed successfully - All data cleared")
         } else {
-            print("🦅 Swift: ⚠️ clearAll completed with warnings - Some data may remain")
+            SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "⚠️ clearAll completed with warnings - Some data may remain")
             if !verificationResult.keychainCleared {
-                print("🦅 Swift: ⚠️ KeyChain items may still exist")
+                SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "⚠️ KeyChain items may still exist")
             }
             if !verificationResult.dbCleared {
-                print("🦅 Swift: ⚠️ Local DB file may still exist")
+                SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "⚠️ Local DB file may still exist")
             }
             if !verificationResult.backupCleared {
-                print("🦅 Swift: ⚠️ Backup files may still exist")
+                SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "⚠️ Backup files may still exist")
             }
         }
         
@@ -343,7 +343,7 @@ import ObjectiveC
         backupKey: String,
         dbFileName: String
     ) {
-        print("🦅 Swift: Present BackUp Alert")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Present BackUp Alert")
         BackupUI.shared.presentBackupPicker(
             initialMessage: initialMessage,
             okTitle: okTitle,
@@ -366,39 +366,57 @@ import ObjectiveC
     @objc public func removeBackup(dbFileName: String) {
         BackupWorker.removeBackup(dbFileName: dbFileName)
     }
+
+    @objc public func hasDatabaseFile(_ dbFileName: String) -> Bool {
+        return SwiftBridge.hasLocalDatabaseFile(dbFileName: dbFileName)
+    }
+    
+    static func hasLocalDatabaseFile(dbFileName: String) -> Bool {
+        let fileManager = FileManager.default
+        guard let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return false
+        }
+        let dbPath = documentsPath.appendingPathComponent(dbFileName)
+        return fileManager.fileExists(atPath: dbPath.path)
+    }
+    
+    // MARK: - Other
+    @objc public func setiOSLogsVisibility(_ isVisible: Bool) {
+        SwiftLogger.shared.updateActive(isVisible)
+    }
+    
 }
 
 private extension SwiftBridge {
     func cleanDB(dbFileName: String) {
-        print("🦅 Swift: CleanDB")
-        let fileManager = FileManager.default
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let dbPath = documentsPath.appendingPathComponent(dbFileName)
-        let isExists = fileManager.fileExists(atPath: dbPath.path)
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "CleanDB")
+        let isExists = SwiftBridge.hasLocalDatabaseFile(dbFileName: dbFileName)
 
-        print("🦅 Swift: is DB exists: \(isExists)")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "is DB exists: \(isExists)")
         if isExists {
+            let fileManager = FileManager.default
+            guard let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+                return
+            }
+            let dbPath = documentsPath.appendingPathComponent(dbFileName)
             _ = try? fileManager.removeItem(at: dbPath)
         }
     }
     
     func verifyCleanup(dbFileName: String) -> CleanupVerificationResult {
-        print("🦅 Swift: Verifying cleanup results")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Verifying cleanup results")
         
         // Check KeyChain
         let keychainCleared = !containsKey(key: "master_key")
-        print("🦅 Swift: KeyChain cleared: \(keychainCleared)")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "KeyChain cleared: \(keychainCleared)")
         
         // Check local DB
-        let fileManager = FileManager.default
-        let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let dbPath = documentsPath.appendingPathComponent(dbFileName)
-        let dbCleared = !fileManager.fileExists(atPath: dbPath.path)
-        print("🦅 Swift: Local DB cleared: \(dbCleared)")
+        let dbCleared = !SwiftBridge.hasLocalDatabaseFile(dbFileName: dbFileName)
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Local DB cleared: \(dbCleared)")
         
         // Check backups
         let backupCleared = !BackupWorker.hasICloudBackup(dbFileName: dbFileName)
-        print("🦅 Swift: Backups cleared: \(backupCleared)")
+        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Backups cleared: \(backupCleared)")
         
         let allCleared = keychainCleared && dbCleared && backupCleared
         

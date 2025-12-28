@@ -15,7 +15,7 @@ import models.appInternalModels.UpdateMemberActionModel
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.KeyValueStorageInterface
-import core.LogTags
+import core.LogTag
 import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
 import core.AlertCoordinatorInterface
@@ -55,7 +55,7 @@ class DevicesScreenViewModel(
         viewModelScope.launch {
             socketHandler.socketActionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
-                    println("✅${LogTags.DEVICES_VM}: New state for Join request has been gotten")
+                    logger.log(LogTag.DevicesVM.Message.JoinRequestStateReceived, success = true)
                     loadDevicesList()
                 }
             }
@@ -96,7 +96,7 @@ class DevicesScreenViewModel(
 
     private fun loadDevicesList() {
         viewModelScope.launch {
-            println("✅${LogTags.DEVICES_VM}: Need to load devices list")
+            logger.log(LogTag.DevicesVM.Message.LoadDevicesList, success = true)
             try {
                 _isLoading.value = true
 
@@ -126,14 +126,14 @@ class DevicesScreenViewModel(
     }
 
     private fun updateMembership(isJoin: Boolean) {
-        println("✅${LogTags.DEVICES_VM}: Start Update candidate")
+        logger.log(LogTag.DevicesVM.Message.UpdateCandidateStart, success = true)
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val action = if (isJoin) { UpdateMemberActionModel.Accept } else { UpdateMemberActionModel.Decline }
                 val updateResult = withContext(Dispatchers.Default) {
                     val candidate = _currentDeviceId.value?.let { appManager.getUserDataBy(it) }
-                    println("✅${LogTags.DEVICES_VM}: Update candidate $candidate")
+                    logger.log(LogTag.DevicesVM.Message.UpdateCandidateSuccess, "$candidate", success = true)
                     if (candidate != null) {
                         appManager.updateMember(candidate, action.name)
                     } else {
@@ -141,12 +141,12 @@ class DevicesScreenViewModel(
                     }
                 }
                 if (updateResult?.success == false) {
-                    println("❌${LogTags.DEVICES_VM}: Update failed: ${updateResult.error}")
+                    logger.log(LogTag.DevicesVM.Message.UpdateCandidateFailed, "${updateResult.error}", success = false)
                 }
                 _currentDeviceId.value = null
                 alertCoordinator.dismissJoinRequest()
             } catch (e: Exception) {
-                println("❌${LogTags.DEVICES_VM}: Update error: ${e.message}")
+                logger.log(LogTag.DevicesVM.Message.UpdateError, "${e.message}", success = false)
             } finally {
                 _isLoading.value = false
             }
@@ -154,7 +154,7 @@ class DevicesScreenViewModel(
     }
 
     private fun selectCurrentDevice(deviceId: String?) {
-        println("✅${LogTags.DEVICES_VM}: Select device with Id: $deviceId")
+        logger.log(LogTag.DevicesVM.Message.SelectDevice, "$deviceId", success = true)
         _currentDeviceId.value = deviceId
     }
 }

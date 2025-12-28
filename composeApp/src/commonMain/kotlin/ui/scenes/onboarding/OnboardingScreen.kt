@@ -160,8 +160,7 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
                 modifier = Modifier
                     .clickable {
                         coroutineScope.launch {
-                            val result = viewModel.handle(OnboardingViewEvents.COMPLETE_ONBOARDING)
-                            println(result)
+                            viewModel.handle(OnboardingViewEvents.COMPLETE_ONBOARDING)
                         }
                     },
                 text = stringResource(Res.string.skip),

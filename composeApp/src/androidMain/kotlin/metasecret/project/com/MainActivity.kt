@@ -61,10 +61,10 @@ class MainActivity : FragmentActivity() {
                 )
             }
             single<KeyChainInterface> { 
-                KeyChainManagerAndroid(this@MainActivity.applicationContext)
+                KeyChainManagerAndroid(this@MainActivity.applicationContext, get())
             }
             single<BackupCoordinatorInterface> {
-                BackupCoordinatorInterfaceAndroid(this@MainActivity, get(), get())
+                BackupCoordinatorInterfaceAndroid(this@MainActivity, get(), get(), get())
             }
         }
 

@@ -1,16 +1,12 @@
 package core
 
-import java.util.Locale
-
 class DatabasePathProviderAndroid(
-    private val keyValueStorage: KeyValueStorageInterface,
-    private val deviceInfoProvider: DeviceInfoProviderInterface
+    private val keyChain: KeyChainInterface
 ) : DatabasePathProviderInterface {
     
-    override fun getDatabaseFileName(): String {
-        val deviceId = keyValueStorage.cachedDeviceId 
-            ?: deviceInfoProvider.getDeviceId()
-        return "meta-secret-${deviceId.uppercase(Locale.ROOT)}.db"
+    override suspend fun getDatabaseFileName(): String? {
+        val masterKey = keyChain.getString("master_key") ?: return null
+        return "meta-secret-${masterKey}.db"
     }
 }
 

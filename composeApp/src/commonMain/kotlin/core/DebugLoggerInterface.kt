@@ -14,7 +14,7 @@ sealed class LogTag(val displayName: String) {
             object BiometricNeedRegistration : Message("BiometricState NeedRegistration")
             object BiometricAvailable : Message("Biometric is available")
             object BiometricApproved : Message("Biometric is approved")
-            object BiometricFailed : Message("Biometric is failed")
+            object BiometricFailed : Message("Biometric is failed:")
             object BiometricProhibited : Message("Biometric is prohibited")
             object MoveToMain : Message("Move to Main")
             object MoveToSignUp : Message("Move to Sign up")
@@ -99,7 +99,45 @@ sealed class LogTag(val displayName: String) {
         sealed class Message(text: String) : LogTag.Message<AppManager>(text) {
             override val tag: AppManager = AppManager
             
-            object Init : Message("Init")
+            object MasterKeyExist : Message("is Master key exist")
+            object IsInitiated : Message("is initiated")
+            object InitError : Message("init error")
+            object InitErrorNoMasterKey : Message("init error: No master key found")
+            object CurrentState : Message("currentState is")
+            object FailedToParseStateJson : Message("Failed to parse state JSON")
+            object CachedDeviceId : Message("Cached deviceId")
+            object CachedVaultName : Message("Cached vaultName")
+            object VaultInfo : Message("vaultInfo is")
+            object FailedToParseVaultInfoJson : Message("Failed to parse vaultInfo JSON")
+            object VaultEvents : Message("vaultEvents is")
+            object FailedToParseVaultEventsJson : Message("Failed to parse vaultEvents JSON")
+            object RequestsCount : Message("requestsCount is")
+            object FailedToParseRequestsCountJson : Message("Failed to parse requestsCount JSON")
+            object GetJoinRequests : Message("getJoinRequests is")
+            object FailedToParseGetJoinRequestsJson : Message("Failed to parse getJoinRequests JSON")
+            object VaultSummary : Message("vaultSummary is")
+            object FailedToParseVaultSummaryJson : Message("Failed to parse vaultSummary JSON")
+            object UpdateCandidateResult : Message("update candidate result is")
+            object FailedToParseUpdateCandidateJson : Message("Failed to parse updatecandidate candidate JSON")
+            object GetUserDataByDeviceId : Message("getUserDataBy deviceId")
+            object FailedToParseGetUserDataByIdJson : Message("Failed to parse getUserDataById JSON")
+            object SplitSecretStarted : Message("split Secret started")
+            object SplitSecretResult : Message("split Secret result is")
+            object FailedToParseSplitSecretJson : Message("Failed to parse split Secret JSON")
+            object FindClaimStarted : Message("find claim started")
+            object FindClaimResult : Message("find Claim result is")
+            object FailedToParseFindClaimJson : Message("Failed to parse find claim JSON")
+            object RecoverSecretIdNull : Message("recover secret Id is Null")
+            object RecoverRequestResult : Message("recover request result is")
+            object FailedToParseRecoverRequestJson : Message("Failed to parse recover request JSON")
+            object AcceptRecoverStarted : Message("Accept recover started")
+            object AcceptRecoverResult : Message("Accept recover result is")
+            object FailedToParseAcceptRecoverJson : Message("Failed to parse Accept Recover JSON")
+            object ShowRecovered : Message("showRecovered")
+            object ShowRecoveredSuccess : Message("showRecovered success")
+            object FailedToParseShowRecoveredJson : Message("Failed to parse showRecovered JSON")
+            object GetSecretsFromVaultResult : Message("getSecretsFromVault result is")
+            object FailedToParseGetSecretsFromVaultJson : Message("Failed to parse getSecretsFromVault JSON")
         }
     }
 
@@ -116,6 +154,19 @@ sealed class LogTag(val displayName: String) {
             object NeedShowAskToJoin : Message("Need to show Ask to join pop up")
             object WaitingForJoinResponse : Message("Waiting for join response")
             object WaitingForStateResponse : Message("Waiting for state response")
+            object WaitingForRecover : Message("Waiting for recover")
+            object WaitingForShowSecret : Message("Waiting for show secret")
+            object NoSubscriptions : Message("NO any subscriptions")
+            object WaitingForRecoverRequest : Message("Waiting for recover request")
+            object FoundClaims : Message("Found claims")
+            object ReadyToRecover : Message("Ready to recover for passIds")
+            object NoClaimsFound : Message("No claims found")
+            object CheckingRecoverSentStatus : Message("Checking recover sent status")
+            object CheckingRecoverSentStatusClaims : Message("Checking recover sent status claims")
+            object CheckingRecoverSentStatusDetails : Message("Checking recover sent status isRecoverType")
+            object CheckingRecoverSentStatusSentClaims : Message("Checking recover sent status sentRecoverClaims")
+            object RecoverSentForSecretId : Message("Recover sent for secretId")
+            object TimerStopped : Message("Timer is stopped")
         }
     }
 
@@ -123,7 +174,23 @@ sealed class LogTag(val displayName: String) {
         sealed class Message(text: String) : LogTag.Message<StateResolver>(text) {
             override val tag: StateResolver = StateResolver
             
-            object ResolveState : Message("Resolve state")
+            object FirstSignUp : Message("first sign up")
+            object LocalState : Message("Local State")
+            object VaultState : Message("Vault state")
+            object MemberState : Message("Member State")
+            object StartGetAppState : Message("Start get app state")
+            object CurrentStateIsLocal : Message("Current state is LOCAL")
+            object SwwWithLocalState : Message("SWW with LOCAL state")
+            object StartGenerateNewCreds : Message("Start generate new creds")
+            object CurrentStateIsVault : Message("Current state is VAULT")
+            object CurrentStateIsOutsider : Message("Current state is OUTSIDER")
+            object CurrentStateIsNonMember : Message("Current state is NON_MEMBER")
+            object CurrentStateIsPending : Message("Current state is PENDING")
+            object CurrentStateIsDeclined : Message("Current state is DECLINED")
+            object SwwWithVaultState : Message("SWW with VAULT state")
+            object StartSignUp : Message("Start SignUp")
+            object CurrentStateIsMember : Message("Current state is MEMBER")
+            object SwwWithMemberState : Message("SWW with MEMBER state")
         }
     }
 
@@ -131,7 +198,12 @@ sealed class LogTag(val displayName: String) {
         sealed class Message(text: String) : LogTag.Message<AddSecretVM>(text) {
             override val tag: AddSecretVM = AddSecretVM
             
-            object Init : Message("Init")
+            object StartingAddSecret : Message("Starting add secret")
+            object WaitingForAddSecret : Message("Waiting for AddSecret")
+            object InProgress : Message("In progress")
+            object AddedSuccessfully : Message("Added successfully")
+            object AddingFailed : Message("Adding failed")
+            object UnknownState : Message("Unknown state")
         }
     }
 
@@ -191,19 +263,128 @@ sealed class LogTag(val displayName: String) {
             object FailedToRefreshStats : Message("Failed to refresh stats")
         }
     }
+
+    object BackupCoordinator : LogTag("💾BackupCoordinator") {
+        sealed class Message(text: String) : LogTag.Message<BackupCoordinator>(text) {
+            override val tag: BackupCoordinator = BackupCoordinator
+
+            object EnsureBackupDestinationSelected : Message("ensureBackupDestinationSelected")
+            object RestoreIfNeeded : Message("restoreIfNeeded")
+            object LocalDbExists : Message("local DB exists, skipping restore")
+            object NoBackupUriSet : Message("no backup URI set")
+            object BackupUriNotGoogleDrive : Message("backup URI is not Google Drive")
+            object RestoreCompleted : Message("restore completed")
+            object RestoreFailed : Message("restore failed")
+            object RestoreException : Message("restore exception")
+            object BackupIfChanged : Message("backupIfChanged - Local DB updated, starting backup")
+            object LocalDbNotExist : Message("local DB does not exist")
+            object LocalDbLastModified : Message("Local DB last modified")
+            object BackupCompleted : Message("backup completed successfully")
+            object BackupFailed : Message("backup failed")
+            object BackupException : Message("backup exception")
+            object TakePersistableUriPermissionFailed : Message("takePersistableUriPermission failed")
+            object BackupUriSaved : Message("backup URI saved")
+            object PathIs : Message("path is")
+            object BackExists : Message("back exists")
+        }
+    }
+
+    object KeyChainManager : LogTag("🗝️KeyChainManager") {
+        sealed class Message(text: String) : LogTag.Message<KeyChainManager>(text) {
+            override val tag: KeyChainManager = KeyChainManager
+
+            object ErrorSaving : Message("Error saving to KeyChain")
+            object ErrorReading : Message("Error reading from KeyChain")
+            object ErrorRemoving : Message("Error removing from KeyChain")
+            object ErrorChecking : Message("Error checking KeyChain")
+            object StartingClearAll : Message("Starting clearAll process")
+            object ClearAllCompleted : Message("clearAll completed successfully")
+            object ErrorClearing : Message("Error clearing KeyChain")
+            object DeletedKeystoreEntries : Message("Deleted keystore entries")
+        }
+    }
+
+    object MetaSecretCoreService : LogTag("🔧MetaSecretCoreService") {
+        sealed class Message(text: String) : LogTag.Message<MetaSecretCoreService>(text) {
+            override val tag: MetaSecretCoreService = MetaSecretCoreService
+
+            object LibraryLoaded : Message("Metasecret_mobile library has been loaded successfully")
+            object LibraryLoadError : Message("Error during loading of the Metasecret_mobile library")
+            object CallingGenerateMasterKey : Message("Calling generateMasterKey")
+            object MasterKeyGenerated : Message("Master key")
+            object MasterKeyGenerationError : Message("Master key generation error")
+            object CallingInitAppManager : Message("Calling initAppManager")
+            object AppManagerInitResult : Message("AppManager")
+            object AppManagerInitError : Message("AppManager initialization error")
+            object CallingGetState : Message("Calling getState")
+            object AppStateResult : Message("App State")
+            object CallingGenerateUserCreds : Message("Calling generateUserCreds")
+            object GenerateUserCredsResult : Message("generateUserCreds")
+            object GenerateUserCredsError : Message("generateUserCreds error")
+            object CallingSignUp : Message("Calling signUp")
+            object SignUpResult : Message("SignUp State")
+            object SignUpError : Message("SignUp error")
+            object CallingUpdateMembership : Message("Calling updateMembership")
+            object FormattedUserDataJson : Message("Formatted userData Json")
+            object FormattedActionUpdate : Message("Formatted actionUpdate")
+            object UpdateMembershipResult : Message("updateMembership result")
+            object UpdateMembershipError : Message("updateMembership error")
+            object CallingSplitSecret : Message("Calling splitSecret")
+            object SplitSecretResult : Message("splitSecret result")
+            object SplitSecretError : Message("splitSecret error")
+            object CallingFindClaim : Message("Calling findClaim")
+            object FindClaimResult : Message("findClaim result")
+            object FindClaimError : Message("findClaim error")
+            object CallingRecover : Message("Calling recover")
+            object RecoverResult : Message("recover result")
+            object RecoverError : Message("recover error")
+            object CallingAcceptRecover : Message("Calling acceptRecover")
+            object AcceptRecoverResult : Message("acceptRecover result")
+            object AcceptRecoverError : Message("acceptRecover error")
+            object CallingShowRecovered : Message("Calling showRecovered")
+            object ShowRecoveredResult : Message("showRecovered result")
+            object ShowRecoveredError : Message("showRecovered error")
+            object CleanDb : Message("CLEAN DB")
+            object DbFileDeleted : Message("DB file deleted")
+            object DbFileNotExist : Message("DB file does not exist")
+            object ErrorCleaningDb : Message("Error cleaning DB")
+        }
+    }
 }
+
+data class CriticalComponentsState(
+    val backupDbExists: Boolean = false,
+    val appManagerCreated: Boolean = false,
+    val masterKeyGenerated: Boolean = false
+)
 
 interface DebugLoggerInterface {
     fun <T : LogTag> log(message: LogTag.Message<T>, extra: String? = null, success: Boolean? = null, )
 
+    fun setLoggerVisibility()
     fun testInfo()
+    fun setBackupDbExists(exists: Boolean)
+    fun setAppManagerCreated(created: Boolean)
+    fun setMasterKeyGenerated(generated: Boolean)
+    fun setOuterLoggerVisibility(isVisible: Boolean)
 }
 
-class DebugLogger : DebugLoggerInterface {
-    val isActive = true
+open class DebugLogger : DebugLoggerInterface {
+    val isCommonLogsActive = false
+    val isCriticalInfoLogsActive = true
+    private var criticalState = CriticalComponentsState()
+
+    init {
+        println(" DEBUGGER LOG INIT")
+    }
+
+    override fun setLoggerVisibility() {
+        println(" DEBUGGER LOG VISIBLE: $isCommonLogsActive")
+        setOuterLoggerVisibility(isCommonLogsActive)
+    }
 
     override fun <T : LogTag> log(message: LogTag.Message<T>, extra: String?, success: Boolean?) {
-        if (!isActive) { return }
+        if (!isCommonLogsActive) { return }
 
         val fullMessage = if (extra != null) "${message.text} $extra" else message.text
         val preMessage = if (success != null) if (success) "✅" else "❌" else ""
@@ -211,7 +392,35 @@ class DebugLogger : DebugLoggerInterface {
         println("$preMessage ${message.tag.displayName}: $fullMessage")
     }
 
-    override fun testInfo() {
-        TODO("Not yet implemented")
+    override fun setBackupDbExists(exists: Boolean) {
+        criticalState = criticalState.copy(backupDbExists = exists)
+        testInfo()
     }
+
+    override fun setAppManagerCreated(created: Boolean) {
+        criticalState = criticalState.copy(appManagerCreated = created)
+        testInfo()
+    }
+
+    override fun setMasterKeyGenerated(generated: Boolean) {
+        criticalState = criticalState.copy(masterKeyGenerated = generated)
+        testInfo()
+    }
+
+    override fun testInfo() {
+        if (!isCriticalInfoLogsActive) { return }
+        
+        val backupStatus = if (criticalState.backupDbExists) "Enable" else "False"
+        val appManagerStatus = if (criticalState.appManagerCreated) "True" else "False"
+        val masterKeyStatus = if (criticalState.masterKeyGenerated) "True" else "False"
+
+        println("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F")
+        println("  Critical Components State:")
+        println("  BackUpDB => $backupStatus")
+        println("  MetaSecretAppManager => $appManagerStatus")
+        println("  MasterKey => $masterKeyStatus")
+        println("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F")
+    }
+    override fun setOuterLoggerVisibility(isVisible: Boolean) { }
+
 }

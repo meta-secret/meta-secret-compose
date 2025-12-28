@@ -379,11 +379,15 @@ data class AppStateModel(
     }
 
     companion object {
-        fun fromJson(jsonResponse: String): AppStateModel {
+        fun fromJson(jsonResponse: String, logger: core.DebugLoggerInterface? = null): AppStateModel {
             return try {
                 JsonConfig.json.decodeFromString<AppStateModel>(jsonResponse)
             } catch (e: Exception) {
-                println("⛔ Failed to parse JSON: $jsonResponse, error: ${e.message}")
+                logger?.log(
+                    core.LogTag.AppManager.Message.FailedToParseStateJson,
+                    "jsonResponse: $jsonResponse, error: ${e.message}",
+                    success = false
+                ) ?: println("⛔ Failed to parse JSON: $jsonResponse, error: ${e.message}")
                 e.printStackTrace()
                 AppStateModel(message = null, success = false)
             }

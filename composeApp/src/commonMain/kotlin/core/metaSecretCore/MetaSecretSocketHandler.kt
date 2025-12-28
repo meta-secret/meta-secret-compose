@@ -23,7 +23,8 @@ import models.appInternalModels.SocketRequestModel
 
 class MetaSecretSocketHandler(
     private val metaSecretCore: MetaSecretCoreInterface,
-    private val appManager: MetaSecretAppManagerInterface
+    private val appManager: MetaSecretAppManagerInterface,
+    private val logger: core.DebugLoggerInterface
 ): MetaSecretSocketHandlerInterface {
     private val _socketActionType = MutableStateFlow<SocketActionModel>(SocketActionModel.NONE)
     override val socketActionType: StateFlow<SocketActionModel> = _socketActionType
@@ -40,7 +41,7 @@ class MetaSecretSocketHandler(
     private val timerScope = CoroutineScope(Dispatchers.Default)
 
     init {
-        println("✅" + core.LogTags.SOCKET_HANDLER + ": init")
+        logger.log(core.LogTag.SocketHandler.Message.Init, success = true)
         startFollowing()
     }
 
@@ -48,7 +49,7 @@ class MetaSecretSocketHandler(
         add: List<SocketRequestModel>?,
         exclude: List<SocketRequestModel>?
     ) {
-        println("✅" + core.LogTags.SOCKET_HANDLER + ": Update actions to follow")
+        logger.log(core.LogTag.SocketHandler.Message.UpdateActionsToFollow, success = true)
 
         exclude?.let { toExclude ->
             actionsToFollow.removeAll(toExclude.toSet())
@@ -58,11 +59,11 @@ class MetaSecretSocketHandler(
             actionsToFollow.addAll(toAdd)
         }
 
-        println("✅" + core.LogTags.SOCKET_HANDLER + ": Actual actions to follow: $actionsToFollow")
+        logger.log(core.LogTag.SocketHandler.Message.ActualActionsToFollow, "$actionsToFollow", success = true)
     }
 
     private fun startFollowing() {
-        println("✅" + core.LogTags.SOCKET_HANDLER + ": Timer is started")
+        logger.log(core.LogTag.SocketHandler.Message.TimerStarted, success = true)
         stopTimer()
         timerJob = timerScope.launch {
             while (isActive) {
@@ -74,10 +75,10 @@ class MetaSecretSocketHandler(
 
     private fun searchRequest() {
         if (!isLocked && actionsToFollow.isNotEmpty()) {
-            println("✅" + core.LogTags.SOCKET_HANDLER + ": Fire the timer!")
+            logger.log(core.LogTag.SocketHandler.Message.FireTimer, success = true)
             isLocked = true
             val stateJson = metaSecretCore.getAppState()
-            val currentState = AppStateModel.fromJson(stateJson)
+            val currentState = AppStateModel.fromJson(stateJson, logger)
 
             if (!currentState.success) {
                 isLocked = false
@@ -87,16 +88,16 @@ class MetaSecretSocketHandler(
             if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
                 val state = appManager.getStateModel()
                 val hasJoinRequests = state?.getVaultEvents()?.hasJoinRequests() == true
-                println("✅" + core.LogTags.SOCKET_HANDLER + ": AppState is $state, hasJoinRequest is $hasJoinRequests")
+                logger.log(core.LogTag.SocketHandler.Message.AppStateReceived, "$state, hasJoinRequest is $hasJoinRequests", success = true)
 
                 if (state?.success == true && hasJoinRequests) {
-                    println("✅" + core.LogTags.SOCKET_HANDLER + ": Need to show Ask to join pop up")
+                    logger.log(core.LogTag.SocketHandler.Message.NeedShowAskToJoin, success = true)
                     _socketActionType.value = SocketActionModel.ASK_TO_JOIN
                 }
             }
 
             if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)) {
-                println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for join response")
+                logger.log(core.LogTag.SocketHandler.Message.WaitingForJoinResponse, success = true)
 
                 when (currentState.getVaultFullInfo()) {
                     is VaultFullInfo.Member -> _socketActionType.value = SocketActionModel.JOIN_REQUEST_ACCEPTED
@@ -114,19 +115,19 @@ class MetaSecretSocketHandler(
             }
 
             if (actionsToFollow.contains(SocketRequestModel.GET_STATE)) {
-                println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for state response")
+                logger.log(core.LogTag.SocketHandler.Message.WaitingForStateResponse, success = true)
                 _socketActions.tryEmit(SocketActionModel.UPDATE_STATE)
             }
 
             if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST)) {
-                println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for recover")
+                logger.log(core.LogTag.SocketHandler.Message.WaitingForRecover, success = true)
                 timerScope.launch {
                     checkRecoverRequest(currentState)
                 }
             }
 
             if (actionsToFollow.contains(SocketRequestModel.SHOW_SECRET)) {
-                println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for show secret")
+                logger.log(core.LogTag.SocketHandler.Message.WaitingForShowSecret, success = true)
                 timerScope.launch {
                     checkRecoverSentStatus(currentState)
                 }
@@ -134,13 +135,13 @@ class MetaSecretSocketHandler(
 
             isLocked = false
         } else {
-            println("✅" + core.LogTags.SOCKET_HANDLER + ": NO any subscriptions")
+            logger.log(core.LogTag.SocketHandler.Message.NoSubscriptions, success = true)
         }
     }
 
     private suspend fun checkRecoverRequest(currentState: AppStateModel) {
         withContext(Dispatchers.Default) {
-            println("✅" + core.LogTags.SOCKET_HANDLER + ": Waiting for recover request")
+            logger.log(core.LogTag.SocketHandler.Message.WaitingForRecoverRequest, success = true)
             
             val currentDeviceId = currentState.getCurrentDeviceId()
             val vaultFullInfo = currentState.getVaultFullInfo()
@@ -150,7 +151,7 @@ class MetaSecretSocketHandler(
                 val claims = ssClaims?.claims
                 
                 if (claims != null && claims.isNotEmpty()) {
-                    println("✅" + core.LogTags.SOCKET_HANDLER + ": Found ${claims.size} claims")
+                    logger.log(core.LogTag.SocketHandler.Message.FoundClaims, "${claims.size}", success = true)
 
                     val recoverClaimIds: List<RestoreData> = claims.values
                         .filter { claim ->
@@ -164,13 +165,13 @@ class MetaSecretSocketHandler(
                         }
 
                     if (recoverClaimIds.isNotEmpty()) {
-                        println("✅" + core.LogTags.SOCKET_HANDLER + ": Ready to recover for passIds: $recoverClaimIds")
+                        logger.log(core.LogTag.SocketHandler.Message.ReadyToRecover, "$recoverClaimIds", success = true)
                         _socketActionType.value = SocketActionModel.READY_TO_RECOVER(
                             restoreData = recoverClaimIds
                         )
                     }
                 } else {
-                    println("✅" + core.LogTags.SOCKET_HANDLER + ": No claims found")
+                    logger.log(core.LogTag.SocketHandler.Message.NoClaimsFound, success = true)
                 }
             }
         }
@@ -178,7 +179,7 @@ class MetaSecretSocketHandler(
 
     private suspend fun checkRecoverSentStatus(currentState: AppStateModel) {
         withContext(Dispatchers.Default) {
-            println("✅" + core.LogTags.SOCKET_HANDLER + ": Checking recover sent status")
+            logger.log(core.LogTag.SocketHandler.Message.CheckingRecoverSentStatus, success = true)
             
             val currentDeviceId = currentState.getCurrentDeviceId()
             val vaultFullInfo = currentState.getVaultFullInfo()
@@ -188,7 +189,7 @@ class MetaSecretSocketHandler(
                 val claims = ssClaims?.claims
                 
                 if (claims != null && claims.isNotEmpty()) {
-                    println("✅" + core.LogTags.SOCKET_HANDLER + ": Checking recover sent status claims: ${claims.values}")
+                    logger.log(core.LogTag.SocketHandler.Message.CheckingRecoverSentStatusClaims, "${claims.values}", success = true)
                     val sentRecoverClaims = claims.values
                         .filter { claim ->
                             val isRecoverType = claim.distributionType == DistributionType.RECOVER
@@ -196,14 +197,14 @@ class MetaSecretSocketHandler(
                             val isSent = claim.receivers.any { receiverId ->
                                 claim.status.statuses[receiverId] == ClaimStatus.SENT
                             }
-                            println("✅" + core.LogTags.SOCKET_HANDLER + ": Checking recover sent status isRecoverType: $isRecoverType, isSenderForThisDevice: $isSenderForThisDevice, isSent: $isSent")
+                            logger.log(core.LogTag.SocketHandler.Message.CheckingRecoverSentStatusDetails, "isRecoverType: $isRecoverType, isSenderForThisDevice: $isSenderForThisDevice, isSent: $isSent", success = true)
                             isRecoverType && isSenderForThisDevice && isSent
                         }
 
-                    println("✅" + core.LogTags.SOCKET_HANDLER + ": Checking recover sent status sentRecoverClaims: $sentRecoverClaims")
+                    logger.log(core.LogTag.SocketHandler.Message.CheckingRecoverSentStatusSentClaims, "$sentRecoverClaims", success = true)
                     if (sentRecoverClaims.isNotEmpty()) {
                         val secretId = sentRecoverClaims.first().distClaimId.passId.name
-                        println("✅" + core.LogTags.SOCKET_HANDLER + ": Recover sent for secretId: $secretId")
+                        logger.log(core.LogTag.SocketHandler.Message.RecoverSentForSecretId, "$secretId", success = true)
                         _socketActionType.value = SocketActionModel.RECOVER_SENT(secretId)
                     }
                 }
@@ -212,7 +213,7 @@ class MetaSecretSocketHandler(
     }
 
     private fun stopTimer() {
-        println("✅" + core.LogTags.SOCKET_HANDLER + ": Timer is stopped")
+        logger.log(core.LogTag.SocketHandler.Message.TimerStopped, success = true)
         timerJob?.cancel()
         timerJob = null
     }

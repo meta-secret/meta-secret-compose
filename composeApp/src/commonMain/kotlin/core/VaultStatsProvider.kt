@@ -14,10 +14,12 @@ import kotlinx.coroutines.withContext
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 import models.apiModels.UserStatus
+import core.LogTag
 
 class VaultStatsProvider(
     private val appManager: MetaSecretAppManagerInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
+    private val logger: DebugLoggerInterface,
 ) : VaultStatsProviderInterface {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -36,14 +38,14 @@ class VaultStatsProvider(
 
     init {
         scope.launch(Dispatchers.IO) {
-            println("✅" + LogTags.VAULT_STATS_PROVIDER + ": Start to follow GET_STATE and RESPONSIBLE_TO_ACCEPT_JOIN for stats")
+            logger.log(LogTag.VaultStatsProvider.Message.StartFollow, success = true)
             socketHandler.actionsToFollow(add = listOf(SocketRequestModel.GET_STATE, SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN), exclude = null)
         }
 
         scope.launch {
             socketHandler.socketActions.collect { actionType ->
                 if (actionType == SocketActionModel.UPDATE_STATE) {
-                    println("✅" + LogTags.VAULT_STATS_PROVIDER + ": UPDATE_STATE received, refreshing stats")
+                    logger.log(LogTag.VaultStatsProvider.Message.UpdateStateReceived, success = true)
                     refresh()
                 }
             }
@@ -52,7 +54,7 @@ class VaultStatsProvider(
         scope.launch {
             socketHandler.socketActionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
-                    println("✅" + LogTags.VAULT_STATS_PROVIDER + ": ASK_TO_JOIN signal received, refreshing join requests count")
+                    logger.log(LogTag.VaultStatsProvider.Message.AskToJoinSignal, success = true)
                     refresh()
                 }
             }
@@ -70,12 +72,12 @@ class VaultStatsProvider(
                     _devicesCount.value = vaultSummary.users.values.count { it.status == UserStatus.MEMBER }
                     _vaultName.value = vaultSummary.vaultName
                     _joinRequestsCount.value = appManager.getJoinRequestsCount()
-                    println("✅" + LogTags.VAULT_STATS_PROVIDER + ": Stats updated: secrets=${_secretsCount.value}, devices(MEMBER)=${_devicesCount.value}, vaultName=${_vaultName.value}, joinRequestsCount = ${_joinRequestsCount.value}")
+                    logger.log(LogTag.VaultStatsProvider.Message.StatsUpdated, "secrets=${_secretsCount.value}, devices(MEMBER)=${_devicesCount.value}, vaultName=${_vaultName.value}, joinRequestsCount = ${_joinRequestsCount.value}", success = true)
                 } else {
-                    println("❌" + LogTags.VAULT_STATS_PROVIDER + ": VaultSummary is null during stats refresh")
+                    logger.log(LogTag.VaultStatsProvider.Message.VaultSummaryNull, success = false)
                 }
             } catch (t: Throwable) {
-                println("❌" + LogTags.VAULT_STATS_PROVIDER + ": Failed to refresh stats: ${t.message}")
+                logger.log(LogTag.VaultStatsProvider.Message.FailedToRefreshStats, "${t.message}", success = false)
             }
         }
     }

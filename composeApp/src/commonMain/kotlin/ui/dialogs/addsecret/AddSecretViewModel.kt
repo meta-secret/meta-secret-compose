@@ -5,7 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import core.LogTags
+import core.LogTag
 import core.KeyValueStorageInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import kotlinx.coroutines.launch
@@ -43,7 +43,7 @@ class AddSecretViewModel(
     }
 
     private fun addSecret(secretName: String, secret: String) {
-        println("✅" + LogTags.ADD_SECRET_VM + ": Starting add secret")
+        logger.log(LogTag.AddSecretVM.Message.StartingAddSecret, success = true)
         viewModelScope.launch {
             _isLoading.value = true
             currentState = AddSecretState.IN_PROGRESS
@@ -66,11 +66,11 @@ class AddSecretViewModel(
 
     private fun addSecretStateResolver() {
         when (currentState) {
-            AddSecretState.IDLE -> println("✅" + LogTags.ADD_SECRET_VM + ": Waiting for AddSecret")
-            AddSecretState.IN_PROGRESS -> println("✅" + LogTags.ADD_SECRET_VM + ": In progress")
-            AddSecretState.ADDED_SUCCESSFULLY -> println("✅" + LogTags.ADD_SECRET_VM + ": Added successfully")
-            AddSecretState.ADDING_FAILURE -> println("❌" + LogTags.ADD_SECRET_VM + ": Adding failed")
-            null -> println("❌" + LogTags.ADD_SECRET_VM + ": Unknown state")
+            AddSecretState.IDLE -> logger.log(LogTag.AddSecretVM.Message.WaitingForAddSecret, success = true)
+            AddSecretState.IN_PROGRESS -> logger.log(LogTag.AddSecretVM.Message.InProgress, success = true)
+            AddSecretState.ADDED_SUCCESSFULLY -> logger.log(LogTag.AddSecretVM.Message.AddedSuccessfully, success = true)
+            AddSecretState.ADDING_FAILURE -> logger.log(LogTag.AddSecretVM.Message.AddingFailed, success = false)
+            null -> logger.log(LogTag.AddSecretVM.Message.UnknownState, success = false)
         }
     }
 }

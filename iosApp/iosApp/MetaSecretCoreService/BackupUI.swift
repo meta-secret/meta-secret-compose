@@ -24,10 +24,10 @@ final class BackupUI: NSObject {
     ) {
         let backupExists = BackupWorker.hasICloudBackup(dbFileName: dbFileName)
         guard !backupExists else {
-            print("🦅 Swift: iCloud backup Exists. Alert doesn't need")
+            SwiftLogger.shared.logInfo(tag: .backupUI, message: "iCloud backup Exists. Alert doesn't need")
             return
         }
-        print("🦅 Swift: iCloud backup Not Exists")
+        SwiftLogger.shared.logInfo(tag: .backupUI, message: "iCloud backup Not Exists")
 
         guard let presenter = self.topMostViewController() else { return }
         let alert = UIAlertController(title: nil, message: initialMessage, preferredStyle: .alert)
@@ -55,8 +55,23 @@ final class BackupUI: NSObject {
         dbFileName: String
     ) {
         let fm = FileManager.default
-        let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            SwiftLogger.shared.logError(tag: .backupUI, message: "Documents directory not found")
+            return
+        }
         let src = documentsPath.appendingPathComponent(dbFileName)
+        
+        guard fm.fileExists(atPath: src.path) else {
+            SwiftLogger.shared.logError(tag: .backupUI, message: "Database file does not exist at path: \(src.path)")
+            let alert = UIAlertController(
+                title: nil,
+                message: "Database file not found. Please ensure the app has been initialized.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: warningOkTitle, style: .default))
+            presenter.present(alert, animated: true)
+            return
+        }
 
         let picker: UIDocumentPickerViewController
         if #available(iOS 14.0, *) {
@@ -106,9 +121,9 @@ final class BackupUI: NSObject {
     }
 }
 
-private extension BackupUI {
+fileprivate extension BackupUI {
     @MainActor
-    private func topMostViewController() -> UIViewController? {
+    func topMostViewController() -> UIViewController? {
         let window = UIApplication.shared.connectedScenes
         .compactMap { $0 as? UIWindowScene }
         .flatMap { $0.windows }
@@ -117,7 +132,7 @@ private extension BackupUI {
     }
 
     @MainActor
-    private func topMostViewController(from base: UIViewController?) -> UIViewController? {
+    func topMostViewController(from base: UIViewController?) -> UIViewController? {
         if let nav = base as? UINavigationController {
             return topMostViewController(from: nav.visibleViewController)
         }
@@ -154,20 +169,26 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
     }
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        print("🦅❌SwiftUI: document Picker Was Cancelled")
-        guard let presenter = (controller.presentingViewController ?? controller.parent) else { return }
-        BackupUI.shared.showWarningAlert(
-            from: presenter,
-            warningMessage: warningMessage,
-            warningOkTitle: warningOkTitle,
-            warningCancelTitle: warningCancelTitle,
-            backupKey: backupKey,
-            dbFileName: dbFileName
-        )
+        SwiftLogger.shared.logError(tag: .backupUI, message: "document Picker Was Cancelled")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self, weak controller] in
+            guard let self = self else { return }
+            controller?.dismiss(animated: true) {
+                let presenter = BackupUI.shared.topMostViewController() ?? controller?.presentingViewController ?? controller?.parent ?? controller
+                guard let presenter = presenter else { return }
+                BackupUI.shared.showWarningAlert(
+                    from: presenter,
+                    warningMessage: self.warningMessage,
+                    warningOkTitle: self.warningOkTitle,
+                    warningCancelTitle: self.warningCancelTitle,
+                    backupKey: self.backupKey,
+                    dbFileName: self.dbFileName
+                )
+            }
+        }
     }
 
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        print("🦅✅SwiftUI: document Picker Was Chosen")
+        SwiftLogger.shared.logSuccess(tag: .backupUI, message: "document Picker Was Chosen")
         guard let url = urls.first else {
             guard let presenter = (controller.presentingViewController ?? controller.parent) else { return }
             BackupUI.shared.showWarningAlert(
@@ -181,9 +202,9 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
             return
         }
 
-        print("🦅✅SwiftUI: target URL: \(url)")
+        SwiftLogger.shared.logSuccess(tag: .backupUI, message: "target URL: \(url)")
         if !BackupWorker.isInICloudContainer(url: url) {
-            print("🦅✅SwiftUI: isInICloudContainer false")
+            SwiftLogger.shared.logSuccess(tag: .backupUI, message: "isInICloudContainer false")
             guard let presenter = (controller.presentingViewController ?? controller.parent) else { return }
             BackupUI.shared.showWarningAlert(
                 from: presenter,
@@ -196,7 +217,7 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
             return
         }
 
-        print("🦅✅SwiftUI: isInICloudContainer true")
+        SwiftLogger.shared.logSuccess(tag: .backupUI, message: "isInICloudContainer true")
 
         let needsScope = url.startAccessingSecurityScopedResource()
         defer { if needsScope { url.stopAccessingSecurityScopedResource() } }
@@ -205,13 +226,13 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
             let bookmark = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
             let b64 = bookmark.base64EncodedString()
             _ = SwiftBridge().saveString(key: "bdBackUpBookmark", value: b64)
-            print("🦅✅SwiftUI: bdBackUpBookmark saved (\(bookmark.count) bytes)")
+            SwiftLogger.shared.logSuccess(tag: .backupUI, message: "bdBackUpBookmark saved (\(bookmark.count) bytes)")
         } catch {
-            print("🦅❌SwiftUI: bookmarkData error: \(error)")
+            SwiftLogger.shared.logError(tag: .backupUI, message: "bookmarkData error: \(error)")
         }
 
         _ = SwiftBridge().saveString(key: backupKey, value: url.path)
-        print("🦅✅SwiftUI: stored path for UI: \(url.path)")
+        SwiftLogger.shared.logSuccess(tag: .backupUI, message: "stored path for UI: \(url.path)")
     }
 }
 
@@ -223,7 +244,7 @@ final class BackupWorker {
 
 
     static func isInICloudContainer(url: URL) -> Bool {
-        print("🦅👷 BackupWorker: isInICloudContainer url: \(url)")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "isInICloudContainer url: \(url)")
         let fm = FileManager.default
         let u = url.standardizedFileURL
 
@@ -241,22 +262,23 @@ final class BackupWorker {
 
 
     static func restoreIfNeeded(dbFileName: String) {
-        print("🦅👷BackupWorker: restoreIfNeeded")
-        let fm = FileManager.default
-        let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
-        guard let dst = documentsPath?.appendingPathComponent(dbFileName) else {
-            print("🦅👷❌BackupWorker: restoreIfNeeded - localDBURL is nil")
-            return
-        }
-        let fileExists = fm.fileExists(atPath: dst.path)
-        print("🦅👷BackupWorker: File exists: \(fileExists)")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "restoreIfNeeded")
+        let fileExists = SwiftBridge.hasLocalDatabaseFile(dbFileName: dbFileName)
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "File exists: \(fileExists)")
         
         if fileExists {
-            print("🦅👷BackupWorker: DB file already exists with data - skipping restore")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "DB file already exists with data - skipping restore")
             return
         }
+        
+        let fm = FileManager.default
+        guard let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "restoreIfNeeded - localDBURL is nil")
+            return
+        }
+        let dst = documentsPath.appendingPathComponent(dbFileName)
 
-        print("🦅👷BackupWorker: Starting restore process...")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "Starting restore process...")
         if let urlFromBookmark = resolveBookmark() {
             let needs = urlFromBookmark.startAccessingSecurityScopedResource()
             defer { if needs { urlFromBookmark.stopAccessingSecurityScopedResource() } }
@@ -266,10 +288,10 @@ final class BackupWorker {
             var coordError: NSError?
             coordinator.coordinate(readingItemAt: urlFromBookmark, options: [], error: &coordError) { readURL in
                 do { try FileManager.default.copyItem(at: readURL, to: dst) }
-                catch { print("🦅👷❌ restoreIfNeeded (bookmark) error \(error)") }
+                catch { SwiftLogger.shared.logError(tag: .backupWorker, message: "restoreIfNeeded (bookmark) error \(error)") }
             }
-            if let e = coordError { print("🦅👷❌ restoreIfNeeded (bookmark) coordination error \(e)") }
-            if FileManager.default.fileExists(atPath: dst.path) { return }
+            if let e = coordError { SwiftLogger.shared.logError(tag: .backupWorker, message: "restoreIfNeeded (bookmark) coordination error \(e)") }
+            if SwiftBridge.hasLocalDatabaseFile(dbFileName: dbFileName) { return }
         }
 
         guard let container = fm.url(forUbiquityContainerIdentifier: containerId) else { return }
@@ -281,23 +303,23 @@ final class BackupWorker {
         var coordError: NSError?
         coordinator.coordinate(readingItemAt: srcURL, options: [], error: &coordError) { readURL in
             do { try FileManager.default.copyItem(at: readURL, to: dst) }
-            catch { print("🦅👷❌ restoreIfNeeded error \(error)") }
+            catch { SwiftLogger.shared.logError(tag: .backupWorker, message: "restoreIfNeeded error \(error)") }
         }
-        if let e = coordError { print("🦅👷❌ restoreIfNeeded coordination error \(e)") }
+        if let e = coordError { SwiftLogger.shared.logError(tag: .backupWorker, message: "restoreIfNeeded coordination error \(e)") }
     }
 
     static func backupIfChanged(dbFileName: String) {
-        print("🦅👷BackupWorker: backupIfChanged - Local DB updated, starting backup")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "backupIfChanged - Local DB updated, starting backup")
         let fm = FileManager.default
         let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
         guard let src = documentsPath?.appendingPathComponent(dbFileName), fm.fileExists(atPath: src.path) else { 
-            print("🦅👷❌BackupWorker: Local DB not found, skipping backup")
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "Local DB not found, skipping backup")
             return 
         }
 
         // Log DB modification time
         if let modificationDate = try? src.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate {
-            print("🦅👷📅BackupWorker: Local DB last modified: \(modificationDate)")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "📅 Local DB last modified: \(modificationDate)")
         }
 
         if let dstURL = resolveBookmark() {
@@ -309,16 +331,16 @@ final class BackupWorker {
             let dstDate = (try? dstURL.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
             
             if srcDate > dstDate {
-                print("🦅👷🔄BackupWorker: Local DB is newer, copying to bookmark location")
+                SwiftLogger.shared.logInfo(tag: .backupWorker, message: "🔄 Local DB is newer, copying to bookmark location")
                 copyLocalDBTo(url: dstURL, dbFileName: dbFileName)
             } else {
-                print("🦅👷✅BackupWorker: Bookmark backup is up to date")
+                SwiftLogger.shared.logSuccess(tag: .backupWorker, message: "Bookmark backup is up to date")
             }
             return
         }
 
         guard let container = fm.url(forUbiquityContainerIdentifier: containerId) else { 
-            print("🦅👷❌BackupWorker: iCloud container not available")
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "iCloud container not available")
             return 
         }
         let docs = container.appendingPathComponent("Documents", isDirectory: true)
@@ -329,19 +351,19 @@ final class BackupWorker {
         let dstDate = (try? dstURL.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
         
         if srcDate > dstDate {
-            print("🦅👷🔄BackupWorker: Local DB is newer, copying to iCloud")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "🔄 Local DB is newer, copying to iCloud")
             copyLocalDBToICloud(dbFileName: dbFileName)
         } else {
-            print("🦅👷✅BackupWorker: iCloud backup is up to date")
+            SwiftLogger.shared.logSuccess(tag: .backupWorker, message: "iCloud backup is up to date")
         }
     }
 
     private static func copyLocalDBTo(url: URL, dbFileName: String) {
-        print("🦅👷BackupWorker: copyLocalDBTo \(url.path)")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "copyLocalDBTo \(url.path)")
         let fm = FileManager.default
         let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
         guard let src = documentsPath?.appendingPathComponent(dbFileName), fm.fileExists(atPath: src.path) else { 
-            print("🦅👷❌BackupWorker: Source DB not found")
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "Source DB not found")
             return 
         }
 
@@ -366,26 +388,26 @@ final class BackupWorker {
                 } else {
                     try fm.moveItem(at: tmp, to: dst)
                 }
-                print("🦅👷✅BackupWorker: DB copied to bookmark location successfully")
+                SwiftLogger.shared.logSuccess(tag: .backupWorker, message: "DB copied to bookmark location successfully")
             } catch let e as NSError {
-                print("🦅👷❌BackupWorker: copyLocalDBTo error \(e)")
+                SwiftLogger.shared.logError(tag: .backupWorker, message: "copyLocalDBTo error \(e)")
             }
         }
         if let e = coordinationError {
-            print("🦅👷❌BackupWorker: copyLocalDBTo coordination error \(e)")
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "copyLocalDBTo coordination error \(e)")
         }
     }
 
     private static func copyLocalDBToICloud(dbFileName: String) {
-        print("🦅👷BackupWorker: copyLocalDBToICloud")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "copyLocalDBToICloud")
         let fm = FileManager.default
         let documentsPath = fm.urls(for: .documentDirectory, in: .userDomainMask).first
         guard let src = documentsPath?.appendingPathComponent(dbFileName), fm.fileExists(atPath: src.path) else { 
-            print("🦅👷❌BackupWorker: Source DB not found")
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "Source DB not found")
             return 
         }
         guard let container = fm.url(forUbiquityContainerIdentifier: containerId) else { 
-            print("🦅👷❌BackupWorker: iCloud container not available")
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "iCloud container not available")
             return 
         }
         let docs = container.appendingPathComponent("Documents", isDirectory: true)
@@ -407,18 +429,18 @@ final class BackupWorker {
                 } else {
                     try fm.moveItem(at: tmp, to: dstURL)
                 }
-                print("🦅👷✅BackupWorker: DB copied to iCloud successfully")
+                SwiftLogger.shared.logSuccess(tag: .backupWorker, message: "DB copied to iCloud successfully")
             } catch let e as NSError {
-                print("🦅👷❌BackupWorker: copyLocalDBToICloud error \(e)")
+                SwiftLogger.shared.logError(tag: .backupWorker, message: "copyLocalDBToICloud error \(e)")
             }
         }
         if let e = coordinationError {
-            print("🦅👷❌BackupWorker: copyLocalDBToICloud coordination error \(e)")
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "copyLocalDBToICloud coordination error \(e)")
         }
     }
 
     static func removeBackup(dbFileName: String) {
-        print("🦅👷BackupWorker: removeBackup")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "removeBackup")
 
         if let url = resolveBookmark() {
             let needs = url.startAccessingSecurityScopedResource()
@@ -428,9 +450,9 @@ final class BackupWorker {
             var coordError: NSError?
             coordinator.coordinate(writingItemAt: url, options: .forDeleting, error: &coordError) { delURL in
                 do { try FileManager.default.removeItem(at: delURL) }
-                catch { print("🦅👷❌BackupWorker: removeBackup (bookmark) error \(error)") }
+                catch { SwiftLogger.shared.logError(tag: .backupWorker, message: "removeBackup (bookmark) error \(error)") }
             }
-            if let e = coordError { print("🦅👷❌BackupWorker: removeBackup (bookmark) coordination error \(e)") }
+            if let e = coordError { SwiftLogger.shared.logError(tag: .backupWorker, message: "removeBackup (bookmark) coordination error \(e)") }
         }
 
         let fm = FileManager.default
@@ -441,9 +463,9 @@ final class BackupWorker {
             var coordError: NSError?
             coordinator.coordinate(writingItemAt: srcURL, options: .forDeleting, error: &coordError) { delURL in
                 do { try FileManager.default.removeItem(at: delURL) }
-                catch { print("🦅👷❌BackupWorker: removeBackup error \(error)") }
+                catch { SwiftLogger.shared.logError(tag: .backupWorker, message: "removeBackup error \(error)") }
             }
-            if let e = coordError { print("🦅👷❌BackupWorker: removeBackup coordination error \(e)") }
+            if let e = coordError { SwiftLogger.shared.logError(tag: .backupWorker, message: "removeBackup coordination error \(e)") }
         }
     }
 
@@ -453,7 +475,7 @@ final class BackupWorker {
 
         if let rv = try? u.resourceValues(forKeys: [.isUbiquitousItemKey]),
            rv.isUbiquitousItem != true {
-            print("🦅👷BackupWorker: Not Ubiquitous")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "Not Ubiquitous")
             return true
         }
 
@@ -466,7 +488,7 @@ final class BackupWorker {
         if let s = status(), s == .downloaded || s == .current { return true }
 
         do { try FileManager.default.startDownloadingUbiquitousItem(at: u) }
-        catch { print("🦅👷BackupWorker: startDownloadingUbiquitousItem error: \(error)") }
+        catch { SwiftLogger.shared.logError(tag: .backupWorker, message: "startDownloadingUbiquitousItem error: \(error)") }
 
         // Use shorter intervals and fewer iterations to avoid blocking UI thread
         let deadline = Date().addingTimeInterval(min(timeout, 3.0)) // Max 3 seconds
@@ -476,7 +498,7 @@ final class BackupWorker {
         
         while Date() < deadline && iterations < maxIterations {
             if let s = status(), s == .downloaded || s == .current { 
-                print("🦅👷BackupWorker: Download completed after \(iterations) iterations")
+                SwiftLogger.shared.logSuccess(tag: .backupWorker, message: "Download completed after \(iterations) iterations")
                 return true 
             }
             
@@ -486,21 +508,21 @@ final class BackupWorker {
             
             // Allow system to process other events
             if iterations % 10 == 0 {
-                print("🦅👷BackupWorker: Still downloading... iteration \(iterations)")
+                SwiftLogger.shared.logInfo(tag: .backupWorker, message: "Still downloading... iteration \(iterations)")
             }
         }
 
-        print("🦅👷BackupWorker: Download timeout for: \(u) after \(iterations) iterations")
+        SwiftLogger.shared.logError(tag: .backupWorker, message: "Download timeout for: \(u) after \(iterations) iterations")
         return false
     }
 
     private static func resolveBookmark() -> URL? {
         guard let b64 = SwiftBridge().getString(key: "bdBackUpBookmark") else {
-            print("🦅👷 No bookmark key in storage")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "No bookmark key in storage")
             return nil
         }
         guard let data = Data(base64Encoded: b64) else {
-            print("🦅👷 Bookmark base64 decode failed")
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "Bookmark base64 decode failed")
             return nil
         }
         var stale = false
@@ -515,19 +537,19 @@ final class BackupWorker {
                 if let newData = try? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil) {
                     let b64new = newData.base64EncodedString()
                     _ = SwiftBridge().saveString(key: "bdBackUpBookmark", value: b64new)
-                    print("🦅👷 Bookmark was stale – refreshed")
+                    SwiftLogger.shared.logInfo(tag: .backupWorker, message: "Bookmark was stale – refreshed")
                 }
             }
-            print("🦅👷 Resolved bookmark URL: \(url)")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "Resolved bookmark URL: \(url)")
             return url
         } catch {
-            print("🦅👷 resolveBookmark error: \(error)")
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "resolveBookmark error: \(error)")
             let nsError = error as NSError
             if nsError.code == 257 { // Permission denied - typical after app reinstall
-                print("🦅👷 Bookmark lost permissions after app reinstall - clearing invalid bookmark")
+                SwiftLogger.shared.logInfo(tag: .backupWorker, message: "Bookmark lost permissions after app reinstall - clearing invalid bookmark")
                 _ = SwiftBridge().saveString(key: "bdBackUpBookmark", value: "")
             } else if nsError.code == 260 { // File not found
-                print("🦅👷 Bookmark points to non-existent file - clearing")
+                SwiftLogger.shared.logInfo(tag: .backupWorker, message: "Bookmark points to non-existent file - clearing")
                 _ = SwiftBridge().saveString(key: "bdBackUpBookmark", value: "")
             }
             return nil
@@ -535,7 +557,7 @@ final class BackupWorker {
     }
 
     static func hasICloudBackup(dbFileName: String) -> Bool {
-        print("🦅👷 BackupWorker: hasICloudBackup")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "hasICloudBackup")
         let fm = FileManager.default
 
         if let url = resolveBookmark() {
@@ -544,10 +566,10 @@ final class BackupWorker {
             _ = ensureDownloadedIfUbiquitous(url)
             let existsReach = (try? url.checkResourceIsReachable()) ?? false
             let existsFS = fm.fileExists(atPath: url.path)
-            print("🦅👷 Bookmark check: reachable=\(existsReach) fileExists=\(existsFS)")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "Bookmark check: reachable=\(existsReach) fileExists=\(existsFS)")
             if existsReach || existsFS {
                 printFileDetails(url: url, source: "bookmark")
-                print("🦅👷 BackupWorker: Exists (bookmark)")
+                SwiftLogger.shared.logSuccess(tag: .backupWorker, message: "Exists (bookmark)")
                 return true
             }
         }
@@ -558,19 +580,19 @@ final class BackupWorker {
             let exists = ((try? iCloudDB.checkResourceIsReachable()) ?? false) || fm.fileExists(atPath: iCloudDB.path)
             if exists {
                 printFileDetails(url: iCloudDB, source: "app container")
-                print("🦅👷 BackupWorker: Exists (app container)")
+                SwiftLogger.shared.logSuccess(tag: .backupWorker, message: "Exists (app container)")
                 return true
             }
         }
 
-        print("🦅👷 BackupWorker: Not Exists")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "Not Exists")
         return false
     }
     
     private static func printFileDetails(url: URL, source: String) {
         let fm = FileManager.default
-        print("🦅👷📁 File details (\(source)):")
-        print("🦅👷📁 Path: \(url.path)")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "📁 File details (\(source)):")
+        SwiftLogger.shared.logInfo(tag: .backupWorker, message: "📁 Path: \(url.path)")
         
         do {
             let attributes = try fm.attributesOfItem(atPath: url.path)
@@ -579,10 +601,10 @@ final class BackupWorker {
             let modificationDate = attributes[.modificationDate] as? Date
             let fileType = attributes[.type] as? FileAttributeType
             
-            print("🦅👷📁 Size: \(fileSize) bytes (\(ByteCountFormatter.string(fromByteCount: fileSize.int64Value, countStyle: .file)))")
-            print("🦅👷📁 Created: \(creationDate?.description ?? "unknown")")
-            print("🦅👷📁 Modified: \(modificationDate?.description ?? "unknown")")
-            print("🦅👷📁 Type: \(fileType?.rawValue ?? "unknown")")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "📁 Size: \(fileSize) bytes (\(ByteCountFormatter.string(fromByteCount: fileSize.int64Value, countStyle: .file)))")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "📁 Created: \(creationDate?.description ?? "unknown")")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "📁 Modified: \(modificationDate?.description ?? "unknown")")
+            SwiftLogger.shared.logInfo(tag: .backupWorker, message: "📁 Type: \(fileType?.rawValue ?? "unknown")")
             
             // Check if it's ubiquitous (iCloud)
             if let resourceValues = try? url.resourceValues(forKeys: [
@@ -593,12 +615,12 @@ final class BackupWorker {
                 let downloadStatus = resourceValues.ubiquitousItemDownloadingStatus?.rawValue ?? "unknown"
                 let isDownloaded = downloadStatus == URLUbiquitousItemDownloadingStatus.current.rawValue
                 
-                print("🦅👷📁 iCloud file: \(isUbiquitous)")
-                print("🦅👷📁 Download status: \(downloadStatus)")
-                print("🦅👷📁 Downloaded: \(isDownloaded)")
+                SwiftLogger.shared.logInfo(tag: .backupWorker, message: "📁 iCloud file: \(isUbiquitous)")
+                SwiftLogger.shared.logInfo(tag: .backupWorker, message: "📁 Download status: \(downloadStatus)")
+                SwiftLogger.shared.logInfo(tag: .backupWorker, message: "📁 Downloaded: \(isDownloaded)")
             }
         } catch {
-            print("🦅👷📁 Error getting file attributes: \(error)")
+            SwiftLogger.shared.logError(tag: .backupWorker, message: "📁 Error getting file attributes: \(error)")
         }
     }
 }

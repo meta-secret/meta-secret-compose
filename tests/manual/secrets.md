@@ -51,21 +51,6 @@ Secrets lifecycle management, secure storage, synchronization, and approval-base
 
 ---
 
-### TC-SEC-004 — Warning shown when skipping backup
-
-**Preconditions:**
-- User canceled backup location selection
-
-**Steps:**
-1. Observe warning popup
-2. Tap “OK”
-
-**Expected Result:**
-- Warning popup is dismissed
-- User is returned to the Secrets screen
-
----
-
 ### TC-SEC-005 — Select backup location → encrypted backup created
 
 **Preconditions:**
