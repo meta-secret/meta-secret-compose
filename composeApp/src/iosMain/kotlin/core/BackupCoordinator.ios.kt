@@ -32,16 +32,16 @@ class BackupCoordinatorInterfaceIos(
 
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun restoreIfNeeded() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@launch
+        withContext(Dispatchers.IO) {
+            val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@withContext
             SwiftBridge().restoreBackupIfNeededWithDbFileName(dbFileName)
         }
     }
 
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun backupIfChanged() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@launch
+        withContext(Dispatchers.IO) {
+            val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@withContext
             SwiftBridge().backupIfChangedWithDbFileName(dbFileName)
         }
     }

@@ -164,20 +164,6 @@ Secrets lifecycle management, secure storage, synchronization, and approval-base
 
 ---
 
-### TC-SEC-015 — Banner “+Add” opens Devices screen
-
-**Preconditions:**
-- Security banner is visible
-
-**Steps:**
-1. Tap “+Add” on the banner
-
-**Expected Result:**
-- Devices screen is opened
-- Add Device flow can be initiated
-
----
-
 ## Add Secret
 
 ### TC-SEC-020 — Open add secret modal
@@ -204,7 +190,7 @@ Secrets lifecycle management, secure storage, synchronization, and approval-base
 3. Tap “Add Secret”
 
 **Expected Result:**
-- Validation error is shown
+- “Add Secret” is not enabled
 - Secret is not added
 
 ---
@@ -220,7 +206,7 @@ Secrets lifecycle management, secure storage, synchronization, and approval-base
 3. Tap “Add Secret”
 
 **Expected Result:**
-- Validation error is shown
+- “Add Secret” is not enabled
 - Secret is not added
 
 ---

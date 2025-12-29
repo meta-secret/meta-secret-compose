@@ -125,6 +125,20 @@ Device network management, including device discovery, join requests, approval f
 
 ---
 
+### TC-SEC-015 — Banner “+Add” opens Devices screen
+
+**Preconditions:**
+- Security banner is visible
+
+**Steps:**
+1. Tap “+Add” on the banner
+
+**Expected Result:**
+- Devices screen is opened
+- Add Device flow can be initiated
+
+---
+
 ## Device Approval
 
 ### TC-DEV-020 — Pending device appears in list

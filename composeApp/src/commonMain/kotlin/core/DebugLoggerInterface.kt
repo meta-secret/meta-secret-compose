@@ -204,6 +204,9 @@ sealed class LogTag(val displayName: String) {
             object AddedSuccessfully : Message("Added successfully")
             object AddingFailed : Message("Adding failed")
             object UnknownState : Message("Unknown state")
+            object BiometricAuthSuccess : Message("Biometric auth success")
+            object BiometricAuthFailed : Message("Biometric auth failed")
+            object BiometricAuthFallback : Message("Biometric auth fallback")
         }
     }
 
