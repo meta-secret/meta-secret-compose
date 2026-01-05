@@ -34,6 +34,7 @@ sealed class LogTag(val displayName: String) {
             object UpdateCandidateSuccess : Message("Update candidate")
             object UpdateCandidateFailed : Message("Update failed")
             object UpdateError : Message("Update error")
+            object BiometricError: Message("Biometric error")
             object SelectDevice : Message("Select device with Id")
         }
     }
@@ -375,22 +376,15 @@ interface DebugLoggerInterface {
 }
 
 open class DebugLogger : DebugLoggerInterface {
-    val isCommonLogsActive = false
+    val isCommonLogsActive = true
+    val isIosLogsActive = isCommonLogsActive
     val isCriticalInfoLogsActive = true
     private var criticalState = CriticalComponentsState()
-
-    init {
-        println(" DEBUGGER LOG INIT")
-    }
-
     override fun setLoggerVisibility() {
-        println(" DEBUGGER LOG VISIBLE: $isCommonLogsActive")
-        setOuterLoggerVisibility(isCommonLogsActive)
+        setOuterLoggerVisibility(isIosLogsActive)
     }
-
     override fun <T : LogTag> log(message: LogTag.Message<T>, extra: String?, success: Boolean?) {
         if (!isCommonLogsActive) { return }
-
         val fullMessage = if (extra != null) "${message.text} $extra" else message.text
         val preMessage = if (success != null) if (success) "✅" else "❌" else ""
 

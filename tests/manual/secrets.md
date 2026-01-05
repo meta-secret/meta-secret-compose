@@ -307,7 +307,7 @@ Secrets lifecycle management, secure storage, synchronization, and approval-base
 
 ---
 
-### TC-SEC-033 — Secret sync to existing devices
+### TC-SEC-033 — Secret sync to existing devices !!!!!!!!!!!!!!!!!!!
 
 **Preconditions:**
 - Two or more devices in the network
@@ -348,7 +348,7 @@ Secrets lifecycle management, secure storage, synchronization, and approval-base
 
 ## Secret List Representation
 
-### TC-SEC-040 — Secret displays description
+### TC-SEC-040 — Secret displays description ++++++++++++++++++++++++
 
 **Expected Result:**
 - Secret description matches input value
@@ -388,7 +388,7 @@ Secrets lifecycle management, secure storage, synchronization, and approval-base
 
 ---
 
-### TC-SEC-052 — Show secret after biometric success
+### TC-SEC-052 — Show secret after biometric success !!!!!!!!!!!!!!!!!!
 
 **Steps:**
 1. Tap “Show”
