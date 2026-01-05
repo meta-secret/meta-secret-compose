@@ -12,6 +12,7 @@ import core.KeyValueStorageInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.BiometricAuthenticatorInterface
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import models.appInternalModels.SecretModel
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -77,20 +78,29 @@ class AddSecretViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             currentState = AddSecretState.IN_PROGRESS
-            val secretObject = SecretModel(secretName, secret)
-            val splitResult = kotlinx.coroutines.withContext(Dispatchers.IO) {
-                metaSecretAppManager.splitSecret(secretObject)
-            }
-            currentState = if (splitResult != null && splitResult.success) {
-                val secretsFromVault = metaSecretAppManager.getSecretsFromVault()
-                if (secretsFromVault != null) {
-                    keyValueStorage.syncSecretsFromVault(secretsFromVault)
+            try {
+                val secretObject = SecretModel(secretName, secret)
+                val splitResult = withContext(Dispatchers.IO) {
+                    metaSecretAppManager.splitSecret(secretObject)
                 }
-                AddSecretState.ADDED_SUCCESSFULLY
-            } else {
-                AddSecretState.ADDING_FAILURE
+                currentState = if (splitResult != null && splitResult.success) {
+                    val secretsFromVault = withContext(Dispatchers.IO) {
+                        metaSecretAppManager.getSecretsFromVault()
+                    }
+                    if (secretsFromVault != null) {
+                        keyValueStorage.syncSecretsFromVault(secretsFromVault)
+                    }
+                    AddSecretState.ADDED_SUCCESSFULLY
+                } else {
+                    logger.log(LogTag.AddSecretVM.Message.AddingFailed, "splitResult=$splitResult", success = false)
+                    AddSecretState.ADDING_FAILURE
+                }
+            } catch (e: Exception) {
+                logger.log(LogTag.AddSecretVM.Message.AddingFailed, "${e.message}", success = false)
+                currentState = AddSecretState.ADDING_FAILURE
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 

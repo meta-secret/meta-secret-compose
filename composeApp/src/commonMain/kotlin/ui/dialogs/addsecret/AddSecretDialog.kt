@@ -66,6 +66,7 @@ import core.AppColors
 import core.ScreenMetricsProviderInterface
 import ui.ClassicButton
 import ui.notifications.InAppNotification
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -110,6 +111,7 @@ fun AddSecret(
         when (addState) {
             AddSecretState.ADDED_SUCCESSFULLY -> {
                 onResult?.invoke(true)
+                delay(100)
                 requestClose()
             }
             AddSecretState.ADDING_FAILURE -> {
@@ -128,7 +130,7 @@ fun AddSecret(
     LaunchedEffect(Unit) {
         viewModel.biometricError.collectLatest { error ->
             errorMessage = error.ifEmpty { biometricErrorString }
-            kotlinx.coroutines.delay(3000)
+            delay(3000)
             errorMessage = null
         }
     }
