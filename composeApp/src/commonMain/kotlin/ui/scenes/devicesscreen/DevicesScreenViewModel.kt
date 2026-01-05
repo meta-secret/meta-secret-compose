@@ -10,6 +10,7 @@ import core.VaultStatsProviderInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -141,7 +142,7 @@ class DevicesScreenViewModel(
             _isLoading.value = true
             try {
                 val action = if (isJoin) { UpdateMemberActionModel.Accept } else { UpdateMemberActionModel.Decline }
-                val updateResult = withContext(Dispatchers.Default) {
+                val updateResult = withContext(Dispatchers.IO) {
                     val candidate = _currentDeviceId.value?.let { appManager.getUserDataBy(it) }
                     logger.log(LogTag.DevicesVM.Message.UpdateCandidateSuccess, "$candidate", success = true)
                     if (candidate != null) {
@@ -165,7 +166,7 @@ class DevicesScreenViewModel(
     }
 
     private suspend fun fetchDevicesList(): List<DeviceCellModel> {
-        val vaultSummary = withContext(Dispatchers.Default) {
+        val vaultSummary = withContext(Dispatchers.IO) {
             appManager.getVaultSummary()
         }
 
