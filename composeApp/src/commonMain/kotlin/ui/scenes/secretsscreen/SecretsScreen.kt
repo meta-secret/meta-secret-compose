@@ -57,9 +57,8 @@ class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: SecretsScreenViewModel = koinViewModel()
-        val secretsCount by viewModel.secretsCount.collectAsState()
-        var previousCount by remember { mutableStateOf(secretsCount) }
         val secretsList by viewModel.secrets.collectAsState()
+        var previousCount by remember { mutableStateOf(secretsList.size) }
         val devicesCount by viewModel.devicesCount.collectAsState()
         var isAddSecretDialogVisible by remember { mutableStateOf(false) }
         var isShowSecretDialogVisible by remember { mutableStateOf(false) }
@@ -74,7 +73,7 @@ class SecretsScreen : Screen {
         val secretRemovedText = stringResource(Res.string.secretRemoved)
 
         LaunchedEffect(Unit) {
-            previousCount = secretsCount
+            previousCount = secretsList.size
         }
         if (isRedirected) {
             LocalTabNavigator.current.current = DevicesTab
@@ -150,14 +149,14 @@ class SecretsScreen : Screen {
             }
         }
 
-        if (previousCount != secretsCount) {
-            isSnackSuccess = previousCount < secretsCount
+        if (previousCount != secretsList.size) {
+            isSnackSuccess = previousCount < secretsList.size
             snackMessage = if (isSnackSuccess) {
                 secretAddedText
             } else {
                 secretRemovedText
             }
-            previousCount = secretsCount
+            previousCount = secretsList.size
         }
 
         if (snackMessage != null) {
@@ -170,7 +169,7 @@ class SecretsScreen : Screen {
             LaunchedEffect(snackMessage) { delay(2000); snackMessage = null }
         }
 
-        if (secretsCount < 1) {
+        if (secretsList.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

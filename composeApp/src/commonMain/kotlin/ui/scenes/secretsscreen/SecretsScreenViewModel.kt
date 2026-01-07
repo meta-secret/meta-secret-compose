@@ -27,7 +27,6 @@ import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.removeSecretConfirmation
 import kotlinproject.composeapp.generated.resources.fromAllDevices
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -57,7 +56,7 @@ class SecretsScreenViewModel(
     val secretsCount: StateFlow<Int> = vaultStatsProvider.secretsCount
 
     init {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch(Dispatchers.IO) {
             logger.log(LogTag.SecretsVM.Message.FollowUpdateState, success = true)
             socketHandler.actionsToFollow(
                 add = listOf(SocketRequestModel.GET_STATE),

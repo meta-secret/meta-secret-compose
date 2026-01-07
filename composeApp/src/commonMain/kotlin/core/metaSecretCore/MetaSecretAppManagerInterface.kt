@@ -15,18 +15,18 @@ interface MetaSecretAppManagerInterface {
     suspend fun initWithSavedKey(): InitResult
     suspend fun checkAuth(): AuthState
 
-    fun getStateModel(): AppStateModel?
-    fun getVaultFullInfoModel(): VaultFullInfo?
-    fun getVaultEventsModel(): VaultEvents?
-    fun getJoinRequestsCount(): Int?
-    fun getJoinRequestsCandidate(): List<JoinClusterRequest>?
-    fun getVaultSummary(): VaultSummary?
-    fun updateMember(candidate: UserData, actionUpdate: String): CommonResponseModel?
-    fun getUserDataBy(deviceId: String): UserData?
-    fun splitSecret(secretModel: SecretModel): CommonResponseModel?
-    fun findClaim(secretId: String): ClaimModel?
-    fun recover(secretModel: SecretModel): CommonResponseModel?
-    fun acceptRecover(claim: ClaimModel): CommonResponseModel?
-    fun showRecovered(secretModel: SecretModel): String?
-    fun getSecretsFromVault(): List<SecretApiModel>?
+    suspend fun getStateModel(): AppStateModel?
+    suspend fun getVaultFullInfoModel(): VaultFullInfo?
+    suspend fun getVaultEventsModel(): VaultEvents?
+    suspend fun getJoinRequestsCount(): Int?
+    suspend fun getJoinRequestsCandidate(): List<JoinClusterRequest>?
+    suspend fun getVaultSummary(): VaultSummary?
+    suspend fun updateMember(candidate: UserData, actionUpdate: String): CommonResponseModel?
+    suspend fun getUserDataBy(deviceId: String): UserData?
+    suspend fun splitSecret(secretModel: SecretModel): CommonResponseModel?
+    suspend fun findClaim(secretId: String): ClaimModel?
+    suspend fun recover(secretModel: SecretModel): CommonResponseModel?
+    suspend fun acceptRecover(claim: ClaimModel): CommonResponseModel?
+    suspend fun showRecovered(secretModel: SecretModel): String?
+    suspend fun getSecretsFromVault(): List<SecretApiModel>?
 }

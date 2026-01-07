@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import core.LogTag
 import core.KeyValueStorageInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
+import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.BiometricAuthenticatorInterface
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,6 +23,7 @@ class AddSecretViewModel(
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val keyValueStorage: KeyValueStorageInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
+    private val socketHandler: MetaSecretSocketHandlerInterface,
 ) : CommonViewModel() {
 
     private val _isLoading = MutableStateFlow(false)

@@ -1,6 +1,8 @@
 package di
 
 import org.koin.dsl.module
+import core.metaSecretCore.FfiSynchronizer
+import core.metaSecretCore.FfiSynchronizerInterface
 import core.metaSecretCore.MetaSecretAppManager
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandler
@@ -29,9 +31,10 @@ import core.DebugLoggerInterface
 
 val appModule = module {
     single<KeyValueStorageInterface> { KeyValueStorageImpl(get()) }
-    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get(), get()) }
+    single<FfiSynchronizerInterface> { FfiSynchronizer(get()) }
+    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get(), get(), get()) }
     single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get(), get()) }
-    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get(), get()) }
+    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get(), get(), get()) }
     single<VaultStatsProviderInterface> { VaultStatsProvider(get(), get(), get()) }
     single<AlertCoordinatorInterface> { AlertCoordinator() }
     single<DebugLoggerInterface> { DebugLogger() }
@@ -43,7 +46,7 @@ val appModule = module {
     factory { ProfileScreenViewModel(get(), get(), get(), get(), get()) }
     factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { SecretsScreenViewModel(get(), get(), get(), get(), get()) }
-    factory { AddSecretViewModel(get(), get(), get()) }
+    factory { AddSecretViewModel(get(), get(), get(), get()) }
     factory { RemoveSecretViewModel(get()) }
     factory { AddDeviceViewModel(get()) }
     factory { ShowSecretViewModel(get(), get(), get(), get(), get()) }

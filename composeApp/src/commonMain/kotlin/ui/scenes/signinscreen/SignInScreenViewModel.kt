@@ -178,36 +178,38 @@ class SignInScreenViewModel(
     private suspend fun firstSignUp(vaultName: String) {
         _isLoading.value = true
 
-        if (initAppManagerResult()) {
-            logger.log(LogTag.SignInVM.Message.StartSignUp, success = true)
-            val signUpResult = withContext(Dispatchers.IO) {
-                metaSecretStateResolver.startFirstSignUp(vaultName)
-            }
+        try {
+            if (initAppManagerResult()) {
+                logger.log(LogTag.SignInVM.Message.StartSignUp, success = true)
+                val signUpResult = withContext(Dispatchers.IO) {
+                    metaSecretStateResolver.startFirstSignUp(vaultName)
+                }
 
-            if (signUpResult.error != null) {
-                logger.log(LogTag.SignInVM.Message.SignUpUnknownState, success = false)
-                currentState = SignInStates.SIGN_IN_FAILED
-            } else {
-                when (signUpResult.appState) {
-                    is MemberState -> {
-                        logger.log(LogTag.SignInVM.Message.SignUpSuccess, success = true)
-                        currentState = SignInStates.SIGN_IN_COMPLETED
-                    }
-                    is OutsiderState -> {
-                        logger.log(LogTag.SignInVM.Message.StartListeningJoinAccept, success = true)
-                        currentState = SignInStates.SIGN_IN_PENDING
-                    }
-                    else -> {
-                        logger.log(LogTag.SignInVM.Message.SignUpUnknownState, success = false)
-                        currentState = SignInStates.SIGN_IN_FAILED
+                if (signUpResult.error != null) {
+                    logger.log(LogTag.SignInVM.Message.SignUpUnknownState, success = false)
+                    currentState = SignInStates.SIGN_IN_FAILED
+                } else {
+                    when (signUpResult.appState) {
+                        is MemberState -> {
+                            logger.log(LogTag.SignInVM.Message.SignUpSuccess, success = true)
+                            currentState = SignInStates.SIGN_IN_COMPLETED
+                        }
+                        is OutsiderState -> {
+                            logger.log(LogTag.SignInVM.Message.StartListeningJoinAccept, success = true)
+                            currentState = SignInStates.SIGN_IN_PENDING
+                        }
+                        else -> {
+                            logger.log(LogTag.SignInVM.Message.SignUpUnknownState, success = false)
+                            currentState = SignInStates.SIGN_IN_FAILED
+                        }
                     }
                 }
+            } else {
+                showErrorSnackBar(SignInSnackMessages.UNEXPECTED_LOGIN_STATE)
             }
-        } else {
-            showErrorSnackBar(SignInSnackMessages.UNEXPECTED_LOGIN_STATE)
+        } finally {
+            _isLoading.value = false
         }
-
-        _isLoading.value = false
     }
 
     private suspend fun generateMasterKey() {

@@ -2,8 +2,10 @@ package core.metaSecretCore
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +26,8 @@ import models.appInternalModels.SocketRequestModel
 class MetaSecretSocketHandler(
     private val metaSecretCore: MetaSecretCoreInterface,
     private val appManager: MetaSecretAppManagerInterface,
-    private val logger: core.DebugLoggerInterface
+    private val logger: core.DebugLoggerInterface,
+    private val ffiSynchronizer: FfiSynchronizerInterface
 ): MetaSecretSocketHandlerInterface {
     private val _socketActionType = MutableStateFlow<SocketActionModel>(SocketActionModel.NONE)
     override val socketActionType: StateFlow<SocketActionModel> = _socketActionType
@@ -36,9 +39,8 @@ class MetaSecretSocketHandler(
     override val socketActions: SharedFlow<SocketActionModel> = _socketActions
 
     private var actionsToFollow = mutableSetOf<SocketRequestModel>()
-    private var isLocked = false
     private var timerJob: Job? = null
-    private val timerScope = CoroutineScope(Dispatchers.Default)
+    private val timerScope = CoroutineScope(Dispatchers.IO)
 
     init {
         logger.log(core.LogTag.SocketHandler.Message.Init, success = true)
@@ -73,69 +75,77 @@ class MetaSecretSocketHandler(
         }
     }
 
-    private fun searchRequest() {
-        if (!isLocked && actionsToFollow.isNotEmpty()) {
-            logger.log(core.LogTag.SocketHandler.Message.FireTimer, success = true)
-            isLocked = true
-            val stateJson = metaSecretCore.getAppState()
-            val currentState = AppStateModel.fromJson(stateJson, logger)
+    private suspend fun searchRequest() {
+        if (actionsToFollow.isEmpty()) {
+            logger.log(core.LogTag.SocketHandler.Message.NoSubscriptions, success = true)
+            return
+        }
+        
+        if (!ffiSynchronizer.isAppManagerInitialized) {
+            logger.log(core.LogTag.SocketHandler.Message.NoSubscriptions, "AppManager not initialized", success = true)
+            return
+        }
 
-            if (!currentState.success) {
-                isLocked = false
-                return
+        logger.log(core.LogTag.SocketHandler.Message.FireTimer, success = true)
+        
+        val currentState = ffiSynchronizer.withFfiLock {
+            val stateJson = withContext(Dispatchers.IO) {
+                metaSecretCore.getAppState()
             }
+            AppStateModel.fromJson(stateJson, logger)
+        }
 
-            if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
-                val state = appManager.getStateModel()
-                val hasJoinRequests = state?.getVaultEvents()?.hasJoinRequests() == true
-                logger.log(core.LogTag.SocketHandler.Message.AppStateReceived, "$state, hasJoinRequest is $hasJoinRequests", success = true)
+        if (!currentState.success) {
+            return
+        }
 
-                if (state?.success == true && hasJoinRequests) {
-                    logger.log(core.LogTag.SocketHandler.Message.NeedShowAskToJoin, success = true)
-                    _socketActionType.value = SocketActionModel.ASK_TO_JOIN
-                }
+        if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
+            val hasJoinRequests = currentState.getVaultEvents()?.hasJoinRequests() == true
+            logger.log(core.LogTag.SocketHandler.Message.AppStateReceived, "$currentState, hasJoinRequest is $hasJoinRequests", success = true)
+
+            if (hasJoinRequests) {
+                logger.log(core.LogTag.SocketHandler.Message.NeedShowAskToJoin, success = true)
+                _socketActionType.value = SocketActionModel.ASK_TO_JOIN
             }
+        }
 
-            if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)) {
-                logger.log(core.LogTag.SocketHandler.Message.WaitingForJoinResponse, success = true)
+        if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)) {
+            logger.log(core.LogTag.SocketHandler.Message.WaitingForJoinResponse, success = true)
 
-                when (currentState.getVaultFullInfo()) {
-                    is VaultFullInfo.Member -> _socketActionType.value = SocketActionModel.JOIN_REQUEST_ACCEPTED
-                    is VaultFullInfo.NotExists -> _socketActionType.value = SocketActionModel.NONE
-                    is VaultFullInfo.Outsider -> {
-                        when (currentState.getOutsiderStatus()) {
-                            UserDataOutsiderStatus.NON_MEMBER -> { _socketActionType.value = SocketActionModel.NONE }
-                            UserDataOutsiderStatus.PENDING -> { _socketActionType.value = SocketActionModel.JOIN_REQUEST_PENDING }
-                            UserDataOutsiderStatus.DECLINED -> { _socketActionType.value = SocketActionModel.JOIN_REQUEST_DECLINED }
-                            null -> _socketActionType.value = SocketActionModel.NONE
-                        }
+            when (currentState.getVaultFullInfo()) {
+                is VaultFullInfo.Member -> _socketActionType.value = SocketActionModel.JOIN_REQUEST_ACCEPTED
+                is VaultFullInfo.NotExists -> _socketActionType.value = SocketActionModel.NONE
+                is VaultFullInfo.Outsider -> {
+                    when (currentState.getOutsiderStatus()) {
+                        UserDataOutsiderStatus.NON_MEMBER -> { _socketActionType.value = SocketActionModel.NONE }
+                        UserDataOutsiderStatus.PENDING -> { _socketActionType.value = SocketActionModel.JOIN_REQUEST_PENDING }
+                        UserDataOutsiderStatus.DECLINED -> { _socketActionType.value = SocketActionModel.JOIN_REQUEST_DECLINED }
+                        null -> _socketActionType.value = SocketActionModel.NONE
                     }
-                    null -> _socketActionType.value = SocketActionModel.JOIN_REQUEST_PENDING
                 }
+                null -> _socketActionType.value = SocketActionModel.JOIN_REQUEST_PENDING
             }
+        }
 
-            if (actionsToFollow.contains(SocketRequestModel.GET_STATE)) {
-                logger.log(core.LogTag.SocketHandler.Message.WaitingForStateResponse, success = true)
-                _socketActions.tryEmit(SocketActionModel.UPDATE_STATE)
-            }
+        if (actionsToFollow.contains(SocketRequestModel.GET_STATE)) {
+            logger.log(core.LogTag.SocketHandler.Message.WaitingForStateResponse, success = true)
+            _socketActions.tryEmit(SocketActionModel.UPDATE_STATE)
+        }
 
+        coroutineScope {
             if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST)) {
                 logger.log(core.LogTag.SocketHandler.Message.WaitingForRecover, success = true)
-                timerScope.launch {
+                launch {
                     checkRecoverRequest(currentState)
                 }
             }
 
             if (actionsToFollow.contains(SocketRequestModel.SHOW_SECRET)) {
                 logger.log(core.LogTag.SocketHandler.Message.WaitingForShowSecret, success = true)
-                timerScope.launch {
+                launch {
                     checkRecoverSentStatus(currentState)
                 }
             }
-
-            isLocked = false
-        } else {
-            logger.log(core.LogTag.SocketHandler.Message.NoSubscriptions, success = true)
         }
     }
 

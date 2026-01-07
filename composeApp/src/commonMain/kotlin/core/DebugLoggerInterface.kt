@@ -308,6 +308,19 @@ sealed class LogTag(val displayName: String) {
         }
     }
 
+    object FfiSync : LogTag("🔒FfiSynchronizer") {
+        sealed class Message(text: String) : LogTag.Message<FfiSync>(text) {
+            override val tag: FfiSync = FfiSync
+
+            object AcquiringLock : Message("Acquiring FFI lock")
+            object LockAcquired : Message("FFI lock acquired")
+            object LockReleased : Message("FFI lock released")
+            object SkippedNotInitialized : Message("Skipped - AppManager not initialized")
+            object MarkedInitialized : Message("AppManager marked as initialized")
+            object ResetInitialization : Message("Initialization reset")
+        }
+    }
+
     object MetaSecretCoreService : LogTag("🔧MetaSecretCoreService") {
         sealed class Message(text: String) : LogTag.Message<MetaSecretCoreService>(text) {
             override val tag: MetaSecretCoreService = MetaSecretCoreService
