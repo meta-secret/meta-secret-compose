@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,11 +44,14 @@ import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import ui.scenes.mainscreen.DevicesTab
+import ui.scenes.mainscreen.MainScreenViewModel
 import core.AppColors
 import ui.AddButton
 import ui.dialogs.addsecret.AddSecret
+import ui.dialogs.showsecret.ShowSecret
 import ui.notifications.InAppNotification
 import ui.screenContent.CommonBackground
 import ui.screenContent.SecretsContent
@@ -57,6 +60,7 @@ class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: SecretsScreenViewModel = koinViewModel()
+        val mainScreenViewModel: MainScreenViewModel = koinInject()
         val secretsList by viewModel.secrets.collectAsState()
         var previousCount by remember { mutableStateOf(secretsList.size) }
         val devicesCount by viewModel.devicesCount.collectAsState()
@@ -66,6 +70,7 @@ class SecretsScreen : Screen {
         val isRedirected by remember { mutableStateOf(false) }
         var snackMessage: String? by remember { mutableStateOf(null) }
         var isSnackSuccess by remember { mutableStateOf(true) }
+        val secretIdToShow by mainScreenViewModel.secretIdToShow.collectAsState()
         
         val secretAddSuccessText = stringResource(Res.string.secretAdded)
         val secretAddFailedText = "Failed to add secret"
@@ -139,11 +144,12 @@ class SecretsScreen : Screen {
                     animationSpec = tween(durationMillis = 1000)
                 )
             ) {
-                selectedSecret?.let { nonNull ->
-                    ui.dialogs.showsecret.ShowSecret(
-                        viewModel.screenMetricsProvider,
-                        nonNull,
-                        dialogVisibility = { isShowSecretDialogVisible = it }
+                selectedSecret?.let { secret ->
+                    ShowSecret(
+                        secret = secret,
+                        secretIdToShow = secretIdToShow,
+                        onDismiss = { isShowSecretDialogVisible = false },
+                        onClearSecretId = { mainScreenViewModel.clearSecretIdToShow() }
                     )
                 }
             }

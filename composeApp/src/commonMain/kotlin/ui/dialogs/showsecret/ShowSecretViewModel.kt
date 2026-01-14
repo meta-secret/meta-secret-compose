@@ -1,29 +1,23 @@
 package ui.dialogs.showsecret
 
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-import core.KeyValueStorageInterface
 import core.LogTag
 import core.VaultStatsProviderInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
-import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import models.appInternalModels.SecretModel
-import models.appInternalModels.SocketRequestModel
+import models.apiModels.ClaimStatus
+import models.apiModels.VaultFullInfo
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 
 class ShowSecretViewModel(
-    private val keyValueStorage: KeyValueStorageInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
-    private val socketHandler: MetaSecretSocketHandlerInterface,
-    private val mainScreenViewModel: ui.scenes.mainscreen.MainScreenViewModel,
     private val vaultStatsProvider: VaultStatsProviderInterface,
 ) : CommonViewModel() {
 
@@ -34,76 +28,99 @@ class ShowSecretViewModel(
 
     private val _recoveredSecret = MutableStateFlow<String?>(null)
     val recoveredSecret: StateFlow<String?> = _recoveredSecret
-
-    init {
-        viewModelScope.launch {
-            mainScreenViewModel.secretIdToShow.collect { secretId ->
-                if (secretId != null) {
-                    showRecoveredSecret(secretId)
-                }
-            }
-        }
-    }
+    
+    private var currentSecretName: String? = null
 
     override fun handle(event: CommonViewModelEventsInterface) {
         logger.log(LogTag.ShowSecretVM.Message.HandleEvent, "$event", success = true)
         if (event is ShowSecretEvents) {
             when (event) {
                 is ShowSecretEvents.ShowSecret -> {
-                    logger.log(LogTag.ShowSecretVM.Message.RecoverSecretId, "${event.secretId}", success = true)
-                    val currentSecretIdToShow = mainScreenViewModel.secretIdToShow.value
-                    if (currentSecretIdToShow == event.secretId) {
-                        logger.log(LogTag.ShowSecretVM.Message.SecretIdMatches, success = true)
+                    logger.log(LogTag.ShowSecretVM.Message.RecoverSecretId, event.secretName, success = true)
+                    currentSecretName = event.secretName
+                    recoverSecret(event.secretName)
+                }
+                
+                is ShowSecretEvents.SecretReadyToShow -> {
+                    logger.log(LogTag.ShowSecretVM.Message.SecretIdMatches, event.secretId, success = true)
+                    if (event.secretId == currentSecretName) {
                         showRecoveredSecret(event.secretId)
-                    } else {
-                        logger.log(LogTag.ShowSecretVM.Message.SecretIdNotMatches, success = true)
-                        recoverSecret(event.secretId)
                     }
                 }
 
                 ShowSecretEvents.HideSecret -> {
                     logger.log(LogTag.ShowSecretVM.Message.HideSecret, success = true)
                     _recoveredSecret.value = null
-                    mainScreenViewModel.clearSecretIdToShow()
+                    currentSecretName = null
                 }
             }
         }
     }
 
-    private fun recoverSecret(secretId: String) {
+    private fun recoverSecret(secretName: String) {
         _isLoading.value = true
         logger.log(LogTag.ShowSecretVM.Message.StartRecovering, success = true)
+        
+        if (devicesCount.value < 2) {
+            logger.log(LogTag.ShowSecretVM.Message.SingleDeviceMode, success = true)
+            showRecoveredSecret(secretName)
+            return
+        }
+        
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    socketHandler.actionsToFollow(
-                        null,
-                        listOf(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST)
-                    )
-                    metaSecretAppManager.recover(secretModel = SecretModel(secretId, null))
+                val existingClaim = withContext(Dispatchers.IO) {
+                    metaSecretAppManager.findClaim(secretName)
+                }
+                
+                if (existingClaim?.claimId != null) {
+                    val vaultInfo = withContext(Dispatchers.IO) {
+                        metaSecretAppManager.getVaultFullInfoModel()
+                    }
+                    val currentDeviceId = if (vaultInfo is VaultFullInfo.Member) {
+                        vaultInfo.member.member.member.userData.device.deviceId
+                    } else null
+                    
+                    val claimStatus = if (vaultInfo is VaultFullInfo.Member && currentDeviceId != null) {
+                        val claim = vaultInfo.member.ssClaims?.claims?.get(existingClaim.claimId)
+                        claim?.status?.statuses?.get(currentDeviceId)
+                    } else null
+                    
+                    if (claimStatus == ClaimStatus.DELIVERED) {
+                        logger.log(LogTag.ShowSecretVM.Message.ExistingClaimFound, "${existingClaim.claimId} (Delivered, creating new)", success = true)
+                        withContext(Dispatchers.IO) {
+                            metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))
+                        }
+                    } else {
+                        logger.log(LogTag.ShowSecretVM.Message.ExistingClaimFound, existingClaim.claimId, success = true)
+                        showRecoveredSecret(secretName)
+                    }
+                } else {
+                    logger.log(LogTag.ShowSecretVM.Message.NoExistingClaim, success = true)
+                    withContext(Dispatchers.IO) {
+                        metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))
+                    }
                 }
             } catch (t: Throwable) {
                 logger.log(LogTag.ShowSecretVM.Message.RecoverFailed, "${t.message}", success = false)
-            } finally {
                 _isLoading.value = false
             }
         }
     }
 
     private fun showRecoveredSecret(secretId: String) {
+        _isLoading.value = true
         logger.log(LogTag.ShowSecretVM.Message.StartShowingRecovered, success = true)
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    val recoveredSecretValue = metaSecretAppManager.showRecovered(SecretModel(secretId, null))
-                    withContext(Dispatchers.Main) {
-                        if (recoveredSecretValue != null) {
-                            _recoveredSecret.value = recoveredSecretValue
-                            logger.log(LogTag.ShowSecretVM.Message.RecoveredSecretLoaded, success = true)
-                        } else {
-                            logger.log(LogTag.ShowSecretVM.Message.FailedToRecoverSecret, success = false)
-                        }
-                    }
+                val recoveredSecretValue = withContext(Dispatchers.IO) {
+                    metaSecretAppManager.showRecovered(SecretModel(secretId, null))
+                }
+                if (recoveredSecretValue != null) {
+                    _recoveredSecret.value = recoveredSecretValue
+                    logger.log(LogTag.ShowSecretVM.Message.RecoveredSecretLoaded, success = true)
+                } else {
+                    logger.log(LogTag.ShowSecretVM.Message.FailedToRecoverSecret, success = false)
                 }
             } catch (t: Throwable) {
                 logger.log(LogTag.ShowSecretVM.Message.ShowRecoveredFailed, "${t.message}", success = false)
@@ -115,6 +132,7 @@ class ShowSecretViewModel(
 }
 
 sealed class ShowSecretEvents : CommonViewModelEventsInterface {
-    data class ShowSecret(val secretId: String) : ShowSecretEvents()
-    object HideSecret: ShowSecretEvents()
+    data class ShowSecret(val secretName: String) : ShowSecretEvents()
+    data class SecretReadyToShow(val secretId: String) : ShowSecretEvents()
+    data object HideSecret : ShowSecretEvents()
 }

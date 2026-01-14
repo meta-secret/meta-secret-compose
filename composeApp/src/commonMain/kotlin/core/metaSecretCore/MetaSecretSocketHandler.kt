@@ -167,7 +167,8 @@ class MetaSecretSocketHandler(
                         .filter { claim ->
                             val isRecoverType = claim.distributionType == DistributionType.RECOVER
                             val isReceiverForThisDevice = claim.receivers.contains(currentDeviceId)
-                            val isPending = claim.status.statuses[currentDeviceId] == ClaimStatus.PENDING
+                            val receiverStatus = claim.status.statuses[currentDeviceId]
+                            val isPending = receiverStatus == ClaimStatus.PENDING
                             isRecoverType && isReceiverForThisDevice && isPending
                         }
                         .map { claim ->
@@ -204,18 +205,23 @@ class MetaSecretSocketHandler(
                         .filter { claim ->
                             val isRecoverType = claim.distributionType == DistributionType.RECOVER
                             val isSenderForThisDevice = claim.sender == currentDeviceId
+                            val senderStatus = claim.status.statuses[currentDeviceId]
+                            val senderAlreadyDelivered = senderStatus == ClaimStatus.DELIVERED
                             val isSent = claim.receivers.any { receiverId ->
                                 claim.status.statuses[receiverId] == ClaimStatus.SENT
                             }
-                            logger.log(core.LogTag.SocketHandler.Message.CheckingRecoverSentStatusDetails, "isRecoverType: $isRecoverType, isSenderForThisDevice: $isSenderForThisDevice, isSent: $isSent", success = true)
-                            isRecoverType && isSenderForThisDevice && isSent
+                            logger.log(core.LogTag.SocketHandler.Message.CheckingRecoverSentStatusDetails, "isRecoverType: $isRecoverType, isSenderForThisDevice: $isSenderForThisDevice, isSent: $isSent, senderAlreadyDelivered: $senderAlreadyDelivered", success = true)
+                            isRecoverType && isSenderForThisDevice && isSent && !senderAlreadyDelivered
                         }
 
                     logger.log(core.LogTag.SocketHandler.Message.CheckingRecoverSentStatusSentClaims, "$sentRecoverClaims", success = true)
                     if (sentRecoverClaims.isNotEmpty()) {
-                        val secretId = sentRecoverClaims.first().distClaimId.passId.name
-                        logger.log(core.LogTag.SocketHandler.Message.RecoverSentForSecretId, "$secretId", success = true)
-                        _socketActionType.value = SocketActionModel.RECOVER_SENT(secretId)
+                        val claim = sentRecoverClaims.first()
+                        val claimId = claim.id
+                        val secretId = claim.distClaimId.passId.name
+                        logger.log(core.LogTag.SocketHandler.Message.RecoverSentForSecretId,
+                            "claimId=$claimId, secretId=$secretId", success = true)
+                        _socketActionType.value = SocketActionModel.RECOVER_SENT(claimId, secretId)
                     }
                 }
             }

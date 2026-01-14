@@ -235,6 +235,9 @@ sealed class LogTag(val displayName: String) {
             object SecretIdNotMatches : Message("SecretId does not match secretIdToShow, starting recover process")
             object HideSecret : Message("hide secret")
             object StartRecovering : Message("Start recovering process")
+            object SingleDeviceMode : Message("Single device mode, showing secret directly")
+            object ExistingClaimFound : Message("Existing claim found, showing secret directly")
+            object NoExistingClaim : Message("No existing claim, sending recover request")
             object RecoverFailed : Message("recover failed")
             object StartShowingRecovered : Message("Start showing recovered secret")
             object RecoveredSecretLoaded : Message("Recovered secret loaded successfully")
@@ -373,7 +376,12 @@ data class CriticalComponentsState(
     val backupDbExists: Boolean = false,
     val appManagerCreated: Boolean = false,
     val masterKeyGenerated: Boolean = false,
-    val vaultState: String? = null
+    val vaultState: String? = null,
+    val deviceId: String? = null,
+    val joinRequestsCount: Int = 0,
+    val pendingClaimsCount: Int = 0,
+    val sentClaimsCount: Int = 0,
+    val deliveredClaimsCount: Int = 0
 )
 
 interface DebugLoggerInterface {
@@ -385,6 +393,8 @@ interface DebugLoggerInterface {
     fun setAppManagerCreated(created: Boolean)
     fun setMasterKeyGenerated(generated: Boolean)
     fun setVaultState(state: String?)
+    fun setDeviceId(deviceId: String?)
+    fun setClaimsStats(joinRequestsCount: Int, pendingClaimsCount: Int, sentClaimsCount: Int, deliveredClaimsCount: Int)
     fun setOuterLoggerVisibility(isVisible: Boolean)
 }
 
@@ -424,6 +434,21 @@ open class DebugLogger : DebugLoggerInterface {
         testInfo()
     }
 
+    override fun setDeviceId(deviceId: String?) {
+        criticalState = criticalState.copy(deviceId = deviceId)
+        testInfo()
+    }
+
+    override fun setClaimsStats(joinRequestsCount: Int, pendingClaimsCount: Int, sentClaimsCount: Int, deliveredClaimsCount: Int) {
+        criticalState = criticalState.copy(
+            joinRequestsCount = joinRequestsCount,
+            pendingClaimsCount = pendingClaimsCount,
+            sentClaimsCount = sentClaimsCount,
+            deliveredClaimsCount = deliveredClaimsCount
+        )
+        testInfo()
+    }
+
     override fun testInfo() {
         if (!isCriticalInfoLogsActive) { return }
         
@@ -431,6 +456,7 @@ open class DebugLogger : DebugLoggerInterface {
         val appManagerStatus = if (criticalState.appManagerCreated) "True" else "False"
         val masterKeyStatus = if (criticalState.masterKeyGenerated) "True" else "False"
         val vaultStateStatus = criticalState.vaultState ?: "null"
+        val deviceIdStatus = criticalState.deviceId ?: "null"
 
         println("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F")
         println("  Critical Components State:")
@@ -438,6 +464,11 @@ open class DebugLogger : DebugLoggerInterface {
         println("  MetaSecretAppManager => $appManagerStatus")
         println("  MasterKey => $masterKeyStatus")
         println("  VaultState => $vaultStateStatus")
+        println("  DeviceId => $deviceIdStatus")
+        println("  JoinRequests => ${criticalState.joinRequestsCount}")
+        println("  PendingClaims => ${criticalState.pendingClaimsCount}")
+        println("  SentClaims => ${criticalState.sentClaimsCount}")
+        println("  DeliveredClaims => ${criticalState.deliveredClaimsCount}")
         println("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F")
     }
     override fun setOuterLoggerVisibility(isVisible: Boolean) { }

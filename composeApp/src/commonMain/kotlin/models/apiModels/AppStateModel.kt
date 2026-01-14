@@ -162,6 +162,8 @@ enum class ClaimStatus {
     PENDING,
     @SerialName("sent")
     SENT,
+    @SerialName("delivered")
+    DELIVERED,
     @SerialName("accepted")
     ACCEPTED,
     @SerialName("declined")

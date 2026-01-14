@@ -1,15 +1,22 @@
 package models.apiModels
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
+@Serializable
+data class SearchClaimMessage(
+    val claim: String? = null
+)
 
 @Serializable
 data class SearchClaimModel (
     val success: Boolean,
-    @SerialName("message") val claimId: String? = null,
+    val message: SearchClaimMessage? = null,
     val error: String? = null
 ) {
+    val claimId: String?
+        get() = message?.claim
+    
     companion object {
         fun fromJson(jsonResponse: String): SearchClaimModel {
             return Json.decodeFromString<SearchClaimModel>(jsonResponse)

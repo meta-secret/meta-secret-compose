@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import models.appInternalModels.SocketActionModel
@@ -16,15 +15,13 @@ import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.BackupCoordinatorInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.LogTag
-import core.Device
-import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
 import core.BiometricAuthenticatorInterface
+import core.AlertCoordinatorInterface
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.appInternalModels.ClaimModel
-import models.appInternalModels.RestoreData
 import ui.TabStateHolder
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -36,6 +33,7 @@ class MainScreenViewModel(
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
+    private val alertCoordinator: AlertCoordinatorInterface,
 ) : CommonViewModel() {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -46,10 +44,6 @@ class MainScreenViewModel(
     val isWarningShown: StateFlow<Boolean> = _isWarningShown
     
     private val _isWarningDismissedByUser = MutableStateFlow(false)
-
-    private val recoverQueue: ArrayDeque<RestoreData> = ArrayDeque()
-    private val _recoverDialog = MutableStateFlow<RestoreData?>(null)
-    val recoverDialog: StateFlow<RestoreData?> = _recoverDialog
     
     private val _secretIdToShow = MutableStateFlow<String?>(null)
     val secretIdToShow: StateFlow<String?> = _secretIdToShow
@@ -72,11 +66,55 @@ class MainScreenViewModel(
             exclude = null
         )
 
+        alertCoordinator.setRecoveryRequestHandler { isAccepted ->
+            if (!isAccepted) {
+                alertCoordinator.onRecoveryRequestProcessingComplete()
+                return@setRecoveryRequestHandler
+            }
+
+            val currentState = alertCoordinator.recoveryRequestAlert.value
+            val restoreData = when (currentState) {
+                is core.RecoveryRequestAlertState.Visible -> currentState.restoreData
+                is core.RecoveryRequestAlertState.Processing -> currentState.restoreData
+                else -> {
+                    alertCoordinator.onRecoveryRequestProcessingComplete()
+                    return@setRecoveryRequestHandler
+                }
+            }
+
+            logger.log(LogTag.MainVM.Message.RecoverAccepted, success = true)
+            biometricAuthenticator.authenticate(
+                onSuccess = {
+                    logger.log(LogTag.MainVM.Message.BiometricAuthSuccess, success = true)
+                    viewModelScope.launch(Dispatchers.IO) {
+                        try {
+                            logger.log(LogTag.MainVM.Message.AcceptRecoverCalled, "claimId = ${restoreData.claimId}", success = true)
+                            metaSecretAppManager.acceptRecover(ClaimModel(restoreData.claimId))
+                        } catch (t: Throwable) {
+                            logger.log(LogTag.MainVM.Message.AcceptRecoverFailed, "claimId = ${restoreData.claimId}: $t", success = false)
+                        } finally {
+                            withContext<Unit>(Dispatchers.Main) {
+                                alertCoordinator.onRecoveryRequestProcessingComplete()
+                            }
+                        }
+                    }
+                },
+                onError = { error ->
+                    logger.log(LogTag.MainVM.Message.BiometricAuthFailed, error, success = false)
+                    alertCoordinator.onRecoveryRequestProcessingComplete()
+                },
+                onFallback = {
+                    logger.log(LogTag.MainVM.Message.BiometricAuthFallback, success = false)
+                    alertCoordinator.onRecoveryRequestProcessingComplete()
+                }
+            )
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             socketHandler.socketActionType.collect { actionType ->
-                when (val a = actionType) {
+                when (actionType) {
                     is SocketActionModel.READY_TO_RECOVER -> {
-                        val restoreData = a.restoreData
+                        val restoreData = actionType.restoreData
                         logger.log(LogTag.MainVM.Message.ReadyToRecoverSignal, "$restoreData", success = true)
 
                         val secrets = metaSecretAppManager.getSecretsFromVault()
@@ -94,15 +132,15 @@ class MainScreenViewModel(
                         }
 
                         withContext(Dispatchers.Main) {
-                            recoverQueue.addAll(newRequests)
-                            if (_recoverDialog.value == null) {
-                                showNextRecoverPrompt()
+                            newRequests.forEach { restoreData ->
+                                alertCoordinator.showRecoveryRequest(restoreData)
                             }
                         }
                     }
                     is SocketActionModel.RECOVER_SENT -> {
-                        _secretIdToShow.value = a.secretId
-                        logger.log(LogTag.MainVM.Message.ReadyToShowSecret, "${a.secretId}", success = true)
+                        _secretIdToShow.value = actionType.secretId
+                        logger.log(LogTag.MainVM.Message.ReadyToShowSecret,
+                            "claimId=${actionType.claimId}, secretId=${actionType.secretId}", success = true)
                     }
                     else -> { /* ignore */ }
                 }
@@ -126,59 +164,8 @@ class MainScreenViewModel(
             when (event) {
                 is MainViewEvents.SetTabIndex -> setTabIndex(event.index)
                 is MainViewEvents.ShowWarning -> changeWarningVisibilityTo(event.isToShow)
-                is MainViewEvents.RecoverDecision -> onRecoverDecision(event.accept)
-                is MainViewEvents.DismissRecoverDialog -> {
-                    _recoverDialog.value = null
-                    showNextRecoverPrompt()
-                }
             }
         }
-    }
-
-    private fun showNextRecoverPrompt() {
-        logger.log(LogTag.MainVM.Message.ShowNextRecoverPrompt, success = true)
-        _recoverDialog.value = if (recoverQueue.isNotEmpty()) recoverQueue.removeFirst() else null
-    }
-
-    private fun onRecoverDecision(accept: Boolean) {
-        logger.log(LogTag.MainVM.Message.ShowNextRecoverPrompt, "$accept", success = true)
-        val current = _recoverDialog.value ?: run {
-            showNextRecoverPrompt()
-            return
-        }
-
-        if (!accept) {
-            logger.log(LogTag.MainVM.Message.RecoverDeclined, success = true)
-            showNextRecoverPrompt()
-            return
-        }
-
-        logger.log(LogTag.MainVM.Message.RecoverAccepted, success = true)
-        biometricAuthenticator.authenticate(
-            onSuccess = {
-                logger.log(LogTag.MainVM.Message.BiometricAuthSuccess, success = true)
-                viewModelScope.launch(Dispatchers.IO) {
-                    try {
-                        logger.log(LogTag.MainVM.Message.AcceptRecoverCalled, "claimId = ${current.claimId}", success = true)
-                        metaSecretAppManager.acceptRecover(ClaimModel(current.claimId))
-                    } catch (t: Throwable) {
-                        logger.log(LogTag.MainVM.Message.AcceptRecoverFailed, "claimId = ${current.claimId}: $t", success = false)
-                    } finally {
-                        withContext(Dispatchers.Main) {
-                            showNextRecoverPrompt()
-                        }
-                    }
-                }
-            },
-            onError = { error ->
-                logger.log(LogTag.MainVM.Message.BiometricAuthFailed, error, success = false)
-                showNextRecoverPrompt()
-            },
-            onFallback = {
-                logger.log(LogTag.MainVM.Message.BiometricAuthFallback, success = false)
-                showNextRecoverPrompt()
-            }
-        )
     }
 
     private fun checkBackup() {
@@ -217,6 +204,4 @@ class MainScreenViewModel(
 sealed class MainViewEvents : CommonViewModelEventsInterface {
     data class SetTabIndex(val index: Int) : MainViewEvents()
     data class ShowWarning(val isToShow: Boolean) : MainViewEvents()
-    data class RecoverDecision(val accept: Boolean) : MainViewEvents()
-    data object DismissRecoverDialog: MainViewEvents()
 }

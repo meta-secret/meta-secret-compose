@@ -15,6 +15,7 @@ import core.KeyChainInterface
 import core.KeyValueStorageInterface
 import core.LogTag
 import core.DebugLoggerInterface
+import models.apiModels.ClaimStatus
 import models.apiModels.RecoveredSecretModel
 import models.apiModels.SearchClaimModel
 import models.appInternalModels.ClaimModel
@@ -80,6 +81,7 @@ class MetaSecretAppManager(
                 logger.setVaultState(appState?.description())
                 
                 cacheDeviceAndVaultInfoIfNeeded(currentState)
+                updateClaimsStats(currentState)
                 
                 currentState
             } catch (e: Exception) {
@@ -87,6 +89,35 @@ class MetaSecretAppManager(
                 logger.setVaultState(null)
                 AppStateModel(null, false)
             }
+        }
+    }
+    
+    private fun updateClaimsStats(appState: AppStateModel) {
+        val deviceId = appState.getCurrentDeviceId()
+        logger.setDeviceId(deviceId)
+        
+        val vaultInfo = appState.getVaultFullInfo()
+        if (vaultInfo is VaultFullInfo.Member) {
+            val joinRequestsCount = vaultInfo.member.vaultEvents?.getJoinRequestsCount() ?: 0
+            val claims = vaultInfo.member.ssClaims?.claims?.values ?: emptyList()
+            
+            var pendingCount = 0
+            var sentCount = 0
+            var deliveredCount = 0
+            
+            for (claim in claims) {
+                val myStatus = claim.status.statuses[deviceId] ?: continue
+                when (myStatus) {
+                    ClaimStatus.PENDING -> pendingCount++
+                    ClaimStatus.SENT -> sentCount++
+                    ClaimStatus.DELIVERED -> deliveredCount++
+                    else -> { }
+                }
+            }
+            
+            logger.setClaimsStats(joinRequestsCount, pendingCount, sentCount, deliveredCount)
+        } else {
+            logger.setClaimsStats(0, 0, 0, 0)
         }
     }
     

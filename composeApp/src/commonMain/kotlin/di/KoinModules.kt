@@ -39,7 +39,7 @@ val appModule = module {
     single<AlertCoordinatorInterface> { AlertCoordinator() }
     single<DebugLoggerInterface> { DebugLogger() }
 
-    factory { MainScreenViewModel(get(), get(), get(), get(), get(), get()) }
+    single { MainScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
@@ -49,5 +49,5 @@ val appModule = module {
     factory { AddSecretViewModel(get(), get(), get(), get()) }
     factory { RemoveSecretViewModel(get()) }
     factory { AddDeviceViewModel(get()) }
-    factory { ShowSecretViewModel(get(), get(), get(), get(), get()) }
+    factory { ShowSecretViewModel(get(), get()) }
 }
