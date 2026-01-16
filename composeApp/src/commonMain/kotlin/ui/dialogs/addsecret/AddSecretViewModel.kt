@@ -3,12 +3,12 @@ package ui.dialogs.addsecret
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import core.LogTag
 import core.KeyValueStorageInterface
+import core.NotificationCoordinatorInterface
+import core.StringProviderInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.BiometricAuthenticatorInterface
@@ -24,6 +24,8 @@ class AddSecretViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
+    private val notificationCoordinator: NotificationCoordinatorInterface,
+    private val stringProvider: StringProviderInterface,
 ) : CommonViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
@@ -31,9 +33,6 @@ class AddSecretViewModel(
 
     private val _state = MutableStateFlow<AddSecretState?>(null)
     val state: StateFlow<AddSecretState?> = _state
-
-    private val _biometricError = MutableSharedFlow<String>(replay = 0)
-    val biometricError: SharedFlow<String> = _biometricError
 
     private var currentState: AddSecretState? by Delegates.observable(null) { _, _, _ ->
         _state.value = currentState
@@ -53,17 +52,14 @@ class AddSecretViewModel(
                         },
                         onError = { error ->
                             logger.log(LogTag.AddSecretVM.Message.BiometricAuthFailed, error, success = false)
-                            viewModelScope.launch {
-                                _biometricError.emit(error)
-                                _isLoading.value = false
-                            }
+                            val message = error.ifEmpty { stringProvider.errorBiometricAuthFailed() }
+                            notificationCoordinator.showError(message)
+                            _isLoading.value = false
                         },
                         onFallback = {
                             logger.log(LogTag.AddSecretVM.Message.BiometricAuthFallback, success = false)
-                            viewModelScope.launch {
-                                _biometricError.emit("")
-                                _isLoading.value = false
-                            }
+                            notificationCoordinator.showError(stringProvider.errorBiometricAuthFailed())
+                            _isLoading.value = false
                         }
                     )
                 }

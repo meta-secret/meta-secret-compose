@@ -65,7 +65,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
 import core.ScreenMetricsProviderInterface
 import ui.ClassicButton
-import ui.notifications.InAppNotification
+import core.NotificationCoordinatorInterface
+import org.koin.compose.koinInject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
@@ -77,13 +78,11 @@ fun AddSecret(
 ) {
     var secretName by remember { mutableStateOf("") }
     var secret by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val viewModel: AddSecretViewModel = koinViewModel()
     val isLoading by viewModel.isLoading.collectAsState()
     val addState by viewModel.state.collectAsState()
     val focusManager = LocalFocusManager.current
-    val biometricErrorString = stringResource(Res.string.biometric_error)
 
     val transitionState = remember { MutableTransitionState(false) }
 
@@ -95,7 +94,6 @@ fun AddSecret(
         {
             secretName = ""
             secret = ""
-            errorMessage = null
             viewModel.handle(AddSecretEvents.ResetState)
             dialogVisibility(false)
         }
@@ -127,13 +125,6 @@ fun AddSecret(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.biometricError.collectLatest { error ->
-            errorMessage = error.ifEmpty { biometricErrorString }
-            delay(3000)
-            errorMessage = null
-        }
-    }
 
     Dialog(
         onDismissRequest = { requestClose() },
@@ -243,20 +234,6 @@ fun AddSecret(
                 }
             }
 
-            if (errorMessage != null) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .zIndex(11f)
-                ) {
-                    InAppNotification(
-                        screenMetricsProvider,
-                        isSuccessful = false,
-                        message = errorMessage ?: "",
-                        onDismiss = { errorMessage = null }
-                    )
-                }
-            }
         }
     }
 }

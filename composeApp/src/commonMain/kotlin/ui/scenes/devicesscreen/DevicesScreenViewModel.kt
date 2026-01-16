@@ -5,16 +5,15 @@ import core.AlertCoordinatorInterface
 import core.BiometricAuthenticatorInterface
 import core.KeyValueStorageInterface
 import core.LogTag
+import core.NotificationCoordinatorInterface
 import core.ScreenMetricsProviderInterface
+import core.StringProviderInterface
 import core.VaultStatsProviderInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,6 +33,8 @@ class DevicesScreenViewModel(
     private val vaultStatsProvider: VaultStatsProviderInterface,
     private val alertCoordinator: AlertCoordinatorInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
+    private val notificationCoordinator: NotificationCoordinatorInterface,
+    private val stringProvider: StringProviderInterface,
 ) : CommonViewModel() {
 
     private val _devicesList = MutableStateFlow<List<DeviceCellModel>>(emptyList())
@@ -45,9 +46,6 @@ class DevicesScreenViewModel(
     private val _currentDeviceId = MutableStateFlow<String?>(null)
     val currentDeviceId: String?
         get() = keyValueStorage.cachedDeviceId
-
-    private val _toastMessage = MutableSharedFlow<String>(replay = 0)
-    val toastMessage: SharedFlow<String> = _toastMessage.asSharedFlow()
 
     val vaultName = vaultStatsProvider.vaultName
     
@@ -107,12 +105,12 @@ class DevicesScreenViewModel(
             onSuccess = { updateMembership(isJoin) },
             onError = { error ->
                 logger.log(LogTag.DevicesVM.Message.BiometricError, error, success = false)
-                viewModelScope.launch { _toastMessage.emit(error) }
+                notificationCoordinator.showError(error.ifEmpty { stringProvider.errorBiometricAuthFailed() })
                 resetJoinRequestState()
             },
             onFallback = {
                 logger.log(LogTag.DevicesVM.Message.BiometricError, success = false)
-                viewModelScope.launch { _toastMessage.emit("") }
+                notificationCoordinator.showError(stringProvider.errorBiometricAuthFailed())
                 resetJoinRequestState()
             }
         )

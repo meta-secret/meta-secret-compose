@@ -27,7 +27,9 @@ import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.metaSecretCore.OutsiderState
 import kotlin.properties.Delegates
 import core.LogTag
+import core.NotificationCoordinatorInterface
 import core.ScreenMetricsProviderInterface
+import core.StringProviderInterface
 import core.BiometricAuthenticatorInterface
 
 class SignInScreenViewModel(
@@ -39,13 +41,13 @@ class SignInScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
+    private val notificationCoordinator: NotificationCoordinatorInterface,
+    private val stringProvider: StringProviderInterface,
 ) : CommonViewModel() {
 
     // Properties
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
-    private val _snackBarMessage = MutableStateFlow<SignInSnackMessages?>(null)
-    val snackBarMessage: StateFlow<SignInSnackMessages?> = _snackBarMessage
     private val _navigationEvent = MutableStateFlow(false)
     val navigationEvent: StateFlow<Boolean> = _navigationEvent
     private val _nameText = MutableStateFlow("")
@@ -131,7 +133,9 @@ class SignInScreenViewModel(
                         currentState = SignInStates.NAME_INCORRECT
                     }
                 }
-                SignInStates.NAME_INCORRECT -> showErrorSnackBar(SignInSnackMessages.INCORRECT_NAME)
+                SignInStates.NAME_INCORRECT -> {
+                    // Name error is shown in UI directly
+                }
                 SignInStates.NAME_SUCCEEDED -> generateMasterKey()
                 SignInStates.MASTER_KEY_GENERATED -> {
                     val name = _nameText.value
@@ -141,17 +145,20 @@ class SignInScreenViewModel(
                         currentState = SignInStates.NAME_INCORRECT
                     }
                 }
-                SignInStates.MASTER_KEY_FAILED -> showErrorSnackBar(SignInSnackMessages.SIGN_IN_ERROR)
+                SignInStates.MASTER_KEY_FAILED -> {
+                    // Error will be shown via notification coordinator if needed
+                }
                 SignInStates.SIGN_IN_PENDING -> viewModelScope.launch { showPendingState() }
                 SignInStates.SIGN_IN_REJECTED -> {
                     _isLoading.value = false
                     _nameText.value = ""
-                    showErrorSnackBar(SignInSnackMessages.REJECT)
                 }
                 SignInStates.SIGN_IN_COMPLETED -> _navigationEvent.value = true
-                SignInStates.SIGN_IN_FAILED -> showErrorSnackBar(SignInSnackMessages.SIGN_IN_ERROR)
-                SignInStates.NONE -> showErrorSnackBar(SignInSnackMessages.NONE)
-                null -> showErrorSnackBar(SignInSnackMessages.NONE)
+                SignInStates.SIGN_IN_FAILED -> {
+                    // Error will be shown via notification coordinator if needed
+                }
+                SignInStates.NONE -> {}
+                null -> {}
             }
     }
 
@@ -162,7 +169,14 @@ class SignInScreenViewModel(
             add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE),
             exclude = null
         )
-        showErrorSnackBar(SignInSnackMessages.WAIT_JOIN, true, null)
+    }
+    
+    fun showNotification(message: String, isError: Boolean) {
+        if (isError) {
+            notificationCoordinator.showError(message)
+        } else {
+            notificationCoordinator.showSuccess(message)
+        }
     }
 
     private fun isNameError(string: String) {
@@ -205,7 +219,7 @@ class SignInScreenViewModel(
                     }
                 }
             } else {
-                showErrorSnackBar(SignInSnackMessages.UNEXPECTED_LOGIN_STATE)
+                // Error will be shown via notification coordinator if needed
             }
         } finally {
             _isLoading.value = false
@@ -266,15 +280,15 @@ class SignInScreenViewModel(
             },
             onError = { error ->
                 logger.log(LogTag.SignInVM.Message.BiometricAuthFailed, error, success = false)
+                notificationCoordinator.showError(error.ifEmpty { stringProvider.errorBiometricAuthFailed() })
                 viewModelScope.launch {
-                    showErrorSnackBar(SignInSnackMessages.BIOMETRIC_ERROR)
                     currentState = SignInStates.IDLE
                 }
             },
             onFallback = {
                 logger.log(LogTag.SignInVM.Message.BiometricAuthFallback, success = false)
+                notificationCoordinator.showError(stringProvider.errorBiometricAuthFailed())
                 viewModelScope.launch {
-                    showErrorSnackBar(SignInSnackMessages.BIOMETRIC_ERROR)
                     currentState = SignInStates.IDLE
                 }
             }
@@ -310,28 +324,8 @@ class SignInScreenViewModel(
         return metaSecretAppManager.initWithSavedKey() is InitResult.Success
     }
 
-    private suspend fun showErrorSnackBar(message: SignInSnackMessages, blockUI: Boolean = false, duration: Long? = 3000) {
-        withContext(Dispatchers.Main.immediate) {
-            _snackBarMessage.value = message
-            _isLoading.value = blockUI
-        }
-        delay(duration ?: Long.MAX_VALUE) // TODO: Long.MAX_VALUE is freezing the main UI flow
-        withContext(Dispatchers.Main.immediate) {
-            _isLoading.value = false
-            _snackBarMessage.value = null
-        }
-    }
 }
 
-enum class SignInSnackMessages {
-    UNEXPECTED_LOGIN_STATE,
-    WAIT_JOIN,
-    INCORRECT_NAME,
-    SIGN_IN_ERROR,
-    REJECT,
-    BIOMETRIC_ERROR,
-    NONE,
-}
 
 sealed class SignInViewEvents : CommonViewModelEventsInterface {
     data class StartSignInProcess(val name: String) : SignInViewEvents()

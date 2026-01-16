@@ -47,8 +47,10 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.compose.koinInject
 import core.AppColors
 import core.AlertCoordinatorInterface
+import core.NotificationCoordinatorInterface
 import ui.TabStateHolder
 import ui.dialogs.AlertProvider
+import ui.notifications.NotificationProvider
 import ui.notifications.WarningBubble
 
 class MainScreen : Screen {
@@ -56,6 +58,7 @@ class MainScreen : Screen {
     override fun Content() {
         val viewModel: MainScreenViewModel = koinViewModel()
         val alertCoordinator: AlertCoordinatorInterface = koinInject()
+        val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         val selectedTabIndex by TabStateHolder.selectedTabIndex
         val tabSize = viewModel.screenMetricsProvider.screenWidth() / tabs.size
@@ -171,6 +174,11 @@ class MainScreen : Screen {
 
         AlertProvider(
             alertCoordinator = alertCoordinator
+        )
+
+        NotificationProvider(
+            notificationCoordinator = notificationCoordinator,
+            screenMetricsProvider = viewModel.screenMetricsProvider
         )
     }
 

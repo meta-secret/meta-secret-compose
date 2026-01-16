@@ -64,7 +64,8 @@ import core.AppColors
 import kotlinproject.composeapp.generated.resources.biometric_error
 import ui.ClassicButton
 import ui.dialogs.qrscanning.scanQRCode
-import ui.notifications.InAppNotification
+import core.NotificationCoordinatorInterface
+import org.koin.compose.koinInject
 
 class SignInScreen : Screen {
     @Composable
@@ -75,7 +76,6 @@ class SignInScreen : Screen {
         val focusManager = LocalFocusManager.current
 
         var isNameError by remember { mutableStateOf(false) }
-        var isSnackError by remember { mutableStateOf(false) }
         var isFocused by remember { mutableStateOf(false) }
         var isScanning by remember { mutableStateOf(false) }
         val nameText by viewModel.nameText.collectAsState()
@@ -83,17 +83,11 @@ class SignInScreen : Screen {
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
-        val unexpectedLoginStringResource = stringResource(Res.string.unexpected_login)
-        val waitForJoinMessage = stringResource(Res.string.accept_request_on_other_device)
         val nameErrorMessage = stringResource(Res.string.nicknameError)
-        val rejectedJoinMessage = stringResource(Res.string.reject_join)
-        val biometricError = stringResource(Res.string.biometric_error)
 
-        val snackBarMessageType by viewModel.snackBarMessage.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
         val navigationEvent by viewModel.navigationEvent.collectAsState()
-
-        var snackBarMessage: String? by remember { mutableStateOf(null) }
+        val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
 
         LaunchedEffect(navigationEvent) {
             if (navigationEvent) {
@@ -101,40 +95,6 @@ class SignInScreen : Screen {
             }
         }
 
-        LaunchedEffect(snackBarMessageType) {
-             when (snackBarMessageType) {
-                SignInSnackMessages.UNEXPECTED_LOGIN_STATE -> {
-                    isSnackError = true
-                    snackBarMessage = unexpectedLoginStringResource
-                }
-                SignInSnackMessages.WAIT_JOIN -> {
-                    isSnackError = false
-                    snackBarMessage = waitForJoinMessage
-                }
-                SignInSnackMessages.INCORRECT_NAME -> {
-                    isNameError = true
-                }
-                SignInSnackMessages.SIGN_IN_ERROR -> {
-                    isSnackError = true
-                    snackBarMessage = unexpectedLoginStringResource
-                }
-                SignInSnackMessages.REJECT -> {
-                    isSnackError = true
-                    snackBarMessage = rejectedJoinMessage
-                }
-                SignInSnackMessages.BIOMETRIC_ERROR -> {
-                    isSnackError = true
-                    snackBarMessage = biometricError
-                }
-                null -> {
-                    snackBarMessage = null
-                }
-
-                 SignInSnackMessages.NONE -> {
-                     snackBarMessage = null
-                 }
-             }
-        }
 
         Box(
             modifier = Modifier
@@ -310,18 +270,6 @@ class SignInScreen : Screen {
                 }
             }
 
-            if (snackBarMessage != null) {
-                Column {
-                    Spacer(modifier = Modifier.height(40.dp))
-                    InAppNotification(
-                        viewModel.screenMetricsProvider,
-                        isSuccessful = !isSnackError,
-                        message = snackBarMessage ?: "",
-                        onDismiss = {}
-                    )
-                    Spacer(modifier = Modifier.fillMaxHeight())
-                }
-            }
         }
     }
 }

@@ -15,6 +15,14 @@ interface StringProviderInterface {
     fun backupChoosePathMessage(): String
     fun backupChoosePathWarning(): String
     fun ok(): String
+    
+    fun errorNetwork(): String
+    fun errorInternal(): String
+    fun errorParse(): String
+    fun errorValidation(): String
+    fun errorUnknownPrefix(): String
+    fun errorBiometricAuthFailed(): String
+    fun errorSecretAddFailed(): String
 }
 
 

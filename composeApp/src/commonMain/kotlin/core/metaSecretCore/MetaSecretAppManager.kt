@@ -20,6 +20,8 @@ import models.apiModels.RecoveredSecretModel
 import models.apiModels.SearchClaimModel
 import models.appInternalModels.ClaimModel
 import models.appInternalModels.SecretModel
+import core.NotificationCoordinatorInterface
+import core.errors.ErrorMapper
 
 sealed class InitResult {
     data class Success(val result: String) : InitResult()
@@ -32,6 +34,8 @@ class MetaSecretAppManager(
     private val keyValueStorage: KeyValueStorageInterface,
     private val logger: DebugLoggerInterface,
     private val ffiSynchronizer: FfiSynchronizerInterface,
+    private val notificationCoordinator: NotificationCoordinatorInterface,
+    private val errorMapper: ErrorMapper,
 ): MetaSecretAppManagerInterface {
 
     override suspend fun initWithSavedKey(): InitResult {
@@ -58,6 +62,9 @@ class MetaSecretAppManager(
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.InitError, "${e.message}", success = false)
                 logger.setAppManagerCreated(false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 InitResult.Error(e.message ?: "Unknown error")
             }
         } else {
@@ -87,6 +94,9 @@ class MetaSecretAppManager(
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseStateJson, "${e.message}", success = false)
                 logger.setVaultState(null)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 AppStateModel(null, false)
             }
         }
@@ -155,6 +165,9 @@ class MetaSecretAppManager(
                 vaultState
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseVaultInfoJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -172,6 +185,9 @@ class MetaSecretAppManager(
                 vaultEvents
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseVaultEventsJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -190,6 +206,9 @@ class MetaSecretAppManager(
                 requestsCount
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseRequestsCountJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -208,6 +227,9 @@ class MetaSecretAppManager(
                 requests
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseGetJoinRequestsJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -225,6 +247,9 @@ class MetaSecretAppManager(
                 vaultSummary
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseVaultSummaryJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -241,6 +266,9 @@ class MetaSecretAppManager(
                 result
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseUpdateCandidateJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -258,6 +286,9 @@ class MetaSecretAppManager(
                 deviceIdResult
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseGetUserDataByIdJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -306,6 +337,9 @@ class MetaSecretAppManager(
                 result
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseSplitSecretJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -327,6 +361,9 @@ class MetaSecretAppManager(
                 }
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseFindClaimJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -347,6 +384,9 @@ class MetaSecretAppManager(
                 result
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseRecoverRequestJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -367,6 +407,9 @@ class MetaSecretAppManager(
                 result
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseAcceptRecoverJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -387,6 +430,9 @@ class MetaSecretAppManager(
                 parsed.message?.secret
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseShowRecoveredJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }
@@ -407,6 +453,9 @@ class MetaSecretAppManager(
                 secrets
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseGetSecretsFromVaultJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
                 null
             }
         }

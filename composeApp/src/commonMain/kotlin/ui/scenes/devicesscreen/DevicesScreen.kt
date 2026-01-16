@@ -36,7 +36,6 @@ import org.jetbrains.compose.resources.stringResource
 import ui.AddButton
 import ui.dialogs.adddevice.AddingDevice
 import ui.dialogs.adddevice.PopUpDevice
-import ui.notifications.InAppNotification
 import ui.screenContent.CommonBackground
 import ui.screenContent.DeviceContent
 
@@ -50,17 +49,9 @@ class DevicesScreen : Screen {
         
         var isDialogVisible by remember { mutableStateOf(false) }
         var isMainDialogVisible by remember { mutableStateOf(false) }
-        var toastMessage by remember { mutableStateOf<String?>(null) }
         
         LaunchedEffect(Unit) {
             viewModel.handle(DeviceViewEvents.OnAppear)
-        }
-        LaunchedEffect(Unit) {
-            viewModel.toastMessage.collectLatest { message ->
-                toastMessage = message.ifEmpty { biometricErrorText }
-                delay(2000)
-                toastMessage = null
-            }
         }
 
         CommonBackground(Res.string.devicesList) {
@@ -138,16 +129,6 @@ class DevicesScreen : Screen {
                 dialogVisibility = { isDialogVisible = it }
             )
         }
-
-        if (toastMessage != null) {
-            InAppNotification(
-                viewModel.screenMetricsProvider,
-                isSuccessful = false,
-                message = toastMessage ?: "",
-                onDismiss = { toastMessage = null }
-            )
-        }
-
 
     }
 }

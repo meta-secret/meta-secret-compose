@@ -26,15 +26,21 @@ import core.VaultStatsProvider
 import core.VaultStatsProviderInterface
 import core.AlertCoordinator
 import core.AlertCoordinatorInterface
+import core.NotificationCoordinator
+import core.NotificationCoordinatorInterface
 import core.DebugLogger
 import core.DebugLoggerInterface
+import core.errors.ErrorMapper
+import core.StringProviderInterface
 
 val appModule = module {
     single<KeyValueStorageInterface> { KeyValueStorageImpl(get()) }
     single<FfiSynchronizerInterface> { FfiSynchronizer(get()) }
-    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get(), get(), get()) }
+    single<ErrorMapper> { ErrorMapper(get()) }
+    single<NotificationCoordinatorInterface> { NotificationCoordinator() }
+    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get(), get(), get(), get(), get()) }
     single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get(), get()) }
-    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get(), get(), get()) }
+    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get(), get(), get(), get(), get()) }
     single<VaultStatsProviderInterface> { VaultStatsProvider(get(), get(), get()) }
     single<AlertCoordinatorInterface> { AlertCoordinator() }
     single<DebugLoggerInterface> { DebugLogger() }
@@ -42,11 +48,11 @@ val appModule = module {
     single { MainScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
-    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { ProfileScreenViewModel(get(), get(), get(), get(), get()) }
-    factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { SecretsScreenViewModel(get(), get(), get(), get(), get()) }
-    factory { AddSecretViewModel(get(), get(), get(), get()) }
+    factory { AddSecretViewModel(get(), get(), get(), get(), get(), get()) }
     factory { RemoveSecretViewModel(get()) }
     factory { AddDeviceViewModel(get()) }
     factory { ShowSecretViewModel(get(), get()) }

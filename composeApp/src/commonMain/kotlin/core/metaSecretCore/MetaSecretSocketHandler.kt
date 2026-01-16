@@ -22,12 +22,16 @@ import models.apiModels.VaultFullInfo
 import models.appInternalModels.RestoreData
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
+import core.NotificationCoordinatorInterface
+import core.errors.ErrorMapper
 
 class MetaSecretSocketHandler(
     private val metaSecretCore: MetaSecretCoreInterface,
     private val appManager: MetaSecretAppManagerInterface,
     private val logger: core.DebugLoggerInterface,
-    private val ffiSynchronizer: FfiSynchronizerInterface
+    private val ffiSynchronizer: FfiSynchronizerInterface,
+    private val notificationCoordinator: NotificationCoordinatorInterface,
+    private val errorMapper: ErrorMapper
 ): MetaSecretSocketHandlerInterface {
     private val _socketActionType = MutableStateFlow<SocketActionModel>(SocketActionModel.NONE)
     override val socketActionType: StateFlow<SocketActionModel> = _socketActionType
@@ -88,11 +92,19 @@ class MetaSecretSocketHandler(
 
         logger.log(core.LogTag.SocketHandler.Message.FireTimer, success = true)
         
-        val currentState = ffiSynchronizer.withFfiLock {
-            val stateJson = withContext(Dispatchers.IO) {
-                metaSecretCore.getAppState()
+        val currentState = try {
+            ffiSynchronizer.withFfiLock {
+                val stateJson = withContext(Dispatchers.IO) {
+                    metaSecretCore.getAppState()
+                }
+                AppStateModel.fromJson(stateJson, logger)
             }
-            AppStateModel.fromJson(stateJson, logger)
+        } catch (e: Exception) {
+            logger.log(core.LogTag.SocketHandler.Message.ErrorGettingState, "${e.message}", success = false)
+            val appError = errorMapper.mapExceptionToAppError(e)
+            val userMessage = errorMapper.getUserFriendlyMessage(appError)
+            notificationCoordinator.showError(userMessage)
+            return
         }
 
         if (!currentState.success) {
@@ -136,14 +148,28 @@ class MetaSecretSocketHandler(
             if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST)) {
                 logger.log(core.LogTag.SocketHandler.Message.WaitingForRecover, success = true)
                 launch {
-                    checkRecoverRequest(currentState)
+                    try {
+                        checkRecoverRequest(currentState)
+                    } catch (e: Exception) {
+                        logger.log(core.LogTag.SocketHandler.Message.ErrorCheckingRecoverRequest, "${e.message}", success = false)
+                        val appError = errorMapper.mapExceptionToAppError(e)
+                        val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                        notificationCoordinator.showError(userMessage)
+                    }
                 }
             }
 
             if (actionsToFollow.contains(SocketRequestModel.SHOW_SECRET)) {
                 logger.log(core.LogTag.SocketHandler.Message.WaitingForShowSecret, success = true)
                 launch {
-                    checkRecoverSentStatus(currentState)
+                    try {
+                        checkRecoverSentStatus(currentState)
+                    } catch (e: Exception) {
+                        logger.log(core.LogTag.SocketHandler.Message.ErrorCheckingRecoverSentStatus, "${e.message}", success = false)
+                        val appError = errorMapper.mapExceptionToAppError(e)
+                        val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                        notificationCoordinator.showError(userMessage)
+                    }
                 }
             }
         }

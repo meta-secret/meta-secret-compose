@@ -168,6 +168,9 @@ sealed class LogTag(val displayName: String) {
             object CheckingRecoverSentStatusSentClaims : Message("Checking recover sent status sentRecoverClaims")
             object RecoverSentForSecretId : Message("Recover sent for secretId")
             object TimerStopped : Message("Timer is stopped")
+            object ErrorGettingState : Message("Error getting app state")
+            object ErrorCheckingRecoverRequest : Message("Error checking recover request")
+            object ErrorCheckingRecoverSentStatus : Message("Error checking recover sent status")
         }
     }
 

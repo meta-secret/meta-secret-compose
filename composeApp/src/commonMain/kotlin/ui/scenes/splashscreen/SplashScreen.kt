@@ -39,7 +39,8 @@ import ui.scenes.mainscreen.MainScreen
 import ui.scenes.onboarding.OnboardingScreen
 import ui.scenes.signinscreen.SignInScreen
 import core.BiometricState
-import ui.notifications.InAppNotification
+import core.NotificationCoordinatorInterface
+import org.koin.compose.koinInject
 
 
 class SplashScreen : Screen {
@@ -57,9 +58,7 @@ class SplashScreen : Screen {
 
         val navigationEvent by viewModel.navigationEvent.collectAsState()
         val biometricState by viewModel.biometricState.collectAsState()
-        
-        var showErrorNotification by remember { mutableStateOf(false) }
-        var errorMessage by remember { mutableStateOf("") }
+        val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
 
         LaunchedEffect(Unit) {
             viewModel.handle(SplashViewEvents.ON_APPEAR)
@@ -72,10 +71,7 @@ class SplashScreen : Screen {
                 is BiometricState.NeedRegistration ->
                     viewModel.handle(SplashViewEvents.BIOMETRIC_NEEDS_REGISTRATION)
                 is BiometricState.Error -> {
-                    errorMessage = biometricError
-                    showErrorNotification = true
-                    delay(5000)
-                    showErrorNotification = false
+                    notificationCoordinator.showError(biometricError)
                 }
 
                 BiometricState.Idle -> Unit
@@ -147,20 +143,6 @@ class SplashScreen : Screen {
                 }
             }
             
-            val currentBiometricState = biometricState
-            if (currentBiometricState is BiometricState.Error) {
-                Column {
-                    Spacer(modifier = Modifier.height(40.dp))
-                    InAppNotification(
-                        screenMetricsProvider = viewModel.screenMetricsProvider,
-                        isSuccessful = false,
-                        message = errorMessage,
-                        onDismiss = { showErrorNotification = false },
-                        visible = showErrorNotification
-                    )
-                    Spacer(modifier = Modifier.fillMaxHeight())
-                }
-            }
         }
     }
 }

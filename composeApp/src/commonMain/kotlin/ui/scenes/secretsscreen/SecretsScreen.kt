@@ -52,7 +52,9 @@ import core.AppColors
 import ui.AddButton
 import ui.dialogs.addsecret.AddSecret
 import ui.dialogs.showsecret.ShowSecret
-import ui.notifications.InAppNotification
+import core.NotificationCoordinatorInterface
+import kotlinproject.composeapp.generated.resources.secretAddFailed
+import org.koin.compose.koinInject
 import ui.screenContent.CommonBackground
 import ui.screenContent.SecretsContent
 
@@ -68,12 +70,11 @@ class SecretsScreen : Screen {
         var isShowSecretDialogVisible by remember { mutableStateOf(false) }
         var selectedSecret: core.Secret? by remember { mutableStateOf(null) }
         val isRedirected by remember { mutableStateOf(false) }
-        var snackMessage: String? by remember { mutableStateOf(null) }
-        var isSnackSuccess by remember { mutableStateOf(true) }
+        val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
         val secretIdToShow by mainScreenViewModel.secretIdToShow.collectAsState()
         
         val secretAddSuccessText = stringResource(Res.string.secretAdded)
-        val secretAddFailedText = "Failed to add secret"
+        val secretAddFailedText = stringResource(Res.string.secretAddFailed)
         val secretAddedText = stringResource(Res.string.secretAdded)
         val secretRemovedText = stringResource(Res.string.secretRemoved)
 
@@ -122,11 +123,15 @@ class SecretsScreen : Screen {
                 viewModel.screenMetricsProvider,
                 dialogVisibility = { isAddSecretDialogVisible = it },
                 onResult = { isSuccess ->
-                    isSnackSuccess = isSuccess
-                    snackMessage = if (isSuccess) {
+                    val message = if (isSuccess) {
                         secretAddSuccessText
                     } else {
                         secretAddFailedText
+                    }
+                    if (isSuccess) {
+                        notificationCoordinator.showSuccess(message)
+                    } else {
+                        notificationCoordinator.showError(message)
                     }
                 }
             )
@@ -156,23 +161,18 @@ class SecretsScreen : Screen {
         }
 
         if (previousCount != secretsList.size) {
-            isSnackSuccess = previousCount < secretsList.size
-            snackMessage = if (isSnackSuccess) {
+            val isSnackSuccess = previousCount < secretsList.size
+            val message = if (isSnackSuccess) {
                 secretAddedText
             } else {
                 secretRemovedText
             }
+            if (isSnackSuccess) {
+                notificationCoordinator.showSuccess(message)
+            } else {
+                notificationCoordinator.showError(message)
+            }
             previousCount = secretsList.size
-        }
-
-        if (snackMessage != null) {
-            InAppNotification(
-                viewModel.screenMetricsProvider,
-                isSnackSuccess,
-                snackMessage ?: "",
-                onDismiss = { snackMessage = null }
-            )
-            LaunchedEffect(snackMessage) { delay(2000); snackMessage = null }
         }
 
         if (secretsList.isEmpty()) {

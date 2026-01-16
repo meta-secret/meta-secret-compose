@@ -24,6 +24,14 @@ class StringProviderIos : StringProviderInterface {
     override fun backupChoosePathMessage() = s(Res.string.backup_choose_path_message)
     override fun backupChoosePathWarning() = s(Res.string.backup_choose_path_warning)
     override fun ok() = s(Res.string.ok)
+    
+    override fun errorNetwork() = s(Res.string.errorNetwork)
+    override fun errorInternal() = s(Res.string.errorInternal)
+    override fun errorParse() = s(Res.string.errorParse)
+    override fun errorValidation() = s(Res.string.errorValidation)
+    override fun errorUnknownPrefix() = s(Res.string.errorUnknownPrefix)
+    override fun errorBiometricAuthFailed() = s(Res.string.errorBiometricAuthFailed)
+    override fun errorSecretAddFailed() = s(Res.string.errorSecretAddFailed)
 }
 
 
