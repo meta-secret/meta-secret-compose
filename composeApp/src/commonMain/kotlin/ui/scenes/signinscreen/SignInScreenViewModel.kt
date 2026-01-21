@@ -52,6 +52,9 @@ class SignInScreenViewModel(
     val navigationEvent: StateFlow<Boolean> = _navigationEvent
     private val _nameText = MutableStateFlow("")
     val nameText: StateFlow<String> = _nameText
+    private var _isNameError = MutableStateFlow(false)
+    val isNameError: StateFlow<Boolean> = _isNameError
+
     private var currentState: SignInStates? by Delegates.observable(null) { _, _, _ ->
         viewModelScope.launch {
             signInStateResolver()
@@ -126,6 +129,7 @@ class SignInScreenViewModel(
             when (currentState) {
                 SignInStates.IDLE -> logger.log(LogTag.SignInVM.Message.WaitingForSignUp, success = true)
                 SignInStates.START_SIGN_IN -> {
+                    _isNameError.value = false
                     val name = _nameText.value
                     if (name.isNotEmpty()) {
                         isNameError(name)
@@ -134,7 +138,7 @@ class SignInScreenViewModel(
                     }
                 }
                 SignInStates.NAME_INCORRECT -> {
-                    // Name error is shown in UI directly
+                    _isNameError.value = true
                 }
                 SignInStates.NAME_SUCCEEDED -> generateMasterKey()
                 SignInStates.MASTER_KEY_GENERATED -> {
@@ -146,7 +150,7 @@ class SignInScreenViewModel(
                     }
                 }
                 SignInStates.MASTER_KEY_FAILED -> {
-                    // Error will be shown via notification coordinator if needed
+                    showNotification(message = stringProvider.errorInternal(), isError = true)
                 }
                 SignInStates.SIGN_IN_PENDING -> viewModelScope.launch { showPendingState() }
                 SignInStates.SIGN_IN_REJECTED -> {
@@ -155,14 +159,14 @@ class SignInScreenViewModel(
                 }
                 SignInStates.SIGN_IN_COMPLETED -> _navigationEvent.value = true
                 SignInStates.SIGN_IN_FAILED -> {
-                    // Error will be shown via notification coordinator if needed
+                    showNotification(message = stringProvider.errorInternal(), isError = true)
                 }
                 SignInStates.NONE -> {}
                 null -> {}
             }
     }
 
-    private suspend fun showPendingState() {
+    private fun showPendingState() {
         _isLoading.value = true
         logger.log(LogTag.SignInVM.Message.StartListeningJoinAccept, success = true)
         socketHandler.actionsToFollow(
@@ -210,6 +214,7 @@ class SignInScreenViewModel(
                         }
                         is OutsiderState -> {
                             logger.log(LogTag.SignInVM.Message.StartListeningJoinAccept, success = true)
+                            showNotification(stringProvider.acceptRequestOnOtherDevice(), isError = false)
                             currentState = SignInStates.SIGN_IN_PENDING
                         }
                         else -> {
@@ -280,14 +285,14 @@ class SignInScreenViewModel(
             },
             onError = { error ->
                 logger.log(LogTag.SignInVM.Message.BiometricAuthFailed, error, success = false)
-                notificationCoordinator.showError(error.ifEmpty { stringProvider.errorBiometricAuthFailed() })
+                showNotification(error.ifEmpty { stringProvider.errorBiometricAuthFailed() }, isError = true)
                 viewModelScope.launch {
                     currentState = SignInStates.IDLE
                 }
             },
             onFallback = {
                 logger.log(LogTag.SignInVM.Message.BiometricAuthFallback, success = false)
-                notificationCoordinator.showError(stringProvider.errorBiometricAuthFailed())
+                showNotification(stringProvider.errorBiometricAuthFailed(), isError = true)
                 viewModelScope.launch {
                     currentState = SignInStates.IDLE
                 }
@@ -323,7 +328,6 @@ class SignInScreenViewModel(
     private suspend fun initAppManagerResult(): Boolean {
         return metaSecretAppManager.initWithSavedKey() is InitResult.Success
     }
-
 }
 
 

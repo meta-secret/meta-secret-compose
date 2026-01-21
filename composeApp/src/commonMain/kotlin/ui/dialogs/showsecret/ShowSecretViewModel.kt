@@ -74,28 +74,6 @@ class ShowSecretViewModel(
                 }
                 
                 if (existingClaim?.claimId != null) {
-                    val vaultInfo = withContext(Dispatchers.IO) {
-                        metaSecretAppManager.getVaultFullInfoModel()
-                    }
-                    val currentDeviceId = if (vaultInfo is VaultFullInfo.Member) {
-                        vaultInfo.member.member.member.userData.device.deviceId
-                    } else null
-                    
-                    val claimStatus = if (vaultInfo is VaultFullInfo.Member && currentDeviceId != null) {
-                        val claim = vaultInfo.member.ssClaims?.claims?.get(existingClaim.claimId)
-                        claim?.status?.statuses?.get(currentDeviceId)
-                    } else null
-                    
-                    if (claimStatus == ClaimStatus.DELIVERED) {
-                        logger.log(LogTag.ShowSecretVM.Message.ExistingClaimFound, "${existingClaim.claimId} (Delivered, creating new)", success = true)
-                        withContext(Dispatchers.IO) {
-                            metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))
-                        }
-                    } else {
-                        logger.log(LogTag.ShowSecretVM.Message.ExistingClaimFound, existingClaim.claimId, success = true)
-                        showRecoveredSecret(secretName)
-                    }
-                } else {
                     logger.log(LogTag.ShowSecretVM.Message.NoExistingClaim, success = true)
                     withContext(Dispatchers.IO) {
                         metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))

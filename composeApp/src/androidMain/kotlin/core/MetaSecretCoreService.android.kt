@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import models.apiModels.UserData
 import org.koin.java.KoinJavaComponent.inject
 import core.metaSecretCore.MetaSecretCoreInterface
+import core.LogFormatterInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,22 +19,30 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     private val context: Context by inject(Context::class.java)
     private val databasePathProvider: DatabasePathProviderInterface by inject(DatabasePathProviderInterface::class.java)
     private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.java)
+    private val logFormatter: LogFormatterInterface by inject(LogFormatterInterface::class.java)
     
     companion object {
         private var loggerInstance: DebugLoggerInterface? = null
+        private var logFormatterInstance: LogFormatterInterface? = null
         
         fun setLogger(logger: DebugLoggerInterface) {
             loggerInstance = logger
+        }
+        
+        fun setLogFormatter(logFormatter: LogFormatterInterface) {
+            logFormatterInstance = logFormatter
         }
         
         init {
             try {
                 System.loadLibrary("metasecret_mobile")
                 loggerInstance?.log(LogTag.MetaSecretCoreService.Message.LibraryLoaded, success = true)
-                    ?: println("Metasecret_mobile library has been loaded successfully")
+                    ?: println(logFormatterInstance?.formatLogMessage("Metasecret_mobile library has been loaded successfully") 
+                        ?: "[${System.currentTimeMillis()}] Metasecret_mobile library has been loaded successfully")
             } catch (e: Exception) {
                 loggerInstance?.log(LogTag.MetaSecretCoreService.Message.LibraryLoadError, "${e.message}", success = false)
-                    ?: println("Error during loading of the Metasecret_mobile library: ${e.message}")
+                    ?: println(logFormatterInstance?.formatLogMessage("Error during loading of the Metasecret_mobile library: ${e.message}")
+                        ?: "[${System.currentTimeMillis()}] Error during loading of the Metasecret_mobile library: ${e.message}")
                 e.printStackTrace()
             }
         }
@@ -41,6 +50,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     
     init {
         setLogger(logger)
+        setLogFormatter(logFormatter)
     }
 
     override fun generateMasterKey(): String {
@@ -73,6 +83,17 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGetState, success = true)
             val result = MetaSecretNative.getAppState()
+            
+            if (result.isEmpty()) {
+                logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "Empty response from FFI", success = false)
+                throw IllegalStateException("Empty response from FFI getState")
+            }
+            
+            if (!result.contains("\"message\"") && !result.contains("\"success\"")) {
+                logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "Invalid JSON response from FFI", success = false)
+                throw IllegalStateException("Invalid JSON response from FFI getState: $result")
+            }
+            
             logger.log(LogTag.MetaSecretCoreService.Message.AppStateResult, result, success = true)
             return result
         } catch (e: Exception) {
@@ -190,6 +211,19 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun declineRecover(claimId: String): String {
+        try {
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingDeclineRecover, success = true)
+            val result = MetaSecretNative.declineRecover(claimId)
+            logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverResult, result, success = true)
+            return result
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }

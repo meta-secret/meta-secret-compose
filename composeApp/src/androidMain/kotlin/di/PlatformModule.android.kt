@@ -17,6 +17,8 @@ import core.ScreenMetricsProviderAndroid
 import core.ScreenMetricsProviderInterface
 import core.DatabasePathProviderInterface
 import core.DatabasePathProviderAndroid
+import core.LogFormatterInterface
+import core.LogFormatterAndroid
 
 val androidPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceAndroid() }
@@ -37,4 +39,5 @@ val androidPlatformModule = module {
     single<DeviceInfoProviderInterface> { DeviceInfoProviderAndroid() }
     single<ScreenMetricsProviderInterface> { ScreenMetricsProviderAndroid() }
     single<DatabasePathProviderInterface> { DatabasePathProviderAndroid(get()) }
+    single<LogFormatterInterface> { LogFormatterAndroid() }
 } 

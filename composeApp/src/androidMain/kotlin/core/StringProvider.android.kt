@@ -33,6 +33,7 @@ class StringProviderAndroid(private val context: Context) : StringProviderInterf
     override fun errorUnknownPrefix() = s(Res.string.errorUnknownPrefix)
     override fun errorBiometricAuthFailed() = s(Res.string.errorBiometricAuthFailed)
     override fun errorSecretAddFailed() = s(Res.string.errorSecretAddFailed)
+    override fun acceptRequestOnOtherDevice() = s(Res.string.accept_request_on_other_device)
 }
 
 

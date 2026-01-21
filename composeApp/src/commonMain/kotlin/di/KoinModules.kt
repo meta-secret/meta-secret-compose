@@ -38,12 +38,12 @@ val appModule = module {
     single<FfiSynchronizerInterface> { FfiSynchronizer(get()) }
     single<ErrorMapper> { ErrorMapper(get()) }
     single<NotificationCoordinatorInterface> { NotificationCoordinator() }
-    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get(), get(), get(), get(), get()) }
+    single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get(), get(), get(), get(), get(), get()) }
     single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get(), get()) }
     single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get(), get(), get(), get(), get()) }
     single<VaultStatsProviderInterface> { VaultStatsProvider(get(), get(), get()) }
     single<AlertCoordinatorInterface> { AlertCoordinator() }
-    single<DebugLoggerInterface> { DebugLogger() }
+    single<DebugLoggerInterface> { DebugLogger(get()) }
 
     single { MainScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }

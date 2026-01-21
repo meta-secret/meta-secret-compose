@@ -5,8 +5,9 @@ import kotlinx.cinterop.ExperimentalForeignApi
 
 @OptIn(ExperimentalForeignApi::class)
 class DebugLoggerIos(
+    logFormatter: LogFormatterInterface,
     private val swiftBridge: SwiftBridge = SwiftBridge()
-) : DebugLogger() {
+) : DebugLogger(logFormatter) {
     override fun setOuterLoggerVisibility(isVisible: Boolean) {
         swiftBridge.setiOSLogsVisibility(isVisible)
     }

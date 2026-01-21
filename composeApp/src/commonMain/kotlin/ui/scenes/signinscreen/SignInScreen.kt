@@ -6,19 +6,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,7 +42,6 @@ import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.accept_request_on_other_device
 import kotlinproject.composeapp.generated.resources.advice
 import kotlinproject.composeapp.generated.resources.background_logo
 import kotlinproject.composeapp.generated.resources.background_main
@@ -52,49 +49,48 @@ import kotlinproject.composeapp.generated.resources.forward
 import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.nicknameError
 import kotlinproject.composeapp.generated.resources.placeholder
-import kotlinproject.composeapp.generated.resources.reject_join
 import kotlinproject.composeapp.generated.resources.scan
 import kotlinproject.composeapp.generated.resources.start
-import kotlinproject.composeapp.generated.resources.unexpected_login
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import ui.scenes.mainscreen.MainScreen
 import core.AppColors
-import kotlinproject.composeapp.generated.resources.biometric_error
 import ui.ClassicButton
 import ui.dialogs.qrscanning.scanQRCode
 import core.NotificationCoordinatorInterface
 import org.koin.compose.koinInject
+import ui.notifications.NotificationProvider
 
 class SignInScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: SignInScreenViewModel = koinViewModel()
+        val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
+
         val navigator = LocalNavigator.current
         val focusRequester = FocusRequester()
         val focusManager = LocalFocusManager.current
 
-        var isNameError by remember { mutableStateOf(false) }
         var isFocused by remember { mutableStateOf(false) }
         var isScanning by remember { mutableStateOf(false) }
-        val nameText by viewModel.nameText.collectAsState()
         var scannedText by remember { mutableStateOf("") }
+
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
         val nameErrorMessage = stringResource(Res.string.nicknameError)
 
+        val nameText by viewModel.nameText.collectAsState()
+        val isNameError by viewModel.isNameError.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
         val navigationEvent by viewModel.navigationEvent.collectAsState()
-        val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
 
         LaunchedEffect(navigationEvent) {
             if (navigationEvent) {
                 navigator?.push(MainScreen())
             }
         }
-
 
         Box(
             modifier = Modifier
@@ -228,11 +224,14 @@ class SignInScreen : Screen {
                         ),
                         textStyle = TextStyle(fontSize = 16.sp, color = Color.White),
 
-                        colors = TextFieldDefaults.textFieldColors(
-                            backgroundColor = AppColors.White5,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = AppColors.White5,
+                            unfocusedContainerColor = AppColors.White5,
+                            disabledContainerColor = AppColors.White5,
                             cursorColor = AppColors.White,
+                            focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent
+                            disabledIndicatorColor = Color.Transparent
                         )
                     )
                     if (isNameError) {
@@ -271,5 +270,10 @@ class SignInScreen : Screen {
             }
 
         }
+        
+        NotificationProvider(
+            notificationCoordinator = notificationCoordinator,
+            screenMetricsProvider = viewModel.screenMetricsProvider
+        )
     }
 }

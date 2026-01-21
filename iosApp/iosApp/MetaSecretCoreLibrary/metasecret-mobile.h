@@ -33,6 +33,8 @@ char *recover(const char *secret_id_ptr);
 
 char *accept_recover(const char *claim_id_ptr);
 
+char *decline_recover(const char *claim_id_ptr);
+
 char *show_recovered(const char *secret_id_ptr);
 
 void free_string(char *ptr);

@@ -27,7 +27,7 @@ open class LocalState(
     fun new(): LocalState? {
         logger.log(core.LogTag.StateResolver.Message.StartGetAppState, success = true)
         val jsonResult = metaSecretCore.getAppState()
-        val coreStateModel = AppStateModel.fromJson(jsonResult, logger)
+        val coreStateModel = AppStateModel.fromJson(jsonResult, logger, null)
 
         val isSuccess = coreStateModel.success
         val stateModel = coreStateModel.getAppState()
@@ -47,7 +47,7 @@ open class LocalState(
     fun generateNewCreds(): VaultState? {
         logger.log(core.LogTag.StateResolver.Message.StartGenerateNewCreds, success = true)
         val jsonResult = metaSecretCore.generateUserCreds(vaultName)
-        val coreStateModel = AppStateModel.fromJson(jsonResult, logger)
+        val coreStateModel = AppStateModel.fromJson(jsonResult, logger, null)
 
         val isSuccess = coreStateModel.success
         val stateModel = coreStateModel.getAppState()
@@ -91,7 +91,7 @@ class VaultState(
     fun signUp(): AppState? {
         logger.log(core.LogTag.StateResolver.Message.StartSignUp, success = true)
         val jsonResult = metaSecretCore.signUp()
-        val coreStateModel = AppStateModel.fromJson(jsonResult, logger)
+        val coreStateModel = AppStateModel.fromJson(jsonResult, logger, null)
 
         val isSuccess = coreStateModel.success
         val vaultInfo = coreStateModel.getVaultFullInfo()

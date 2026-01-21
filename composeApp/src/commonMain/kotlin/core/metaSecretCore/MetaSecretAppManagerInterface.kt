@@ -27,6 +27,7 @@ interface MetaSecretAppManagerInterface {
     suspend fun findClaim(secretId: String): ClaimModel?
     suspend fun recover(secretModel: SecretModel): CommonResponseModel?
     suspend fun acceptRecover(claim: ClaimModel): CommonResponseModel?
+    suspend fun declineRecover(claim: ClaimModel): CommonResponseModel?
     suspend fun showRecovered(secretModel: SecretModel): String?
     suspend fun getSecretsFromVault(): List<SecretApiModel>?
 }

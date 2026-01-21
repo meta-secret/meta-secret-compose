@@ -51,6 +51,11 @@ sealed class LogTag(val displayName: String) {
             object ReadyToShowSecret : Message("READY_TO_SHOW secret by secretId")
             object ShowNextRecoverPrompt : Message("showNextRecoverPrompt")
             object RecoverDeclined : Message("Recover is declined")
+            object DeclineRecoverSuccess : Message("declineRecover success for claimId")
+            object DeclineRecoverFailed : Message("declineRecover failed for claimId")
+            object RecoverDeclinedOnSender : Message("Recover declined on sender device")
+            object CompleteDeclinedClaimSuccess : Message("completeDeclinedClaim success for claimId")
+            object CompleteDeclinedClaimFailed : Message("completeDeclinedClaim failed for claimId")
             object RecoverAccepted : Message("Recover is accepted")
             object BiometricAuthSuccess : Message("Biometric authentication successful")
             object AcceptRecoverCalled : Message("acceptRecover called for claimId")
@@ -134,6 +139,12 @@ sealed class LogTag(val displayName: String) {
             object AcceptRecoverStarted : Message("Accept recover started")
             object AcceptRecoverResult : Message("Accept recover result is")
             object FailedToParseAcceptRecoverJson : Message("Failed to parse Accept Recover JSON")
+            object DeclineRecoverStarted : Message("Decline recover started")
+            object DeclineRecoverResult : Message("Decline recover result is")
+            object FailedToParseDeclineRecoverJson : Message("Failed to parse Decline Recover JSON")
+            object CompleteDeclinedClaimStarted : Message("Complete declined claim started")
+            object CompleteDeclinedClaimResult : Message("Complete declined claim result is")
+            object FailedToParseCompleteDeclinedClaimJson : Message("Failed to parse Complete Declined Claim JSON")
             object ShowRecovered : Message("showRecovered")
             object ShowRecoveredSuccess : Message("showRecovered success")
             object FailedToParseShowRecoveredJson : Message("Failed to parse showRecovered JSON")
@@ -164,9 +175,11 @@ sealed class LogTag(val displayName: String) {
             object NoClaimsFound : Message("No claims found")
             object CheckingRecoverSentStatus : Message("Checking recover sent status")
             object CheckingRecoverSentStatusClaims : Message("Checking recover sent status claims")
-            object CheckingRecoverSentStatusDetails : Message("Checking recover sent status isRecoverType")
+            object CheckingRecoverSentStatusDetails : Message("Checking recover sent status")
             object CheckingRecoverSentStatusSentClaims : Message("Checking recover sent status sentRecoverClaims")
             object RecoverSentForSecretId : Message("Recover sent for secretId")
+            object RecoverDeclinedForSecretId : Message("Recover declined for secretId")
+            object MarkingClaimAsDeclined : Message("Marking claim as locally declined")
             object TimerStopped : Message("Timer is stopped")
             object ErrorGettingState : Message("Error getting app state")
             object ErrorCheckingRecoverRequest : Message("Error checking recover request")
@@ -364,6 +377,12 @@ sealed class LogTag(val displayName: String) {
             object CallingAcceptRecover : Message("Calling acceptRecover")
             object AcceptRecoverResult : Message("acceptRecover result")
             object AcceptRecoverError : Message("acceptRecover error")
+            object CallingDeclineRecover : Message("Calling declineRecover")
+            object DeclineRecoverResult : Message("declineRecover result")
+            object DeclineRecoverError : Message("declineRecover error")
+            object CallingCompleteDeclinedClaim : Message("Calling completeDeclinedClaim")
+            object CompleteDeclinedClaimResult : Message("completeDeclinedClaim result")
+            object CompleteDeclinedClaimError : Message("completeDeclinedClaim error")
             object CallingShowRecovered : Message("Calling showRecovered")
             object ShowRecoveredResult : Message("showRecovered result")
             object ShowRecoveredError : Message("showRecovered error")
@@ -401,10 +420,12 @@ interface DebugLoggerInterface {
     fun setOuterLoggerVisibility(isVisible: Boolean)
 }
 
-open class DebugLogger : DebugLoggerInterface {
+open class DebugLogger(
+    private val logFormatter: LogFormatterInterface
+) : DebugLoggerInterface {
     val isCommonLogsActive = true
-    val isIosLogsActive = isCommonLogsActive
-    val isCriticalInfoLogsActive = true
+    val isIosLogsActive = false
+    val isCriticalInfoLogsActive = false
     private var criticalState = CriticalComponentsState()
     override fun setLoggerVisibility() {
         setOuterLoggerVisibility(isIosLogsActive)
@@ -414,7 +435,8 @@ open class DebugLogger : DebugLoggerInterface {
         val fullMessage = if (extra != null) "${message.text} $extra" else message.text
         val preMessage = if (success != null) if (success) "✅" else "❌" else ""
 
-        println("$preMessage ${message.tag.displayName}: $fullMessage")
+        val logMessage = "$preMessage ${message.tag.displayName}: $fullMessage"
+        println(logFormatter.formatLogMessage(logMessage))
     }
 
     override fun setBackupDbExists(exists: Boolean) {
@@ -461,18 +483,18 @@ open class DebugLogger : DebugLoggerInterface {
         val vaultStateStatus = criticalState.vaultState ?: "null"
         val deviceIdStatus = criticalState.deviceId ?: "null"
 
-        println("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F")
-        println("  Critical Components State:")
-        println("  BackUpDB => $backupStatus")
-        println("  MetaSecretAppManager => $appManagerStatus")
-        println("  MasterKey => $masterKeyStatus")
-        println("  VaultState => $vaultStateStatus")
-        println("  DeviceId => $deviceIdStatus")
-        println("  JoinRequests => ${criticalState.joinRequestsCount}")
-        println("  PendingClaims => ${criticalState.pendingClaimsCount}")
-        println("  SentClaims => ${criticalState.sentClaimsCount}")
-        println("  DeliveredClaims => ${criticalState.deliveredClaimsCount}")
-        println("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F")
+        println(logFormatter.formatLogMessage("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F"))
+        println(logFormatter.formatLogMessage("  Critical Components State:"))
+        println(logFormatter.formatLogMessage("  BackUpDB => $backupStatus"))
+        println(logFormatter.formatLogMessage("  MetaSecretAppManager => $appManagerStatus"))
+        println(logFormatter.formatLogMessage("  MasterKey => $masterKeyStatus"))
+        println(logFormatter.formatLogMessage("  VaultState => $vaultStateStatus"))
+        println(logFormatter.formatLogMessage("  DeviceId => $deviceIdStatus"))
+        println(logFormatter.formatLogMessage("  JoinRequests => ${criticalState.joinRequestsCount}"))
+        println(logFormatter.formatLogMessage("  PendingClaims => ${criticalState.pendingClaimsCount}"))
+        println(logFormatter.formatLogMessage("  SentClaims => ${criticalState.sentClaimsCount}"))
+        println(logFormatter.formatLogMessage("  DeliveredClaims => ${criticalState.deliveredClaimsCount}"))
+        println(logFormatter.formatLogMessage("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F"))
     }
     override fun setOuterLoggerVisibility(isVisible: Boolean) { }
 

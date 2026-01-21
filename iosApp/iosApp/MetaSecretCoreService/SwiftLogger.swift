@@ -8,6 +8,13 @@
 
 import Foundation
 
+private func getCurrentTimestamp() -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+    formatter.timeZone = TimeZone.current
+    return formatter.string(from: Date())
+}
+
 enum SwiftLogTag: String, Sendable {
     case swiftBridge = "🦅SwiftBridge"
     case backupUI = "🦅BackupUI"
@@ -48,7 +55,8 @@ final class SwiftLogger: @unchecked Sendable {
         }
         
         let fullMessage = prefix.isEmpty ? message : "\(prefix) \(message)"
-        print("\(tag.displayName): \(fullMessage)")
+        let timestamp = getCurrentTimestamp()
+        print("[\(timestamp)] \(tag.displayName): \(fullMessage)")
     }
     
     nonisolated func logInfo(tag: SwiftLogTag, message: String) {

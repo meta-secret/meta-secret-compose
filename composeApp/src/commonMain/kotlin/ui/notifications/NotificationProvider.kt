@@ -15,16 +15,16 @@ fun NotificationProvider(
 ) {
     val notificationState by notificationCoordinator.notificationState.collectAsState()
     
-    when (val state = notificationState) {
-        is NotificationState.Visible -> {
-            InAppNotification(
-                screenMetricsProvider = screenMetricsProvider,
-                isSuccessful = !state.isError,
-                message = state.message,
-                onDismiss = { notificationCoordinator.dismiss() },
-                visible = true
-            )
-        }
-        is NotificationState.Hidden -> {}
+    val (isVisible, message, isError) = when (val state = notificationState) {
+        is NotificationState.Visible -> Triple(true, state.message, state.isError)
+        is NotificationState.Hidden -> Triple(false, "", false)
     }
+    
+    InAppNotification(
+        screenMetricsProvider = screenMetricsProvider,
+        isSuccessful = !isError,
+        message = message,
+        onDismiss = { notificationCoordinator.dismiss() },
+        visible = isVisible
+    )
 }

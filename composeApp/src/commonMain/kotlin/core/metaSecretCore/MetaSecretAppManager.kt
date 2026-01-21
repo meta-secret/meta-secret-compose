@@ -15,6 +15,7 @@ import core.KeyChainInterface
 import core.KeyValueStorageInterface
 import core.LogTag
 import core.DebugLoggerInterface
+import core.LogFormatterInterface
 import models.apiModels.ClaimStatus
 import models.apiModels.RecoveredSecretModel
 import models.apiModels.SearchClaimModel
@@ -36,6 +37,7 @@ class MetaSecretAppManager(
     private val ffiSynchronizer: FfiSynchronizerInterface,
     private val notificationCoordinator: NotificationCoordinatorInterface,
     private val errorMapper: ErrorMapper,
+    private val logFormatter: LogFormatterInterface,
 ): MetaSecretAppManagerInterface {
 
     override suspend fun initWithSavedKey(): InitResult {
@@ -81,9 +83,7 @@ class MetaSecretAppManager(
                 metaSecretCore.getAppState()
             }
             try {
-                val currentState = AppStateModel.fromJson(stateJson, logger)
-                logger.log(LogTag.AppManager.Message.CurrentState, "$currentState", success = true)
-                
+                val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
                 val appState = currentState.getAppState()
                 logger.setVaultState(appState?.description())
                 
@@ -159,7 +159,7 @@ class MetaSecretAppManager(
                 metaSecretCore.getAppState()
             }
             try {
-                val currentState = AppStateModel.fromJson(stateJson, logger)
+                val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
                 val vaultState = currentState.getVaultFullInfo()
                 logger.log(LogTag.AppManager.Message.VaultInfo, "$vaultState", success = true)
                 vaultState
@@ -179,7 +179,7 @@ class MetaSecretAppManager(
                 metaSecretCore.getAppState()
             }
             try {
-                val currentState = AppStateModel.fromJson(stateJson, logger)
+                val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
                 val vaultEvents = currentState.getVaultEvents()
                 logger.log(LogTag.AppManager.Message.VaultEvents, "$vaultEvents", success = true)
                 vaultEvents
@@ -199,7 +199,7 @@ class MetaSecretAppManager(
                 metaSecretCore.getAppState()
             }
             try {
-                val currentState = AppStateModel.fromJson(stateJson, logger)
+                val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
                 val vaultEvents = currentState.getVaultEvents()
                 val requestsCount = vaultEvents?.getJoinRequestsCount()
                 logger.log(LogTag.AppManager.Message.RequestsCount, "$requestsCount", success = true)
@@ -220,7 +220,7 @@ class MetaSecretAppManager(
                 metaSecretCore.getAppState()
             }
             try {
-                val currentState = AppStateModel.fromJson(stateJson, logger)
+                val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
                 val vaultEvents = currentState.getVaultEvents()
                 val requests = vaultEvents?.getJoinRequests()
                 logger.log(LogTag.AppManager.Message.GetJoinRequests, "$requests", success = true)
@@ -241,7 +241,7 @@ class MetaSecretAppManager(
                 metaSecretCore.getAppState()
             }
             try {
-                val currentState = AppStateModel.fromJson(stateJson, logger)
+                val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
                 val vaultSummary = currentState.getVaultSummary()
                 logger.log(LogTag.AppManager.Message.VaultSummary, "$vaultSummary", success = true)
                 vaultSummary
@@ -280,7 +280,7 @@ class MetaSecretAppManager(
                 metaSecretCore.getAppState()
             }
             try {
-                val currentState = AppStateModel.fromJson(stateJson, logger)
+                val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
                 val deviceIdResult = currentState.getUserDataByDeviceId(deviceId)
                 logger.log(LogTag.AppManager.Message.GetUserDataByDeviceId, "$deviceId is $deviceIdResult", success = true)
                 deviceIdResult
@@ -415,6 +415,29 @@ class MetaSecretAppManager(
         }
     }
 
+    override suspend fun declineRecover(claim: ClaimModel): CommonResponseModel? {
+        logger.log(LogTag.AppManager.Message.DeclineRecoverStarted, success = true)
+        if (claim.claimId == null) {
+            return null
+        }
+        return ffiSynchronizer.withFfiLock {
+            val declineResult = withContext(Dispatchers.IO) {
+                metaSecretCore.declineRecover(claim.claimId)
+            }
+            try {
+                val result = CommonResponseModel.fromJson(declineResult)
+                logger.log(LogTag.AppManager.Message.DeclineRecoverResult, "$result", success = true)
+                result
+            } catch (e: Exception) {
+                logger.log(LogTag.AppManager.Message.FailedToParseDeclineRecoverJson, "${e.message}", success = false)
+                val appError = errorMapper.mapExceptionToAppError(e)
+                val userMessage = errorMapper.getUserFriendlyMessage(appError)
+                notificationCoordinator.showError(userMessage)
+                null
+            }
+        }
+    }
+
     override suspend fun showRecovered(secretModel: SecretModel): String? {
         logger.log(LogTag.AppManager.Message.ShowRecovered, success = true)
         if (secretModel.secretName == null) {
@@ -444,7 +467,7 @@ class MetaSecretAppManager(
                 metaSecretCore.getAppState()
             }
             try {
-                val currentState = AppStateModel.fromJson(stateJson, logger)
+                val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
                 val secrets = when (val vaultInfo = currentState.getVaultFullInfo()) {
                     is VaultFullInfo.Member -> vaultInfo.member.member.vault.secrets
                     else -> emptyList()

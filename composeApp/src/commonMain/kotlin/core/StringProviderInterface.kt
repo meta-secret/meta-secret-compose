@@ -23,6 +23,8 @@ interface StringProviderInterface {
     fun errorUnknownPrefix(): String
     fun errorBiometricAuthFailed(): String
     fun errorSecretAddFailed(): String
+    
+    fun acceptRequestOnOtherDevice(): String
 }
 
 

@@ -97,7 +97,7 @@ class MetaSecretSocketHandler(
                 val stateJson = withContext(Dispatchers.IO) {
                     metaSecretCore.getAppState()
                 }
-                AppStateModel.fromJson(stateJson, logger)
+                AppStateModel.fromJson(stateJson, logger, null)
             }
         } catch (e: Exception) {
             logger.log(core.LogTag.SocketHandler.Message.ErrorGettingState, "${e.message}", success = false)
@@ -113,7 +113,6 @@ class MetaSecretSocketHandler(
 
         if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
             val hasJoinRequests = currentState.getVaultEvents()?.hasJoinRequests() == true
-            logger.log(core.LogTag.SocketHandler.Message.AppStateReceived, "$currentState, hasJoinRequest is $hasJoinRequests", success = true)
 
             if (hasJoinRequests) {
                 logger.log(core.LogTag.SocketHandler.Message.NeedShowAskToJoin, success = true)

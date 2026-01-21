@@ -67,7 +67,7 @@ fun InAppNotification(
         ) {
             Box(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 35.dp)
+                    .padding(start = 16.dp, top = 45.dp, end = 16.dp, bottom = 35.dp)
             ) {
                 Box(
                     modifier = Modifier

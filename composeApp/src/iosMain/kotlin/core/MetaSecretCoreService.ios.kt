@@ -47,6 +47,12 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGetState, success = true)
             val result = swiftBridge.getState()
+            
+            if (result.isEmpty()) {
+                logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "Empty response from FFI", success = false)
+                throw IllegalStateException("Empty response from FFI getState")
+            }
+            
             logger.log(LogTag.MetaSecretCoreService.Message.AppStateResult, result, success = true)
             return result
         } catch (e: Exception) {
@@ -163,6 +169,19 @@ class MetaSecretCoreServiceIos(
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun declineRecover(claimId: String): String {
+        try {
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingDeclineRecover, "with: $claimId", success = true)
+            val result = swiftBridge.declineRecover(claimId)
+            logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverResult, result, success = true)
+            return result
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
