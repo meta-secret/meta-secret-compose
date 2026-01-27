@@ -1,7 +1,6 @@
 package ui.scenes.signinscreen
 
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -88,7 +87,7 @@ class SignInScreenViewModel(
     private suspend fun initialState() {
         if (initAppManagerResult()) {
             val stateModel = metaSecretAppManager.getStateModel()
-            val appState = stateModel?.getAppState()
+            val appState = stateModel?.getCurrentAppState()
             logger.setVaultState(appState?.description())
             
             appState?.let { state ->
@@ -169,6 +168,7 @@ class SignInScreenViewModel(
     private fun showPendingState() {
         _isLoading.value = true
         logger.log(LogTag.SignInVM.Message.StartListeningJoinAccept, success = true)
+        showNotification(stringProvider.acceptRequestOnOtherDevice(), isError = false)
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE),
             exclude = null
@@ -205,6 +205,7 @@ class SignInScreenViewModel(
 
                 if (signUpResult.error != null) {
                     logger.log(LogTag.SignInVM.Message.SignUpUnknownState, success = false)
+                    showNotification( stringProvider.errorInternal(), isError = true)
                     currentState = SignInStates.SIGN_IN_FAILED
                 } else {
                     when (signUpResult.appState) {
@@ -214,7 +215,6 @@ class SignInScreenViewModel(
                         }
                         is OutsiderState -> {
                             logger.log(LogTag.SignInVM.Message.StartListeningJoinAccept, success = true)
-                            showNotification(stringProvider.acceptRequestOnOtherDevice(), isError = false)
                             currentState = SignInStates.SIGN_IN_PENDING
                         }
                         else -> {
@@ -224,7 +224,11 @@ class SignInScreenViewModel(
                     }
                 }
             } else {
-                // Error will be shown via notification coordinator if needed
+                logger.log(LogTag.SignInVM.Message.SignUpUnknownState, success = false)
+                showNotification( stringProvider.errorInternal(), isError = true)
+                viewModelScope.launch {
+                    currentState = SignInStates.SIGN_IN_FAILED
+                }
             }
         } finally {
             _isLoading.value = false
@@ -306,7 +310,7 @@ class SignInScreenViewModel(
             when (metaSecretAppManager.initWithSavedKey()) {
                 is InitResult.Success -> {
                     val appState = metaSecretAppManager.getStateModel()
-                    val state = appState?.getAppState()
+                    val state = appState?.getCurrentAppState()
                     logger.setVaultState(state?.description())
                     
                     val vaultState = appState?.getVaultFullInfo()

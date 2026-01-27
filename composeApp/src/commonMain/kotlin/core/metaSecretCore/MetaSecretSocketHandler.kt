@@ -45,6 +45,7 @@ class MetaSecretSocketHandler(
     private var actionsToFollow = mutableSetOf<SocketRequestModel>()
     private var timerJob: Job? = null
     private val timerScope = CoroutineScope(Dispatchers.IO)
+    private var isPaused = false
 
     init {
         logger.log(core.LogTag.SocketHandler.Message.Init, success = true)
@@ -80,6 +81,11 @@ class MetaSecretSocketHandler(
     }
 
     private suspend fun searchRequest() {
+        if (isPaused) {
+            logger.log(core.LogTag.SocketHandler.Message.PollingSkippedWhilePaused, success = true)
+            return
+        }
+
         if (actionsToFollow.isEmpty()) {
             logger.log(core.LogTag.SocketHandler.Message.NoSubscriptions, success = true)
             return
@@ -257,6 +263,16 @@ class MetaSecretSocketHandler(
         logger.log(core.LogTag.SocketHandler.Message.TimerStopped, success = true)
         timerJob?.cancel()
         timerJob = null
+    }
+
+    override fun pausePolling() {
+        logger.log(core.LogTag.SocketHandler.Message.PollingPaused, success = true)
+        isPaused = true
+    }
+
+    override fun resumePolling() {
+        logger.log(core.LogTag.SocketHandler.Message.PollingResumed, success = true)
+        isPaused = false
     }
 
     fun dispose() {

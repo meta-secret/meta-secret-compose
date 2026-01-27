@@ -30,7 +30,7 @@ open class LocalState(
         val coreStateModel = AppStateModel.fromJson(jsonResult, logger, null)
 
         val isSuccess = coreStateModel.success
-        val stateModel = coreStateModel.getAppState()
+        val stateModel = coreStateModel.getCurrentAppState()
         logger.setVaultState(stateModel?.description())
 
         val result: LocalState? = if (isSuccess && stateModel is State.Local) {
@@ -50,7 +50,7 @@ open class LocalState(
         val coreStateModel = AppStateModel.fromJson(jsonResult, logger, null)
 
         val isSuccess = coreStateModel.success
-        val stateModel = coreStateModel.getAppState()
+        val stateModel = coreStateModel.getCurrentAppState()
         val vaultInfo = coreStateModel.getVaultFullInfo()
         logger.setVaultState(stateModel?.description())
 
@@ -95,7 +95,7 @@ class VaultState(
 
         val isSuccess = coreStateModel.success
         val vaultInfo = coreStateModel.getVaultFullInfo()
-        val stateModel = coreStateModel.getAppState()
+        val stateModel = coreStateModel.getCurrentAppState()
         logger.setVaultState(stateModel?.description())
 
         val result: AppState? = if (isSuccess && vaultInfo is VaultFullInfo.Member) {

@@ -84,7 +84,7 @@ class MetaSecretAppManager(
             }
             try {
                 val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
-                val appState = currentState.getAppState()
+                val appState = currentState.getCurrentAppState()
                 logger.setVaultState(appState?.description())
                 
                 cacheDeviceAndVaultInfoIfNeeded(currentState)
@@ -298,7 +298,7 @@ class MetaSecretAppManager(
         return when (initWithSavedKey()) {
             is InitResult.Success -> {
                 val stateModel = getStateModel()
-                val appState = stateModel?.getAppState()
+                val appState = stateModel?.getCurrentAppState()
                 logger.setVaultState(appState?.description())
                 
                 return when (appState) {
@@ -392,7 +392,7 @@ class MetaSecretAppManager(
         }
     }
 
-    override suspend fun acceptRecover(claim: ClaimModel): CommonResponseModel? {
+    override suspend fun acceptRecover(claim: ClaimModel): AppStateModel? {
         logger.log(LogTag.AppManager.Message.AcceptRecoverStarted, success = true)
         if (claim.claimId == null) {
             return null
@@ -402,8 +402,8 @@ class MetaSecretAppManager(
                 metaSecretCore.acceptRecover(claim.claimId)
             }
             try {
-                val result = CommonResponseModel.fromJson(acceptResult)
-                logger.log(LogTag.AppManager.Message.AcceptRecoverResult, "$result", success = true)
+                val result = AppStateModel.fromJson(acceptResult, logger, logFormatter)
+                logger.log(LogTag.AppManager.Message.AcceptRecoverResult, "success=${result.success}", success = true)
                 result
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseAcceptRecoverJson, "${e.message}", success = false)
@@ -415,7 +415,7 @@ class MetaSecretAppManager(
         }
     }
 
-    override suspend fun declineRecover(claim: ClaimModel): CommonResponseModel? {
+    override suspend fun declineRecover(claim: ClaimModel): AppStateModel? {
         logger.log(LogTag.AppManager.Message.DeclineRecoverStarted, success = true)
         if (claim.claimId == null) {
             return null
@@ -425,8 +425,8 @@ class MetaSecretAppManager(
                 metaSecretCore.declineRecover(claim.claimId)
             }
             try {
-                val result = CommonResponseModel.fromJson(declineResult)
-                logger.log(LogTag.AppManager.Message.DeclineRecoverResult, "$result", success = true)
+                val result = AppStateModel.fromJson(declineResult, logger, logFormatter)
+                logger.log(LogTag.AppManager.Message.DeclineRecoverResult, "success=${result.success}", success = true)
                 result
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.FailedToParseDeclineRecoverJson, "${e.message}", success = false)

@@ -275,12 +275,12 @@ data class AppStateModel(
     val message: Message? = null,
     val success: Boolean = false
 ) {
-    fun getAppState(): State? {
+    fun getCurrentAppState(): State? {
         return message?.state
     }
 
     fun getVaultFullInfo(): VaultFullInfo? {
-        return when (val state = getAppState()) {
+        return when (val state = getCurrentAppState()) {
             is State.Vault -> state.vault
             else -> null
         }

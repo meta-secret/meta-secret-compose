@@ -87,12 +87,14 @@ class MainScreenViewModel(
                 onSuccess = {
                     logger.log(LogTag.MainVM.Message.BiometricAuthSuccess, success = true)
                     viewModelScope.launch(Dispatchers.IO) {
+                        socketHandler.pausePolling()
                         try {
                             logger.log(LogTag.MainVM.Message.AcceptRecoverCalled, "claimId = ${restoreData.claimId}", success = true)
                             metaSecretAppManager.acceptRecover(ClaimModel(restoreData.claimId))
                         } catch (t: Throwable) {
                             logger.log(LogTag.MainVM.Message.AcceptRecoverFailed, "claimId = ${restoreData.claimId}: $t", success = false)
                         } finally {
+                            socketHandler.resumePolling()
                             withContext<Unit>(Dispatchers.Main) {
                                 alertCoordinator.onRecoveryRequestProcessingComplete()
                             }
