@@ -42,7 +42,7 @@ val appModule = module {
     single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get(), get()) }
     single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get(), get(), get(), get(), get()) }
     single<VaultStatsProviderInterface> { VaultStatsProvider(get(), get(), get()) }
-    single<AlertCoordinatorInterface> { AlertCoordinator() }
+    single<AlertCoordinatorInterface> { AlertCoordinator(get(), get()) }
     single<DebugLoggerInterface> { DebugLogger(get()) }
 
     single { MainScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
@@ -55,5 +55,5 @@ val appModule = module {
     factory { AddSecretViewModel(get(), get(), get(), get(), get(), get()) }
     factory { RemoveSecretViewModel(get()) }
     factory { AddDeviceViewModel(get()) }
-    factory { ShowSecretViewModel(get(), get()) }
+    factory { ShowSecretViewModel(get(), get(), get(), get(), get()) }
 }

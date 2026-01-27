@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -40,7 +41,6 @@ import kotlinproject.composeapp.generated.resources.noSecretsHeader
 import kotlinproject.composeapp.generated.resources.secretAdded
 import kotlinproject.composeapp.generated.resources.secretRemoved
 import kotlinproject.composeapp.generated.resources.secretsHeader
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -64,7 +64,8 @@ class SecretsScreen : Screen {
         val viewModel: SecretsScreenViewModel = koinViewModel()
         val mainScreenViewModel: MainScreenViewModel = koinInject()
         val secretsList by viewModel.secrets.collectAsState()
-        var previousCount by remember { mutableStateOf(secretsList.size) }
+        val previousCount = remember { mutableStateOf(secretsList.size) }
+        val skipNextCountChanges = remember { mutableStateOf(0) }
         val devicesCount by viewModel.devicesCount.collectAsState()
         var isAddSecretDialogVisible by remember { mutableStateOf(false) }
         var isShowSecretDialogVisible by remember { mutableStateOf(false) }
@@ -78,9 +79,29 @@ class SecretsScreen : Screen {
         val secretAddedText = stringResource(Res.string.secretAdded)
         val secretRemovedText = stringResource(Res.string.secretRemoved)
 
-        LaunchedEffect(Unit) {
-            previousCount = secretsList.size
+        LifecycleResumeEffect(Unit) {
+            skipNextCountChanges.value = 2
+            previousCount.value = secretsList.size
+            onPauseOrDispose { }
         }
+
+        LaunchedEffect(secretsList.size) {
+            if (previousCount.value != secretsList.size) {
+                if (skipNextCountChanges.value > 0) {
+                    skipNextCountChanges.value--
+                } else {
+                    val isSnackSuccess = previousCount.value < secretsList.size
+                    val message = if (isSnackSuccess) secretAddedText else secretRemovedText
+                    if (isSnackSuccess) {
+                        notificationCoordinator.showSuccess(message)
+                    } else {
+                        notificationCoordinator.showError(message)
+                    }
+                }
+                previousCount.value = secretsList.size
+            }
+        }
+
         if (isRedirected) {
             LocalTabNavigator.current.current = DevicesTab
             viewModel.handle(SecretsEvents.SetTabIndex(index = 1))
@@ -93,7 +114,7 @@ class SecretsScreen : Screen {
                     .padding(bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                itemsIndexed(secretsList.sortedBy { it.secretName }) { index, secret ->
+                itemsIndexed(secretsList.sortedBy { it.secretName }) { _, secret ->
                     SecretsContent(
                         secret = secret,
                         devicesCount = devicesCount,
@@ -158,21 +179,6 @@ class SecretsScreen : Screen {
                     )
                 }
             }
-        }
-
-        if (previousCount != secretsList.size) {
-            val isSnackSuccess = previousCount < secretsList.size
-            val message = if (isSnackSuccess) {
-                secretAddedText
-            } else {
-                secretRemovedText
-            }
-            if (isSnackSuccess) {
-                notificationCoordinator.showSuccess(message)
-            } else {
-                notificationCoordinator.showError(message)
-            }
-            previousCount = secretsList.size
         }
 
         if (secretsList.isEmpty()) {

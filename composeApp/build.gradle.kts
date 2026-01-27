@@ -80,6 +80,7 @@ kotlin {
             implementation(libs.coroutines.core)
             implementation(libs.settings.coroutine)
             implementation(libs.qr.kit)
+            implementation(libs.jetbrains.lifecycle.runtime.compose)
         }
     }
 }

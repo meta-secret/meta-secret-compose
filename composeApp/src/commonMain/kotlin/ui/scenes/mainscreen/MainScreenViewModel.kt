@@ -123,26 +123,28 @@ class MainScreenViewModel(
                         val existingSecretsIds = secrets?.map { it.name }?.toSet()
                         logger.log(LogTag.MainVM.Message.ReadyToRecoverExistingSecrets, "$existingSecretsIds", success = true)
 
-                        val newRequests = restoreData.filter { restoreData ->
-                            existingSecretsIds?.contains(restoreData.secretId) == true
-                        }
-                        logger.log(LogTag.MainVM.Message.ReadyToRecoverNewRequests, "$newRequests", success = true)
-
-                        if (newRequests.isEmpty()) {
+                        val secretExists = existingSecretsIds?.contains(restoreData.secretId) == true
+                        if (!secretExists) {
                             logger.log(LogTag.MainVM.Message.ReadyToRecoverNothing, success = true)
                             return@collect
                         }
 
                         withContext(Dispatchers.Main) {
-                            newRequests.forEach { restoreData ->
-                                alertCoordinator.showRecoveryRequest(restoreData)
-                            }
+                            alertCoordinator.showRecoveryRequest(restoreData)
                         }
                     }
                     is SocketActionModel.RECOVER_SENT -> {
                         _secretIdToShow.value = actionType.secretId
                         logger.log(LogTag.MainVM.Message.ReadyToShowSecret,
                             "claimId=${actionType.claimId}, secretId=${actionType.secretId}", success = true)
+                    }
+                    is SocketActionModel.RECOVER_DECLINED -> {
+                        logger.log(LogTag.MainVM.Message.RecoverDeclined, 
+                            "secretId=${actionType.secretId}", success = true)
+                        withContext(Dispatchers.Main) {
+                            _secretIdToShow.value = null
+                            alertCoordinator.showRecoverDeclinedNotification()
+                        }
                     }
                     else -> { /* ignore */ }
                 }
@@ -166,6 +168,7 @@ class MainScreenViewModel(
             when (event) {
                 is MainViewEvents.SetTabIndex -> setTabIndex(event.index)
                 is MainViewEvents.ShowWarning -> changeWarningVisibilityTo(event.isToShow)
+                MainViewEvents.OnEnterForeground -> socketHandler.restartTimer()
             }
         }
     }
@@ -206,4 +209,5 @@ class MainScreenViewModel(
 sealed class MainViewEvents : CommonViewModelEventsInterface {
     data class SetTabIndex(val index: Int) : MainViewEvents()
     data class ShowWarning(val isToShow: Boolean) : MainViewEvents()
+    data object OnEnterForeground : MainViewEvents()
 }

@@ -17,6 +17,7 @@ glance = "1.1.1"
 koin = "4.1.1"
 kotlin = "2.3.0"
 lifecycleLivedataCoreKtx = "2.10.0"
+lifecycleRuntimeCompose = "2.9.6"
 material = "1.13.0"
 multiplatformSettings = "1.3.0"
 qrKit = "3.1.3"
@@ -64,6 +65,7 @@ voyager-transitions = { module = "cafe.adriel.voyager:voyager-transitions", vers
 androidx-annotation-jvm = { group = "androidx.annotation", name = "annotation-jvm", version.ref = "annotationJvm" }
 androidx-foundation-layout-android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "foundationLayoutAndroid" }
 androidx-lifecycle-livedata-core-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-core-ktx", version.ref = "lifecycleLivedataCoreKtx" }
+jetbrains-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-glance = { group = "androidx.glance", name = "glance", version.ref = "glance" }
 androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }

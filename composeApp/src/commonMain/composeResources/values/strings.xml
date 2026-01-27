@@ -62,6 +62,7 @@
     <string name = "errorUnknownPrefix">An error occurred: </string>
     <string name = "errorBiometricAuthFailed">Biometric authentication failed</string>
     <string name = "errorSecretAddFailed">Failed to add secret</string>
+    <string name = "errorRecoverDeclined">Secret recovery was declined</string>
     <string name = "lackOfDevices">Not having enough devices?</string>
     <string name = "useMetaSecret">MetaSecret Cloud Device - you can use our cloud as a device</string>
     <string name = "lackOfDevices_start">You need to add </string>
@@ -91,6 +92,8 @@
     <string name = "accept">Accept</string>
     <string name = "decline">Decline</string>
     <string name = "accept_request_on_other_device">Accept the request on your other device</string>
+    <string name = "recoverPendingExists">Recovery request already sent. Please accept it on your other device</string>
+    <string name = "recoverRequestSent">Recovery request sent. Please accept it on your other device</string>
     <string name = "unexpected_login">"Unexpected loading state"</string>
     <string name = "reject_join">"Registration denied. You may be connecting to the wrong account."</string>
     <string name = "biometric_error">Biometric authentification error. Please, try again later</string>

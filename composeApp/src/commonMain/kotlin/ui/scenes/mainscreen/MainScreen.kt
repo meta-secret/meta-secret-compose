@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -59,6 +60,10 @@ class MainScreen : Screen {
         val viewModel: MainScreenViewModel = koinViewModel()
         val alertCoordinator: AlertCoordinatorInterface = koinInject()
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
+        LifecycleResumeEffect(Unit) {
+            viewModel.handle(MainViewEvents.OnEnterForeground)
+            onPauseOrDispose { }
+        }
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         val selectedTabIndex by TabStateHolder.selectedTabIndex
         val tabSize = viewModel.screenMetricsProvider.screenWidth() / tabs.size

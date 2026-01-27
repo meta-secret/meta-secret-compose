@@ -5,7 +5,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import models.appInternalModels.RestoreData
 
-class AlertCoordinator : AlertCoordinatorInterface {
+class AlertCoordinator(
+    private val notificationCoordinator: NotificationCoordinatorInterface,
+    private val stringProvider: StringProviderInterface
+) : AlertCoordinatorInterface {
     private val _joinRequestAlert = MutableStateFlow<JoinRequestAlertState>(JoinRequestAlertState.Hidden)
     override val joinRequestAlert: StateFlow<JoinRequestAlertState> = _joinRequestAlert.asStateFlow()
     
@@ -77,5 +80,9 @@ class AlertCoordinator : AlertCoordinatorInterface {
         } else {
             _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
         }
+    }
+    
+    override fun showRecoverDeclinedNotification() {
+        notificationCoordinator.showError(stringProvider.errorRecoverDeclined())
     }
 }

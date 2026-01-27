@@ -17,6 +17,7 @@ interface AlertCoordinatorInterface {
     fun onRecoveryRequestDecision(isAccepted: Boolean)
     fun setRecoveryRequestHandler(handler: (Boolean) -> Unit)
     fun onRecoveryRequestProcessingComplete()
+    fun showRecoverDeclinedNotification()
 }
 
 sealed class JoinRequestAlertState {

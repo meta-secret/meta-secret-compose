@@ -23,8 +23,11 @@ interface StringProviderInterface {
     fun errorUnknownPrefix(): String
     fun errorBiometricAuthFailed(): String
     fun errorSecretAddFailed(): String
+    fun errorRecoverDeclined(): String
     
     fun acceptRequestOnOtherDevice(): String
+    fun recoverPendingExists(): String
+    fun recoverRequestSent(): String
 }
 
 

@@ -32,7 +32,10 @@ class StringProviderIos : StringProviderInterface {
     override fun errorUnknownPrefix() = s(Res.string.errorUnknownPrefix)
     override fun errorBiometricAuthFailed() = s(Res.string.errorBiometricAuthFailed)
     override fun errorSecretAddFailed() = s(Res.string.errorSecretAddFailed)
+    override fun errorRecoverDeclined() = s(Res.string.errorRecoverDeclined)
     override fun acceptRequestOnOtherDevice() = s(Res.string.accept_request_on_other_device)
+    override fun recoverPendingExists() = s(Res.string.recoverPendingExists)
+    override fun recoverRequestSent() = s(Res.string.recoverRequestSent)
 }
 
 
