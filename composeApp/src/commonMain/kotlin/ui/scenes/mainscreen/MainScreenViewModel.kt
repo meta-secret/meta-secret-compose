@@ -66,11 +66,6 @@ class MainScreenViewModel(
         )
 
         alertCoordinator.setRecoveryRequestHandler { isAccepted ->
-            if (!isAccepted) {
-                alertCoordinator.onRecoveryRequestProcessingComplete()
-                return@setRecoveryRequestHandler
-            }
-
             val currentState = alertCoordinator.recoveryRequestAlert.value
             val restoreData = when (currentState) {
                 is core.RecoveryRequestAlertState.Visible -> currentState.restoreData

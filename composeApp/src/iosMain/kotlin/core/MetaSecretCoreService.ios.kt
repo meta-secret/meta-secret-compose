@@ -177,7 +177,7 @@ class MetaSecretCoreServiceIos(
     override fun declineRecover(claimId: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingDeclineRecover, "with: $claimId", success = true)
-            val result = swiftBridge.acceptRecover(claimId)
+            val result = swiftBridge.declineRecover(claimId)
             logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverResult, result, success = true)
             return result
         } catch (e: Exception) {

@@ -54,8 +54,7 @@ import ObjectiveC
     
     @_silgen_name("decline_recover")
     private func c_decline_recover(_ claim_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-    
-    
+
     @_silgen_name("show_recovered")
     private func c_show_recovered(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
     
