@@ -237,7 +237,9 @@ class SignInScreenViewModel(
 
     private suspend fun generateMasterKey() {
         _isLoading.value = true
-        val jsonResponse = metaSecretCore.generateMasterKey()
+        val jsonResponse = withContext(Dispatchers.IO) {
+            metaSecretCore.generateMasterKey()
+        }
         val model = MasterKeyModel.fromJson(jsonResponse)
 
         if (model.success && !model.masterKey.isNullOrEmpty()) {

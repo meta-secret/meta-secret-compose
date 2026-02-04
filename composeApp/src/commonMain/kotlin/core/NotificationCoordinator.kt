@@ -41,9 +41,4 @@ class NotificationCoordinator : NotificationCoordinatorInterface {
             _notificationState.value = NotificationState.Hidden
         }
     }
-    
-    fun dispose() {
-        autoDismissJob?.cancel()
-        coordinatorScope.cancel()
-    }
 }

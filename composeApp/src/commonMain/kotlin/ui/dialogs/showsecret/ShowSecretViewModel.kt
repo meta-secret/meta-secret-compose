@@ -14,9 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import models.apiModels.ClaimStatus
-import models.apiModels.DistributionType
-import models.apiModels.VaultFullInfo
 import models.appInternalModels.SecretModel
+import models.appInternalModels.SocketRequestModel
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 
@@ -47,7 +46,7 @@ class ShowSecretViewModel(
                     logger.log(LogTag.ShowSecretVM.Message.RecoverSecretId, event.secretName, success = true)
                     currentSecretName = event.secretName
                     userRequestedRecovery = true
-                    recoverSecret(event.secretName)
+                    findClaim(event.secretName)
                 }
                 
                 is ShowSecretEvents.SecretReadyToShow -> {
@@ -71,13 +70,11 @@ class ShowSecretViewModel(
         }
     }
 
-    private fun recoverSecret(secretName: String) {
+    private fun findClaim(secretName: String) {
         _isLoading.value = true
         logger.log(LogTag.ShowSecretVM.Message.StartRecovering, success = true)
-        
-        socketHandler.clearProcessedRecoverClaims()
-        
-        if (devicesCount.value < 2) {
+
+        if (devicesCount.value < 2) { // TODO: Should be resolved inside the Lib
             logger.log(LogTag.ShowSecretVM.Message.SingleDeviceMode, success = true)
             showRecoveredSecret(secretName)
             return
@@ -88,19 +85,16 @@ class ShowSecretViewModel(
                 val existingClaim = withContext(Dispatchers.IO) {
                     metaSecretAppManager.findClaim(secretName)
                 }
-                
-                if (existingClaim?.claimId != null) {
-                    val isClaimUsed = checkIfClaimAlreadyUsed(existingClaim.claimId)
-                    
-                    if (isClaimUsed) {
-                        logger.log(LogTag.ShowSecretVM.Message.ClaimAlreadyUsed, existingClaim.claimId, success = true)
-                        handleNoValidClaim(secretName)
-                    } else {
-                        logger.log(LogTag.ShowSecretVM.Message.ExistingClaimFound, existingClaim.claimId, success = true)
-                        showRecoveredSecret(secretName)
-                    }
-                } else {
-                    handleNoValidClaim(secretName)
+
+                logger.log(LogTag.ShowSecretVM.Message.ExistingClaimFound, "$existingClaim", success = true)
+                socketHandler.actionsToFollow(
+                    add = listOf(SocketRequestModel.SHOW_SECRET),
+                    exclude = null
+                )
+                when (existingClaim?.status) {
+                    ClaimStatus.PENDING -> notificationCoordinator.showSuccess(stringProvider.recoverRequestSent())
+                    ClaimStatus.SENT -> showRecoveredSecret(secretName)
+                    else -> recoverSecret(secretName)
                 }
             } catch (t: Throwable) {
                 logger.log(LogTag.ShowSecretVM.Message.RecoverFailed, "${t.message}", success = false)
@@ -109,62 +103,12 @@ class ShowSecretViewModel(
         }
     }
     
-    private suspend fun handleNoValidClaim(secretName: String) {
-        val hasPendingClaim = checkForPendingClaim(secretName)
-        if (hasPendingClaim) {
-            logger.log(LogTag.ShowSecretVM.Message.PendingClaimExists, secretName, success = true)
-            _isLoading.value = false
-            notificationCoordinator.showSuccess(stringProvider.recoverPendingExists())
-        } else {
-            logger.log(LogTag.ShowSecretVM.Message.NoExistingClaim, success = true)
-            withContext(Dispatchers.IO) {
-                metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))
-            }
-            notificationCoordinator.showSuccess(stringProvider.recoverRequestSent())
+    private suspend fun recoverSecret(secretName: String) {
+        socketHandler.setProcessingSecretName(secretName)
+        withContext(Dispatchers.IO) {
+            metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))
         }
-    }
-    
-    private suspend fun checkIfClaimAlreadyUsed(claimId: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            val appState = metaSecretAppManager.getStateModel() ?: return@withContext false
-            val currentDeviceId = appState.getCurrentDeviceId() ?: return@withContext false
-            val vaultFullInfo = appState.getVaultFullInfo()
-            
-            if (vaultFullInfo is VaultFullInfo.Member) {
-                val claims = vaultFullInfo.member.ssClaims?.claims ?: return@withContext false
-                val claim = claims[claimId] ?: return@withContext false
-                
-                if (claim.sender == currentDeviceId) {
-                    val senderStatus = claim.status.statuses[currentDeviceId]
-                    return@withContext senderStatus == ClaimStatus.DELIVERED
-                }
-            }
-            false
-        }
-    }
-    
-    private suspend fun checkForPendingClaim(secretName: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            val appState = metaSecretAppManager.getStateModel() ?: return@withContext false
-            val currentDeviceId = appState.getCurrentDeviceId() ?: return@withContext false
-            val vaultFullInfo = appState.getVaultFullInfo()
-            
-            if (vaultFullInfo is VaultFullInfo.Member) {
-                val claims = vaultFullInfo.member.ssClaims?.claims ?: return@withContext false
-                
-                claims.values.any { claim ->
-                    val isRecoverType = claim.distributionType == DistributionType.RECOVER
-                    val isForThisSecret = claim.distClaimId.passId.name == secretName
-                    val isSenderForThisDevice = claim.sender == currentDeviceId
-                    val hasPendingStatus = claim.receivers.any { receiverId ->
-                        claim.status.statuses[receiverId] == ClaimStatus.PENDING
-                    }
-                    isRecoverType && isForThisSecret && isSenderForThisDevice && hasPendingStatus
-                }
-            } else {
-                false
-            }
-        }
+        notificationCoordinator.showSuccess(stringProvider.recoverRequestSent())
     }
 
     private fun showRecoveredSecret(secretId: String) {
@@ -186,6 +130,10 @@ class ShowSecretViewModel(
                 logger.log(LogTag.ShowSecretVM.Message.ShowRecoveredFailed, "${t.message}", success = false)
             } finally {
                 _isLoading.value = false
+                socketHandler.actionsToFollow(
+                    add = null,
+                    exclude = listOf(SocketRequestModel.SHOW_SECRET)
+                )
             }
         }
     }

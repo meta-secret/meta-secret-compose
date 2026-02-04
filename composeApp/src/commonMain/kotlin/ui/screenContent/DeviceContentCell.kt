@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +26,6 @@ import kotlinproject.composeapp.generated.resources.currentDevice
 import kotlinproject.composeapp.generated.resources.devices
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
-import kotlinproject.composeapp.generated.resources.removeDevice
 import kotlinproject.composeapp.generated.resources.secret
 import kotlinproject.composeapp.generated.resources.secrets_4
 import kotlinproject.composeapp.generated.resources.secrets_5
@@ -36,12 +35,9 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
-import core.ScreenMetricsProviderInterface
-import ui.SwipeableItem
 
 @Composable
 fun DeviceContent(
-    screenMetricsProvider: ScreenMetricsProviderInterface,
     model: DeviceCellModel,
     currentDeviceId: String?,
     onClick: ()-> Unit

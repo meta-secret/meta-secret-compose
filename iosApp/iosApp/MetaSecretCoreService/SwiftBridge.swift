@@ -42,7 +42,10 @@ import ObjectiveC
     
     @_silgen_name("find_claim_by")
     private func c_find_claim_by(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-    
+
+    @_silgen_name("find_claim_id_by")
+    private func c_find_claim_id_by(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
+
     @_silgen_name("recover")
     private func c_recover(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
     

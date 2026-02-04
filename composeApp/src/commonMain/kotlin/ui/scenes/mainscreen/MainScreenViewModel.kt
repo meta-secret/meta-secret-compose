@@ -61,8 +61,7 @@ class MainScreenViewModel(
         checkBackup()
         logger.log(LogTag.MainVM.Message.FollowResponsibleToAcceptJoin, success = true)
         socketHandler.actionsToFollow(
-            add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN, SocketRequestModel.WAIT_FOR_RECOVER_REQUEST,
-                SocketRequestModel.SHOW_SECRET),
+            add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN, SocketRequestModel.WAIT_FOR_RECOVER_REQUEST),
             exclude = null
         )
 
@@ -82,6 +81,25 @@ class MainScreenViewModel(
                 }
             }
 
+            if (!isAccepted) {
+                logger.log(LogTag.MainVM.Message.RecoverDeclined, "claimId = ${restoreData.claimId}", success = true)
+                viewModelScope.launch(Dispatchers.IO) {
+                    socketHandler.pausePolling()
+                    try {
+                        logger.log(LogTag.MainVM.Message.DeclineRecoverCalled, "claimId = ${restoreData.claimId}", success = true)
+                        metaSecretAppManager.declineRecover(restoreData.claimId)
+                    } catch (t: Throwable) {
+                        logger.log(LogTag.MainVM.Message.DeclineRecoverFailed, "claimId = ${restoreData.claimId}: $t", success = false)
+                    } finally {
+                        socketHandler.resumePolling()
+                        withContext<Unit>(Dispatchers.Main) {
+                            alertCoordinator.onRecoveryRequestProcessingComplete()
+                        }
+                    }
+                }
+                return@setRecoveryRequestHandler
+            }
+
             logger.log(LogTag.MainVM.Message.RecoverAccepted, success = true)
             biometricAuthenticator.authenticate(
                 onSuccess = {
@@ -90,7 +108,7 @@ class MainScreenViewModel(
                         socketHandler.pausePolling()
                         try {
                             logger.log(LogTag.MainVM.Message.AcceptRecoverCalled, "claimId = ${restoreData.claimId}", success = true)
-                            metaSecretAppManager.acceptRecover(ClaimModel(restoreData.claimId))
+                            metaSecretAppManager.acceptRecover(restoreData.claimId)
                         } catch (t: Throwable) {
                             logger.log(LogTag.MainVM.Message.AcceptRecoverFailed, "claimId = ${restoreData.claimId}: $t", success = false)
                         } finally {
@@ -119,7 +137,7 @@ class MainScreenViewModel(
                         val restoreData = actionType.restoreData
                         logger.log(LogTag.MainVM.Message.ReadyToRecoverSignal, "$restoreData", success = true)
 
-                        val secrets = metaSecretAppManager.getSecretsFromVault()
+                        val secrets = metaSecretAppManager.getSecretsFromVault(true)
                         val existingSecretsIds = secrets?.map { it.name }?.toSet()
                         logger.log(LogTag.MainVM.Message.ReadyToRecoverExistingSecrets, "$existingSecretsIds", success = true)
 
@@ -168,7 +186,7 @@ class MainScreenViewModel(
             when (event) {
                 is MainViewEvents.SetTabIndex -> setTabIndex(event.index)
                 is MainViewEvents.ShowWarning -> changeWarningVisibilityTo(event.isToShow)
-                MainViewEvents.OnEnterForeground -> socketHandler.restartTimer()
+                MainViewEvents.OnEnterForeground -> {/* TODO: Launch socket timer again */ }
             }
         }
     }

@@ -62,7 +62,7 @@ class DevicesScreenViewModel(
             socketHandler.socketActionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
                     logger.log(LogTag.DevicesVM.Message.JoinRequestStateReceived, success = true)
-                    loadDevicesList()
+                    loadDevicesList(true)
                 }
             }
         }
@@ -87,7 +87,7 @@ class DevicesScreenViewModel(
     override fun handle(event: CommonViewModelEventsInterface) {
         if (event is DeviceViewEvents) {
             when (event) {
-                DeviceViewEvents.OnAppear -> loadDevicesList()
+                DeviceViewEvents.OnAppear -> loadDevicesList(false)
                 DeviceViewEvents.Accept -> authenticateAndUpdateMembership(true)
                 DeviceViewEvents.Decline -> authenticateAndUpdateMembership(false)
                 is DeviceViewEvents.SelectDevice -> {
@@ -116,12 +116,12 @@ class DevicesScreenViewModel(
         )
     }
 
-    private fun loadDevicesList() {
+    private fun loadDevicesList(isSocketAction: Boolean) {
         viewModelScope.launch {
             logger.log(LogTag.DevicesVM.Message.LoadDevicesList, success = true)
             try {
                 _isLoading.value = true
-                _devicesList.value = fetchDevicesList()
+                _devicesList.value = fetchDevicesList(isSocketAction)
             } finally {
                 _isLoading.value = false
             }
@@ -154,7 +154,7 @@ class DevicesScreenViewModel(
                 }
                 _currentDeviceId.value = null
                 alertCoordinator.dismissJoinRequest()
-                _devicesList.value = fetchDevicesList()
+                _devicesList.value = fetchDevicesList(isSocketAction = false)
             } catch (e: Exception) {
                 logger.log(LogTag.DevicesVM.Message.UpdateError, "${e.message}", success = false)
             } finally {
@@ -163,9 +163,9 @@ class DevicesScreenViewModel(
         }
     }
 
-    private suspend fun fetchDevicesList(): List<DeviceCellModel> {
+    private suspend fun fetchDevicesList(isSocketAction: Boolean): List<DeviceCellModel> {
         val vaultSummary = withContext(Dispatchers.IO) {
-            appManager.getVaultSummary()
+            appManager.getVaultSummary(isSocketAction)
         }
 
         return vaultSummary?.users?.map { (_, userInfo) ->

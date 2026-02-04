@@ -1,6 +1,5 @@
 package core
 
-import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -9,15 +8,15 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 import models.apiModels.UserStatus
-import core.LogTag
+import models.apiModels.VaultFullInfo
 
 class VaultStatsProvider(
-    private val appManager: MetaSecretAppManagerInterface,
+    private val appStateCacheProvider: AppStateCacheProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val logger: DebugLoggerInterface,
 ) : VaultStatsProviderInterface {
@@ -43,41 +42,43 @@ class VaultStatsProvider(
         }
 
         scope.launch {
-            socketHandler.socketActions.collect { actionType ->
-                if (actionType == SocketActionModel.UPDATE_STATE) {
-                    logger.log(LogTag.VaultStatsProvider.Message.UpdateStateReceived, success = true)
-                    refresh()
+            appStateCacheProvider.appState
+                .filterNotNull()
+                .collect { appState ->
+                    logger.log(LogTag.VaultStatsProvider.Message.AppStateUpdated, success = true)
+                    updateStatsFromState(appState)
                 }
-            }
         }
-
-        scope.launch {
-            socketHandler.socketActionType.collect { actionType ->
-                if (actionType == SocketActionModel.ASK_TO_JOIN) {
-                    logger.log(LogTag.VaultStatsProvider.Message.AskToJoinSignal, success = true)
-                    refresh()
-                }
-            }
-        }
-
-        scope.launch { refresh() }
     }
 
-    override suspend fun refresh() {
-        withContext(Dispatchers.IO) {
-            try {
-                val vaultSummary = appManager.getVaultSummary()
+    private fun updateStatsFromState(appState: models.apiModels.AppStateModel) {
+        try {
+            val vaultInfo = appState.getVaultFullInfo()
+            if (vaultInfo is VaultFullInfo.Member) {
+                val vaultSummary = appState.getVaultSummary()
                 if (vaultSummary != null) {
                     _secretsCount.value = vaultSummary.secretsCount
                     _devicesCount.value = vaultSummary.users.values.count { it.status == UserStatus.MEMBER }
                     _vaultName.value = vaultSummary.vaultName
-                    _joinRequestsCount.value = appManager.getJoinRequestsCount()
-                    logger.log(LogTag.VaultStatsProvider.Message.StatsUpdated, "secrets=${_secretsCount.value}, devices(MEMBER)=${_devicesCount.value}, vaultName=${_vaultName.value}, joinRequestsCount = ${_joinRequestsCount.value}", success = true)
+                    _joinRequestsCount.value = vaultInfo.member.vaultEvents?.getJoinRequestsCount()
                 } else {
                     logger.log(LogTag.VaultStatsProvider.Message.VaultSummaryNull, success = false)
                 }
-            } catch (t: Throwable) {
-                logger.log(LogTag.VaultStatsProvider.Message.FailedToRefreshStats, "${t.message}", success = false)
+            } else {
+                logger.log(LogTag.VaultStatsProvider.Message.AppStateNull, success = false)
+            }
+        } catch (t: Throwable) {
+            logger.log(LogTag.VaultStatsProvider.Message.FailedToRefreshStats, "${t.message}", success = false)
+        }
+    }
+
+    override suspend fun refresh() {
+        withContext(Dispatchers.IO) {
+            val cachedState = appStateCacheProvider.appState.value
+            if (cachedState != null) {
+                updateStatsFromState(cachedState)
+            } else {
+                logger.log(LogTag.VaultStatsProvider.Message.AppStateNull, success = false)
             }
         }
     }

@@ -11,6 +11,5 @@ interface MetaSecretSocketHandlerInterface {
     fun actionsToFollow(add: List<SocketRequestModel>?, exclude: List<SocketRequestModel>?)
     fun pausePolling()
     fun resumePolling()
-    fun restartTimer()
-    fun clearProcessedRecoverClaims()
+    fun setProcessingSecretName(secretName: String)
 }

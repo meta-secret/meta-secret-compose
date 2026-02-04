@@ -40,10 +40,6 @@ class AlertCoordinator(
         joinRequestHandler = handler
     }
     
-    fun onJoinRequestProcessingComplete() {
-        _joinRequestAlert.value = JoinRequestAlertState.Hidden
-    }
-    
     override fun showRecoveryRequest(restoreData: RestoreData) {
         recoverQueue.addLast(restoreData)
         if (_recoveryRequestAlert.value is RecoveryRequestAlertState.Hidden) {

@@ -29,6 +29,8 @@ char *split_secret(const char *secret_id_ptr, const char *secret_ptr);
 
 char *find_claim_by(const char *secret_id_ptr);
 
+char *find_claim_id_by(const char *secret_id_ptr);
+
 char *recover(const char *secret_id_ptr);
 
 char *accept_recover(const char *claim_id_ptr);

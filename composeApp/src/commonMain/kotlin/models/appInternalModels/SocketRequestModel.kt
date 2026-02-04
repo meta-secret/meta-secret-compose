@@ -6,5 +6,4 @@ enum class SocketRequestModel {
     GET_STATE,
     WAIT_FOR_RECOVER_REQUEST,
     SHOW_SECRET,
-    NONE,
 }

@@ -23,7 +23,6 @@ class AddSecretViewModel(
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val keyValueStorage: KeyValueStorageInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
-    private val socketHandler: MetaSecretSocketHandlerInterface,
     private val notificationCoordinator: NotificationCoordinatorInterface,
     private val stringProvider: StringProviderInterface,
 ) : CommonViewModel() {
@@ -83,7 +82,7 @@ class AddSecretViewModel(
                 }
                 currentState = if (splitResult != null && splitResult.success) {
                     val secretsFromVault = withContext(Dispatchers.IO) {
-                        metaSecretAppManager.getSecretsFromVault()
+                        metaSecretAppManager.getSecretsFromVault(false)
                     }
                     if (secretsFromVault != null) {
                         keyValueStorage.syncSecretsFromVault(secretsFromVault)

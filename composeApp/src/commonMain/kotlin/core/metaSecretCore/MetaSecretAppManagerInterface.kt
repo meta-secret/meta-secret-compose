@@ -17,17 +17,15 @@ interface MetaSecretAppManagerInterface {
 
     suspend fun getStateModel(): AppStateModel?
     suspend fun getVaultFullInfoModel(): VaultFullInfo?
-    suspend fun getVaultEventsModel(): VaultEvents?
     suspend fun getJoinRequestsCount(): Int?
-    suspend fun getJoinRequestsCandidate(): List<JoinClusterRequest>?
-    suspend fun getVaultSummary(): VaultSummary?
+    suspend fun getVaultSummary(isSocketAction: Boolean): VaultSummary?
     suspend fun updateMember(candidate: UserData, actionUpdate: String): CommonResponseModel?
     suspend fun getUserDataBy(deviceId: String): UserData?
     suspend fun splitSecret(secretModel: SecretModel): CommonResponseModel?
     suspend fun findClaim(secretId: String): ClaimModel?
     suspend fun recover(secretModel: SecretModel): CommonResponseModel?
-    suspend fun acceptRecover(claim: ClaimModel): AppStateModel?
-    suspend fun declineRecover(claim: ClaimModel): AppStateModel?
+    suspend fun acceptRecover(claimId: String?): AppStateModel?
+    suspend fun declineRecover(claimId: String?): AppStateModel?
     suspend fun showRecovered(secretModel: SecretModel): String?
-    suspend fun getSecretsFromVault(): List<SecretApiModel>?
+    suspend fun getSecretsFromVault(isSocketAction: Boolean): List<SecretApiModel>?
 }

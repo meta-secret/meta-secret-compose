@@ -1,40 +1,21 @@
 package ui.scenes.secretsscreen
 
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.Secret
-import core.AppColors
 import core.LogTag
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.VaultStatsProviderInterface
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.manrope_bold
-import kotlinproject.composeapp.generated.resources.removeSecretConfirmation
-import kotlinproject.composeapp.generated.resources.fromAllDevices
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
-import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.stringResource
 import ui.TabStateHolder
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -50,10 +31,7 @@ class SecretsScreenViewModel(
     private val secretsList: StateFlow<List<Secret>> = keyValueStorage.secretData
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val secrets: StateFlow<List<Secret>> = secretsList
-
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
-
-    val secretsCount: StateFlow<Int> = vaultStatsProvider.secretsCount
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -66,15 +44,14 @@ class SecretsScreenViewModel(
 
         viewModelScope.launch {
             socketHandler.socketActions.collect { actionType ->
-                logger.log(LogTag.SecretsVM.Message.SocketActionType, "$actionType", success = true)
                 if (actionType == SocketActionModel.UPDATE_STATE) {
                     logger.log(LogTag.SecretsVM.Message.NewStateForSecrets, success = true)
-                    loadSecretsFromVault()
+                    loadSecretsFromVault(true)
                 }
             }
         }
         
-        loadSecretsFromVault()
+        loadSecretsFromVault(false)
     }
 
     override fun handle(event: CommonViewModelEventsInterface) {
@@ -99,11 +76,11 @@ class SecretsScreenViewModel(
         TabStateHolder.setTabIndex(index)
     }
 
-    private fun loadSecretsFromVault() {
+    private fun loadSecretsFromVault(isSocketAction: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 logger.log(LogTag.SecretsVM.Message.LoadingSecretsFromVault, success = true)
-                val secretsFromVault = metaSecretAppManager.getSecretsFromVault()
+                val secretsFromVault = metaSecretAppManager.getSecretsFromVault(isSocketAction)
                 if (secretsFromVault != null) {
                     keyValueStorage.syncSecretsFromVault(secretsFromVault)
                     logger.log(LogTag.SecretsVM.Message.SecretsSyncedSuccess, success = true)

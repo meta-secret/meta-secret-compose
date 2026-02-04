@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import core.NotificationCoordinatorInterface
 import core.NotificationState
 import core.ScreenMetricsProviderInterface
-import org.koin.compose.koinInject
 
 @Composable
 fun NotificationProvider(

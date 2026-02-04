@@ -1,5 +1,8 @@
 package core.metaSecretCore
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
 import models.apiModels.AppStateModel
 import models.apiModels.State
 import models.apiModels.UserDataOutsiderStatus
@@ -12,7 +15,7 @@ data class AppStateResult (
 )
 
 interface MetaSecretStateResolverInterface {
-    fun startFirstSignUp(
+    suspend fun startFirstSignUp(
         vaultName: String
     ): AppStateResult
 }
@@ -24,9 +27,11 @@ open class LocalState(
     private val metaSecretCore: MetaSecretCoreInterface,
     private val logger: core.DebugLoggerInterface
 ) : AppState {
-    fun new(): LocalState? {
+    suspend fun new(): LocalState? {
         logger.log(core.LogTag.StateResolver.Message.StartGetAppState, success = true)
-        val jsonResult = metaSecretCore.getAppState()
+        val jsonResult = withContext(Dispatchers.IO) {
+            metaSecretCore.getAppState() // Uses only once
+        }
         val coreStateModel = AppStateModel.fromJson(jsonResult, logger, null)
 
         val isSuccess = coreStateModel.success
@@ -44,9 +49,11 @@ open class LocalState(
         return result
     }
 
-    fun generateNewCreds(): VaultState? {
+    suspend fun generateNewCreds(): VaultState? {
         logger.log(core.LogTag.StateResolver.Message.StartGenerateNewCreds, success = true)
-        val jsonResult = metaSecretCore.generateUserCreds(vaultName)
+        val jsonResult = withContext(Dispatchers.IO) {
+            metaSecretCore.generateUserCreds(vaultName)
+        }
         val coreStateModel = AppStateModel.fromJson(jsonResult, logger, null)
 
         val isSuccess = coreStateModel.success
@@ -88,9 +95,11 @@ class VaultState(
     private val metaSecretCore: MetaSecretCoreInterface,
     private val logger: core.DebugLoggerInterface
 ) : AppState {
-    fun signUp(): AppState? {
+    suspend fun signUp(): AppState? {
         logger.log(core.LogTag.StateResolver.Message.StartSignUp, success = true)
-        val jsonResult = metaSecretCore.signUp()
+        val jsonResult = withContext(Dispatchers.IO) {
+            metaSecretCore.signUp()
+        }
         val coreStateModel = AppStateModel.fromJson(jsonResult, logger, null)
 
         val isSuccess = coreStateModel.success
@@ -103,7 +112,7 @@ class VaultState(
             MemberState()
         } else if (isSuccess && vaultInfo is VaultFullInfo.Outsider) {
             logger.log(core.LogTag.StateResolver.Message.CurrentStateIsOutsider, success = true)
-            OutsiderState(coreStateModel)
+            OutsiderState()
         } else {
             logger.log(core.LogTag.StateResolver.Message.SwwWithMemberState, success = false)
             null
@@ -115,4 +124,4 @@ class VaultState(
 
 class  MemberState : AppState
 
-class  OutsiderState(val coreStateModel: AppStateModel) : AppState
+class  OutsiderState : AppState

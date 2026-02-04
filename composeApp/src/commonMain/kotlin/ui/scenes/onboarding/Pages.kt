@@ -1,7 +1,6 @@
 package ui.scenes.onboarding
 
 import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.empty
 import kotlinproject.composeapp.generated.resources.executioner
 import kotlinproject.composeapp.generated.resources.onBoardingDescription1
 import kotlinproject.composeapp.generated.resources.onBoardingDescription2

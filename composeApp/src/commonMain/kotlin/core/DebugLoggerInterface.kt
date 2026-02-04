@@ -51,6 +51,7 @@ sealed class LogTag(val displayName: String) {
             object ReadyToShowSecret : Message("READY_TO_SHOW secret by secretId")
             object ShowNextRecoverPrompt : Message("showNextRecoverPrompt")
             object RecoverDeclined : Message("Recover is declined")
+            object DeclineRecoverCalled : Message("declineRecover called for claimId")
             object DeclineRecoverSuccess : Message("declineRecover success for claimId")
             object DeclineRecoverFailed : Message("declineRecover failed for claimId")
             object RecoverDeclinedOnSender : Message("Recover declined on sender device")
@@ -131,7 +132,6 @@ sealed class LogTag(val displayName: String) {
             object SplitSecretResult : Message("split Secret result is")
             object FailedToParseSplitSecretJson : Message("Failed to parse split Secret JSON")
             object FindClaimStarted : Message("find claim started")
-            object FindClaimResult : Message("find Claim result is")
             object FailedToParseFindClaimJson : Message("Failed to parse find claim JSON")
             object RecoverSecretIdNull : Message("recover secret Id is Null")
             object RecoverRequestResult : Message("recover request result is")
@@ -165,13 +165,14 @@ sealed class LogTag(val displayName: String) {
             object AppStateReceived : Message("AppState is")
             object NeedShowAskToJoin : Message("Need to show Ask to join pop up")
             object WaitingForJoinResponse : Message("Waiting for join response")
-            object WaitingForStateResponse : Message("Waiting for state response")
-            object WaitingForRecover : Message("Waiting for recover")
+            object SocketEmmitOnStateResponse : Message("Emmit signal on state response")
+            object SocketEmmitOnRecoverState : Message("Emmit signal on recover")
             object WaitingForShowSecret : Message("Waiting for show secret")
             object NoSubscriptions : Message("NO any subscriptions")
             object WaitingForRecoverRequest : Message("Waiting for recover request")
             object FoundClaims : Message("Found claims")
             object ReadyToRecover : Message("Ready to recover for passIds")
+            object NothingToRecover : Message("Nothing to recover")
             object NoClaimsFound : Message("No claims found")
             object CheckingRecoverSentStatus : Message("Checking recover sent status")
             object CheckingRecoverSentStatusClaims : Message("Checking recover sent status claims")
@@ -259,11 +260,12 @@ sealed class LogTag(val displayName: String) {
             object HideSecret : Message("hide secret")
             object StartRecovering : Message("Start recovering process")
             object SingleDeviceMode : Message("Single device mode, showing secret directly")
-            object ExistingClaimFound : Message("Existing claim found, showing secret directly")
+            object ExistingClaimFound : Message("Existing claim found")
             object ClaimAlreadyUsed : Message("Claim already used (sender has DELIVERED status), need new request")
             object NoExistingClaim : Message("No existing claim, sending recover request")
             object PendingClaimExists : Message("Pending claim already exists for secret")
             object RecoverFailed : Message("recover failed")
+            object PresentingFailed : Message("Secret presenting is failed")
             object StartShowingRecovered : Message("Start showing recovered secret")
             object RecoveredSecretLoaded : Message("Recovered secret loaded successfully")
             object FailedToRecoverSecret : Message("Failed to recover secret")
@@ -293,6 +295,17 @@ sealed class LogTag(val displayName: String) {
             object StatsUpdated : Message("Stats updated")
             object VaultSummaryNull : Message("VaultSummary is null during stats refresh")
             object FailedToRefreshStats : Message("Failed to refresh stats")
+            object AppStateUpdated : Message("AppState updated from cache")
+            object AppStateNull : Message("AppState from cache is null")
+        }
+    }
+
+    object AppStateCacheProvider : LogTag("📦AppStateCacheProvider") {
+        sealed class Message(text: String) : LogTag.Message<AppStateCacheProvider>(text) {
+            override val tag: AppStateCacheProvider = AppStateCacheProvider
+
+            object CacheUpdated : Message("Cache updated")
+            object CacheCleared : Message("Cache cleared")
         }
     }
 
@@ -333,19 +346,6 @@ sealed class LogTag(val displayName: String) {
             object ClearAllCompleted : Message("clearAll completed successfully")
             object ErrorClearing : Message("Error clearing KeyChain")
             object DeletedKeystoreEntries : Message("Deleted keystore entries")
-        }
-    }
-
-    object FfiSync : LogTag("🔒FfiSynchronizer") {
-        sealed class Message(text: String) : LogTag.Message<FfiSync>(text) {
-            override val tag: FfiSync = FfiSync
-
-            object AcquiringLock : Message("Acquiring FFI lock")
-            object LockAcquired : Message("FFI lock acquired")
-            object LockReleased : Message("FFI lock released")
-            object SkippedNotInitialized : Message("Skipped - AppManager not initialized")
-            object MarkedInitialized : Message("AppManager marked as initialized")
-            object ResetInitialization : Message("Initialization reset")
         }
     }
 

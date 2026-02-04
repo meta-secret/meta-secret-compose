@@ -9,7 +9,7 @@ class MetaSecretStateResolver(
     private val logger: DebugLoggerInterface
 ) : MetaSecretStateResolverInterface {
 
-    override fun startFirstSignUp(
+    override suspend fun startFirstSignUp(
         vaultName: String
     ): AppStateResult {
         logger.log(LogTag.StateResolver.Message.FirstSignUp, success = true)
