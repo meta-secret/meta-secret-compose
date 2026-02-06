@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -32,14 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.text.rememberTextMeasurer
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -126,7 +121,7 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(32.dp)
+            .height(OnboardingHeaderHeight)
     ) {
         Row(
             modifier = Modifier
@@ -172,12 +167,16 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
     }
 }
 
+private val OnboardingHeaderHeight = 32.dp
+private val OnboardingFooterHeight = 60.dp
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OnboardingFooter(pagerState: PagerState, viewModel: OnboardingViewModel, pagesCount: Int) {
     Column(
         modifier = Modifier
-            .padding(top = 24.dp)
+            .height(OnboardingFooterHeight)
+            .padding(top = 12.dp)
             .padding(horizontal = 24.dp)
             .fillMaxWidth()
     ) {
@@ -200,115 +199,58 @@ fun OnboardingFooter(pagerState: PagerState, viewModel: OnboardingViewModel, pag
 
 @Composable
 fun PagerScreen(onBoardingPage: OnBoardingPage) {
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val density = LocalDensity.current
-        val textMeasurer = rememberTextMeasurer()
+    val horizontalPadding = 24.dp
+    val verticalGap = 16.dp
 
-        val horizontalPadding = 24.dp
-        val verticalGap = 16.dp
-        val imageTopPadding = 32.dp
-
-        val maxWidthDp = maxWidth
-        val maxHeightDp = maxHeight
-
-        val availableTextWidthPx = with(density) { (maxWidthDp - horizontalPadding * 2).toPx() }
-
-        val titleStyle = TextStyle(
-            color = AppColors.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 28.sp
-        )
-        val subTitleStyle = TextStyle(
-            color = AppColors.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp
-        )
-        val descriptionStyle = TextStyle(
-            color = AppColors.White75,
-            fontSize = 16.sp
-        )
-
-        val titleResult = textMeasurer.measure(
-            text = AnnotatedString(stringResource(onBoardingPage.title)),
-            style = titleStyle,
-            constraints = Constraints(maxWidth = availableTextWidthPx.toInt())
-        )
-        val subTitleResult = textMeasurer.measure(
-            text = AnnotatedString(stringResource(onBoardingPage.subTitle)),
-            style = subTitleStyle,
-            constraints = Constraints(maxWidth = availableTextWidthPx.toInt())
-        )
-        val descriptionResult = textMeasurer.measure(
-            text = AnnotatedString(stringResource(onBoardingPage.description)),
-            style = descriptionStyle,
-            constraints = Constraints(maxWidth = availableTextWidthPx.toInt())
-        )
-
-        val totalTextHeightDp = with(density) {
-            titleResult.size.height.toDp() +
-            subTitleResult.size.height.toDp() +
-            descriptionResult.size.height.toDp()
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Top,
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = horizontalPadding),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(onBoardingPage.image),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize()
+            )
         }
-        val totalGapsDp = verticalGap * 2
-        val occupiedBelowImage = imageTopPadding + totalTextHeightDp + totalGapsDp
-        val availableForImage = (maxHeightDp - occupiedBelowImage).coerceAtLeast(0.dp)
-        val imageSize = availableForImage.coerceAtMost(maxWidthDp)
 
         Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = horizontalPadding)
+                .padding(top = verticalGap, bottom = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(verticalGap)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = imageTopPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                if (imageSize > 0.dp) {
-                    Image(
-                        painter = painterResource(onBoardingPage.image),
-                        contentDescription = null,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier.size(imageSize)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(verticalGap))
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(verticalGap)
-            ) {
-                Text(
-                    text = stringResource(onBoardingPage.title),
+            Text(
+                text = stringResource(onBoardingPage.title),
+                style = TextStyle(
                     color = AppColors.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = horizontalPadding)
-                )
-                Text(
-                    text = stringResource(onBoardingPage.subTitle),
-                    color = AppColors.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = horizontalPadding)
-                )
-                Text(
-                    text = stringResource(onBoardingPage.description),
-                    fontSize = 16.sp,
-                    color = AppColors.White75,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = horizontalPadding)
-                )
-            }
+                    lineHeight = 31.sp,
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = stringResource(onBoardingPage.subTitle),
+                color = AppColors.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = stringResource(onBoardingPage.description),
+                fontSize = 16.sp,
+                color = AppColors.White75,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

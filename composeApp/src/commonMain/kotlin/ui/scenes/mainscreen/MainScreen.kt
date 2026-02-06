@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.Color
@@ -95,15 +95,12 @@ class MainScreen : Screen {
                                 .height(4.dp)
                                 .background(AppColors.ActionMain)
                         )
-                        BottomNavigation(
-                            modifier = Modifier
-                                .height(68.dp),
+                        NavigationBar(
+                            modifier = Modifier.height(68.dp),
+                            containerColor = AppColors.TabBar,
                         ) {
                             tabs.forEachIndexed { index, tab ->
-                                BottomNavigationItem(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(AppColors.TabBar),
+                                NavigationBarItem(
                                     selected = selectedTabIndex == index,
                                     onClick = {
                                         viewModel.handle(MainViewEvents.SetTabIndex(index))

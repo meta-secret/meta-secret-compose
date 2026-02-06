@@ -25,8 +25,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -280,11 +280,16 @@ fun TextInput(
             imeAction = ImeAction.Done
         ),
         textStyle = TextStyle(fontSize = 16.sp, color = Color.White),
-        colors = TextFieldDefaults.textFieldColors(
-            backgroundColor = AppColors.White5,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = AppColors.White5,
+            unfocusedContainerColor = AppColors.White5,
             cursorColor = AppColors.White,
+            focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
-            focusedIndicatorColor = Color.Transparent
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            focusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
+            unfocusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
         )
     )
 }

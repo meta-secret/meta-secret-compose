@@ -59,7 +59,6 @@ kotlin {
             implementation(kotlin("stdlib"))
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.material)
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
@@ -135,10 +134,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.glance)
     implementation(libs.androidx.ui.android)
-    implementation(libs.androidx.material)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.runtime.android)
-    implementation(libs.androidx.compose.material.core)
     runtimeOnly(libs.androidx.runtime)
 }
 
