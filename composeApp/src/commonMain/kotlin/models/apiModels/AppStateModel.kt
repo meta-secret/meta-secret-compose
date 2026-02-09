@@ -162,6 +162,8 @@ enum class ClaimStatus {
     PENDING,
     @SerialName("sent")
     SENT,
+    @SerialName("delivered")
+    DELIVERED,
     @SerialName("accepted")
     ACCEPTED,
     @SerialName("declined")
@@ -254,6 +256,13 @@ sealed class State {
     data class Vault(
         val vault: VaultFullInfo
     ) : State()
+    
+    fun description(): String {
+        return when (this) {
+            is Local -> "Local"
+            is Vault -> "Vault"
+        }
+    }
 }
 
 @Serializable
@@ -266,12 +275,12 @@ data class AppStateModel(
     val message: Message? = null,
     val success: Boolean = false
 ) {
-    fun getAppState(): State? {
+    fun getCurrentAppState(): State? {
         return message?.state
     }
 
     fun getVaultFullInfo(): VaultFullInfo? {
-        return when (val state = getAppState()) {
+        return when (val state = getCurrentAppState()) {
             is State.Vault -> state.vault
             else -> null
         }
@@ -379,11 +388,16 @@ data class AppStateModel(
     }
 
     companion object {
-        fun fromJson(jsonResponse: String): AppStateModel {
+        fun fromJson(jsonResponse: String, logger: core.DebugLoggerInterface? = null, logFormatter: core.LogFormatterInterface? = null): AppStateModel {
             return try {
                 JsonConfig.json.decodeFromString<AppStateModel>(jsonResponse)
             } catch (e: Exception) {
-                println("⛔ Failed to parse JSON: $jsonResponse, error: ${e.message}")
+                logger?.log(
+                    core.LogTag.AppManager.Message.FailedToParseStateJson,
+                    "jsonResponse: $jsonResponse, error: ${e.message}",
+                    success = false
+                ) ?: println(logFormatter?.formatLogMessage("⛔ Failed to parse JSON: $jsonResponse, error: ${e.message}")
+                    ?: "⛔ Failed to parse JSON: $jsonResponse, error: ${e.message}")
                 e.printStackTrace()
                 AppStateModel(message = null, success = false)
             }

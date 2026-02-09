@@ -9,4 +9,7 @@ interface MetaSecretSocketHandlerInterface {
     val socketActionType: StateFlow<SocketActionModel>
     val socketActions: SharedFlow<SocketActionModel>
     fun actionsToFollow(add: List<SocketRequestModel>?, exclude: List<SocketRequestModel>?)
+    fun pausePolling()
+    fun resumePolling()
+    fun setProcessingSecretName(secretName: String)
 }

@@ -1,26 +1,17 @@
 package ui.scenes.devicesscreen
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,14 +26,13 @@ import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.devicesList
+import kotlinproject.composeapp.generated.resources.biometric_error
 import models.appInternalModels.DeviceStatus
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
-import kotlinproject.composeapp.generated.resources.wanna_join
 import org.jetbrains.compose.resources.stringResource
 import ui.AddButton
 import ui.dialogs.adddevice.AddingDevice
-import ui.dialogs.YesNoDialog
 import ui.dialogs.adddevice.PopUpDevice
 import ui.screenContent.CommonBackground
 import ui.screenContent.DeviceContent
@@ -53,7 +43,7 @@ class DevicesScreen : Screen {
         val viewModel: DevicesScreenViewModel = koinViewModel()
         val devices by viewModel.devicesList.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
-        
+
         var isDialogVisible by remember { mutableStateOf(false) }
         var isMainDialogVisible by remember { mutableStateOf(false) }
         
@@ -65,13 +55,12 @@ class DevicesScreen : Screen {
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 100.dp),
+                        .fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     items(devices) { device ->
                         DeviceContent(
-                            viewModel.screenMetricsProvider,
                             device,
                             viewModel.currentDeviceId,
                             onClick = {
@@ -136,7 +125,6 @@ class DevicesScreen : Screen {
                 dialogVisibility = { isDialogVisible = it }
             )
         }
-
 
     }
 }

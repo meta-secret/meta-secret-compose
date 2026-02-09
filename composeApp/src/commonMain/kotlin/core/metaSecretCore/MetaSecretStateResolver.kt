@@ -1,30 +1,33 @@
 package core.metaSecretCore
 
 import models.appInternalModels.AppErrors
+import core.DebugLoggerInterface
+import core.LogTag
 
 class MetaSecretStateResolver(
-    private val metaSecretCore: MetaSecretCoreInterface
+    private val metaSecretCore: MetaSecretCoreInterface,
+    private val logger: DebugLoggerInterface
 ) : MetaSecretStateResolverInterface {
 
-    override fun startFirstSignUp(
+    override suspend fun startFirstSignUp(
         vaultName: String
     ): AppStateResult {
-        println("✅" + core.LogTags.STATE_RESOLVER + ": first sign up")
+        logger.log(LogTag.StateResolver.Message.FirstSignUp, success = true)
 
-        val localStateResult = LocalState(vaultName, metaSecretCore).new()
+        val localStateResult = LocalState(vaultName, metaSecretCore, logger).new()
             ?: return AppStateResult(null, AppErrors.CreateLocalError)
 
-        println("✅" + core.LogTags.STATE_RESOLVER + ": Local State")
+        logger.log(LogTag.StateResolver.Message.LocalState, success = true)
 
         val userCredsResult = localStateResult.generateNewCreds()
             ?: return AppStateResult(null, AppErrors.CredsGenerationError)
 
-        println("✅" + core.LogTags.STATE_RESOLVER + ": Vault state")
+        logger.log(LogTag.StateResolver.Message.VaultState, success = true)
 
         val memberResult = userCredsResult.signUp()
             ?:  return AppStateResult(null, AppErrors.SignUpError)
 
-        println("✅" + core.LogTags.STATE_RESOLVER + ": Member State")
+        logger.log(LogTag.StateResolver.Message.MemberState, success = true)
 
         return AppStateResult(memberResult, null)
     }

@@ -21,21 +21,14 @@ class BiometricAuthenticatorAndroid (
     private val executor = ContextCompat.getMainExecutor(context)
 
     private fun checkBiometricPermissions(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            return ContextCompat.checkSelfPermission(
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.USE_BIOMETRIC
             ) == PackageManager.PERMISSION_GRANTED
-        } 
-
-        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.USE_FINGERPRINT
-            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
         }
-        
-        return false
     }
 
     private fun requestBiometricPermissions() {
@@ -43,12 +36,6 @@ class BiometricAuthenticatorAndroid (
             ActivityCompat.requestPermissions(
                 activity,
                 arrayOf(Manifest.permission.USE_BIOMETRIC),
-                REQUEST_BIOMETRIC_PERMISSION
-            )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.USE_FINGERPRINT),
                 REQUEST_BIOMETRIC_PERMISSION
             )
         }

@@ -1,25 +1,27 @@
 package ui.scenes.devicesscreen
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import core.AlertCoordinatorInterface
+import core.BiometricAuthenticatorInterface
+import core.KeyValueStorageInterface
+import core.LogTag
+import core.NotificationCoordinatorInterface
+import core.ScreenMetricsProviderInterface
+import core.StringProviderInterface
+import core.VaultStatsProviderInterface
+import core.metaSecretCore.MetaSecretAppManagerInterface
+import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import models.apiModels.UserStatus
 import models.appInternalModels.DeviceCellModel
 import models.appInternalModels.DeviceStatus
 import models.appInternalModels.SocketActionModel
-import models.appInternalModels.SocketRequestModel
 import models.appInternalModels.UpdateMemberActionModel
-import core.metaSecretCore.MetaSecretAppManagerInterface
-import core.metaSecretCore.MetaSecretSocketHandlerInterface
-import core.KeyValueStorageInterface
-import core.LogTags
-import core.ScreenMetricsProviderInterface
-import core.VaultStatsProviderInterface
-import core.AlertCoordinatorInterface
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 
@@ -30,19 +32,22 @@ class DevicesScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
     private val alertCoordinator: AlertCoordinatorInterface,
-) : ViewModel(), CommonViewModel {
+    private val biometricAuthenticator: BiometricAuthenticatorInterface,
+    private val notificationCoordinator: NotificationCoordinatorInterface,
+    private val stringProvider: StringProviderInterface,
+) : CommonViewModel() {
 
     private val _devicesList = MutableStateFlow<List<DeviceCellModel>>(emptyList())
     val devicesList = _devicesList.asStateFlow()
 
-    val vaultName = vaultStatsProvider.vaultName
-    
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
     private val _currentDeviceId = MutableStateFlow<String?>(null)
     val currentDeviceId: String?
         get() = keyValueStorage.cachedDeviceId
+
+    val vaultName = vaultStatsProvider.vaultName
     
     init {
         alertCoordinator.setJoinRequestHandler { isAccepted ->
@@ -56,8 +61,8 @@ class DevicesScreenViewModel(
         viewModelScope.launch {
             socketHandler.socketActionType.collect { actionType ->
                 if (actionType == SocketActionModel.ASK_TO_JOIN) {
-                    println("✅${LogTags.DEVICES_VM}: New state for Join request has been gotten")
-                    loadDevicesList()
+                    logger.log(LogTag.DevicesVM.Message.JoinRequestStateReceived, success = true)
+                    loadDevicesList(true)
                 }
             }
         }
@@ -82,9 +87,9 @@ class DevicesScreenViewModel(
     override fun handle(event: CommonViewModelEventsInterface) {
         if (event is DeviceViewEvents) {
             when (event) {
-                DeviceViewEvents.OnAppear -> loadDevicesList()
-                DeviceViewEvents.Accept -> updateMembership(true)
-                DeviceViewEvents.Decline -> updateMembership(false)
+                DeviceViewEvents.OnAppear -> loadDevicesList(false)
+                DeviceViewEvents.Accept -> authenticateAndUpdateMembership(true)
+                DeviceViewEvents.Decline -> authenticateAndUpdateMembership(false)
                 is DeviceViewEvents.SelectDevice -> {
                     selectCurrentDevice(event.deviceId)
                     event.deviceId?.let { deviceId ->
@@ -95,46 +100,49 @@ class DevicesScreenViewModel(
         }
     }
 
-    private fun loadDevicesList() {
+    private fun authenticateAndUpdateMembership(isJoin: Boolean) {
+        biometricAuthenticator.authenticate(
+            onSuccess = { updateMembership(isJoin) },
+            onError = { error ->
+                logger.log(LogTag.DevicesVM.Message.BiometricError, error, success = false)
+                notificationCoordinator.showError(error.ifEmpty { stringProvider.errorBiometricAuthFailed() })
+                resetJoinRequestState()
+            },
+            onFallback = {
+                logger.log(LogTag.DevicesVM.Message.BiometricError, success = false)
+                notificationCoordinator.showError(stringProvider.errorBiometricAuthFailed())
+                resetJoinRequestState()
+            }
+        )
+    }
+
+    private fun loadDevicesList(isSocketAction: Boolean) {
         viewModelScope.launch {
-            println("✅${LogTags.DEVICES_VM}: Need to load devices list")
+            logger.log(LogTag.DevicesVM.Message.LoadDevicesList, success = true)
             try {
                 _isLoading.value = true
-
-                val vaultSummary = withContext(Dispatchers.Default) {
-                    appManager.getVaultSummary()
-                }
-
-                val devices = vaultSummary?.users?.map { (_, userInfo) ->
-                    DeviceCellModel(
-                        id = userInfo.deviceId,
-                        status = when (userInfo.status) {
-                            UserStatus.MEMBER -> DeviceStatus.Member
-                            UserStatus.PENDING -> DeviceStatus.Pending
-                            else -> DeviceStatus.Unknown
-                        },
-                        secretsCount = vaultStatsProvider.secretsCount.value,
-                        devicesCount = vaultStatsProvider.devicesCount.value,
-                        vaultName = vaultStatsProvider.vaultName.value ?: vaultSummary.vaultName
-                    )
-                } ?: emptyList()
-
-                _devicesList.value = devices
+                _devicesList.value = fetchDevicesList(isSocketAction)
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
+    private fun resetJoinRequestState() {
+        _currentDeviceId.value?.let { deviceId ->
+            alertCoordinator.showJoinRequest(deviceId)
+        } ?: alertCoordinator.dismissJoinRequest()
+    }
+
     private fun updateMembership(isJoin: Boolean) {
-        println("✅${LogTags.DEVICES_VM}: Start Update candidate")
+        logger.log(LogTag.DevicesVM.Message.UpdateCandidateStart, success = true)
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val action = if (isJoin) { UpdateMemberActionModel.Accept } else { UpdateMemberActionModel.Decline }
-                val updateResult = withContext(Dispatchers.Default) {
+                val updateResult = withContext(Dispatchers.IO) {
                     val candidate = _currentDeviceId.value?.let { appManager.getUserDataBy(it) }
-                    println("✅${LogTags.DEVICES_VM}: Update candidate $candidate")
+                    logger.log(LogTag.DevicesVM.Message.UpdateCandidateSuccess, "$candidate", success = true)
                     if (candidate != null) {
                         appManager.updateMember(candidate, action.name)
                     } else {
@@ -142,20 +150,41 @@ class DevicesScreenViewModel(
                     }
                 }
                 if (updateResult?.success == false) {
-                    println("❌${LogTags.DEVICES_VM}: Update failed: ${updateResult.error}")
+                    logger.log(LogTag.DevicesVM.Message.UpdateCandidateFailed, "${updateResult.error}", success = false)
                 }
                 _currentDeviceId.value = null
                 alertCoordinator.dismissJoinRequest()
+                _devicesList.value = fetchDevicesList(isSocketAction = false)
             } catch (e: Exception) {
-                println("❌${LogTags.DEVICES_VM}: Update error: ${e.message}")
+                logger.log(LogTag.DevicesVM.Message.UpdateError, "${e.message}", success = false)
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
+    private suspend fun fetchDevicesList(isSocketAction: Boolean): List<DeviceCellModel> {
+        val vaultSummary = withContext(Dispatchers.IO) {
+            appManager.getVaultSummary(isSocketAction)
+        }
+
+        return vaultSummary?.users?.map { (_, userInfo) ->
+            DeviceCellModel(
+                id = userInfo.deviceId,
+                status = when (userInfo.status) {
+                    UserStatus.MEMBER -> DeviceStatus.Member
+                    UserStatus.PENDING -> DeviceStatus.Pending
+                    else -> DeviceStatus.Unknown
+                },
+                secretsCount = vaultStatsProvider.secretsCount.value,
+                devicesCount = vaultStatsProvider.devicesCount.value,
+                vaultName = vaultStatsProvider.vaultName.value ?: vaultSummary.vaultName
+            )
+        } ?: emptyList()
+    }
+
     private fun selectCurrentDevice(deviceId: String?) {
-        println("✅${LogTags.DEVICES_VM}: Select device with Id: $deviceId")
+        logger.log(LogTag.DevicesVM.Message.SelectDevice, "$deviceId", success = true)
         _currentDeviceId.value = deviceId
     }
 }

@@ -9,18 +9,20 @@ import kotlinx.serialization.json.putJsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 @OptIn(ExperimentalForeignApi::class)
-class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
+class MetaSecretCoreServiceIos(
+    private val logger: DebugLoggerInterface
+): MetaSecretCoreInterface {
     private val swiftBridge = SwiftBridge()
 
     @OptIn(ExperimentalForeignApi::class)
     override fun generateMasterKey(): String {
         try {
-            println("\uF8FF ✅ iOS: Calling generateMasterKey")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingGenerateMasterKey, success = true)
             val masterKey = swiftBridge.generateMasterKey()
-            println("\uF8FF ✅ iOS: Master key: $masterKey")
+            logger.log(LogTag.MetaSecretCoreService.Message.MasterKeyGenerated, masterKey, success = true)
             return masterKey
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: Master key generation error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.MasterKeyGenerationError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
@@ -29,12 +31,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun initAppManager(masterKey: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling initWithMasterKey with: $masterKey")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingInitAppManager, "with: $masterKey", success = true)
             val result = swiftBridge.initWithMasterKey(masterKey)
-            println("\uF8FF ✅ iOS: AppManager: $result")
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitResult, result, success = true)
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: AppManager initialization error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
@@ -43,12 +45,18 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun getAppState(): String {
         try {
-            println("\uF8FF ✅ iOS: Calling getState")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingGetState, success = true)
             val result = swiftBridge.getState()
-            println("\uF8FF ✅ iOS: App State: $result")
+            
+            if (result.isEmpty()) {
+                logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "Empty response from FFI", success = false)
+                throw IllegalStateException("Empty response from FFI getState")
+            }
+            
+            logger.log(LogTag.MetaSecretCoreService.Message.AppStateResult, result, success = true)
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: AppManager initialization error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
@@ -57,12 +65,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun generateUserCreds(vaultName: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling generateUserCreds")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingGenerateUserCreds, success = true)
             val result = swiftBridge.generateUserCredsWithVaultName(vaultName)
-            println("\uF8FF ✅ iOS: App generateUserCreds: $result")
+            logger.log(LogTag.MetaSecretCoreService.Message.GenerateUserCredsResult, result, success = true)
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: AppManager generateUserCreds error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.GenerateUserCredsError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
@@ -71,12 +79,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
     @OptIn(ExperimentalForeignApi::class)
     override fun signUp(): String {
         try {
-            println("\uF8FF ✅ iOS: Calling signUp")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingSignUp, success = true)
             val result = swiftBridge.signUp()
-            println("\uF8FF ✅ iOS: SignUp result: $result")
+            logger.log(LogTag.MetaSecretCoreService.Message.SignUpResult, result, success = true)
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: SignUp error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.SignUpError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
@@ -84,7 +92,7 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
 
     override fun updateMembership(candidate: UserData, actionUpdate: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling updateMembership")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingUpdateMembership, success = true)
             val jsonObject = buildJsonObject {
                 put("vaultName", JsonPrimitive(candidate.vaultName))
                 putJsonObject("device") {
@@ -97,19 +105,19 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
                 }
             }
             val userDataJson = jsonObject.toString()
-            println("\uF8FF ✅ iOS: Formatted userData Json: $userDataJson")
+            logger.log(LogTag.MetaSecretCoreService.Message.FormattedUserDataJson, userDataJson, success = true)
 
             if (actionUpdate.isBlank()) {
                 throw IllegalArgumentException("actionUpdate cannot be blank")
             }
             val jsonActionUpdate = "\"" + actionUpdate.lowercase() + "\""
-            println("\uF8FF ✅ iOS: Formatted actionUpdate: $jsonActionUpdate")
+            logger.log(LogTag.MetaSecretCoreService.Message.FormattedActionUpdate, jsonActionUpdate, success = true)
 
             val result = swiftBridge.updateMembership(userDataJson, jsonActionUpdate)
-            println("\uF8FF ✅ iOS: updateMembership result: $result")
+            logger.log(LogTag.MetaSecretCoreService.Message.UpdateMembershipResult, result, success = true)
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: updateMembership error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.UpdateMembershipError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
@@ -117,24 +125,24 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
 
     override fun splitSecret(secretName: String, secret: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling splitSecret with: $secretName")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingSplitSecret, "with: $secretName", success = true)
             val result = swiftBridge.splitSecret(secretName, secret)
-            println("\uF8FF ✅ iOS: AppManager: splitSecret result $result")
+            logger.log(LogTag.MetaSecretCoreService.Message.SplitSecretResult, result, success = true)
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: AppManager splitSecret error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.SplitSecretError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
     }
     override fun findClaim(secretId: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling findClaim with: $secretId")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingFindClaim, "with: $secretId", success = true)
             val result = swiftBridge.findClaim(secretId)
-            println("\uF8FF ✅ iOS: AppManager: findClaim result $result")
+            logger.log(LogTag.MetaSecretCoreService.Message.FindClaimResult, result, success = true)
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: AppManager findClaim error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.FindClaimError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
@@ -142,12 +150,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
 
     override fun recover(secretId: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling recover with: $secretId")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingRecover, "with: $secretId", success = true)
             val result = swiftBridge.recover(secretId)
-            println("\uF8FF ✅ iOS: AppManager: recover result $result")
+            logger.log(LogTag.MetaSecretCoreService.Message.RecoverResult, result, success = true)
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: AppManager recover error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.RecoverError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
@@ -155,12 +163,25 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
 
     override fun acceptRecover(claimId: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling acceptRecover with: $claimId")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingAcceptRecover, "with: $claimId", success = true)
             val result = swiftBridge.acceptRecover(claimId)
-            println("\uF8FF ✅ iOS: AppManager: acceptRecover result $result")
+            logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverResult, result, success = true)
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: AppManager acceptRecover error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun declineRecover(claimId: String): String {
+        try {
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingDeclineRecover, "with: $claimId", success = true)
+            val result = swiftBridge.declineRecover(claimId)
+            logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverResult, result, success = true)
+            return result
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }
@@ -168,12 +189,12 @@ class MetaSecretCoreServiceIos: MetaSecretCoreInterface {
 
     override fun showRecovered(secretId: String): String {
         try {
-            println("\uF8FF ✅ iOS: Calling showRecovered with: $secretId")
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingShowRecovered, "with: $secretId", success = true)
             val result = swiftBridge.showRecovered(secretId)
-            println("\uF8FF ✅ iOS: AppManager: showRecovered result $result")
+            logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredResult, result, success = true)
             return result
         } catch (e: Exception) {
-            println("\uF8FF ⛔ iOS: AppManager showRecovered error: ${e.message}")
+            logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
         }

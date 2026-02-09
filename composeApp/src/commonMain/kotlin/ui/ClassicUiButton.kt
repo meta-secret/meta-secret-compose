@@ -5,12 +5,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,27 +26,35 @@ fun ClassicButton(
     horizontalPadding: Int = 0,
     modifier: Modifier = Modifier
 ) {
+    val shape = RoundedCornerShape(8.dp)
     Button(
         modifier = modifier
             .let { if (fillMaxWidth) it.fillMaxWidth() else it }
             .padding(horizontal = horizontalPadding.dp)
             .height(48.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(8.dp)
-            ),
+            .border(width = 1.dp, color = borderColor, shape = shape),
+        shape = shape,
         colors = ButtonDefaults.buttonColors(
-            backgroundColor = color,
+            containerColor = color,
             contentColor = AppColors.White,
-            disabledBackgroundColor = AppColors.ActionMain.copy(alpha = 0.5f),
+            disabledContainerColor = AppColors.ActionMain.copy(alpha = 0.5f),
             disabledContentColor = AppColors.White.copy(alpha = 0.5f),
         ),
         enabled = isEnabled,
-        elevation = null,
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            disabledElevation = 0.dp,
+            hoveredElevation = 0.dp,
+            focusedElevation = 0.dp,
+        ),
         onClick = { action() }
     ) {
-        Text(text = text, fontSize = 16.sp, modifier = Modifier.height(22.dp))
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            color = AppColors.White,
+            modifier = Modifier.height(22.dp)
+        )
     }
 }

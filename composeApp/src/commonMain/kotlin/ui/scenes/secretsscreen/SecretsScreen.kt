@@ -8,13 +8,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,16 +41,21 @@ import kotlinproject.composeapp.generated.resources.noSecretsHeader
 import kotlinproject.composeapp.generated.resources.secretAdded
 import kotlinproject.composeapp.generated.resources.secretRemoved
 import kotlinproject.composeapp.generated.resources.secretsHeader
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import ui.scenes.mainscreen.DevicesTab
+import ui.scenes.mainscreen.MainScreenViewModel
 import core.AppColors
 import ui.AddButton
 import ui.dialogs.addsecret.AddSecret
-import ui.notifications.InAppNotification
+import ui.dialogs.showsecret.ShowSecret
+import core.NotificationCoordinatorInterface
+import kotlinx.coroutines.delay
+import kotlinproject.composeapp.generated.resources.secretAddFailed
+import org.koin.compose.koinInject
 import ui.screenContent.CommonBackground
 import ui.screenContent.SecretsContent
 
@@ -57,25 +63,42 @@ class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: SecretsScreenViewModel = koinViewModel()
-        val secretsCount by viewModel.secretsCount.collectAsState()
-        var previousCount by remember { mutableStateOf(secretsCount) }
+        val mainScreenViewModel: MainScreenViewModel = koinInject()
         val secretsList by viewModel.secrets.collectAsState()
+        val previousCount = remember { mutableStateOf(secretsList.size) }
+        val isInitialized = remember { mutableStateOf(false) }
         val devicesCount by viewModel.devicesCount.collectAsState()
         var isAddSecretDialogVisible by remember { mutableStateOf(false) }
         var isShowSecretDialogVisible by remember { mutableStateOf(false) }
         var selectedSecret: core.Secret? by remember { mutableStateOf(null) }
         val isRedirected by remember { mutableStateOf(false) }
-        var snackMessage: String? by remember { mutableStateOf(null) }
-        var isSnackSuccess by remember { mutableStateOf(true) }
+        val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
+        val secretIdToShow by mainScreenViewModel.secretIdToShow.collectAsState()
         
         val secretAddSuccessText = stringResource(Res.string.secretAdded)
-        val secretAddFailedText = "Failed to add secret"
-        val secretAddedText = stringResource(Res.string.secretAdded)
+        val secretAddFailedText = stringResource(Res.string.secretAddFailed)
         val secretRemovedText = stringResource(Res.string.secretRemoved)
 
         LaunchedEffect(Unit) {
-            previousCount = secretsCount
+            delay(3000)
+            previousCount.value = secretsList.size
+            isInitialized.value = true
         }
+
+        LaunchedEffect(secretsList.size) {
+            if (!isInitialized.value) {
+                previousCount.value = secretsList.size
+                return@LaunchedEffect
+            }
+            if (previousCount.value != secretsList.size) {
+                val isRemoval = previousCount.value > secretsList.size
+                if (isRemoval) {
+                    notificationCoordinator.showSuccess(secretRemovedText)
+                }
+                previousCount.value = secretsList.size
+            }
+        }
+
         if (isRedirected) {
             LocalTabNavigator.current.current = DevicesTab
             viewModel.handle(SecretsEvents.SetTabIndex(index = 1))
@@ -84,11 +107,11 @@ class SecretsScreen : Screen {
         CommonBackground(Res.string.secretsHeader) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 100.dp),
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                itemsIndexed(secretsList.sortedBy { it.secretName }) { index, secret ->
+                itemsIndexed(secretsList.sortedBy { it.secretName }) { _, secret ->
                     SecretsContent(
                         secret = secret,
                         devicesCount = devicesCount,
@@ -118,11 +141,15 @@ class SecretsScreen : Screen {
                 viewModel.screenMetricsProvider,
                 dialogVisibility = { isAddSecretDialogVisible = it },
                 onResult = { isSuccess ->
-                    isSnackSuccess = isSuccess
-                    snackMessage = if (isSuccess) {
+                    val message = if (isSuccess) {
                         secretAddSuccessText
                     } else {
                         secretAddFailedText
+                    }
+                    if (isSuccess) {
+                        notificationCoordinator.showSuccess(message)
+                    } else {
+                        notificationCoordinator.showError(message)
                     }
                 }
             )
@@ -140,37 +167,18 @@ class SecretsScreen : Screen {
                     animationSpec = tween(durationMillis = 1000)
                 )
             ) {
-                selectedSecret?.let { nonNull ->
-                    ui.dialogs.showsecret.ShowSecret(
-                        viewModel.screenMetricsProvider,
-                        nonNull,
-                        dialogVisibility = { isShowSecretDialogVisible = it }
+                selectedSecret?.let { secret ->
+                    ShowSecret(
+                        secret = secret,
+                        secretIdToShow = secretIdToShow,
+                        onDismiss = { isShowSecretDialogVisible = false },
+                        onClearSecretId = { mainScreenViewModel.clearSecretIdToShow() }
                     )
                 }
             }
         }
 
-        if (previousCount != secretsCount) {
-            isSnackSuccess = previousCount < secretsCount
-            snackMessage = if (isSnackSuccess) {
-                secretAddedText
-            } else {
-                secretRemovedText
-            }
-            previousCount = secretsCount
-        }
-
-        if (snackMessage != null) {
-            InAppNotification(
-                viewModel.screenMetricsProvider,
-                isSnackSuccess,
-                snackMessage ?: "",
-                onDismiss = { snackMessage = null }
-            )
-            LaunchedEffect(snackMessage) { delay(2000); snackMessage = null }
-        }
-
-        if (secretsCount < 1) {
+        if (secretsList.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

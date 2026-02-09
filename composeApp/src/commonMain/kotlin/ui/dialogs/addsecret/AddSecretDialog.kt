@@ -1,6 +1,7 @@
 package ui.dialogs.addsecret
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -22,10 +23,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,17 +41,16 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import kotlin.math.max
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addSecret
 import kotlinproject.composeapp.generated.resources.close
@@ -64,6 +64,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
 import core.ScreenMetricsProviderInterface
 import ui.ClassicButton
+import kotlinx.coroutines.delay
 
 @Composable
 fun AddSecret(
@@ -73,47 +74,67 @@ fun AddSecret(
 ) {
     var secretName by remember { mutableStateOf("") }
     var secret by remember { mutableStateOf("") }
-    var visible by remember { mutableStateOf(false) }
 
     val viewModel: AddSecretViewModel = koinViewModel()
     val isLoading by viewModel.isLoading.collectAsState()
     val addState by viewModel.state.collectAsState()
+    val focusManager = LocalFocusManager.current
 
-    LaunchedEffect(Unit) { visible = true }
+    val transitionState = remember { MutableTransitionState(false) }
 
-    LaunchedEffect(visible) {
-        if (!visible) {
-            kotlinx.coroutines.delay(250)
+    LaunchedEffect(Unit) {
+        transitionState.targetState = true
+    }
+
+    val finalizeClose = remember {
+        {
+            secretName = ""
+            secret = ""
+            viewModel.handle(AddSecretEvents.ResetState)
             dialogVisibility(false)
+        }
+    }
+
+    val requestClose = remember(transitionState) {
+        {
+            transitionState.targetState = false
         }
     }
 
     LaunchedEffect(addState) {
         when (addState) {
             AddSecretState.ADDED_SUCCESSFULLY -> {
-                visible = false
                 onResult?.invoke(true)
+                delay(100)
+                requestClose()
             }
-            AddSecretState.ADDING_FAILURE, null -> {
+            AddSecretState.ADDING_FAILURE -> {
                 onResult?.invoke(false)
             }
             else -> {}
         }
     }
 
+    LaunchedEffect(transitionState.currentState, transitionState.targetState) {
+        if (!transitionState.currentState && !transitionState.targetState) {
+            finalizeClose()
+        }
+    }
+
+
     Dialog(
-        onDismissRequest = {},
+        onDismissRequest = { requestClose() },
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable { visible = false }
+                .clickable { requestClose() }
                 .background(AppColors.Black30),
             contentAlignment = Alignment.BottomCenter
         ) {
             AnimatedVisibility(
-                visible = visible,
+                visibleState = transitionState,
                 enter = slideInVertically(
                     initialOffsetY = { it },
                     animationSpec = tween(durationMillis = 350)
@@ -129,7 +150,7 @@ fun AddSecret(
                     val imeBottom = with(density) { imeBottomPx.toDp() }
                     val minHeight = (screenMetricsProvider.heightFactor() * 294).dp
                     val maxCandidate = maxHeight - imeBottom - 16.dp
-                    val maxHeightForDialog = max(minHeight, maxCandidate)
+                    val maxHeightForDialog = maxOf(minHeight, maxCandidate)
 
                     Box(
                         modifier = Modifier
@@ -159,7 +180,7 @@ fun AddSecret(
                                     contentDescription = null,
                                     modifier = Modifier
                                         .align(Alignment.CenterEnd)
-                                        .clickable { visible = false }
+                                        .clickable { requestClose() }
                                 )
                             }
 
@@ -186,11 +207,11 @@ fun AddSecret(
 
                             ClassicButton(
                                 action = {
+                                    focusManager.clearFocus()
                                     viewModel.handle(AddSecretEvents.AddSecret(secretName, secret))
-                                    dialogVisibility(false)
                                 },
                                 text = stringResource(Res.string.addSecret),
-                                isEnabled = (secretName.isNotEmpty() && secret.isNotEmpty())
+                                isEnabled = (secretName.isNotEmpty() && secret.isNotEmpty() && !isLoading)
                             )
                         }
                     }
@@ -205,9 +226,10 @@ fun AddSecret(
                         .zIndex(10f),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = AppColors.White)
+                    CircularProgressIndicator(color = AppColors.ActionMain)
                 }
             }
+
         }
     }
 }
@@ -258,11 +280,16 @@ fun TextInput(
             imeAction = ImeAction.Done
         ),
         textStyle = TextStyle(fontSize = 16.sp, color = Color.White),
-        colors = TextFieldDefaults.textFieldColors(
-            backgroundColor = AppColors.White5,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = AppColors.White5,
+            unfocusedContainerColor = AppColors.White5,
             cursorColor = AppColors.White,
+            focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
-            focusedIndicatorColor = Color.Transparent
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            focusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
+            unfocusedPlaceholderColor = Color.White.copy(alpha = 0.5f),
         )
     )
 }

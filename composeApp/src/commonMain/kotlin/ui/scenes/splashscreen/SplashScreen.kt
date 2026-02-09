@@ -3,9 +3,7 @@ package ui.scenes.splashscreen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,9 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -31,7 +26,6 @@ import kotlinproject.composeapp.generated.resources.background_main
 import kotlinproject.composeapp.generated.resources.enable_biometric_required
 import kotlinproject.composeapp.generated.resources.logo
 import kotlinproject.composeapp.generated.resources.text
-import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -39,8 +33,8 @@ import ui.scenes.mainscreen.MainScreen
 import ui.scenes.onboarding.OnboardingScreen
 import ui.scenes.signinscreen.SignInScreen
 import core.BiometricState
-import ui.notifications.InAppNotification
-
+import core.NotificationCoordinatorInterface
+import org.koin.compose.koinInject
 
 class SplashScreen : Screen {
     @Composable
@@ -57,9 +51,7 @@ class SplashScreen : Screen {
 
         val navigationEvent by viewModel.navigationEvent.collectAsState()
         val biometricState by viewModel.biometricState.collectAsState()
-        
-        var showErrorNotification by remember { mutableStateOf(false) }
-        var errorMessage by remember { mutableStateOf("") }
+        val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
 
         LaunchedEffect(Unit) {
             viewModel.handle(SplashViewEvents.ON_APPEAR)
@@ -72,10 +64,7 @@ class SplashScreen : Screen {
                 is BiometricState.NeedRegistration ->
                     viewModel.handle(SplashViewEvents.BIOMETRIC_NEEDS_REGISTRATION)
                 is BiometricState.Error -> {
-                    errorMessage = biometricError
-                    showErrorNotification = true
-                    delay(3000)
-                    showErrorNotification = false
+                    notificationCoordinator.showError(biometricError)
                 }
 
                 BiometricState.Idle -> Unit
@@ -147,18 +136,6 @@ class SplashScreen : Screen {
                 }
             }
             
-            if (showErrorNotification) {
-                Column {
-                    Spacer(modifier = Modifier.height(40.dp))
-                    InAppNotification(
-                        viewModel.screenMetricsProvider,
-                        isSuccessful = false,
-                        message = errorMessage,
-                        onDismiss = { showErrorNotification = false }
-                    )
-                    Spacer(modifier = Modifier.fillMaxHeight())
-                }
-            }
         }
     }
 }

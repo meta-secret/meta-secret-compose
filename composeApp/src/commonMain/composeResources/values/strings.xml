@@ -55,6 +55,14 @@
     <string name = "secretNotAdded">We were unable to add the secret</string>
     <string name = "secretAddSuccess">Secret added successfully</string>
     <string name = "secretAddFailed">Failed to add secret</string>
+    <string name = "errorNetwork">Network connection error. Please check your internet connection.</string>
+    <string name = "errorInternal">Internal error occurred. Please try again.</string>
+    <string name = "errorParse">Data parsing error. Please try again.</string>
+    <string name = "errorValidation">Invalid input. Please check your data.</string>
+    <string name = "errorUnknownPrefix">An error occurred: </string>
+    <string name = "errorBiometricAuthFailed">Biometric authentication failed</string>
+    <string name = "errorSecretAddFailed">Failed to add secret</string>
+    <string name = "errorRecoverDeclined">Secret recovery was declined</string>
     <string name = "lackOfDevices">Not having enough devices?</string>
     <string name = "useMetaSecret">MetaSecret Cloud Device - you can use our cloud as a device</string>
     <string name = "lackOfDevices_start">You need to add </string>
@@ -74,7 +82,7 @@
     <string name = "biometric_cancel">Cancel</string>
     <string name = "biometric_prompt">Use your biometric credential to sign in</string>
     <string name = "authentication_error">Authentication Error</string>
-    <string name = "enable_biometric_required">To use the app, biometric authentication must be enabled in app settings</string>
+    <string name = "enable_biometric_required">To use the app, biometric authentication must be enabled</string>
     <string name = "enable_biometric_settings">Enable biometrics in settings</string>
     <string name = "biometric_permission_required">Biometric permission required</string>
     <string name = "biometric_permission_settings">Please provide access in settings</string>
@@ -84,6 +92,8 @@
     <string name = "accept">Accept</string>
     <string name = "decline">Decline</string>
     <string name = "accept_request_on_other_device">Accept the request on your other device</string>
+    <string name = "recoverPendingExists">Recovery request already sent. Please accept it on your other device</string>
+    <string name = "recoverRequestSent">Recovery request sent. Please accept it on your other device</string>
     <string name = "unexpected_login">"Unexpected loading state"</string>
     <string name = "reject_join">"Registration denied. You may be connecting to the wrong account."</string>
     <string name = "biometric_error">Biometric authentification error. Please, try again later</string>

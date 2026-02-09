@@ -29,10 +29,16 @@ object MetaSecretNative {
     external fun findClaim(secretId: String): String
 
     @JvmStatic
+    external fun findClaimId(secretId: String): String
+
+    @JvmStatic
     external fun recover(secretId: String): String
 
     @JvmStatic
     external fun acceptRecover(claimId: String): String
+
+    @JvmStatic
+    external fun declineRecover(claimId: String): String
 
     @JvmStatic
     external fun showRecovered(secretId: String): String

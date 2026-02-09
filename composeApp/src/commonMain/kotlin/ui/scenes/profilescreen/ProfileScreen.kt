@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Text
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,8 +39,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
 import ui.screenContent.CommonBackground
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 
 class ProfileScreen : Screen {
     @Composable
@@ -53,7 +51,6 @@ class ProfileScreen : Screen {
 
 @Composable
 fun ProfileBody() {
-    val navigator = LocalNavigator.currentOrThrow
     val viewModel: ProfileScreenViewModel = koinViewModel()
     val secretsCount by viewModel.secretsCount.collectAsState()
     val devicesCount by viewModel.devicesCount.collectAsState()

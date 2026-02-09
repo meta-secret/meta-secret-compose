@@ -11,13 +11,6 @@ interface BiometricAuthenticatorInterface {
     fun openAppSettings()
 }
 
-sealed class BiometricResult {
-    object Success : BiometricResult()
-    data class Error(val message: String) : BiometricResult()
-    object NotAvailable : BiometricResult()
-    object Fallback : BiometricResult()
-}
-
 sealed class BiometricState {
     object Idle : BiometricState()
     object Success : BiometricState()

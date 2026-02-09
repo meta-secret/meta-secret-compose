@@ -1,6 +1,5 @@
 package core
 
-import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -9,15 +8,17 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 import models.apiModels.UserStatus
+import models.apiModels.VaultFullInfo
 
 class VaultStatsProvider(
-    private val appManager: MetaSecretAppManagerInterface,
+    private val appStateCacheProvider: AppStateCacheProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
+    private val logger: DebugLoggerInterface,
 ) : VaultStatsProviderInterface {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -36,46 +37,48 @@ class VaultStatsProvider(
 
     init {
         scope.launch(Dispatchers.IO) {
-            println("✅" + LogTags.VAULT_STATS_PROVIDER + ": Start to follow GET_STATE and RESPONSIBLE_TO_ACCEPT_JOIN for stats")
+            logger.log(LogTag.VaultStatsProvider.Message.StartFollow, success = true)
             socketHandler.actionsToFollow(add = listOf(SocketRequestModel.GET_STATE, SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN), exclude = null)
         }
 
         scope.launch {
-            socketHandler.socketActions.collect { actionType ->
-                if (actionType == SocketActionModel.UPDATE_STATE) {
-                    println("✅" + LogTags.VAULT_STATS_PROVIDER + ": UPDATE_STATE received, refreshing stats")
-                    refresh()
+            appStateCacheProvider.appState
+                .filterNotNull()
+                .collect { appState ->
+                    logger.log(LogTag.VaultStatsProvider.Message.AppStateUpdated, success = true)
+                    updateStatsFromState(appState)
                 }
-            }
         }
-
-        scope.launch {
-            socketHandler.socketActionType.collect { actionType ->
-                if (actionType == SocketActionModel.ASK_TO_JOIN) {
-                    println("✅" + LogTags.VAULT_STATS_PROVIDER + ": ASK_TO_JOIN signal received, refreshing join requests count")
-                    refresh()
-                }
-            }
-        }
-
-        scope.launch { refresh() }
     }
 
-    override suspend fun refresh() {
-        withContext(Dispatchers.IO) {
-            try {
-                val vaultSummary = appManager.getVaultSummary()
+    private fun updateStatsFromState(appState: models.apiModels.AppStateModel) {
+        try {
+            val vaultInfo = appState.getVaultFullInfo()
+            if (vaultInfo is VaultFullInfo.Member) {
+                val vaultSummary = appState.getVaultSummary()
                 if (vaultSummary != null) {
                     _secretsCount.value = vaultSummary.secretsCount
                     _devicesCount.value = vaultSummary.users.values.count { it.status == UserStatus.MEMBER }
                     _vaultName.value = vaultSummary.vaultName
-                    _joinRequestsCount.value = appManager.getJoinRequestsCount()
-                    println("✅" + LogTags.VAULT_STATS_PROVIDER + ": Stats updated: secrets=${_secretsCount.value}, devices(MEMBER)=${_devicesCount.value}, vaultName=${_vaultName.value}, joinRequestsCount = ${_joinRequestsCount.value}")
+                    _joinRequestsCount.value = vaultInfo.member.vaultEvents?.getJoinRequestsCount()
                 } else {
-                    println("❌" + LogTags.VAULT_STATS_PROVIDER + ": VaultSummary is null during stats refresh")
+                    logger.log(LogTag.VaultStatsProvider.Message.VaultSummaryNull, success = false)
                 }
-            } catch (t: Throwable) {
-                println("❌" + LogTags.VAULT_STATS_PROVIDER + ": Failed to refresh stats: ${t.message}")
+            } else {
+                logger.log(LogTag.VaultStatsProvider.Message.AppStateNull, success = false)
+            }
+        } catch (t: Throwable) {
+            logger.log(LogTag.VaultStatsProvider.Message.FailedToRefreshStats, "${t.message}", success = false)
+        }
+    }
+
+    override suspend fun refresh() {
+        withContext(Dispatchers.IO) {
+            val cachedState = appStateCacheProvider.appState.value
+            if (cachedState != null) {
+                updateStatsFromState(cachedState)
+            } else {
+                logger.log(LogTag.VaultStatsProvider.Message.AppStateNull, success = false)
             }
         }
     }

@@ -13,5 +13,6 @@ interface MetaSecretCoreInterface {
     fun findClaim(secretId: String): String
     fun recover(secretId: String): String
     fun acceptRecover(claimId: String): String
+    fun declineRecover(claimId: String): String
     fun showRecovered(secretId: String): String
 }

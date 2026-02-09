@@ -15,13 +15,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.device
@@ -43,6 +47,7 @@ import kotlinproject.composeapp.generated.resources.showSecret
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
 import core.ScreenMetricsProviderInterface
@@ -51,13 +56,23 @@ import ui.ClassicButton
 
 @Composable
 fun ShowSecret(
-    screenMetricsProvider: ScreenMetricsProviderInterface,
     secret: Secret,
-    dialogVisibility: (Boolean) -> Unit,
+    secretIdToShow: String?,
+    onDismiss: () -> Unit,
+    onClearSecretId: () -> Unit,
 ) {
     val viewModel: ShowSecretViewModel = koinViewModel()
+    val screenMetricsProvider: ScreenMetricsProviderInterface = koinInject()
     val devicesCount by viewModel.devicesCount.collectAsState()
     val recoveredSecret by viewModel.recoveredSecret.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(secretIdToShow) {
+        if (secretIdToShow != null) {
+            viewModel.handle(ShowSecretEvents.SecretReadyToShow(secretIdToShow))
+            onClearSecretId()
+        }
+    }
 
     val deviceText = when {
         devicesCount == 0 || devicesCount > 4 -> stringResource(Res.string.devices_5)
@@ -72,12 +87,12 @@ fun ShowSecret(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
                 .background(AppColors.Black30),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
+                    .padding(horizontal = 16.dp)
                     .heightIn(
                         min = (screenMetricsProvider.heightFactor() * 316).dp,
                         max = (screenMetricsProvider.heightFactor() * 516).dp
@@ -101,7 +116,7 @@ fun ShowSecret(
                             .align(Alignment.CenterEnd)
                             .clickable {
                                 viewModel.handle(ShowSecretEvents.HideSecret)
-                                dialogVisibility(false)
+                                onDismiss()
                             }
                     )
                 }
@@ -145,9 +160,9 @@ fun ShowSecret(
                     }
                     ClassicButton(
                         {
-                            if (recoveredSecret == null) {
+                            if (recoveredSecret == null && !isLoading) {
                                 viewModel.handle(ShowSecretEvents.ShowSecret(secret.secretName))
-                            } else {
+                            } else if (recoveredSecret != null) {
                                 viewModel.handle(ShowSecretEvents.HideSecret)
                             }
                         },
@@ -156,6 +171,17 @@ fun ShowSecret(
                             else -> stringResource(Res.string.show)
                         }
                     )
+                }
+            }
+            
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(10f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = AppColors.ActionMain)
                 }
             }
         }

@@ -1,42 +1,21 @@
 package ui.scenes.secretsscreen
 
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.Composable
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.Secret
-import core.AppColors
-import core.LogTags
+import core.LogTag
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.VaultStatsProviderInterface
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.manrope_bold
-import kotlinproject.composeapp.generated.resources.removeSecretConfirmation
-import kotlinproject.composeapp.generated.resources.fromAllDevices
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
-import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.stringResource
 import ui.TabStateHolder
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -47,19 +26,16 @@ class SecretsScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
-) : ViewModel(), CommonViewModel {
+) : CommonViewModel() {
 
     private val secretsList: StateFlow<List<Secret>> = keyValueStorage.secretData
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val secrets: StateFlow<List<Secret>> = secretsList
-
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
 
-    val secretsCount: StateFlow<Int> = vaultStatsProvider.secretsCount
-
     init {
-        CoroutineScope(Dispatchers.IO).launch {
-            println("✅${LogTags.SECRETS_VM}: Start to follow UPDATE_STATE")
+        viewModelScope.launch(Dispatchers.IO) {
+            logger.log(LogTag.SecretsVM.Message.FollowUpdateState, success = true)
             socketHandler.actionsToFollow(
                 add = listOf(SocketRequestModel.GET_STATE),
                 exclude = null
@@ -68,15 +44,14 @@ class SecretsScreenViewModel(
 
         viewModelScope.launch {
             socketHandler.socketActions.collect { actionType ->
-                println("✅${LogTags.SECRETS_VM}: Socket action type is $actionType")
                 if (actionType == SocketActionModel.UPDATE_STATE) {
-                    println("✅${LogTags.SECRETS_VM}: New state for secrets been gotten")
-                    loadSecretsFromVault()
+                    logger.log(LogTag.SecretsVM.Message.NewStateForSecrets, success = true)
+                    loadSecretsFromVault(true)
                 }
             }
         }
         
-        loadSecretsFromVault()
+        loadSecretsFromVault(false)
     }
 
     override fun handle(event: CommonViewModelEventsInterface) {
@@ -101,21 +76,21 @@ class SecretsScreenViewModel(
         TabStateHolder.setTabIndex(index)
     }
 
-    private fun loadSecretsFromVault() {
+    private fun loadSecretsFromVault(isSocketAction: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                println("✅${LogTags.SECRETS_VM}: Loading secrets from vault in background")
-                val secretsFromVault = metaSecretAppManager.getSecretsFromVault()
+                logger.log(LogTag.SecretsVM.Message.LoadingSecretsFromVault, success = true)
+                val secretsFromVault = metaSecretAppManager.getSecretsFromVault(isSocketAction)
                 if (secretsFromVault != null) {
                     keyValueStorage.syncSecretsFromVault(secretsFromVault)
-                    println("✅${LogTags.SECRETS_VM}: Secrets synced successfully")
+                    logger.log(LogTag.SecretsVM.Message.SecretsSyncedSuccess, success = true)
                 } else {
-                    println("❌${LogTags.SECRETS_VM}: Failed to get secrets from vault")
+                    logger.log(LogTag.SecretsVM.Message.FailedToGetSecrets, success = false)
                 }
                 
                 vaultStatsProvider.refresh()
             } catch (e: Exception) {
-                println("❌${LogTags.SECRETS_VM}: Error loading secrets from vault: ${e.message}")
+                logger.log(LogTag.SecretsVM.Message.ErrorLoadingSecrets, "${e.message}", success = false)
             }
         }
     }

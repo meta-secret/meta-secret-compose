@@ -1,10 +1,6 @@
 package ui.scenes.mainscreen
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,9 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.Icon
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.Color
@@ -28,6 +24,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -51,10 +48,10 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.compose.koinInject
 import core.AppColors
 import core.AlertCoordinatorInterface
-import kotlinproject.composeapp.generated.resources.wanna_recover
+import core.NotificationCoordinatorInterface
 import ui.TabStateHolder
-import ui.AlertProvider
-import ui.dialogs.YesNoDialog
+import ui.dialogs.AlertProvider
+import ui.notifications.NotificationProvider
 import ui.notifications.WarningBubble
 
 class MainScreen : Screen {
@@ -62,6 +59,11 @@ class MainScreen : Screen {
     override fun Content() {
         val viewModel: MainScreenViewModel = koinViewModel()
         val alertCoordinator: AlertCoordinatorInterface = koinInject()
+        val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
+        LifecycleResumeEffect(Unit) {
+            viewModel.handle(MainViewEvents.OnEnterForeground)
+            onPauseOrDispose { }
+        }
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         val selectedTabIndex by TabStateHolder.selectedTabIndex
         val tabSize = viewModel.screenMetricsProvider.screenWidth() / tabs.size
@@ -69,7 +71,6 @@ class MainScreen : Screen {
         val hasJoinRequestsBadge by viewModel.hasJoinRequestsBadge.collectAsState()
         val devicesCount by viewModel.devicesCount.collectAsState()
         val isWarningShown by viewModel.isWarningShown.collectAsState()
-        val recoverDialog by viewModel.recoverDialog.collectAsState()
 
         TabNavigator(tabs[selectedTabIndex]) {
             val tabNavigator = LocalTabNavigator.current
@@ -83,6 +84,7 @@ class MainScreen : Screen {
                     Column(
                         modifier = Modifier
                             .background(AppColors.TabBar)
+                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
                     ) {
                         val animatedOffset by animateDpAsState(
                             targetValue = tabSize.dp * selectedTabIndex
@@ -94,15 +96,12 @@ class MainScreen : Screen {
                                 .height(4.dp)
                                 .background(AppColors.ActionMain)
                         )
-                        BottomNavigation(
-                            modifier = Modifier
-                                .height(68.dp),
+                        NavigationBar(
+                            modifier = Modifier.height(68.dp),
+                            containerColor = AppColors.TabBar,
                         ) {
                             tabs.forEachIndexed { index, tab ->
-                                BottomNavigationItem(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(AppColors.TabBar),
+                                NavigationBarItem(
                                     selected = selectedTabIndex == index,
                                     onClick = {
                                         viewModel.handle(MainViewEvents.SetTabIndex(index))
@@ -180,29 +179,10 @@ class MainScreen : Screen {
             alertCoordinator = alertCoordinator
         )
 
-        AnimatedVisibility(
-            visible = recoverDialog != null,
-            enter = slideInVertically(
-                initialOffsetY = { it },
-                animationSpec = tween(durationMillis = 1500)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(durationMillis = 1000)
-            )
-        ) {
-            YesNoDialog(
-                stringResource(Res.string.wanna_recover),
-                onDismiss = {
-                    if (it != null) {
-                        viewModel.handle(MainViewEvents.RecoverDecision(it))
-                    } else {
-                        viewModel.handle(MainViewEvents.DismissRecoverDialog)
-                    }
-                },
-                isVisible = recoverDialog != null
-            )
-        }
+        NotificationProvider(
+            notificationCoordinator = notificationCoordinator,
+            screenMetricsProvider = viewModel.screenMetricsProvider
+        )
     }
 
     @Composable

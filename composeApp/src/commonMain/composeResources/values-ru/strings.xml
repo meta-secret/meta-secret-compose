@@ -55,6 +55,14 @@
     <string name = "secretNotAdded">Не удалось добавить секрет</string>
     <string name = "secretAddSuccess">Секрет успешно добавлен</string>
     <string name = "secretAddFailed">Не удалось добавить секрет</string>
+    <string name = "errorNetwork">Ошибка сетевого подключения. Проверьте подключение к интернету.</string>
+    <string name = "errorInternal">Произошла внутренняя ошибка. Попробуйте еще раз.</string>
+    <string name = "errorParse">Ошибка парсинга данных. Попробуйте еще раз.</string>
+    <string name = "errorValidation">Неверный ввод. Проверьте ваши данные.</string>
+    <string name = "errorUnknownPrefix">Произошла ошибка: </string>
+    <string name = "errorBiometricAuthFailed">Ошибка биометрической аутентификации</string>
+    <string name = "errorSecretAddFailed">Не удалось добавить секрет</string>
+    <string name = "errorRecoverDeclined">Восстановление секрета было отклонено</string>
     <string name = "lackOfDevices">Не хватает устройств?</string>
     <string name = "useMetaSecret">MetaSecret Cloud Device - используйте наше облако как одно из устройств </string>
     <string name = "lackOfDevices_start">Не хватает </string>
@@ -74,7 +82,7 @@
     <string name = "biometric_cancel">Отмена</string>
     <string name = "biometric_prompt">Используйте биометрические данные для входа</string>
     <string name = "authentication_error">Ошибка аутентификации</string>
-    <string name = "enable_biometric_required">Для использования приложения необходимо разрешить биометрическую аутентификацию в настройках телефона</string>
+    <string name = "enable_biometric_required">Для использования приложения необходимо разрешить биометрическую аутентификацию</string>
     <string name = "enable_biometric_settings">Разрешить биометрию в настройках</string>
     <string name = "biometric_permission_required">Требуется разрешение на использование биометрии</string>
     <string name = "biometric_permission_settings">Пожалуйста, предоставьте доступ в настройках</string>
@@ -84,6 +92,8 @@
     <string name = "accept">Принять</string>
     <string name = "decline">Отклонить</string>
     <string name = "accept_request_on_other_device">Примите запрос на другом вашем девайсе</string>
+    <string name = "recoverPendingExists">Запрос на восстановление уже отправлен. Пожалуйста, подтвердите его на другом устройстве</string>
+    <string name = "recoverRequestSent">Запрос на восстановление отправлен. Пожалуйста, подтвердите его на другом устройстве</string>
     <string name = "unexpected_login">"Неизвестная ошибка при логине"</string>
     <string name = "reject_join">"Отказано в регистрации. Возможно вы присоединяетесь не к своему аккаунту."</string>
     <string name = "biometric_error">Ошибка авторизации. Попробуйте позже</string>

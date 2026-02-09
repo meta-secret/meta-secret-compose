@@ -8,8 +8,9 @@ sealed class SocketActionModel {
     data object JOIN_REQUEST_DECLINED : SocketActionModel()
     data object JOIN_REQUEST_PENDING : SocketActionModel()
     data object UPDATE_STATE : SocketActionModel()
-    data class READY_TO_RECOVER(val restoreData: List<RestoreData>) : SocketActionModel()
-    data class RECOVER_SENT(val secretId: String) : SocketActionModel()
+    data class READY_TO_RECOVER(val restoreData: RestoreData) : SocketActionModel()
+    data class RECOVER_SENT(val claimId: String, val secretId: String) : SocketActionModel()
+    data class RECOVER_DECLINED(val secretId: String) : SocketActionModel()
 }
 
 @Serializable

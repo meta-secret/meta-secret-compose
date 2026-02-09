@@ -17,12 +17,14 @@ import core.ScreenMetricsProviderAndroid
 import core.ScreenMetricsProviderInterface
 import core.DatabasePathProviderInterface
 import core.DatabasePathProviderAndroid
+import core.LogFormatterInterface
+import core.LogFormatterAndroid
 
 val androidPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceAndroid() }
 
     factory<KeyChainInterface> { (context: Context) ->
-        KeyChainManagerAndroid(context)
+        KeyChainManagerAndroid(context, get())
     }
     
     factory<BiometricAuthenticatorInterface> { (activity: FragmentActivity) ->
@@ -36,5 +38,6 @@ val androidPlatformModule = module {
     single<StringProviderInterface> { StringProviderAndroid(get()) }
     single<DeviceInfoProviderInterface> { DeviceInfoProviderAndroid() }
     single<ScreenMetricsProviderInterface> { ScreenMetricsProviderAndroid() }
-    single<DatabasePathProviderInterface> { DatabasePathProviderAndroid(get(), get()) }
+    single<DatabasePathProviderInterface> { DatabasePathProviderAndroid(get()) }
+    single<LogFormatterInterface> { LogFormatterAndroid() }
 } 
