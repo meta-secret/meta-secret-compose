@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -53,6 +53,7 @@ import ui.AddButton
 import ui.dialogs.addsecret.AddSecret
 import ui.dialogs.showsecret.ShowSecret
 import core.NotificationCoordinatorInterface
+import kotlinx.coroutines.delay
 import kotlinproject.composeapp.generated.resources.secretAddFailed
 import org.koin.compose.koinInject
 import ui.screenContent.CommonBackground
@@ -65,7 +66,7 @@ class SecretsScreen : Screen {
         val mainScreenViewModel: MainScreenViewModel = koinInject()
         val secretsList by viewModel.secrets.collectAsState()
         val previousCount = remember { mutableStateOf(secretsList.size) }
-        val skipNextCountChanges = remember { mutableStateOf(0) }
+        val isInitialized = remember { mutableStateOf(false) }
         val devicesCount by viewModel.devicesCount.collectAsState()
         var isAddSecretDialogVisible by remember { mutableStateOf(false) }
         var isShowSecretDialogVisible by remember { mutableStateOf(false) }
@@ -76,27 +77,23 @@ class SecretsScreen : Screen {
         
         val secretAddSuccessText = stringResource(Res.string.secretAdded)
         val secretAddFailedText = stringResource(Res.string.secretAddFailed)
-        val secretAddedText = stringResource(Res.string.secretAdded)
         val secretRemovedText = stringResource(Res.string.secretRemoved)
 
-        LifecycleResumeEffect(Unit) {
-            skipNextCountChanges.value = 2
+        LaunchedEffect(Unit) {
+            delay(3000)
             previousCount.value = secretsList.size
-            onPauseOrDispose { }
+            isInitialized.value = true
         }
 
         LaunchedEffect(secretsList.size) {
+            if (!isInitialized.value) {
+                previousCount.value = secretsList.size
+                return@LaunchedEffect
+            }
             if (previousCount.value != secretsList.size) {
-                if (skipNextCountChanges.value > 0) {
-                    skipNextCountChanges.value--
-                } else {
-                    val isSnackSuccess = previousCount.value < secretsList.size
-                    val message = if (isSnackSuccess) secretAddedText else secretRemovedText
-                    if (isSnackSuccess) {
-                        notificationCoordinator.showSuccess(message)
-                    } else {
-                        notificationCoordinator.showError(message)
-                    }
+                val isRemoval = previousCount.value > secretsList.size
+                if (isRemoval) {
+                    notificationCoordinator.showSuccess(secretRemovedText)
                 }
                 previousCount.value = secretsList.size
             }
@@ -110,8 +107,8 @@ class SecretsScreen : Screen {
         CommonBackground(Res.string.secretsHeader) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 100.dp),
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 itemsIndexed(secretsList.sortedBy { it.secretName }) { _, secret ->

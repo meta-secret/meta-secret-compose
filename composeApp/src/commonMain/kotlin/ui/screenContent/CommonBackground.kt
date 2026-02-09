@@ -51,8 +51,8 @@ fun CommonBackground(
                 modifier = Modifier
                     .align(Alignment.Start)
                     .padding(
-                        top = 20.dp, 
-                        bottom = 30.dp, 
+                        top = 30.dp,
+                        bottom = 14.dp, 
                         start = 16.dp
                     ),
                 text = stringResource(text),
