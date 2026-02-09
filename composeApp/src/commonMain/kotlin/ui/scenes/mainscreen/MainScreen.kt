@@ -84,6 +84,7 @@ class MainScreen : Screen {
                     Column(
                         modifier = Modifier
                             .background(AppColors.TabBar)
+                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
                     ) {
                         val animatedOffset by animateDpAsState(
                             targetValue = tabSize.dp * selectedTabIndex

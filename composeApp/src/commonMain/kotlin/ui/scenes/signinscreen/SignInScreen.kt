@@ -1,5 +1,6 @@
 package ui.scenes.signinscreen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -259,11 +260,12 @@ class SignInScreen : Screen {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(AppColors.Black60)
                         .zIndex(10f),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        color = AppColors.White,
+                        color = AppColors.ActionMain,
                         modifier = Modifier.padding(16.dp)
                     )
                 }

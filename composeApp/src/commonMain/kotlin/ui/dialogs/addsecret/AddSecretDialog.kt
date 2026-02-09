@@ -226,7 +226,7 @@ fun AddSecret(
                         .zIndex(10f),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = AppColors.White)
+                    CircularProgressIndicator(color = AppColors.ActionMain)
                 }
             }
 

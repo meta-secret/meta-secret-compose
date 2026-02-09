@@ -51,9 +51,9 @@ class SplashScreenViewModel(
     // All biometric routine
     private fun biometricRoutine() {
         viewModelScope.launch {
-            logger.log(LogTag.SplashVM.Message.DataCleanupStart)
-            val clearResult = keyChain.clearAll(isCleanDB = true)
-            logger.log(LogTag.SplashVM.Message.DataCleanupCompleted, " $clearResult")
+//            logger.log(LogTag.SplashVM.Message.DataCleanupStart)
+//            val clearResult = keyChain.clearAll(isCleanDB = true)
+//            logger.log(LogTag.SplashVM.Message.DataCleanupCompleted, " $clearResult")
 
             val isHardwareAvailable = biometricAuthenticator.isBiometricAvailable()
             logger.log(LogTag.SplashVM.Message.BiometricAvailable, "$isHardwareAvailable")

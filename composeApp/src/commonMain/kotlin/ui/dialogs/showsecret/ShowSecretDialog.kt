@@ -24,6 +24,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -86,12 +87,12 @@ fun ShowSecret(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
                 .background(AppColors.Black30),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
+                    .padding(horizontal = 16.dp)
                     .heightIn(
                         min = (screenMetricsProvider.heightFactor() * 316).dp,
                         max = (screenMetricsProvider.heightFactor() * 516).dp
@@ -177,11 +178,10 @@ fun ShowSecret(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(AppColors.Black30)
                         .zIndex(10f),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = AppColors.White)
+                    CircularProgressIndicator(color = AppColors.ActionMain)
                 }
             }
         }

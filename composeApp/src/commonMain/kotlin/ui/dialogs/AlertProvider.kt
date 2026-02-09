@@ -14,12 +14,14 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import core.AlertCoordinatorInterface
 import core.AppColors
 import core.JoinRequestAlertState
@@ -109,6 +111,20 @@ fun AlertProvider(
             },
             isVisible = isAlertVisible && !isProcessing
         )
+    }
+
+    if (isProcessing) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(10f),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                color = AppColors.ActionMain,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
     }
 }
 
