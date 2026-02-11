@@ -46,6 +46,7 @@ class ShowSecretViewModel(
                     logger.log(LogTag.ShowSecretVM.Message.RecoverSecretId, event.secretName, success = true)
                     currentSecretName = event.secretName
                     userRequestedRecovery = true
+                    socketHandler.pausePolling()
                     findClaim(event.secretName)
                 }
                 
@@ -77,6 +78,7 @@ class ShowSecretViewModel(
         if (devicesCount.value < 2) { // TODO: Should be resolved inside the Lib
             logger.log(LogTag.ShowSecretVM.Message.SingleDeviceMode, success = true)
             showRecoveredSecret(secretName)
+            socketHandler.resumePolling()
             return
         }
         
@@ -92,13 +94,20 @@ class ShowSecretViewModel(
                     exclude = null
                 )
                 when (existingClaim?.status) {
-                    ClaimStatus.PENDING -> notificationCoordinator.showSuccess(stringProvider.recoverRequestSent())
-                    ClaimStatus.SENT -> showRecoveredSecret(secretName)
+                    ClaimStatus.PENDING -> {
+                        notificationCoordinator.showSuccess(stringProvider.recoverRequestSent())
+                        socketHandler.resumePolling()
+                    }
+                    ClaimStatus.SENT -> {
+                        showRecoveredSecret(secretName)
+                        socketHandler.resumePolling()
+                    }
                     else -> recoverSecret(secretName)
                 }
             } catch (t: Throwable) {
                 logger.log(LogTag.ShowSecretVM.Message.RecoverFailed, "${t.message}", success = false)
                 _isLoading.value = false
+                socketHandler.resumePolling()
             }
         }
     }
@@ -109,6 +118,7 @@ class ShowSecretViewModel(
             metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))
         }
         notificationCoordinator.showSuccess(stringProvider.recoverRequestSent())
+        socketHandler.resumePolling()
     }
 
     private fun showRecoveredSecret(secretId: String) {

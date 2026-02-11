@@ -77,6 +77,7 @@ class MetaSecretSocketHandler(
     override fun setProcessingSecretName(secretName: String) {
         processingSecretName = secretName
     }
+
     private fun startFollowing() {
         stopTimer()
         timerJob = timerScope.launch {
@@ -206,21 +207,13 @@ class MetaSecretSocketHandler(
 
     private suspend fun checkRecoverSentStatus() {
         try {
-            println("#1")
             val secretName = processingSecretName ?: return
             val searchResult = withContext(Dispatchers.IO) {
-                println("#2")
                 metaSecretCore.findClaim(secretName)
             }
-            println("#3")
             val existingClaim = SearchClaimModel.fromJson(searchResult)
             when (existingClaim.claim?.status) {
-                ClaimStatus.PENDING -> {
-                    println("#4")
-                    notificationCoordinator.showSuccess(stringProvider.recoverRequestSent())
-                }
                 ClaimStatus.SENT ->  {
-                    println("#5")
                     val claimId = existingClaim.claim?.claimId ?: return
                     if (existingClaim.claim?.claimId != null) {
                         _socketActionType.value = SocketActionModel.RECOVER_SENT(claimId, secretName)
@@ -237,18 +230,18 @@ class MetaSecretSocketHandler(
     }
 
     private fun stopTimer() {
-        logger.log(core.LogTag.SocketHandler.Message.TimerStopped, success = true)
+        logger.log(LogTag.SocketHandler.Message.TimerStopped, success = true)
         timerJob?.cancel()
         timerJob = null
     }
 
     override fun pausePolling() {
-        logger.log(core.LogTag.SocketHandler.Message.PollingPaused, success = true)
+        logger.log(LogTag.SocketHandler.Message.PollingPaused, success = true)
         isPaused = true
     }
 
     override fun resumePolling() {
-        logger.log(core.LogTag.SocketHandler.Message.PollingResumed, success = true)
+        logger.log(LogTag.SocketHandler.Message.PollingResumed, success = true)
         isPaused = false
     }
 }
