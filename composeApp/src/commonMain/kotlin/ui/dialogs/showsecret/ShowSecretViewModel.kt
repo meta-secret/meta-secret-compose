@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import models.apiModels.ClaimStatus
 import models.appInternalModels.SecretModel
+import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -37,6 +38,19 @@ class ShowSecretViewModel(
     
     private var currentSecretName: String? = null
     private var userRequestedRecovery = false
+
+    init {
+        viewModelScope.launch {
+            socketHandler.socketActionType.collect { actionType ->
+                if (actionType is SocketActionModel.RECOVER_DECLINED &&
+                    actionType.secretId == currentSecretName &&
+                    _isLoading.value
+                ) {
+                    _isLoading.value = false
+                }
+            }
+        }
+    }
 
     override fun handle(event: CommonViewModelEventsInterface) {
         logger.log(LogTag.ShowSecretVM.Message.HandleEvent, "$event", success = true)

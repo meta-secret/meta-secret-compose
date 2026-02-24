@@ -11,4 +11,5 @@ data class ClaimModel(
     val distributionType: DistributionType,
     val receivers: List<String>?,
     val status: ClaimStatus,
+    val senderStatus: ClaimStatus? = null,
 )

@@ -191,6 +191,7 @@ sealed class LogTag(val displayName: String) {
             object ErrorCheckingRecoverSentStatus : Message("Error checking recover sent status")
             object CheckingRecoverDeclinedStatus : Message("Checking recover declined status")
             object ErrorCheckingRecoverDeclinedStatus : Message("Error checking recover declined status")
+            object RecoverSentStatusClaimStatus : Message("Claim status from findClaim")
         }
     }
 
@@ -389,6 +390,9 @@ sealed class LogTag(val displayName: String) {
             object CallingDeclineRecover : Message("Calling declineRecover")
             object DeclineRecoverResult : Message("declineRecover result")
             object DeclineRecoverError : Message("declineRecover error")
+            object CallingSendDeclineCompletion : Message("Calling sendDeclineCompletion")
+            object SendDeclineCompletionResult : Message("sendDeclineCompletion result")
+            object SendDeclineCompletionError : Message("sendDeclineCompletion error")
             object CallingCompleteDeclinedClaim : Message("Calling completeDeclinedClaim")
             object CompleteDeclinedClaimResult : Message("completeDeclinedClaim result")
             object CompleteDeclinedClaimError : Message("completeDeclinedClaim error")

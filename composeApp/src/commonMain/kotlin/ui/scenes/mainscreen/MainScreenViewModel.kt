@@ -152,8 +152,14 @@ class MainScreenViewModel(
                             "claimId=${actionType.claimId}, secretId=${actionType.secretId}", success = true)
                     }
                     is SocketActionModel.RECOVER_DECLINED -> {
-                        logger.log(LogTag.MainVM.Message.RecoverDeclined, 
+                        logger.log(LogTag.MainVM.Message.RecoverDeclined,
                             "secretId=${actionType.secretId}", success = true)
+                        val claim = metaSecretAppManager.findClaim(actionType.secretId)
+                        if (claim?.claimId != null) {
+                            try {
+                                metaSecretAppManager.sendDeclineCompletion(claim.claimId)
+                            } catch (_: Throwable) { }
+                        }
                         withContext(Dispatchers.Main) {
                             _secretIdToShow.value = null
                             alertCoordinator.showRecoverDeclinedNotification()
