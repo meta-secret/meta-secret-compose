@@ -408,6 +408,13 @@ class MetaSecretAppManager(
         }
     }
 
+    override suspend fun sendDeclineCompletion(claimId: String?) {
+        if (claimId == null) return
+        withContext(Dispatchers.IO) {
+            metaSecretCore.sendDeclineCompletion(claimId)
+        }
+    }
+
     override suspend fun showRecovered(secretModel: SecretModel): String? {
         logger.log(LogTag.AppManager.Message.ShowRecovered, success = true)
         if (secretModel.secretName == null) {

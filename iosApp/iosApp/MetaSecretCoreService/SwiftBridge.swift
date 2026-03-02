@@ -55,6 +55,9 @@ import ObjectiveC
     @_silgen_name("decline_recover")
     private func c_decline_recover(_ claim_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
 
+    @_silgen_name("send_decline_completion")
+    private func c_send_decline_completion(_ claim_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
+
     @_silgen_name("show_recovered")
     private func c_show_recovered(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
     
@@ -205,8 +208,17 @@ import ObjectiveC
         c_free_string(resultPtr)
         return resultString
     }
-    
-    
+
+    @objc public func sendDeclineCompletion(_ claimId: String) -> String {
+        guard let claimIdString = claimId.cString(using: .utf8) else { return "" }
+
+        guard let resultPtr = c_send_decline_completion(claimIdString) else { return "" }
+
+        let resultString = String(cString: resultPtr)
+        c_free_string(resultPtr)
+        return resultString
+    }
+
     @objc public func showRecovered(_ secretId: String) -> String {
         guard let secretIdString = secretId.cString(using: .utf8) else { return "" }
 

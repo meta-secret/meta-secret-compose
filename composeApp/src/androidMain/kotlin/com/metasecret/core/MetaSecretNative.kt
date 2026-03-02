@@ -41,5 +41,8 @@ object MetaSecretNative {
     external fun declineRecover(claimId: String): String
 
     @JvmStatic
+    external fun sendDeclineCompletion(claimId: String): String
+
+    @JvmStatic
     external fun showRecovered(secretId: String): String
 } 

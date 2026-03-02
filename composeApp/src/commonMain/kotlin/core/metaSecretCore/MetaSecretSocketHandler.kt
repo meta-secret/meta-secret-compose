@@ -70,6 +70,12 @@ class MetaSecretSocketHandler(
         
         add?.let { toAdd ->
             actionsToFollow.addAll(toAdd)
+            val needsImmediateSync = toAdd.any {
+                it == SocketRequestModel.SHOW_SECRET || it == SocketRequestModel.WAIT_FOR_RECOVER_REQUEST
+            }
+            if (needsImmediateSync) {
+                timerScope.launch { searchRequest() }
+            }
         }
         logger.log(core.LogTag.SocketHandler.Message.ActualActionsToFollow, "$actionsToFollow", success = true)
     }
@@ -212,17 +218,27 @@ class MetaSecretSocketHandler(
                 metaSecretCore.findClaim(secretName)
             }
             val existingClaim = SearchClaimModel.fromJson(searchResult)
-            when (existingClaim.claim?.status) {
-                ClaimStatus.SENT ->  {
-                    val claimId = existingClaim.claim?.claimId ?: return
-                    if (existingClaim.claim?.claimId != null) {
-                        _socketActionType.value = SocketActionModel.RECOVER_SENT(claimId, secretName)
-                        processingSecretName = null
-                    }
+            val claim = existingClaim.claim
+            val statusStr = claim?.status?.name ?: "null"
+            val statusesStr = existingClaim.message?.claim?.status?.statuses?.entries
+                ?.joinToString { "${it.key}=${it.value.name}" } ?: "{}"
+            logger.log(
+                core.LogTag.SocketHandler.Message.RecoverSentStatusClaimStatus,
+                "status=$statusStr statuses=$statusesStr",
+                success = true
+            )
+            when (claim?.status) {
+                ClaimStatus.SENT -> {
+                    val claimId = claim.claimId ?: return
+                    _socketActionType.value = SocketActionModel.RECOVER_SENT(claimId, secretName)
+                    processingSecretName = null
                 }
-                else -> {
-                    println("#6")
+                ClaimStatus.DECLINED -> {
+                    _socketActionType.value = SocketActionModel.NONE
+                    _socketActionType.value = SocketActionModel.RECOVER_DECLINED(secretName)
+                    processingSecretName = null
                 }
+                else -> { }
             }
         } catch (t: Throwable) {
             logger.log(LogTag.ShowSecretVM.Message.PresentingFailed, "${t.message}", success = false)

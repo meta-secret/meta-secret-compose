@@ -25,12 +25,23 @@ data class SearchClaimModel(
 }
 
 private fun ClaimObject.toClaimModel(): ClaimModel {
-    val derivedStatus = status.statuses.values.firstOrNull() ?: ClaimStatus.PENDING
+    val derivedStatus = aggregateClaimStatus(status.statuses.values)
+    val senderStatus = sender?.let { status.statuses[it] }
     return ClaimModel(
         claimId = id,
         sender = sender,
         distributionType = distributionType,
         receivers = receivers.ifEmpty { null },
-        status = derivedStatus
+        status = derivedStatus,
+        senderStatus = senderStatus
     )
+}
+
+private fun aggregateClaimStatus(statuses: Collection<ClaimStatus>): ClaimStatus {
+    if (statuses.isEmpty()) return ClaimStatus.PENDING
+    if (statuses.any { it == ClaimStatus.PENDING }) return ClaimStatus.PENDING
+    if (statuses.any { it == ClaimStatus.DELIVERED }) return ClaimStatus.DELIVERED
+    if (statuses.any { it == ClaimStatus.SENT }) return ClaimStatus.SENT
+    if (statuses.any { it == ClaimStatus.DECLINED }) return ClaimStatus.DECLINED
+    return ClaimStatus.DELIVERED
 }

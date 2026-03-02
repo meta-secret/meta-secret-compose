@@ -229,6 +229,19 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
         }
     }
 
+    override fun sendDeclineCompletion(claimId: String): String {
+        try {
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingSendDeclineCompletion, success = true)
+            val result = MetaSecretNative.sendDeclineCompletion(claimId)
+            logger.log(LogTag.MetaSecretCoreService.Message.SendDeclineCompletionResult, result, success = true)
+            return result
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.SendDeclineCompletionError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
+
     override fun showRecovered(secretId: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingShowRecovered, success = true)
