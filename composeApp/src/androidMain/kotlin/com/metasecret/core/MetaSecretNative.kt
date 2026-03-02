@@ -5,31 +5,28 @@ object MetaSecretNative {
     external fun generateMasterKey(): String
 
     @JvmStatic
-    external fun initAppManager(masterKey: String): String
+    external fun init(masterKey: String): String
 
     @JvmStatic
-    external fun getAppState(): String
+    external fun getState(): String
 
     @JvmStatic
-    external fun generateUserCreds(vaultName: String): String
+    external fun generate_user_creds(vaultName: String): String
 
     @JvmStatic
     external fun signUp(): String
 
     @JvmStatic
-    external fun updateMembership(candidate: String, actionUpdate: String): String
+    external fun update_membership(candidate: String, actionUpdate: String): String
 
     @JvmStatic
-    external fun cleanUpDatabase(): String
+    external fun clean_up_database(): String
 
     @JvmStatic
-    external fun splitSecret(secretId: String, secret: String): String
+    external fun split(secretId: String, secret: String): String
 
     @JvmStatic
-    external fun findClaim(secretId: String): String
-
-    @JvmStatic
-    external fun findClaimId(secretId: String): String
+    external fun find_claim_by_(secretId: String): String
 
     @JvmStatic
     external fun recover(secretId: String): String

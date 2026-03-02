@@ -20,6 +20,8 @@ class BiometricAuthenticatorAndroid (
 
     private val executor = ContextCompat.getMainExecutor(context)
 
+    private var resolvedAuthenticators: Int = BiometricManager.Authenticators.BIOMETRIC_STRONG
+
     private fun checkBiometricPermissions(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             ContextCompat.checkSelfPermission(
@@ -48,10 +50,20 @@ class BiometricAuthenticatorAndroid (
         }
 
         val biometricManager = BiometricManager.from(context)
-        return when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
-            BiometricManager.BIOMETRIC_SUCCESS -> true
-            else -> false
+
+        if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS) {
+            resolvedAuthenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
+            return true
         }
+        if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK or BiometricManager.Authenticators.DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS) {
+            resolvedAuthenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            return true
+        }
+        if (biometricManager.canAuthenticate(BiometricManager.Authenticators.DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS) {
+            resolvedAuthenticators = BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            return true
+        }
+        return false
     }
 
     override fun authenticate(
@@ -114,13 +126,17 @@ class BiometricAuthenticatorAndroid (
     }
 
     private fun createPromptInfo(): BiometricPrompt.PromptInfo {
-        return BiometricPrompt.PromptInfo.Builder()
+        val builder = BiometricPrompt.PromptInfo.Builder()
             .setTitle(stringProvider.biometricTitle())
             .setSubtitle(stringProvider.biometricSubtitle())
             .setDescription(stringProvider.biometricDescription())
-            .setNegativeButtonText(stringProvider.biometricFallback())
-            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
-            .build()
+            .setAllowedAuthenticators(resolvedAuthenticators)
+
+        val hasDeviceCredential = (resolvedAuthenticators and BiometricManager.Authenticators.DEVICE_CREDENTIAL) != 0
+        if (!hasDeviceCredential) {
+            builder.setNegativeButtonText(stringProvider.biometricFallback())
+        }
+        return builder.build()
     }
     
     companion object {

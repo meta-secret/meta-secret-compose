@@ -244,7 +244,13 @@ class SignInScreenViewModel(
 
         if (model.success && !model.masterKey.isNullOrEmpty()) {
             logger.log(LogTag.SignInVM.Message.GeneratedMasterKey, "$model", success = true)
-            keyChainManager.saveString("master_key", model.masterKey)
+            val saved = keyChainManager.saveString("master_key", model.masterKey)
+            if (!saved) {
+                logger.setMasterKeyGenerated(false)
+                currentState = SignInStates.MASTER_KEY_FAILED
+                _isLoading.value = false
+                return
+            }
             logger.setMasterKeyGenerated(true)
             currentState = SignInStates.MASTER_KEY_GENERATED
         } else {

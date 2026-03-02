@@ -3,7 +3,7 @@ package core
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSURL
 import platform.LocalAuthentication.LAContext
-import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthenticationWithBiometrics
+import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthentication
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -16,7 +16,7 @@ class BiometricAuthenticatorIos(
     override fun isBiometricAvailable(): Boolean {
         val context = LAContext()
         val canEvaluate = context.canEvaluatePolicy(
-            LAPolicyDeviceOwnerAuthenticationWithBiometrics, 
+            LAPolicyDeviceOwnerAuthentication, 
             error = null
         )
         return canEvaluate
@@ -37,14 +37,12 @@ class BiometricAuthenticatorIos(
         context.localizedFallbackTitle = stringProvider.biometricFallback()
 
         context.evaluatePolicy(
-            LAPolicyDeviceOwnerAuthenticationWithBiometrics,
+            LAPolicyDeviceOwnerAuthentication,
             localizedReason = stringProvider.biometricPromptReason()
         ) { success, error ->
             if (success) {
                 onSuccess()
             } else if (error != null) {
-                val errorDomain = error.domain
-                val errorCode = error.code
                 val errorDesc = error.localizedDescription.lowercase()
                 
                 when {
