@@ -113,7 +113,11 @@ class ShowSecretViewModel(
                         socketHandler.resumePolling()
                     }
                     ClaimStatus.SENT -> {
-                        showRecoveredSecret(secretName)
+                        if (existingClaim?.senderStatus == ClaimStatus.DELIVERED) {
+                            recoverSecret(secretName)
+                        } else {
+                            showRecoveredSecret(secretName)
+                        }
                         socketHandler.resumePolling()
                     }
                     else -> recoverSecret(secretName)

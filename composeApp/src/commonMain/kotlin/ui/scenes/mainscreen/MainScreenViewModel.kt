@@ -126,6 +126,16 @@ class MainScreenViewModel(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
+            socketHandler.socketActions.collect { action ->
+                if (action is SocketActionModel.DISMISS_RECOVERY_REQUEST) {
+                    withContext(Dispatchers.Main) {
+                        alertCoordinator.dismissRecoveryRequestForClaim(action.claimId)
+                    }
+                }
+            }
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
             socketHandler.socketActionType.collect { actionType ->
                 when (actionType) {
                     is SocketActionModel.READY_TO_RECOVER -> {

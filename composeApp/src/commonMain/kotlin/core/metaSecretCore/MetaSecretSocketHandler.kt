@@ -54,6 +54,7 @@ class MetaSecretSocketHandler(
     private val timerScope = CoroutineScope(Dispatchers.IO)
     private var isPaused = false
     private var processingSecretName: String? = null
+    private var lastEmittedReadyToRecoverClaimId: String? = null
 
     init {
         logger.log(core.LogTag.SocketHandler.Message.Init, success = true)
@@ -191,6 +192,20 @@ class MetaSecretSocketHandler(
     }
 
     private fun checkRecoverRequest(claims: Map<String, ClaimObject>, currentDeviceId: String) {
+        val declinedClaimIds = claims.values
+            .filter { claim ->
+                claim.distributionType == DistributionType.RECOVER &&
+                    claim.receivers.contains(currentDeviceId) &&
+                    claim.status.statuses[currentDeviceId] == ClaimStatus.DECLINED
+            }
+            .map { it.distClaimId.id }
+        declinedClaimIds.forEach { claimId ->
+            if (claimId == lastEmittedReadyToRecoverClaimId) {
+                lastEmittedReadyToRecoverClaimId = null
+            }
+            logger.log(core.LogTag.SocketHandler.Message.DismissRecoveryRequest, "claimId=$claimId", success = true)
+            _socketActions.tryEmit(SocketActionModel.DISMISS_RECOVERY_REQUEST(claimId))
+        }
         val firstPendingClaim = claims.values.firstOrNull { claim ->
             val isRecoverType = claim.distributionType == DistributionType.RECOVER
             val isReceiverForThisDevice = claim.receivers.contains(currentDeviceId)
@@ -198,15 +213,16 @@ class MetaSecretSocketHandler(
             val isPending = receiverStatus == ClaimStatus.PENDING
             isRecoverType && isReceiverForThisDevice && isPending
         }
-
         if (firstPendingClaim != null) {
-            val restoreData = RestoreData(
-                firstPendingClaim.distClaimId.id,
-                firstPendingClaim.distClaimId.passId.name
-            )
-            logger.log(core.LogTag.SocketHandler.Message.ReadyToRecover, "$restoreData", success = true)
-            _socketActionType.value = SocketActionModel.READY_TO_RECOVER(restoreData = restoreData)
+            val claimId = firstPendingClaim.distClaimId.id
+            if (claimId != lastEmittedReadyToRecoverClaimId) {
+                lastEmittedReadyToRecoverClaimId = claimId
+                val restoreData = RestoreData(claimId, firstPendingClaim.distClaimId.passId.name)
+                logger.log(core.LogTag.SocketHandler.Message.ReadyToRecover, "$restoreData", success = true)
+                _socketActionType.value = SocketActionModel.READY_TO_RECOVER(restoreData = restoreData)
+            }
         } else {
+            lastEmittedReadyToRecoverClaimId = null
             logger.log(core.LogTag.SocketHandler.Message.NothingToRecover, success = true)
         }
     }
@@ -230,6 +246,7 @@ class MetaSecretSocketHandler(
             when (claim?.status) {
                 ClaimStatus.SENT -> {
                     val claimId = claim.claimId ?: return
+                    _socketActionType.value = SocketActionModel.NONE
                     _socketActionType.value = SocketActionModel.RECOVER_SENT(claimId, secretName)
                     processingSecretName = null
                 }
