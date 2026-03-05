@@ -85,6 +85,12 @@ class MetaSecretSocketHandler(
         processingSecretName = secretName
     }
 
+    override fun resetReadyToRecoverDedup(claimId: String?) {
+        if (claimId == null || lastEmittedReadyToRecoverClaimId == claimId) {
+            lastEmittedReadyToRecoverClaimId = null
+        }
+    }
+
     private fun startFollowing() {
         stopTimer()
         timerJob = timerScope.launch {

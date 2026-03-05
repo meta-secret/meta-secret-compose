@@ -85,6 +85,7 @@ class MainScreenViewModel(
                         metaSecretAppManager.declineRecover(restoreData.claimId)
                     } catch (t: Throwable) {
                         logger.log(LogTag.MainVM.Message.DeclineRecoverFailed, "claimId = ${restoreData.claimId}: $t", success = false)
+                        socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
                     } finally {
                         socketHandler.resumePolling()
                         withContext<Unit>(Dispatchers.Main) {
@@ -106,6 +107,7 @@ class MainScreenViewModel(
                             metaSecretAppManager.acceptRecover(restoreData.claimId)
                         } catch (t: Throwable) {
                             logger.log(LogTag.MainVM.Message.AcceptRecoverFailed, "claimId = ${restoreData.claimId}: $t", success = false)
+                            socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
                         } finally {
                             socketHandler.resumePolling()
                             withContext<Unit>(Dispatchers.Main) {
@@ -116,10 +118,12 @@ class MainScreenViewModel(
                 },
                 onError = { error ->
                     logger.log(LogTag.MainVM.Message.BiometricAuthFailed, error, success = false)
+                    socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
                     alertCoordinator.onRecoveryRequestProcessingComplete()
                 },
                 onFallback = {
                     logger.log(LogTag.MainVM.Message.BiometricAuthFallback, success = false)
+                    socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
                     alertCoordinator.onRecoveryRequestProcessingComplete()
                 }
             )
