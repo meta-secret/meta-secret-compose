@@ -69,7 +69,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     override fun initAppManager(masterKey: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingInitAppManager, "with: $masterKey", success = true)
-            val result = MetaSecretNative.initAppManager(masterKey)
+            val result = MetaSecretNative.init(masterKey)
             logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitResult, result, success = true)
             return result
         } catch (e: Exception) {
@@ -82,7 +82,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     override fun getAppState(): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGetState, success = true)
-            val result = MetaSecretNative.getAppState()
+            val result = MetaSecretNative.getState()
             
             if (result.isEmpty()) {
                 logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "Empty response from FFI", success = false)
@@ -106,7 +106,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     override fun generateUserCreds(vaultName: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGenerateUserCreds, success = true)
-            val result = MetaSecretNative.generateUserCreds(vaultName)
+            val result = MetaSecretNative.generate_user_creds(vaultName)
             logger.log(LogTag.MetaSecretCoreService.Message.GenerateUserCredsResult, result, success = true)
             return result
         } catch (e: Exception) {
@@ -154,7 +154,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
             val jsonActionUpdate = "\"" + actionUpdate.lowercase() + "\""
             logger.log(LogTag.MetaSecretCoreService.Message.FormattedActionUpdate, jsonActionUpdate, success = true)
             
-            val result = MetaSecretNative.updateMembership(userDataJson, jsonActionUpdate)
+            val result = MetaSecretNative.update_membership(userDataJson, jsonActionUpdate)
             logger.log(LogTag.MetaSecretCoreService.Message.UpdateMembershipResult, result, success = true)
             return result
         } catch (e: Exception) {
@@ -167,7 +167,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     override fun splitSecret(secretName: String, secret: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingSplitSecret, success = true)
-            val result = MetaSecretNative.splitSecret(secretName,secret)
+            val result = MetaSecretNative.split(secretName, secret)
             logger.log(LogTag.MetaSecretCoreService.Message.SplitSecretResult, result, success = true)
             return result
         } catch (e: Exception) {
@@ -180,7 +180,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     override fun findClaim(secretId: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingFindClaim, success = true)
-            val result = MetaSecretNative.findClaim(secretId)
+            val result = MetaSecretNative.find_claim_by_(secretId)
             logger.log(LogTag.MetaSecretCoreService.Message.FindClaimResult, result, success = true)
             return result
         } catch (e: Exception) {
@@ -259,11 +259,11 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
         CoroutineScope(Dispatchers.IO).launch {
             logger.log(LogTag.MetaSecretCoreService.Message.CleanDb, success = true)
             try {
-                val dbFileName = databasePathProvider.getDatabaseFileName()
+                val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@launch
                 val dbFile = File(context.getDatabasePath(dbFileName).path)
                 if (dbFile.exists()) {
                     val deleted = dbFile.delete()
-                    MetaSecretNative.cleanUpDatabase()
+                    MetaSecretNative.clean_up_database()
                     logger.log(
                         LogTag.MetaSecretCoreService.Message.DbFileDeleted,
                         "$deleted",

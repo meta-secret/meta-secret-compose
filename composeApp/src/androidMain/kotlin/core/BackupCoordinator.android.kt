@@ -58,7 +58,7 @@ class BackupCoordinatorInterfaceAndroid(
         logger.log(LogTag.BackupCoordinator.Message.RestoreIfNeeded, success = true)
         withContext(Dispatchers.IO) {
             try {
-                val dbFileName = databasePathProvider.getDatabaseFileName()
+                val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@withContext
                 val dbFile = File(activity.applicationContext.getDatabasePath(dbFileName).path)
                 if (dbFile.exists()) {
                     logger.log(LogTag.BackupCoordinator.Message.LocalDbExists, success = true)
@@ -110,7 +110,7 @@ class BackupCoordinatorInterfaceAndroid(
                     return@launch
                 }
 
-                val dbFileName = databasePathProvider.getDatabaseFileName()
+                val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@launch
                 val dbFile = File(activity.applicationContext.getDatabasePath(dbFileName).path)
                 if (!dbFile.exists()) {
                     logger.log(LogTag.BackupCoordinator.Message.LocalDbNotExist, success = false)
@@ -157,7 +157,7 @@ class BackupCoordinatorInterfaceAndroid(
     }
 
     override suspend fun hasDatabaseFile(): Boolean = withContext(Dispatchers.IO) {
-        val dbFileName = databasePathProvider.getDatabaseFileName()
+        val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@withContext false
         val dbFile = File(activity.applicationContext.getDatabasePath(dbFileName).path)
         dbFile.exists()
     }

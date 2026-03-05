@@ -51,6 +51,20 @@ class AlertCoordinator(
         _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
         showNextRecoveryPrompt()
     }
+
+    override fun dismissRecoveryRequestForClaim(claimId: String) {
+        recoverQueue.removeAll { it.claimId == claimId }
+        val current = _recoveryRequestAlert.value
+        val currentClaimId = when (current) {
+            is RecoveryRequestAlertState.Visible -> current.restoreData.claimId
+            is RecoveryRequestAlertState.Processing -> current.restoreData.claimId
+            else -> null
+        }
+        if (currentClaimId == claimId) {
+            _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
+            showNextRecoveryPrompt()
+        }
+    }
     
     override fun onRecoveryRequestDecision(isAccepted: Boolean) {
         val currentState = _recoveryRequestAlert.value

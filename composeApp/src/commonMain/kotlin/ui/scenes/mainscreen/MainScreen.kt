@@ -192,7 +192,7 @@ class MainScreen : Screen {
                 append(stringResource(Res.string.goto_devices_tab))
             }
         } else {
-            return if (devicesCount != null) {
+            return if (devicesCount != null && devicesCount < 3) { // TODO: 3 is hardcoded number. we gonna set it up in settings
                 buildAnnotatedString {
                     append(stringResource(Res.string.lackOfDevices_start))
                     append((3 - devicesCount).toString())

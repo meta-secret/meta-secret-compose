@@ -41,31 +41,21 @@ class SplashScreenViewModel(
     override fun handle(event: CommonViewModelEventsInterface) {
         if (event is SplashViewEvents) {
             when (event) {
-                SplashViewEvents.ON_APPEAR -> biometricRoutine()
+                SplashViewEvents.ON_APPEAR -> {
+                    viewModelScope.launch {
+//                        clearAll()
+                    }
+                    authenticateWithBiometrics()
+                }
                 SplashViewEvents.BIOMETRIC_SUCCEEDED -> biometricSucceeded()
-                SplashViewEvents.BIOMETRIC_NEEDS_REGISTRATION -> TODO()
             }
         }
     }
 
-    // All biometric routine
-    private fun biometricRoutine() {
-        viewModelScope.launch {
-//            logger.log(LogTag.SplashVM.Message.DataCleanupStart)
-//            val clearResult = keyChain.clearAll(isCleanDB = true)
-//            logger.log(LogTag.SplashVM.Message.DataCleanupCompleted, " $clearResult")
-
-            val isHardwareAvailable = biometricAuthenticator.isBiometricAvailable()
-            logger.log(LogTag.SplashVM.Message.BiometricAvailable, "$isHardwareAvailable")
-
-            if (!isHardwareAvailable) {
-                logger.log(LogTag.SplashVM.Message.BiometricNeedRegistration)
-                setupPinCode()
-                return@launch
-            }
-
-            authenticateWithBiometrics()
-        }
+    private suspend fun clearAll() {
+        logger.log(LogTag.SplashVM.Message.DataCleanupStart)
+        val clearResult = keyChain.clearAll(isCleanDB = true)
+        logger.log(LogTag.SplashVM.Message.DataCleanupCompleted, " $clearResult")
     }
 
     private fun authenticateWithBiometrics() {
@@ -76,7 +66,7 @@ class SplashScreenViewModel(
             },
             onError = { error ->
                 logger.log(LogTag.SplashVM.Message.BiometricFailed, error, success = false)
-                _biometricState.value = BiometricState.Error(Res.string.biometric_description.toString())
+                _biometricState.value = BiometricState.Error(error)
             },
             onFallback = {
                 logger.log(LogTag.SplashVM.Message.BiometricProhibited, success = false)
@@ -85,41 +75,39 @@ class SplashScreenViewModel(
         )
     }
 
-    private fun setupPinCode() {
-        // TODO #48
-        logger.log(LogTag.SplashVM.Message.MoveToOnboarding)
-        _biometricState.value = BiometricState.NeedRegistration
-    }
-
     private fun biometricSucceeded() {
         viewModelScope.launch {
-            backupCoordinatorInterface.restoreIfNeeded()
-            val hasBackupDb = backupCoordinatorInterface.hasDatabaseFile()
-            logger.setBackupDbExists(hasBackupDb)
+            proceedWithNavigation()
+        }
+    }
 
-            when (isOnboardingComplete()) {
-                OnboardingState.COMPLETED -> {
-                    when (checkAuth()) {
-                        AuthState.COMPLETED -> {
-                            try {
-                                vaultStatsProvider.refresh()
-                            } catch (_: Throwable) {}
-                            logger.log(LogTag.SplashVM.Message.MoveToMain, success = true)
-                            _navigationEvent.value = SplashNavigationEvent.NavigateToMain
-                        }
-                        AuthState.NOT_YET_COMPLETED -> {
-                            logger.log(LogTag.SplashVM.Message.MoveToSignUp, success = true)
-                            _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
-                        }
+    private suspend fun proceedWithNavigation() {
+        backupCoordinatorInterface.restoreIfNeeded()
+        val hasBackupDb = backupCoordinatorInterface.hasDatabaseFile()
+        logger.setBackupDbExists(hasBackupDb)
+
+        when (isOnboardingComplete()) {
+            OnboardingState.COMPLETED -> {
+                when (checkAuth()) {
+                    AuthState.COMPLETED -> {
+                        try {
+                            vaultStatsProvider.refresh()
+                        } catch (_: Throwable) {}
+                        logger.log(LogTag.SplashVM.Message.MoveToMain, success = true)
+                        _navigationEvent.value = SplashNavigationEvent.NavigateToMain
+                    }
+                    AuthState.NOT_YET_COMPLETED -> {
+                        logger.log(LogTag.SplashVM.Message.MoveToSignUp, success = true)
+                        _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
                     }
                 }
-                OnboardingState.NOT_YET_COMPLETED -> {
-                    logger.log(LogTag.SplashVM.Message.MoveToOnboarding, success = true)
-                    _navigationEvent.value = SplashNavigationEvent.NavigateToOnboarding
-                }
             }
-            logger.log(LogTag.SplashVM.Message.BiometricStateSuccess, success = true)
+            OnboardingState.NOT_YET_COMPLETED -> {
+                logger.log(LogTag.SplashVM.Message.MoveToOnboarding, success = true)
+                _navigationEvent.value = SplashNavigationEvent.NavigateToOnboarding
+            }
         }
+        logger.log(LogTag.SplashVM.Message.BiometricStateSuccess, success = true)
     }
 
     private fun isOnboardingComplete(): OnboardingState {
@@ -141,8 +129,7 @@ enum class SplashNavigationEvent {
 
 enum class SplashViewEvents: CommonViewModelEventsInterface {
     ON_APPEAR,
-    BIOMETRIC_SUCCEEDED,
-    BIOMETRIC_NEEDS_REGISTRATION
+    BIOMETRIC_SUCCEEDED
 }
 
 private enum class OnboardingState {

@@ -39,9 +39,10 @@ private fun ClaimObject.toClaimModel(): ClaimModel {
 
 private fun aggregateClaimStatus(statuses: Collection<ClaimStatus>): ClaimStatus {
     if (statuses.isEmpty()) return ClaimStatus.PENDING
-    if (statuses.any { it == ClaimStatus.PENDING }) return ClaimStatus.PENDING
-    if (statuses.any { it == ClaimStatus.DELIVERED }) return ClaimStatus.DELIVERED
+    // TODO: k-of-N — replace with statuses.count { it == SENT || it == DELIVERED } >= threshold
     if (statuses.any { it == ClaimStatus.SENT }) return ClaimStatus.SENT
+    if (statuses.any { it == ClaimStatus.DELIVERED }) return ClaimStatus.DELIVERED
+    if (statuses.any { it == ClaimStatus.PENDING }) return ClaimStatus.PENDING
     if (statuses.any { it == ClaimStatus.DECLINED }) return ClaimStatus.DECLINED
     return ClaimStatus.DELIVERED
 }

@@ -14,6 +14,5 @@ interface BiometricAuthenticatorInterface {
 sealed class BiometricState {
     object Idle : BiometricState()
     object Success : BiometricState()
-    object NeedRegistration : BiometricState()
     data class Error(val message: String) : BiometricState()
 }

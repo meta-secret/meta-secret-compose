@@ -12,4 +12,5 @@ interface MetaSecretSocketHandlerInterface {
     fun pausePolling()
     fun resumePolling()
     fun setProcessingSecretName(secretName: String)
+    fun resetReadyToRecoverDedup(claimId: String?)
 }

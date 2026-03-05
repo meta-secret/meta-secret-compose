@@ -61,12 +61,9 @@ class SplashScreen : Screen {
             when (biometricState) {
                 is BiometricState.Success ->
                     viewModel.handle(SplashViewEvents.BIOMETRIC_SUCCEEDED)
-                is BiometricState.NeedRegistration ->
-                    viewModel.handle(SplashViewEvents.BIOMETRIC_NEEDS_REGISTRATION)
                 is BiometricState.Error -> {
                     notificationCoordinator.showError(biometricError)
                 }
-
                 BiometricState.Idle -> Unit
             }
         }

@@ -192,6 +192,7 @@ sealed class LogTag(val displayName: String) {
             object CheckingRecoverDeclinedStatus : Message("Checking recover declined status")
             object ErrorCheckingRecoverDeclinedStatus : Message("Error checking recover declined status")
             object RecoverSentStatusClaimStatus : Message("Claim status from findClaim")
+            object DismissRecoveryRequest : Message("Dismiss recovery request for claimId")
         }
     }
 

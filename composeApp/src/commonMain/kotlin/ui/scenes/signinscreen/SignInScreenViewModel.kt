@@ -244,7 +244,13 @@ class SignInScreenViewModel(
 
         if (model.success && !model.masterKey.isNullOrEmpty()) {
             logger.log(LogTag.SignInVM.Message.GeneratedMasterKey, "$model", success = true)
-            keyChainManager.saveString("master_key", model.masterKey)
+            val saved = keyChainManager.saveString("master_key", model.masterKey)
+            if (!saved) {
+                logger.setMasterKeyGenerated(false)
+                currentState = SignInStates.MASTER_KEY_FAILED
+                _isLoading.value = false
+                return
+            }
             logger.setMasterKeyGenerated(true)
             currentState = SignInStates.MASTER_KEY_GENERATED
         } else {
@@ -261,7 +267,11 @@ class SignInScreenViewModel(
                 logger.log(LogTag.SignInVM.Message.SubscribeJoinResponse, success = true)
                 when (actionType) {
                     SocketActionModel.JOIN_REQUEST_ACCEPTED -> {
-                        handleJoinRequestAccepted()
+                        if (currentState == SignInStates.SIGN_IN_PENDING) {
+                            handleJoinRequestAccepted()
+                        } else {
+                            logger.log(LogTag.SignInVM.Message.JoiningNotFollowing, "currentState=$currentState, ignoring JOIN_REQUEST_ACCEPTED", success = true)
+                        }
                     }
                     SocketActionModel.JOIN_REQUEST_DECLINED -> {
                         logger.log(LogTag.SignInVM.Message.GotDeclinedSignal, success = false)
