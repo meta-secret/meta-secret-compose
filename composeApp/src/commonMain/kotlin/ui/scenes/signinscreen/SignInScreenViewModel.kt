@@ -267,7 +267,11 @@ class SignInScreenViewModel(
                 logger.log(LogTag.SignInVM.Message.SubscribeJoinResponse, success = true)
                 when (actionType) {
                     SocketActionModel.JOIN_REQUEST_ACCEPTED -> {
-                        handleJoinRequestAccepted()
+                        if (currentState == SignInStates.SIGN_IN_PENDING) {
+                            handleJoinRequestAccepted()
+                        } else {
+                            logger.log(LogTag.SignInVM.Message.JoiningNotFollowing, "currentState=$currentState, ignoring JOIN_REQUEST_ACCEPTED", success = true)
+                        }
                     }
                     SocketActionModel.JOIN_REQUEST_DECLINED -> {
                         logger.log(LogTag.SignInVM.Message.GotDeclinedSignal, success = false)
