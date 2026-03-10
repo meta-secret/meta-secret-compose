@@ -11,7 +11,7 @@ import ObjectiveC
 final class BackupUI: NSObject {
     static let shared = BackupUI()
 
-    private let iCloudContainerId = "iCloud.metasecret.project.com.KotlinProject"
+    private let iCloudContainerId = "iCloud.metasecret.project.com"
 
     func presentBackupPicker(
         initialMessage: String,
@@ -264,7 +264,7 @@ private final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
 // MARK: - BackupWorker
 
 final class BackupWorker {
-    private static let containerId = "iCloud.metasecret.project.com.KotlinProject"
+    private static let containerId = "iCloud.metasecret.project.com"
 
 
 

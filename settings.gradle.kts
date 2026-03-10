@@ -1,4 +1,4 @@
-rootProject.name = "KotlinProject"
+rootProject.name = "MetaSecret"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

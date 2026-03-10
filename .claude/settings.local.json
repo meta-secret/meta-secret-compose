@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew :composeApp:assemble --stacktrace 2>&1 | grep -E \"^e:|error:|BUILD|FAILED|SUCCESS\" | head -40)"
+    ]
+  }
+}

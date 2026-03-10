@@ -23,7 +23,7 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "Metasecret"
+            baseName = "ComposeApp"
             isStatic = true
             binaryOption("bundleId", "metasecret.project.com")
         }
@@ -82,6 +82,10 @@ kotlin {
             implementation(libs.jetbrains.lifecycle.runtime.compose)
         }
     }
+}
+
+compose.resources {
+    packageOfResClass = "kotlinproject.composeapp.generated.resources"
 }
 
 android {
