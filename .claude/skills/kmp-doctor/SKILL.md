@@ -28,6 +28,8 @@ Your job is to:
 - .claude/skills/kmp-doctor/error-categories.md
 - .claude/skills/kmp-doctor/launch-policy.md
 - .claude/skills/kmp-doctor/runtime-error-categories.md
+- .claude/skills/architecture-guardian/solid-rules.md
+- .claude/skills/architecture-guardian/layer-rules.md
 - CLAUDE.md
 
 ## Workflow
@@ -74,6 +76,12 @@ Respond using exactly this structure:
 
 ## Waiting
 Say: "Waiting for approval before making changes."
+
+## Architecture Impact
+- Correct layer for the fix:
+- Existing abstraction to use:
+- New abstraction needed: yes / no
+- Architecture risk: low / medium / high
 
 Do not edit any file in this phase.
 

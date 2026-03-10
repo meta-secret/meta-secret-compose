@@ -169,3 +169,26 @@ Same emoji used consistently within a file and its paired View/ViewModel. No PII
 - Do not declare the problem solved until runtime verification is either:
     1. confirmed by the user, or
     2. explicitly deferred by the user.
+
+## SOLID rules for this project
+- Single Responsibility: a type must have one reason to change. Do not combine UI state, navigation, networking, persistence, and domain decisions in one class.
+- Open/Closed: prefer extending behavior via new use-cases, adapters, or implementations instead of editing unrelated existing logic.
+- Liskov Substitution: implementations of interfaces must preserve expected behavior and contracts.
+- Interface Segregation: prefer narrow interfaces focused on one capability. Avoid large manager-style interfaces with unrelated responsibilities.
+- Dependency Inversion: UI and platform layers must depend on abstractions from core, not concrete implementations.
+
+## Architecture decision rules
+Before writing code:
+1. Identify the layer where the change belongs.
+2. Check whether an existing interface or use-case already owns this behavior.
+3. Prefer adding or extending a focused abstraction over putting logic into View, ViewModel, or platform bridge.
+4. Keep Swift proxy code minimal; business logic must remain in shared/core layers unless clearly platform-specific.
+5. Never place FFI calls outside the allowed FFI boundary.
+
+## Forbidden architectural anti-patterns
+- No business logic inside SwiftUI/UIView/UIKit views.
+- No direct FFI usage outside MetaSecretCoreInterface and its allowed façade path.
+- No platform-specific logic leaking into shared domain abstractions unless explicitly designed for that.
+- No giant manager classes with mixed responsibilities.
+- No direct dependency from UI to concrete data/network/native implementations.
+- No cross-layer shortcuts that bypass core interfaces.
