@@ -21,6 +21,8 @@ Your job is to:
 - Prefer the narrowest possible build command first.
 - Prefer minimal repair over refactor.
 - If the failure is ambiguous, ask for clarification instead of guessing.
+- Before proposing a fix, use systematic root-cause analysis.
+- Do not jump directly from symptom to patch.
 
 ## Read these files before acting
 - .claude/skills/kmp-doctor/project-context.md
@@ -30,6 +32,7 @@ Your job is to:
 - .claude/skills/kmp-doctor/runtime-error-categories.md
 - .claude/skills/architecture-guardian/solid-rules.md
 - .claude/skills/architecture-guardian/layer-rules.md
+- .claude/skills/systematic-debugging/root-cause-framework.md
 - CLAUDE.md
 
 ## Workflow
@@ -60,6 +63,12 @@ Respond using exactly this structure:
 ## Diagnosis
 - Category:
 - Likely root cause:
+- Confidence: low / medium / high
+
+## Root Cause Analysis
+- Symptoms:
+- Observations:
+- Most likely root cause:
 - Confidence: low / medium / high
 
 ## Repair Plan

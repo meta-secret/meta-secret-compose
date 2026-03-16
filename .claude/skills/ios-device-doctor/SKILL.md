@@ -20,6 +20,8 @@ This skill is for cases where:
 - Do not change signing, provisioning, or Apple team settings unless explicitly asked.
 - Do not touch Rust code.
 - Do not modify more than 3 files in one iteration unless explicitly approved.
+- Use systematic root-cause analysis before proposing a fix.
+- Do not jump directly from runtime symptom to patch.
 
 ## Inputs you may use
 - user-provided crash message
@@ -45,6 +47,14 @@ Classify the issue into one primary category:
 - KMP / Swift interop runtime issue
 - app configuration / environment issue
 - first screen / navigation failure
+
+### Phase 2.5 — Root Cause Analysis
+Respond using:
+## Symptoms
+## Observations
+## Hypotheses
+## Evidence
+## Most Likely Root Cause
 
 ### Phase 3 — Plan
 Respond using exactly this structure:

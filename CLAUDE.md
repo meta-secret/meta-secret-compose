@@ -192,3 +192,29 @@ Before writing code:
 - No giant manager classes with mixed responsibilities.
 - No direct dependency from UI to concrete data/network/native implementations.
 - No cross-layer shortcuts that bypass core interfaces.
+
+## New feature development workflow
+For new features, do not jump directly into code generation.
+
+Use this sequence:
+1. /feature-brainstorm
+2. /write-implementation-plan
+3. approval
+4. code generation
+5. /arch-review
+6. build verification
+7. runtime verification if needed
+
+## Code generation policy
+When generating new code:
+- architecture-first, code-second
+- respect current module boundaries
+- follow project-specific SOLID rules
+- preserve MVVM and interface-driven design
+- prefer minimal compliant design over broad refactor
+
+## Debugging policy
+When debugging:
+- use systematic root-cause analysis before proposing a patch
+- distinguish symptoms from causes
+- prefer the smallest verifiable intervention

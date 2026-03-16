@@ -26,6 +26,7 @@ Your job is to:
 - CLAUDE.md
 - .claude/skills/architecture-guardian/solid-rules.md
 - .claude/skills/architecture-guardian/layer-rules.md
+- .claude/skills/architecture-guardian/generation-rules.md
 
 ## Workflow
 
@@ -70,3 +71,12 @@ Only after architectural placement is clear:
 - preserve module boundaries
 - keep public APIs interface-driven
 - avoid leaking platform details into core
+
+## New feature generation mode
+For new features, do not go straight to code.
+Recommend this path:
+1. /feature-brainstorm
+2. /write-implementation-plan
+3. approval
+4. code generation
+5. /arch-review
