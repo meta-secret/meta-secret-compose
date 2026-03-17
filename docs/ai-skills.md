@@ -162,3 +162,67 @@ The skill system enforces several engineering principles:
 - SOLID principles
 
 This ensures that AI-assisted development behaves closer to a disciplined senior engineering workflow rather than ad-hoc code generation.
+
+
+# Using These Skills in Cursor
+
+Cursor does not support Claude-style slash commands directly. Instead, the AI behavior is controlled through the rules located in:
+
+.cursor/rules/
+
+These rules automatically guide the model to behave as if the skills exist.
+
+Current rules include:
+
+- architecture.mdc — enforces architecture and layering
+- codestyle.mdc — enforces coding standards
+- projectrules.mdc — global project constraints
+- feature-workflow.mdc — feature design workflow
+- debugging.mdc — systematic debugging discipline
+
+Because of these rules, you should trigger the same behavior using **natural prompts**.
+
+Examples:
+
+Start feature design:
+
+"Design this feature first. Do not write code yet."
+
+Write implementation plan:
+
+"Write an implementation plan only. No code yet."
+
+Generate code after approval:
+
+"The plan is approved. Generate the minimal implementation."
+
+Architecture review:
+
+"Review this change for architecture and SOLID compliance."
+
+Systematic debugging:
+
+"Use systematic debugging for this failure:" followed by logs.
+
+Build failure investigation:
+
+"Diagnose this KMP build failure using root-cause analysis:" followed by build output.
+
+iOS runtime crash:
+
+"Use device runtime debugging for this iPhone crash:" followed by device logs.
+
+In practice this produces the same workflow as the Claude skills:
+
+Feature → Design → Plan → Code → Review → Build → Debug
+
+The rules ensure the AI:
+
+- respects project architecture
+- follows SOLID
+- avoids unsafe refactors
+- performs root-cause debugging
+
+This allows Cursor to behave similarly to the Claude skill system while remaining compatible with Cursor's rule-based prompting model.
+
+---

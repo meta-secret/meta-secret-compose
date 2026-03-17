@@ -1,0 +1,59 @@
+---
+description: Systematic debugging and root-cause analysis workflow
+globs: ["**/*"]
+alwaysApply: false
+---
+
+# Systematic Debugging
+
+When debugging, do not jump directly from symptom to patch.
+
+Always use this sequence:
+
+## Symptoms
+- what failed:
+- where it failed:
+- when it failed:
+
+## Observations
+- fact:
+- fact:
+
+## Hypotheses
+1.
+2.
+3.
+
+## Evidence
+### Hypothesis 1
+- supporting:
+- contradicting:
+
+### Hypothesis 2
+- supporting:
+- contradicting:
+
+### Hypothesis 3
+- supporting:
+- contradicting:
+
+## Most Likely Root Cause
+- root cause:
+- confidence: low / medium / high
+
+## Minimal Fix Plan
+1.
+2.
+3.
+
+## Verification Step
+- exact next check:
+
+## KMP Build-Specific Rules
+- prefer the narrowest possible build command first
+- distinguish Gradle/KMP config vs shared Kotlin vs Swift/iOS integration vs environment/generated artifacts
+
+## iOS Runtime Rules
+- assume physical-device-only verification
+- ask for real device logs if needed
+- do not assume simulator is relevant

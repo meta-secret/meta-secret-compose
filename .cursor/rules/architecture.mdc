@@ -1,131 +1,186 @@
 ---
-description:
-globs:
+description: Architecture rules, layering constraints, SOLID discipline and feature design workflow
+globs: ["**/*"]
 alwaysApply: true
 ---
 
-# ARCHITECTURE
+# Architecture Rules
 
-**Scope.** Kotlin-first KMM app with:
-- Android UI: Jetpack Compose
-- iOS UI: UIKit with a minimal Swift proxy (“SwiftBridge”)
-- Prebuilt native library (“meta-secret-lib”) over FFI:
-  - iOS: `metasecret-mobile.a`, `metasecret-mobile.h`, `MetaSecretCoreLibrary-Bridging-Header.h`
-  - Android: `jniLibs/.../libmetasecret_mobile.so`
+This repository is a Kotlin Multiplatform mobile application targeting Android and iOS.
 
-Architectural style: **MVVM** with unidirectional data flow.
+The architecture follows:
 
----
+- MVVM
+- unidirectional data flow
+- shared domain in commonMain
+- platform adapters in androidMain / iosMain
+- Rust cryptographic core via FFI
 
-## Modules & Source Sets
-
-- `core/`
-  - `commonMain` — shared Kotlin code: domain, use-cases, models, interfaces (ports), optional platform-agnostic implementations, DI (`di/KoinModules`)
-  - `androidMain` — platform adapters (Android), FFI/JNI bridge, DI (`di/PlatformModule.android`)
-  - `iosMain` — platform adapters (iOS), Swift/ObjC bridge, DI (`di/PlatformModule.ios`)
-- `composeApp/` — application code (scenes, View, ViewModel, navigation, etc.)
-- `iosApp/` — Xcode target (UIKit + SwiftBridge entrypoint)
-
-> There is **no** separate `infra/` module. Platform adapters live in the platform source sets.
+AI must respect the architecture described below when generating or modifying code.
 
 ---
 
-## Layers & Boundaries
+# Project Structure
 
-### ui/
-- Views (Compose/UIKit) and ViewModels grouped by **scenes/**
-- Presentation only; **no business logic**
-- Depends on **core public APIs**; **must not** call FFI or platform APIs directly
+composeApp/src/
 
-### models/
-- `apiModels/` — JSON/domain coming from `meta-secret-lib`
-- `appInternalModels/` — internal app-level models used by UI and core
-- Mapping `apiModels ↔ appInternalModels` lives in **core**
+commonMain/
+- domain models
+- use cases
+- interfaces
+- state resolvers
+- DI modules
 
-### core/
-- Domain logic, use-cases, validation, state machines
-- `shareData/` — shared classes & **interfaces** for platform capabilities (instead of `expect/actual`)
-- `storage/` — KeyValue abstractions (interfaces)
-- `metaSecretCore/` — integration with meta-secret-lib:
-  - `MetaSecretSocketHandlerInterface` / `MetaSecretSocketHandler` — usable from any VM
-  - `MetaSecretAppManagerInterface` / `MetaSecretAppManager` — façade over meta-secret-lib; usable from any VM
-  - `MetaSecretCoreInterface` — the **only** interface allowed to reach FFI; **only** `MetaSecretAppManager` may use it
-  - `MetaSecretStateResolverInterface` / `MetaSecretStateResolver` — Type-State helper; **usable only by VMs**
-- `di/` — Koin modules
+androidMain/
+- Android adapters
+- JNI bridge
+- Android DI bindings
 
-### Platform adapters (source sets)
-- **androidMain / iosMain**: implementations of `core` interfaces for Keychain/Keystore, camera, push, biometrics, and FFI bridges
-- No UI; no business rules; technical plumbing only
+iosMain/
+- iOS adapters
+- Swift / Objective-C bridge
+- iOS DI bindings
 
----
-
-## Interface Placement & DI Binding Policy
-
-- **Interfaces live in `core/commonMain`.**
-- Implementations:
-  - If 100% platform-agnostic → keep next to the interface in `commonMain`
-  - If platform-specific / FFI → put in `androidMain` or `iosMain`
-- **Koin registration is mandatory** where the implementation lives:
-  - `commonMain` → `di/KoinModules`
-  - `androidMain` → `di/PlatformModule.android`
-  - `iosMain` → `di/PlatformModule.ios`
-- Public APIs, constructors, and factories expose **interfaces only** (no `*Impl` in signatures)
+iosApp/
+- Xcode target
+- UIKit entrypoints
+- minimal Swift proxy
 
 ---
 
-## ViewModel Contract (handle-only)
+# MVVM Rules
 
-  - Every ViewModel implements CommonViewModel
-  - UI interacts with VM only via handle(event) + read-only StateFlow<UiState> and optional SharedFlow<NavigationEvent>
-  - Events are scene-specific sealed types implementing CommonViewModelEventsInterface
-  - Internal state machines are private (simple enum or Type-State when safety matters)
+Views:
+- contain no business logic
+- only render state
+- send events to ViewModel
 
-## Allowed Dependencies (one-way)
-  -	ui/ → core/
-  - core/ → platform adapters (androidMain / iosMain) via interfaces only
-  - adapters → (implement core ports; no upward deps)
+ViewModels:
+- orchestrate state
+- receive UI events
+- call use-cases
+- never perform FFI calls directly
 
-## Forbidden:
-	-	UI importing platform adapters or FFI packages directly
-	-	core public APIs exposing types from platform source sets
+Domain/Core:
+- contains business logic
+- defines interfaces
+- platform-agnostic
 
-## Data Flow (MVVM)
-
-View → ViewModel → UseCase (core) → Repository/Adapter (platform source set) → FFI
-                                       ↑
-                               appInternalModels
-  - StateFlow for state; SharedFlow for one-off events (incl. navigation)
-	-	Rust/FFI calls must never block UI threads; wrap in withContext(Dispatchers.IO)
-
-## Errors
-	-	FFI/native errors are mapped once in core to sealed domain errors
-	-	UI never handles raw error strings/codes; it renders friendly text based on sealed errors
-	-	No exceptions across module boundaries
+Platform adapters:
+- implement interfaces defined in core
+- contain platform-specific logic only
 
 ---
 
-## Navigation
-	-	Android: Navigation-Compose
-	-	iOS: UIKit push/pop (Coordinator optional)
+# FFI Boundary
+
+Rust native library (`meta-secret-lib`) is accessed through a strict boundary.
+
+Rules:
+
+- Rust code must never be modified by AI
+- FFI calls must never appear in UI or ViewModel
+- Only `MetaSecretCoreInterface` may call FFI
+- Only the approved façade may use that interface
+- FFI calls must be executed off the main thread
+
+No direct JNI / Swift bridge usage outside the defined interface.
 
 ---
 
-## DI (Koin) — composition roots
-	-	Android: app module loads commonModule + PlatformModule.android
-	-	iOS: SwiftBridge loads commonModule + PlatformModule.ios
-	-	ViewModels depend on interfaces; implementations are hidden behind DI
+# Dependency Rules
+
+Dependencies must flow **towards abstractions**.
+
+UI → ViewModel → Core interfaces → Platform adapters
+
+Never:
+
+UI → concrete repository
+UI → FFI
+Core → Android / iOS frameworks
 
 ---
 
-## Testing
-	-	core/ (commonMain): unit tests for use-cases, mappers, error mapping
-	-	Platform adapters (androidMain / iosMain): when introduced, integration tests for Keychain/Keystore and FFI bridges
-	-	ui/: ViewModel tests with fakes for core interfaces
-	-	Regression tests: on demand (manual decision)
+# Interface Placement Policy
+
+When adding new capability:
+
+1. Define interface in `commonMain`
+2. If platform-agnostic → implement in `commonMain`
+3. If platform-specific → implement in androidMain / iosMain
+4. Expose interfaces only
+
+Public APIs must never expose `*Impl` classes.
 
 ---
 
-## Architecture Principles
-	-	SOLID (SRP, OCP via ADRs, LSP via clean contracts, ISP small ports, DIP on interfaces in core)
-	-	Interface-only access to services/managers (no expect/actual)
-	-	Prefer Type-State for flows with illegal transitions
+# Model Mapping Rules
+
+`apiModels` represent transport / native data.
+
+They must be mapped to internal models before use.
+
+UI must never consume raw API/native models directly.
+
+---
+
+# SOLID Rules
+
+Single Responsibility
+A class must have only one reason to change.
+
+Open / Closed
+Prefer extending behavior through new implementations instead of modifying unrelated code.
+
+Liskov Substitution
+Interface implementations must respect behavioral contracts.
+
+Interface Segregation
+Prefer small focused interfaces.
+
+Dependency Inversion
+Higher layers depend on abstractions, never implementations.
+
+---
+
+# Feature Development Workflow
+
+When implementing a new feature:
+
+1. Determine architectural placement
+2. Produce implementation plan
+3. Wait for approval
+4. Generate minimal code
+5. Verify build
+6. Verify runtime behavior
+7. Perform architecture review
+
+AI must **not jump directly to code generation** for complex features.
+
+---
+
+# Code Generation Discipline
+
+When writing code:
+
+- follow existing module boundaries
+- prefer extending existing abstractions
+- do not introduce parallel architecture
+- avoid god objects
+- avoid mixing UI, networking, persistence, and domain logic
+- prefer minimal compliant implementation
+
+If architectural placement is unclear, AI must ask before implementing.
+
+---
+
+# Forbidden
+
+AI must never:
+
+- modify Rust libraries
+- modify signing / provisioning settings
+- introduce FFI calls outside the defined interface
+- introduce platform code inside shared modules
+- rewrite unrelated code

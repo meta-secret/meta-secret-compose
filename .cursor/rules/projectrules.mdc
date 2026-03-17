@@ -1,59 +1,62 @@
 ---
+description: Global project rules for AI-assisted development in this repository
+globs: ["**/*"]
 alwaysApply: true
 ---
-# Project Rules
-
-## Goals
-- MVP: Distributed secret saver. Serverless. Keeping all data on the device only. No master password. No Auth. Only biometrical checking.
 
 # Project Rules
 
-## Goals
-- (fill in your concrete MVP goals here)
+This is a Kotlin Multiplatform mobile app targeting Android and iOS.
 
-## Stack and Versions
-- Runtime:
-  - Kotlin: latest stable (K2.x), JVM 17, Android minSdk as defined in build
-  - Swift: latest stable (Swift 6.x, current Xcode), iOS target per project
-  - Rust (prebuilt lib only): stable toolchain
-- Update Policy:
-  - Upgrade to latest stable at least once per quarter
-  - Lock files are mandatory for reproducible builds
+## Architecture
+- Follow MVVM with unidirectional data flow.
+- Keep business logic out of Views / ViewControllers / Swift proxy code.
+- Keep shared/core logic platform-agnostic.
+- Platform-specific behavior belongs in platform adapters only.
+- Public APIs should expose interfaces, not concrete implementations.
 
-## Architectural Style
-- **MVVM** with unidirectional data flow
-- Scenes: each screen has View + ViewModel; shared components live outside `scenes/`
+## FFI Boundary
+- Do not touch Rust code.
+- Do not modify external native libraries.
+- Do not move FFI calls outside the approved FFI boundary.
+- FFI calls must remain wrapped according to project rules.
 
-## Architecture Principles (SOLID)
-- SRP / OCP (via ADRs) / LSP (clean contracts) / ISP (small ports) / DIP (depend on interfaces in `core`)
+## Feature Development Policy
+For new features, do not jump directly into code generation.
 
-## Access Policy (Interface-Only)
-- All services/managers are accessed **only via interfaces** defined in `core/commonMain`
-- Implementations:
-  - `commonMain` if platform-agnostic → bind in `di/KoinModules`
-  - `androidMain` / `iosMain` if platform-specific → bind in `di/PlatformModule.android` / `.ios`
-- Public APIs expose interfaces only (no `*Impl` in signatures)
-- No `expect/actual`; use interfaces
+Always follow this sequence:
+1. Brainstorm architectural placement
+2. Write an implementation plan
+3. Wait for approval
+4. Generate minimal code
+5. Review architecture impact
+6. Verify build
+7. Verify runtime if needed
 
-## Performance (guidelines)
-- Do not block UI threads; wrap FFI in IO dispatcher
-- Keep hot allocations out of tight loops; measure before “optimizing”
+## Code Generation Policy
+- Architecture first, code second.
+- Prefer minimal compliant design over broad refactor.
+- Respect current module boundaries.
+- Follow project-specific SOLID rules.
+- Prefer small interfaces and focused responsibilities.
+- Do not create god objects.
+- Do not place business logic in UI.
 
-## Testing (current)
-- `core` unit tests; VM unit with fakes; platform integration tests when adapters appear
-- Regression tests — on demand
+## Build / Debug Policy
+- Use root-cause analysis before proposing fixes.
+- Do not jump directly from symptom to patch.
+- Prefer the narrowest useful build command first.
+- Prefer minimal repair over refactor.
+- If the issue is ambiguous, ask for clarification instead of guessing.
 
-## Security (minimum)
-- Secrets only via Keychain (iOS) / Keystore (Android)
-- User-safe error messages; no raw FFI errors in UI
+## Runtime Policy
+- iOS runtime verification must assume physical-device-only testing.
+- Do not assume iOS Simulator is relevant.
+- Android can be verified on emulator or physical device.
+- Build success does not imply runtime success.
 
-## VM Contract
-```kotlin
-interface CommonViewModel { fun handle(event: CommonViewModelEventsInterface) }
-- UI directly calling Business logic or FFI.
-- Business logic inside ui/.
-- Adding new infra dependencies without ADR.
-- Using `expect/actual`; platform abstractions must be interfaces only.
-
-- All interfaces must have a Koin binding
-- UI talks to VM only via handle(event) + read-only state/optional navigation events
+## Forbidden
+- Do not rewrite unrelated code.
+- Do not clean up code unless required for the task.
+- Do not change dependency versions unless the failure directly points to that.
+- Do not change signing, provisioning, certificates, or Apple team settings.
