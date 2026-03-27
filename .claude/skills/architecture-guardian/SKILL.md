@@ -3,80 +3,60 @@ name: architecture-guardian
 description: Preserve project architecture and SOLID when proposing or writing code. Always identify the correct layer and minimal design first.
 ---
 
-# Architecture Guardian
+# Architecture Guardian (meta-secret-compose)
 
 You protect the architecture of this Kotlin Multiplatform + Swift project.
 
-Your job is to:
-1. determine the correct layer for a change,
-2. preserve current architecture,
-3. enforce project-specific SOLID rules,
-4. prevent architectural degradation,
-5. propose the minimal compliant design before code is written.
+## Job
+
+1. Determine the correct **layer** for a change.
+2. Preserve boundaries in [ARCHITECTURE.md](../../../ARCHITECTURE.md).
+3. Enforce SOLID — no mixing of UI, domain, persistence, or FFI concerns.
+4. Prevent architectural degradation; prefer minimal fixes.
 
 ## Hard rules
+
 - Do not write code before identifying the correct architectural layer.
-- Do not put business logic into Views, ViewControllers, Swift proxy code, or platform glue unless explicitly required.
-- Do not bypass core interfaces.
+- Do not put business logic into Views, ViewControllers, or Swift proxy code.
+- Do not bypass `MetaSecretCoreInterface`; never call FFI from UI or ViewModel.
 - Do not touch Rust code.
-- Do not introduce broad refactors when a local architectural fix is sufficient.
-- Do not move FFI usage outside the approved FFI boundary.
+- Do not introduce broad refactors when a local fix is sufficient.
 
-## Read these files first
-- CLAUDE.md
-- .claude/skills/architecture-guardian/solid-rules.md
-- .claude/skills/architecture-guardian/layer-rules.md
-- .claude/skills/architecture-guardian/generation-rules.md
+## Layers (quick reference)
 
-## Workflow
+| Layer | Location | Rules |
+|-------|----------|-------|
+| UI | `ui/scenes/`, `iosApp/` | No logic, no FFI, render state only |
+| ViewModel | anywhere | Orchestrates state; no FFI; no platform glue |
+| Core / Domain | `commonMain/` | Business logic, interfaces, models — platform-agnostic |
+| Platform adapters | `androidMain/`, `iosMain/` | Implement core ports; nothing leaks upward |
+| FFI boundary | `MetaSecretCoreInterface` | Only this interface calls FFI; off main thread |
 
-### Phase 1 — Architectural placement
-Before writing code, determine:
-- which layer owns the change
-- whether an interface already exists
-- whether a new abstraction is needed
-- whether the proposed change violates current boundaries
+## SOLID (brief)
 
-### Phase 2 — Design proposal
-Respond using this structure:
+- **SRP:** one reason to change per type; no god objects.
+- **OCP:** extend via new implementations/use-cases, not unrelated patches.
+- **LSP:** implementations must preserve interface contracts and state.
+- **ISP:** prefer small focused interfaces; avoid "manager" catch-alls.
+- **DIP:** UI → ViewModel → Core interfaces → Platform adapters; never toward concretes.
 
-## Architectural Context
-- Requested change:
-- Correct layer:
-- Existing abstractions involved:
-- New abstraction needed: yes / no
+## Code generation checklist
 
-## SOLID Check
-- SRP:
-- OCP:
-- ISP:
-- DIP:
-- Main risk:
+Before writing code, confirm:
 
-## Minimal Design Plan
-1.
-2.
-3.
+1. Which layer owns this change?
+2. Does an existing interface cover it?
+3. Is a new abstraction needed, or can we extend?
+4. Does this touch FFI? (If yes, check boundary rules.)
+5. Is the proposed diff minimal and layering-safe?
 
-## Files Likely To Change
-- file
-- file
+If architectural placement is unclear, **stop and ask** before generating code.
 
-## Waiting
-Say: "Waiting before code generation if architectural direction needs confirmation."
+## New feature entry point
 
-### Phase 3 — Code generation
-Only after architectural placement is clear:
-- generate minimal code changes
-- preserve module boundaries
-- keep public APIs interface-driven
-- avoid leaking platform details into core
+Use **`feature-planner`** subagent via [WORKFLOW.md](../../../WORKFLOW.md) — not the legacy `/feature-brainstorm` skill.
 
-## New feature generation mode
-For new features, do not go straight to code.
-Recommend this path:
-1. /feature-brainstorm
-2. /write-implementation-plan
-3. approval
-4. code generation
-5. /arch-review
+## Read first
+
+- [ARCHITECTURE.md](../../../ARCHITECTURE.md)
+- [SECURITY.md](../../../SECURITY.md) — before any FFI or network change

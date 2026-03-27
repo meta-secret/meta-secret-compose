@@ -1,6 +1,7 @@
 ---
 name: systematic-debugging
 description: Perform root-cause debugging before proposing fixes. Never jump directly from symptom to patch.
+context: fork
 ---
 
 # Systematic Debugging

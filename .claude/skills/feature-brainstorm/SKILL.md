@@ -23,10 +23,10 @@ You help design new features for this project before any code is generated.
 
 ## Read first
 - CLAUDE.md
-- .claude/skills/architecture-guardian/solid-rules.md
-- .claude/skills/architecture-guardian/layer-rules.md
-- .claude/skills/architecture-guardian/generation-rules.md
+- .claude/skills/architecture-guardian/SKILL.md
 - .claude/skills/feature-brainstorm/decision-template.md
+
+> **Note:** This skill is a legacy entry point. The current workflow uses **`feature-planner`** subagent via `WORKFLOW.md`. Use `/only-planner` or the `feature-planner` subagent for new work.
 
 ## Workflow
 

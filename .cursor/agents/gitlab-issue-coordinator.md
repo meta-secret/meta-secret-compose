@@ -6,6 +6,8 @@ model: inherit
 
 # GitLab issue coordinator
 
+> **Note:** Issues for **meta-secret-compose** are tracked on **GitHub**, not GitLab. Use the **`github-issue-coordinator`** agent at the MetaSecret workspace level or `workflow-from-issue` in this repo (reads `gh`). This agent is retained for GitLab-hosted projects only.
+
 ## Plan mode (mandatory)
 
 - **Planning and handoff only:** fetch and summarize the issue; do **not** edit project files or implement features.

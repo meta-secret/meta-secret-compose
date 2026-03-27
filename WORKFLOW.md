@@ -8,7 +8,7 @@ This document describes how to run the **multi-phase delivery pipeline** with **
 
 | Role | Subagent name (invoke by name) | Purpose |
 |------|----------------------------------|---------|
-| GitLab issue fetch + handoff | `gitlab-issue-coordinator` | Load issue via `glab`, summarize, list next steps |
+| GitHub issue fetch + handoff | `github-issue-coordinator` (MetaSecret root) or `workflow-from-issue` command | Load issue via `gh`, summarize, list next steps |
 | Plan only | `feature-planner` | Structured plan, no code |
 | Implement | `code-implementer` | Code per approved plan |
 | Tests | `test-author` | Add/update tests |
@@ -25,7 +25,7 @@ Files: [`.cursor/agents/`](.cursor/agents/) and [`.claude/agents/`](.claude/agen
 
 | Entry | First phase | Artifact before your approval |
 |-------|-------------|--------------------------------|
-| **GitLab issue** (number or URL) | `gitlab-issue-coordinator` | Issue summary (title, description, acceptance) |
+| **GitHub issue** (number or URL) | `/workflow-from-issue <n>` → `github-issue-coordinator` → `feature-planner` | Issue summary (title, description, acceptance) |
 | **Manual prompt** (feature or bug description) | Skip coordinator; go to `feature-planner` with a **task brief** (use skill `workflow-manual-task-brief`) | Task brief + plan |
 
 After the first approved plan, the pipeline is identical.
@@ -67,7 +67,7 @@ You can invoke **any** subagent alone with a direct prompt (logs, files, partial
 
 | Skill folder | Use |
 |--------------|-----|
-| `workflow-issue-handoff` | Format after `glab issue view` |
+| `workflow-issue-handoff` | Format after `gh issue view` (or `glab issue view`) |
 | `workflow-manual-task-brief` | Structure a manual task before planning |
 | `workflow-plan-output` | Plan shape; aligns with `write-implementation-plan` |
 | `workflow-mr-body` | MR title/body checklist |

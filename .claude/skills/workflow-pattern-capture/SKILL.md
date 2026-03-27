@@ -30,6 +30,8 @@ If none apply, **stop** and output **No changes recommended** (one line is enoug
 - **Slash command** — repeatable entry under [`.claude/commands/`](../../commands/) (mirror usage in [`.cursor/commands/README.md`](../../../.cursor/commands/README.md)).
 - **Cursor rule** — persistent guidance under [`.cursor/rules/`](../../../.cursor/rules/) when the issue is editor/agent behavior, not Gradle.
 - **Claude hook** — only when **automated session-level control** is truly needed (e.g. block writes to forbidden paths, audit log). Hooks are **not** a substitute for CI or Gradle; say **no** when a skill or rule is enough.
+- **`## Gotchas` section** — when the model **repeatedly fails** in the same way (wrong layer choice, ignored constraint, incorrect test scope): add a `## Gotchas` section to the relevant skill documenting the failure mode and correct behavior. This is the highest-ROI addition to any skill.
+- **Dynamic injection** — for build/diagnostic skills (e.g. `kmp-doctor`, `systematic-debugging`): consider embedding a shell command using `` !`command` `` syntax in `SKILL.md` so the model receives live output on invocation (e.g. current Gradle version, active SDK, recent error lines). Only propose when the dynamic context materially changes how the model should act.
 
 ## Output format (strict)
 

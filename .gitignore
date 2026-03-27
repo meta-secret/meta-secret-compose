@@ -29,3 +29,6 @@ meta-secret-mobile.a
 libmetasecret_mobile.so
 **/libs/**/*.so
 **/jniLibs/**/*.so
+
+# Claude Code local settings (developer-specific allowlists, not for repo)
+.claude/settings.local.json

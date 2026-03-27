@@ -1,6 +1,7 @@
 ---
 name: kmp-doctor
 description: Diagnose and repair Kotlin Multiplatform + Swift build failures. Always plan first, wait for confirmation, then apply minimal fixes.
+context: fork
 ---
 
 # KMP Doctor
@@ -30,8 +31,7 @@ Your job is to:
 - .claude/skills/kmp-doctor/error-categories.md
 - .claude/skills/kmp-doctor/launch-policy.md
 - .claude/skills/kmp-doctor/runtime-error-categories.md
-- .claude/skills/architecture-guardian/solid-rules.md
-- .claude/skills/architecture-guardian/layer-rules.md
+- .claude/skills/architecture-guardian/SKILL.md
 - .claude/skills/systematic-debugging/root-cause-framework.md
 - CLAUDE.md
 

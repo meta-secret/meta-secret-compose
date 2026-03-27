@@ -9,6 +9,8 @@ permissionMode: plan
 
 # GitLab issue coordinator
 
+> **Note:** Issues for **meta-secret-compose** are tracked on **GitHub**, not GitLab. For GitHub issues, use the **`github-issue-coordinator`** agent at the MetaSecret workspace level (`/compose-github-issue <n>`) or the `workflow-from-issue` command in this repo. This agent is retained for GitLab-hosted projects only.
+
 ## Plan mode (mandatory)
 
 - **Planning and handoff only:** fetch and summarize the issue; do **not** edit files or implement code.

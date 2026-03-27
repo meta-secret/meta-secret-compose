@@ -1,14 +1,17 @@
 ---
-description: Start delivery from a GitLab issue — fetch with glab, format handoff, stop for approval before planning.
+description: Start delivery from a GitHub issue — fetch with gh, format handoff, stop for approval before planning.
 ---
 
 # Workflow from issue
 
 Arguments: issue reference (number or URL). Example: `/workflow-from-issue 42`
 
-1. Run the **gitlab-issue-coordinator** subagent with: `$ARGUMENTS`
+1. Run the **github-issue-coordinator** subagent (MetaSecret-level: `.claude/agents/github-issue-coordinator.md`) with `TARGET_SUBDIR=meta-secret-compose` and `ISSUE=$ARGUMENTS`.
+   - If running from the **meta-secret-compose** workspace directly (not MetaSecret root), call `gh issue view <n> --repo meta-secret/meta-secret-compose` and format the result with skill `workflow-issue-handoff`.
 2. Apply skill **workflow-issue-handoff** (`.claude/skills/workflow-issue-handoff/`) to format the summary.
 3. **Stop.** Wait for explicit user approval of the issue summary.
 4. Next: `/only-planner` with the approved handoff text (or delegate **feature-planner** with that context).
 
 Read [WORKFLOW.md](../WORKFLOW.md) for the full pipeline.
+
+> **Note:** Issues for this repo are on **GitHub** (`gh`). The `gitlab-issue-coordinator` agent exists for GitLab-hosted projects only.

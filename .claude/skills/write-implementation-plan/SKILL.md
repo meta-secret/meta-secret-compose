@@ -20,10 +20,10 @@ You write implementation plans for new features after the design direction is ch
 
 ## Read first
 - CLAUDE.md
-- .claude/skills/architecture-guardian/solid-rules.md
-- .claude/skills/architecture-guardian/layer-rules.md
-- .claude/skills/architecture-guardian/generation-rules.md
+- .claude/skills/architecture-guardian/SKILL.md
 - .claude/skills/write-implementation-plan/plan-template.md
+
+> **Note:** This skill is a legacy entry point. The current workflow uses **`feature-planner`** subagent via `WORKFLOW.md` which references this skill's `plan-template.md` for structure.
 
 ## Workflow
 
