@@ -30,7 +30,7 @@ Follow:
 2. Mirror existing test libraries and patterns in the repo (JUnit, Kotlin test, coroutine test rules, fakes).
 3. Keep tests deterministic; avoid flakiness and real network/device dependencies unless the project already uses them for that case.
 
-## Handoff
+## Next steps
 
 After adding tests, recommend running **`test-verifier`** (or the narrowest `./gradlew` test task) to confirm green builds.
 

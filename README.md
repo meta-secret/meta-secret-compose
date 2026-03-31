@@ -41,7 +41,7 @@ Skills (templates and playbooks) live under [`.claude/skills/`](.claude/skills/)
 | `/workflow-from-issue` | You have a GitLab issue number or URL (`glab` available). |
 | `/workflow-from-prompt` | You only have a free-text feature/bug description. |
 
-Each command file lists the exact steps (task brief or issue handoff → pause for approval → `feature-planner` → rest of pipeline per [WORKFLOW.md](WORKFLOW.md)).
+Each command file lists the exact steps (task brief or issue **Summary** → pause for approval → `feature-planner` → rest of pipeline per [WORKFLOW.md](WORKFLOW.md)).
 
 **Run a single phase** (no full chain)
 
