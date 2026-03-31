@@ -12,10 +12,21 @@ See also: [CLAUDE.md](CLAUDE.md), [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md), [SEC
 ```
 composeApp/src/
 ├── commonMain/   — domain, use-cases, models, interfaces, DI (KoinModules)
-├── androidMain/  — Android adapters, JNI bridge, DI (PlatformModule.android)
+├── androidMain/  — Android adapters, UniFFI bindings to native code, DI (PlatformModule.android)
 └── iosMain/      — iOS adapters, Swift/ObjC bridge, DI (PlatformModule.ios)
 iosApp/           — Xcode target (UIKit + SwiftBridge entrypoint)
 ```
+
+### UniFFI bindings (`mobile_uniffi`)
+
+Generated artifacts are produced in **`meta-secret-core`**; this repo consumes them as-is.
+
+- **Android:** Kotlin bindings live under `composeApp/src/androidMain/kotlin/.../uniffi/` (JNA loads `metasecret_mobile`; see `MetaSecretCoreService.android.kt`). Regenerate when the Rust API changes; avoid hand-editing except any project-specific post-step documented next to the generator.
+- **iOS:** Swift and C headers exist in **two** locations so SwiftPM (`swiftklib`) and the Xcode target both see the same API: `iosApp/iosApp/UniffiGenerated/` and `iosApp/iosApp/MetaSecretCoreService/UniffiGenerated/`. After regeneration, **keep both copies in sync** (copy from one canonical build output or run the project’s generation script) to avoid checksum/version drift between targets.
+
+### KMP layout vs AGP 9+
+
+Multi-module migration for Kotlin Multiplatform + Android is tracked as technical debt; see the `BACKLOG(AGP 9+)` comment in `composeApp/build.gradle.kts` and [KMP project structure migration](https://kotl.in/kmp-project-structure-migration).
 
 ### Layers
 
@@ -37,7 +48,7 @@ iosApp/           — Xcode target (UIKit + SwiftBridge entrypoint)
 
 `MetaSecretCoreInterface` is the **only** interface allowed to call FFI. Only **`MetaSecretAppManager`** may use it. FFI calls must run off the main thread (e.g. `withContext(Dispatchers.IO)`).
 
-Rust code (`meta-secret-lib`) must **not** be modified in this repo. No direct JNI / Swift bridge usage outside the defined interface.
+Rust code (`meta-secret-lib`) must **not** be modified in this repo. No direct UniFFI calls or ad hoc Swift/C bridge usage outside the defined interface (`MetaSecretCoreInterface` path).
 
 ### Key types
 

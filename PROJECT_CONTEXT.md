@@ -7,8 +7,8 @@ See also: [CLAUDE.md](CLAUDE.md), [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITY.
 
 Kotlin Multiplatform (KMM) mobile app for **Android** (Jetpack Compose) and **iOS** (UIKit + minimal Swift proxy). It integrates a **prebuilt** Rust native library (`meta-secret-lib`) over FFI for cryptography and secret sharing.
 
-- **Android:** JNI via `libmetasecret_mobile.so`
-- **iOS:** `metasecret-mobile.a` + `MetaSecretCoreLibrary-Bridging-Header.h`
+- **Android:** UniFFI-generated Kotlin (JNA) + `libmetasecret_mobile.so` (see `System.setProperty` for `uniffi.component.mobile_uniffi.libraryOverride`)
+- **iOS:** `metasecret-mobile.a` + generated Swift under `iosApp/UniffiGenerated` (`mobile_uniffiFFI` module map; bridging header remains for Foundation-only)
 
 ## Relation to `meta-secret-core`
 
@@ -19,7 +19,7 @@ Rust sources and the UniFFI/mobile build live in the separate **`meta-secret-cor
 ```bash
 ./gradlew build
 ./gradlew installDebug
-./gradlew ktlintFormat detekt
+./gradlew :composeApp:detekt
 ./gradlew test
 ./gradlew test --tests "com.example.MyTestClass"
 ```

@@ -1,3 +1,5 @@
+import io.gitlab.arturbosch.detekt.Detekt
+import io.github.ttypic.swiftklib.gradle.task.CompileSwiftTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -7,10 +9,13 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version "2.1.21-RC"
-    alias(libs.plugins.swiftklib)
+    alias(libs.plugins.detekt)
+    id("io.github.ttypic.swiftklib")
 }
 
 kotlin {
+    // BACKLOG(AGP 9+): migrate KMP + Android app to recommended multi-module layout —
+    // https://kotl.in/kmp-project-structure-migration (see also ARCHITECTURE.md "KMP layout vs AGP 9+")
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
@@ -39,6 +44,7 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
+            implementation("net.java.dev.jna:jna:5.15.0")
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.ui.android)
@@ -148,4 +154,31 @@ swiftklib {
         path = file("../iosApp/iosApp/MetaSecretCoreService/")
         packageName("com.metaSecret.ios")
     }
+}
+
+// swiftklib: patched plugin in plugins/swiftklib-patched adds Package.swift swiftSettings with
+// -fmodule-map-file for UniFFI (MetaSecretCoreService/UniffiGenerated/mobile_uniffiFFI.modulemap).
+
+tasks.withType<CompileSwiftTask>().configureEach {
+    doFirst {
+        logger.debug("swiftklib task ${name}: swiftBuildDir=${swiftBuildDir.absolutePath}")
+    }
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    parallel = true
+    config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+}
+
+tasks.withType<Detekt>().configureEach {
+    setSource(
+        files(
+            "src/commonMain/kotlin",
+            "src/androidMain/kotlin",
+            "src/iosMain/kotlin",
+        ),
+    )
+    jvmTarget = "11"
+    exclude("**/uniffi/**")
 }

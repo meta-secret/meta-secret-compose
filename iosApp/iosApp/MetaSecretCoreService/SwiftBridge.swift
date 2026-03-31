@@ -8,227 +8,79 @@
 
 import Foundation
 import UIKit
-import ObjectiveC
 
 @objc public class SwiftBridge: NSObject {
     // MARK: - MetaSecretCoreBridge API
 
-    @_silgen_name("generate_master_key")
-    private func c_generate_master_key() -> UnsafeMutablePointer<CChar>?
-
-    @_silgen_name("init")
-    private func c_init(_ master_key_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-    
-    @_silgen_name("get_state")
-    private func c_get_state() -> UnsafeMutablePointer<CChar>?
-    
-    @_silgen_name("sign_up")
-    private func c_sign_up() -> UnsafeMutablePointer<CChar>?
-
-    @_silgen_name("free_string")
-    private func c_free_string(_ ptr: UnsafeMutablePointer<CChar>?)
-    
-    @_silgen_name("generate_user_creds")
-    private func c_generate_user_creds(_ vault_name_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-
-    @_silgen_name("update_membership")
-    private func c_update_memberships(_ candidate_ptr: UnsafePointer<CChar>?, _ action_update_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-
-    @_silgen_name("clean_up_database")
-    private func c_clean_up_database() -> UnsafeMutablePointer<CChar>?
-    
-    @_silgen_name("split_secret")
-    private func c_split_secret(_ secret_id_ptr: UnsafePointer<CChar>?, _ secret_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-    
-    @_silgen_name("find_claim_by")
-    private func c_find_claim_by(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-
-    @_silgen_name("find_claim_id_by")
-    private func c_find_claim_id_by(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-
-    @_silgen_name("recover")
-    private func c_recover(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-    
-    @_silgen_name("accept_recover")
-    private func c_accept_recover(_ claim_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-    
-    @_silgen_name("decline_recover")
-    private func c_decline_recover(_ claim_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-
-    @_silgen_name("send_decline_completion")
-    private func c_send_decline_completion(_ claim_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-
-    @_silgen_name("show_recovered")
-    private func c_show_recovered(_ secret_id_ptr: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>?
-    
-    // MARK: - MetaSecretCoreBridge
     @objc public func generateMasterKey() -> String {
-        guard let cString = c_generate_master_key() else {
-            return ""
-        }
-        
-        let swiftString = String(cString: cString)
-        c_free_string(cString)
-        return swiftString
+        uniffiMobileGenerateMasterKey()
     }
 
     @objc public func initWithMasterKey(_ masterKey: String) -> String {
-        guard let cString = masterKey.cString(using: .utf8) else {
-            return ""
-        }
- 
-        guard let resultPtr = c_init(cString) else {
-            return ""
-        }
-        
-        let resultString = String(cString: resultPtr)
-        c_free_string(resultPtr)
-        return resultString
+        uniffiMobileInitIos(masterKey: masterKey)
     }
-    
+
     @objc public func getState() -> String {
-        guard let cString = c_get_state() else {
-            SwiftLogger.shared.logError(tag: .swiftBridge, message: "getState: FFI returned nil")
-            return "{\"success\": false, \"message\": \"FFI getState returned nil\"}"
-        }
-        
-        let resultString = String(cString: cString)
-        c_free_string(cString)
-        
+        let resultString = uniffiMobileGetState()
         if resultString.isEmpty {
             SwiftLogger.shared.logError(tag: .swiftBridge, message: "getState: FFI returned empty string")
             return "{\"success\": false, \"message\": \"FFI getState returned empty string\"}"
         }
-        
         if !resultString.contains("\"message\"") && !resultString.contains("\"success\"") {
             SwiftLogger.shared.logError(tag: .swiftBridge, message: "getState: FFI returned invalid JSON")
             return "{\"success\": false, \"message\": \"FFI getState returned invalid JSON\"}"
         }
-        
         return resultString
     }
-    
+
     @objc public func generateUserCreds(vaultName: String) -> String {
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "generateUserCreds with \(vaultName)")
-        guard let cVaultName = vaultName.cString(using: .utf8) else {
-            SwiftLogger.shared.logError(tag: .swiftBridge, message: "generateUserCreds return #")
-            return ""
-        }
-        
-        guard let cString = c_generate_user_creds(cVaultName) else {
-            SwiftLogger.shared.logError(tag: .swiftBridge, message: "generateUserCreds return ##")
-            return ""
-        }
-        
-        let resultString = String(cString: cString)
+        let resultString = uniffiMobileGenerateUserCreds(vaultName: vaultName)
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "generateUserCreds resultString \(resultString)")
-        c_free_string(cString)
         return resultString
     }
-    
+
     @objc public func signUp() -> String {
-        guard let cString = c_sign_up() else {
-            return ""
-        }
-        
-        let resultString = String(cString: cString)
-        c_free_string(cString)
-        return resultString
+        uniffiMobileSignUp()
     }
 
     @objc public func updateMembership(_ candidate: String, _ actionUpdate: String) -> String {
-        guard let candidateString = candidate.cString(using: .utf8),
-              let actionUpdateString = actionUpdate.cString(using: .utf8)
-         else {
-            return ""
-        }
-
-        guard let resultPtr = c_update_memberships(candidateString, actionUpdateString) else {
-            return ""
-        }
-
-        let resultString = String(cString: resultPtr)
-        c_free_string(resultPtr)
-        return resultString
+        uniffiMobileUpdateMembership(candidate: candidate, actionUpdate: actionUpdate)
     }
-    
+
     @objc public func splitSecret(_ secretName: String, _ secret: String) -> String {
-        guard let secretNameString = secretName.cString(using: .utf8),
-              let secretString = secret.cString(using: .utf8)
-         else {
-            return ""
-        }
-
-        guard let resultPtr = c_split_secret(secretNameString, secretString) else {
-            return ""
-        }
-
-        let resultString = String(cString: resultPtr)
-        c_free_string(resultPtr)
-        return resultString
+        uniffiMobileSplitSecret(secretId: secretName, secret: secret)
     }
-    
+
     @objc public func findClaim(_ secretId: String) -> String {
-        guard let secretIdString = secretId.cString(using: .utf8) else { return ""}
-
-        guard let resultPtr = c_find_claim_by(secretIdString) else { return "" }
-
-        let resultString = String(cString: resultPtr)
-        c_free_string(resultPtr)
-        return resultString
+        uniffiMobileFindClaimBy(secretId: secretId)
     }
-    
+
+    @objc public func findClaimIdBy(_ secretId: String) -> String {
+        uniffiMobileFindClaimIdBy(secretId: secretId)
+    }
+
     @objc public func recover(_ secretId: String) -> String {
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "recover secret ID \(secretId)")
-        guard let secretIdString = secretId.cString(using: .utf8) else { return "" }
-
-        guard let resultPtr = c_recover(secretIdString) else { return "" }
-
-        let resultString = String(cString: resultPtr)
-        c_free_string(resultPtr)
-        return resultString
+        return uniffiMobileRecover(secretId: secretId)
     }
-    
+
     @objc public func acceptRecover(_ claimId: String) -> String {
-        guard let claimIdString = claimId.cString(using: .utf8) else { return "" }
-
-        guard let resultPtr = c_accept_recover(claimIdString) else { return "" }
-
-        let resultString = String(cString: resultPtr)
-        c_free_string(resultPtr)
-        return resultString
+        uniffiMobileAcceptRecover(claimId: claimId)
     }
-    
+
     @objc public func declineRecover(_ claimId: String) -> String {
-        guard let claimIdString = claimId.cString(using: .utf8) else { return "" }
-
-        guard let resultPtr = c_decline_recover(claimIdString) else { return "" }
-
-        let resultString = String(cString: resultPtr)
-        c_free_string(resultPtr)
-        return resultString
+        uniffiMobileDeclineRecover(claimId: claimId)
     }
 
     @objc public func sendDeclineCompletion(_ claimId: String) -> String {
-        guard let claimIdString = claimId.cString(using: .utf8) else { return "" }
-
-        guard let resultPtr = c_send_decline_completion(claimIdString) else { return "" }
-
-        let resultString = String(cString: resultPtr)
-        c_free_string(resultPtr)
-        return resultString
+        uniffiMobileSendDeclineCompletion(claimId: claimId)
     }
 
     @objc public func showRecovered(_ secretId: String) -> String {
-        guard let secretIdString = secretId.cString(using: .utf8) else { return "" }
-
-        guard let resultPtr = c_show_recovered(secretIdString) else { return "" }
-
-        let resultString = String(cString: resultPtr)
-        c_free_string(resultPtr)
-        return resultString
+        uniffiMobileShowRecovered(secretId: secretId)
     }
-    
+
     // MARK: - KeyChain
     private let serviceName: String = "MetaSecret"
     
@@ -314,9 +166,7 @@ import ObjectiveC
     @objc public func clearAll(dbFileName: String) -> Bool {
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "clearAll keys - Starting cleanup process")
 
-        if let ptr = c_clean_up_database() {
-            c_free_string(ptr)
-        }
+        _ = uniffiMobileCleanUpDatabase()
         
         cleanDB(dbFileName: dbFileName)
         

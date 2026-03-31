@@ -35,6 +35,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
         
         init {
             try {
+                System.setProperty("uniffi.component.mobile_uniffi.libraryOverride", "metasecret_mobile")
                 System.loadLibrary("metasecret_mobile")
                 loggerInstance?.log(LogTag.MetaSecretCoreService.Message.LibraryLoaded, success = true)
                     ?: println(logFormatterInstance?.formatLogMessage("Metasecret_mobile library has been loaded successfully") 

@@ -1,0 +1,8 @@
+# Detekt rules; extend default set and tune over time.
+# See https://detekt.dev/docs/introduction/configurations/
+#
+# Current codebase reports ~393 weighted issues on default rules; maxIssues is set
+# above that so `./gradlew detekt` can be used in CI while rules are tightened incrementally.
+
+build:
+  maxIssues: 500

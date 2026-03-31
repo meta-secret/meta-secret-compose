@@ -2,44 +2,52 @@ package com.metasecret.core
 
 object MetaSecretNative {
     @JvmStatic
-    external fun generateMasterKey(): String
+    fun generateMasterKey(): String = uniffi.mobile_uniffi.generateMasterKey()
 
     @JvmStatic
-    external fun init(masterKey: String): String
+    fun init(masterKey: String): String = uniffi.mobile_uniffi.initAndroid(masterKey)
 
     @JvmStatic
-    external fun getState(): String
+    fun getState(): String = uniffi.mobile_uniffi.getState()
 
     @JvmStatic
-    external fun generate_user_creds(vaultName: String): String
+    fun generate_user_creds(vaultName: String): String =
+        uniffi.mobile_uniffi.generateUserCreds(vaultName)
 
     @JvmStatic
-    external fun signUp(): String
+    fun signUp(): String = uniffi.mobile_uniffi.signUp()
 
     @JvmStatic
-    external fun update_membership(candidate: String, actionUpdate: String): String
+    fun update_membership(candidate: String, actionUpdate: String): String =
+        uniffi.mobile_uniffi.updateMembership(candidate, actionUpdate)
 
     @JvmStatic
-    external fun clean_up_database(): String
+    fun clean_up_database(): String = uniffi.mobile_uniffi.cleanUpDatabase()
 
     @JvmStatic
-    external fun split(secretId: String, secret: String): String
+    fun split(secretId: String, secret: String): String =
+        uniffi.mobile_uniffi.splitSecret(secretId, secret)
 
     @JvmStatic
-    external fun find_claim_by_(secretId: String): String
+    fun find_claim_by_(secretId: String): String =
+        uniffi.mobile_uniffi.findClaimBy(secretId)
 
     @JvmStatic
-    external fun recover(secretId: String): String
+    fun recover(secretId: String): String = uniffi.mobile_uniffi.recover(secretId)
 
     @JvmStatic
-    external fun acceptRecover(claimId: String): String
+    fun acceptRecover(claimId: String): String =
+        uniffi.mobile_uniffi.acceptRecover(claimId)
 
     @JvmStatic
-    external fun declineRecover(claimId: String): String
+    fun declineRecover(claimId: String): String =
+        uniffi.mobile_uniffi.declineRecover(claimId)
 
     @JvmStatic
-    external fun sendDeclineCompletion(claimId: String): String
+    fun sendDeclineCompletion(claimId: String): String =
+        uniffi.mobile_uniffi.sendDeclineCompletion(claimId)
 
     @JvmStatic
-    external fun showRecovered(secretId: String): String
-} 
+    fun showRecovered(secretId: String): String =
+        uniffi.mobile_uniffi.showRecovered(secretId)
+}
