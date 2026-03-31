@@ -2,6 +2,7 @@ rootProject.name = "MetaSecret"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
+    includeBuild("plugins/swiftklib-patched")
     repositories {
         google {
             mavenContent {

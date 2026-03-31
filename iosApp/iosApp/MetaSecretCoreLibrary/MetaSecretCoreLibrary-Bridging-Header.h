@@ -1,9 +1,9 @@
 #ifndef MetaSecretCoreLibrary_Bridging_Header_h
 #define MetaSecretCoreLibrary_Bridging_Header_h
 
-// IMMUTABLE START - Core includes
 #import <Foundation/Foundation.h>
-#import "metasecret-mobile.h"
-// IMMUTABLE END
 
-#endif /* MetaSecretCoreLibrary_Bridging_Header_h */ 
+/* Previous C headers (e.g. metasecret-mobile.h) were removed: UniFFI exposes FFI via the
+   generated Swift sources and mobile_uniffiFFI.modulemap consumed by SwiftBridge / swiftklib. */
+
+#endif /* MetaSecretCoreLibrary_Bridging_Header_h */

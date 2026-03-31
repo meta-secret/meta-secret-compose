@@ -26,7 +26,7 @@ enum SwiftLogTag: String, Sendable {
 }
 
 final class SwiftLogger: @unchecked Sendable {
-    nonisolated(unsafe) static let shared = SwiftLogger()
+    static let shared = SwiftLogger()
     
     private let stateLock = NSLock()
     private var isActive: Bool
