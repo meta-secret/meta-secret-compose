@@ -34,6 +34,8 @@ This file guides Claude Code (claude.ai/code) in this repository. **Canonical de
 
 Follow [WORKFLOW.md](WORKFLOW.md). Slash commands: [`.claude/commands/`](.claude/commands/). Cursor parity: [`.cursor/commands/README.md`](.cursor/commands/README.md).
 
+**Agent output:** When this repo sits under the MetaSecret parent workspace, follow [Agent output conventions](../CLAUDE.md#agent-output-conventions) in the root `CLAUDE.md`. Otherwise use the same norms (emojis in replies; `##`/`###` headings, **bold**, blockquotes; optional HTML color where the UI supports it).
+
 ## Cursor
 
 Rules under [`.cursor/rules/`](.cursor/rules/) apply. An **Always Apply** rule (`ai-project-context.mdc`) pulls in the same markdown documents for Agent context (including [WORKFLOW.md](WORKFLOW.md)).
