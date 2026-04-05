@@ -38,8 +38,8 @@ Skills (templates and playbooks) live under [`.claude/skills/`](.claude/skills/)
 
 | Command | When |
 |---------|------|
-| `/workflow-from-issue` | You have a GitLab issue number or URL (`glab` available). |
-| `/workflow-from-prompt` | You only have a free-text feature/bug description. |
+| `/only-issue-coordinator` | You have a GitHub issue number or URL (`gh` available). |
+| `/only-from-prompt` | You only have a free-text feature/bug description. |
 
 Each command file lists the exact steps (task brief or issue **Summary** → pause for approval → `feature-planner` → rest of pipeline per [WORKFLOW.md](WORKFLOW.md)).
 
@@ -47,7 +47,7 @@ Each command file lists the exact steps (task brief or issue **Summary** → pau
 
 | Command | Phase |
 |---------|--------|
-| `/only-issue-coordinator` | GitLab issue summary |
+| `/only-issue-coordinator` | GitHub issue summary |
 | `/only-planner` | Plan only (`feature-planner`) |
 | `/only-implementer` | Implement approved plan |
 | `/only-test-author` | Add/update tests |
