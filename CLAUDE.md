@@ -39,3 +39,19 @@ Follow [WORKFLOW.md](WORKFLOW.md). Slash command catalog (`/help`): [`.claude/co
 ## Cursor
 
 Rules under [`.cursor/rules/`](.cursor/rules/) apply. An **Always Apply** rule (`ai-project-context.mdc`) pulls in the same markdown documents for Agent context (including [WORKFLOW.md](WORKFLOW.md)).
+
+## UniFFI bindings sync (from meta-secret-core)
+
+Generated Kotlin (`composeApp/.../uniffi/.../mobile_uniffi.kt`) and Swift/C headers under **`iosApp/.../UniffiGenerated/`** (both copies: `iosApp/UniffiGenerated` and `MetaSecretCoreService/UniffiGenerated`) are **not committed** — they are produced by **`uniffi-bindgen-runner`** in **meta-secret-core** (UDL: `meta-secret/mobile/uniffi/src/mobile_uniffi.udl`).
+
+**When to regenerate:** after changing `mobile_uniffi.udl` or Rust exports in **meta-secret-core**, or when cloning **meta-secret-compose** without those files.
+
+**How (pick one):**
+
+1. **Gradle (recommended):** from the compose repo root, run **`./gradlew :composeApp:generateUniffiBindings`** — runs `scripts/sync-uniffi-from-core.sh`. **`./gradlew build`** depends on this task so Kotlin, Kotlin/Native, and swiftklib compile after bindings exist. Override the core checkout with **`-PmetaSecretCoreRoot=...`** or **`META_SECRET_CORE_ROOT`** (default: **`../meta-secret-core`** relative to the compose repo root). Requires **`cargo`** on `PATH`; the task fails with a clear error if the core root or script is wrong.
+2. **Manual:** `./scripts/sync-uniffi-from-core.sh ../meta-secret-core` (same env var / argument rules).
+
+**After regenerating bindings**, rebuild the native library (`libmetasecret_mobile` / `metasecret-mobile.a`) from core so symbols match the bindings.
+
+**CI / agents:** check out **both** repositories (or point **`META_SECRET_CORE_ROOT`** at the core checkout), install the Rust toolchain, then run **`generateUniffiBindings`** or **`build`** before compiling the app.
+

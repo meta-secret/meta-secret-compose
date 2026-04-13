@@ -14,9 +14,14 @@ Kotlin Multiplatform (KMM) mobile app for **Android** (Jetpack Compose) and **iO
 
 Rust sources and the UniFFI/mobile build live in the separate **`meta-secret-core`** repository. This repo **consumes** the native artifacts; it does not edit Rust. Cross-repo changes follow **core first**, then integration here (see [CLAUDE.md](CLAUDE.md)).
 
+To refresh **UniFFI-generated** Kotlin/Swift after UDL or Rust API changes in core, run **`./gradlew :composeApp:generateUniffiBindings`** or **`./scripts/sync-uniffi-from-core.sh`** (see [CLAUDE.md](CLAUDE.md)). Generated binding sources are gitignored; a clean clone must run generation (or full **`./gradlew build`**, which depends on it) before compile.
+
+**CI:** pipelines that build this repo need the **meta-secret-core** checkout (or **`META_SECRET_CORE_ROOT`**), Rust + **`cargo`**, then **`generateUniffiBindings`** or **`build`**.
+
 ## Build commands
 
 ```bash
+./gradlew :composeApp:generateUniffiBindings
 ./gradlew build
 ./gradlew installDebug
 ./gradlew :composeApp:detekt

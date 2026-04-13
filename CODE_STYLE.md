@@ -46,6 +46,7 @@ Use a consistent emoji convention within a file and its paired View/ViewModel. N
 - Types: `PascalCase`; members: `camelCase`; constants: `UPPER_SNAKE_CASE`
 - Use cases: `SomethingUseCase`; ViewModels: `SomethingViewModel`
 - Repositories: `XRepository` / `XRepositoryImpl`
+- **FFI bridge (`MetaSecretNative`, Android static JNI):** public Kotlin functions use **camelCase**, aligned with generated UniFFI Swift and [Kotlin conventions](https://kotlinlang.org/docs/coding-conventions.html#function-names). Do not mirror Rust/UDL snake_case in this facade when generated bindings already expose camelCase (e.g. `metaWsStart`, not `meta_ws_start`). Legacy snake_case names may remain until refactored intentionally.
 
 ## Comments
 

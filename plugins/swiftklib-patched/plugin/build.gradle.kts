@@ -1,3 +1,4 @@
+// Keep org.jetbrains.kotlin.jvm in gradle/libs.versions.toml aligned with the root project Kotlin and Gradle wrapper (avoid metadata mismatch with gradleApi()).
 plugins {
     id("java-gradle-plugin")
     alias(libs.plugins.kotlin.jvm)

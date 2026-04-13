@@ -82,11 +82,10 @@ class MetaSecretAppManager(
         if (!_isAppManagerInitialized) {
             return null
         }
-        
-        val stateJson = withContext(Dispatchers.IO) {
-            metaSecretCore.getAppState() // It's ok. Uses Few times. Not cyclical
-        }
         return try {
+            val stateJson = withContext(Dispatchers.IO) {
+                metaSecretCore.getAppState()
+            }
             val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
             val appState = currentState.getCurrentAppState()
             logger.setVaultState(appState?.description())

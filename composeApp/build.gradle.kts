@@ -2,6 +2,9 @@ import io.gitlab.arturbosch.detekt.Detekt
 import io.github.ttypic.swiftklib.gradle.task.CompileSwiftTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
+import java.io.File
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -153,6 +156,7 @@ swiftklib {
     create("SwiftBridge") {
         path = file("../iosApp/iosApp/MetaSecretCoreService/")
         packageName("com.metaSecret.ios")
+        minIos.set(18)
     }
 }
 
@@ -181,4 +185,59 @@ tasks.withType<Detekt>().configureEach {
     )
     jvmTarget = "11"
     exclude("**/uniffi/**")
+}
+
+// UniFFI: regenerate Kotlin + Swift bindings from meta-secret-core before Kotlin/Swift compile (see scripts/sync-uniffi-from-core.sh).
+val metaSecretCoreRootProvider =
+    providers
+        .gradleProperty("metaSecretCoreRoot")
+        .orElse(providers.environmentVariable("META_SECRET_CORE_ROOT"))
+        .orElse("../meta-secret-core")
+
+val generateUniffiBindings =
+    tasks.register<Exec>("generateUniffiBindings") {
+        group = "build"
+        description =
+            "Regenerate UniFFI Kotlin/Swift bindings from meta-secret-core (requires Rust cargo and uniffi-bindgen-runner)."
+        workingDir(rootProject.layout.projectDirectory)
+
+        doFirst {
+            val script = rootProject.layout.projectDirectory.file("scripts/sync-uniffi-from-core.sh").asFile
+            if (!script.isFile) {
+                throw GradleException("Missing UniFFI sync script: ${script.absolutePath}")
+            }
+            val coreRoot = rootProject.file(metaSecretCoreRootProvider.get()).normalize()
+            if (!coreRoot.isDirectory) {
+                throw GradleException(
+                    "Invalid META_SECRET_CORE_ROOT / -PmetaSecretCoreRoot: not a directory: ${coreRoot.absolutePath}. " +
+                        "Expected the meta-secret-core checkout root (contains meta-secret/Cargo.toml).",
+                )
+            }
+            val marker = File(coreRoot, "meta-secret/Cargo.toml")
+            if (!marker.isFile) {
+                throw GradleException(
+                    "Invalid meta-secret-core root: missing ${marker.absolutePath}. " +
+                        "Point META_SECRET_CORE_ROOT at the repository root that contains the meta-secret/ workspace.",
+                )
+            }
+            commandLine("bash", script.absolutePath, coreRoot.absolutePath)
+        }
+    }
+
+tasks.withType<KotlinCompile>().configureEach {
+    dependsOn(generateUniffiBindings)
+}
+
+tasks.withType<KotlinNativeCompile>().configureEach {
+    dependsOn(generateUniffiBindings)
+}
+
+tasks.withType<CompileSwiftTask>().configureEach {
+    dependsOn(generateUniffiBindings)
+}
+
+tasks.configureEach {
+    if (name == "build") {
+        dependsOn(generateUniffiBindings)
+    }
 }

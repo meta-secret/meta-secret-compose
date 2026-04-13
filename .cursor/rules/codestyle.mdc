@@ -130,6 +130,10 @@ Repositories
 XRepository
 XRepositoryImpl
 
+FFI / MetaSecretNative (Android JNI static wrapper)
+- Public Kotlin function names: camelCase, aligned with generated UniFFI Swift (e.g. metaWsStart) and Kotlin conventions.
+- Do not copy Rust/UDL snake_case into this facade when generated bindings already expose camelCase.
+
 ---
 
 # Security Constraints

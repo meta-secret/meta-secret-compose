@@ -38,6 +38,8 @@ After the first approved plan, the pipeline is identical.
 4. **Tests** — `test-author` → you approve test diff.
 5. **Verify** — `test-verifier` → you review pass/fail stats.
 
+**UniFFI bindings missing (clean clone / FFI change in core):** run **`./gradlew :composeApp:generateUniffiBindings`** or **`./gradlew build`** with **`META_SECRET_CORE_ROOT`** pointing at **meta-secret-core** — see [CLAUDE.md](CLAUDE.md).
+
 **If tests fail or build fails:** `debug-rca` → approve → back to **Plan** (`feature-planner`) → **Implement** → **Tests** → **Verify** (loop until green).
 
 **Optional (after Gradle / KMP build failure or unclear shared-code errors):** run skill **`kmp-doctor`** for Kotlin Multiplatform / Gradle diagnostics before or alongside narrow RCA.

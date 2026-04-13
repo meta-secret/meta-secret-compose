@@ -1,4 +1,0 @@
-module mobile_uniffiFFI {
-    header "mobile_uniffiFFI.h"
-    export *
-}

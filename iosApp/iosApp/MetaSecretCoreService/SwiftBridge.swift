@@ -9,19 +9,45 @@
 import Foundation
 import UIKit
 
+/// Forwards to UniFFI-generated module functions. Required because many globals share names with `SwiftBridge` methods.
+private enum UniffiGenerated {
+    static func ffiGenerateMasterKey() -> String { generateMasterKey() }
+    static func ffiInitIos(masterKey: String) -> String { initIos(masterKey: masterKey) }
+    static func ffiGetState() -> String { getState() }
+    static func ffiGenerateUserCreds(vaultName: String) -> String { generateUserCreds(vaultName: vaultName) }
+    static func ffiSignUp() -> String { signUp() }
+    static func ffiUpdateMembership(candidate: String, actionUpdate: String) -> String {
+        updateMembership(candidate: candidate, actionUpdate: actionUpdate)
+    }
+    static func ffiSplitSecret(secretId: String, secret: String) -> String {
+        splitSecret(secretId: secretId, secret: secret)
+    }
+    static func ffiFindClaimBy(secretId: String) -> String { findClaimBy(secretId: secretId) }
+    static func ffiFindClaimIdBy(secretId: String) -> String { findClaimIdBy(secretId: secretId) }
+    static func ffiRecover(secretId: String) -> String { recover(secretId: secretId) }
+    static func ffiAcceptRecover(claimId: String) -> String { acceptRecover(claimId: claimId) }
+    static func ffiDeclineRecover(claimId: String) -> String { declineRecover(claimId: claimId) }
+    static func ffiSendDeclineCompletion(claimId: String) -> String { sendDeclineCompletion(claimId: claimId) }
+    static func ffiShowRecovered(secretId: String) -> String { showRecovered(secretId: secretId) }
+    static func ffiMetaWsStart() -> String { metaWsStart() }
+    static func ffiMetaWsStop() -> String { metaWsStop() }
+    static func ffiMetaWsWaitNextEvent(timeoutMs: UInt32) -> Bool { metaWsWaitNextEvent(timeoutMs: timeoutMs) }
+    static func ffiCleanUpDatabase() -> String { cleanUpDatabase() }
+}
+
 @objc public class SwiftBridge: NSObject {
     // MARK: - MetaSecretCoreBridge API
 
     @objc public func generateMasterKey() -> String {
-        uniffiMobileGenerateMasterKey()
+        UniffiGenerated.ffiGenerateMasterKey()
     }
 
     @objc public func initWithMasterKey(_ masterKey: String) -> String {
-        uniffiMobileInitIos(masterKey: masterKey)
+        UniffiGenerated.ffiInitIos(masterKey: masterKey)
     }
 
     @objc public func getState() -> String {
-        let resultString = uniffiMobileGetState()
+        let resultString = UniffiGenerated.ffiGetState()
         if resultString.isEmpty {
             SwiftLogger.shared.logError(tag: .swiftBridge, message: "getState: FFI returned empty string")
             return "{\"success\": false, \"message\": \"FFI getState returned empty string\"}"
@@ -35,50 +61,62 @@ import UIKit
 
     @objc public func generateUserCreds(vaultName: String) -> String {
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "generateUserCreds with \(vaultName)")
-        let resultString = uniffiMobileGenerateUserCreds(vaultName: vaultName)
+        let resultString = UniffiGenerated.ffiGenerateUserCreds(vaultName: vaultName)
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "generateUserCreds resultString \(resultString)")
         return resultString
     }
 
     @objc public func signUp() -> String {
-        uniffiMobileSignUp()
+        UniffiGenerated.ffiSignUp()
     }
 
     @objc public func updateMembership(_ candidate: String, _ actionUpdate: String) -> String {
-        uniffiMobileUpdateMembership(candidate: candidate, actionUpdate: actionUpdate)
+        UniffiGenerated.ffiUpdateMembership(candidate: candidate, actionUpdate: actionUpdate)
     }
 
     @objc public func splitSecret(_ secretName: String, _ secret: String) -> String {
-        uniffiMobileSplitSecret(secretId: secretName, secret: secret)
+        UniffiGenerated.ffiSplitSecret(secretId: secretName, secret: secret)
     }
 
     @objc public func findClaim(_ secretId: String) -> String {
-        uniffiMobileFindClaimBy(secretId: secretId)
+        UniffiGenerated.ffiFindClaimBy(secretId: secretId)
     }
 
     @objc public func findClaimIdBy(_ secretId: String) -> String {
-        uniffiMobileFindClaimIdBy(secretId: secretId)
+        UniffiGenerated.ffiFindClaimIdBy(secretId: secretId)
     }
 
     @objc public func recover(_ secretId: String) -> String {
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "recover secret ID \(secretId)")
-        return uniffiMobileRecover(secretId: secretId)
+        return UniffiGenerated.ffiRecover(secretId: secretId)
     }
 
     @objc public func acceptRecover(_ claimId: String) -> String {
-        uniffiMobileAcceptRecover(claimId: claimId)
+        UniffiGenerated.ffiAcceptRecover(claimId: claimId)
     }
 
     @objc public func declineRecover(_ claimId: String) -> String {
-        uniffiMobileDeclineRecover(claimId: claimId)
+        UniffiGenerated.ffiDeclineRecover(claimId: claimId)
     }
 
     @objc public func sendDeclineCompletion(_ claimId: String) -> String {
-        uniffiMobileSendDeclineCompletion(claimId: claimId)
+        UniffiGenerated.ffiSendDeclineCompletion(claimId: claimId)
     }
 
     @objc public func showRecovered(_ secretId: String) -> String {
-        uniffiMobileShowRecovered(secretId: secretId)
+        UniffiGenerated.ffiShowRecovered(secretId: secretId)
+    }
+
+    @objc public func metaWsStartBridge() -> String {
+        UniffiGenerated.ffiMetaWsStart()
+    }
+
+    @objc public func metaWsStopBridge() -> String {
+        UniffiGenerated.ffiMetaWsStop()
+    }
+
+    @objc public func metaWsWaitNextEventBridge(_ timeoutMs: UInt32) -> Bool {
+        UniffiGenerated.ffiMetaWsWaitNextEvent(timeoutMs: timeoutMs)
     }
 
     // MARK: - KeyChain
@@ -166,7 +204,7 @@ import UIKit
     @objc public func clearAll(dbFileName: String) -> Bool {
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "clearAll keys - Starting cleanup process")
 
-        _ = uniffiMobileCleanUpDatabase()
+        _ = UniffiGenerated.ffiCleanUpDatabase()
         
         cleanDB(dbFileName: dbFileName)
         

@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.0.0"
+kotlin = "2.3.0"
 
 gradlePublishPlugin = "1.2.1"
 

@@ -201,7 +201,10 @@ class MainScreenViewModel(
             when (event) {
                 is MainViewEvents.SetTabIndex -> setTabIndex(event.index)
                 is MainViewEvents.ShowWarning -> changeWarningVisibilityTo(event.isToShow)
-                MainViewEvents.OnEnterForeground -> {/* TODO: Launch socket timer again */ }
+                MainViewEvents.OnEnterForeground -> {
+                    logger.log(LogTag.MainVM.Message.EnterForegroundResumePolling, success = true)
+                    socketHandler.resumePolling()
+                }
             }
         }
     }

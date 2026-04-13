@@ -212,4 +212,39 @@ class MetaSecretCoreServiceIos(
             throw e
         }
     }
+
+    @OptIn(ExperimentalForeignApi::class)
+    override fun metaWsStart(): String {
+        try {
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingGetState, "metaWsStart", success = true)
+            return swiftBridge.metaWsStartBridge()
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    override fun metaWsStop(): String {
+        try {
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingGetState, "metaWsStop", success = true)
+            return swiftBridge.metaWsStopBridge()
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    override fun metaWsWaitNextEvent(timeoutMs: UInt): Boolean {
+        try {
+            return swiftBridge.metaWsWaitNextEventBridge(timeoutMs)
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
 }

@@ -32,3 +32,8 @@ libmetasecret_mobile.so
 
 # Claude Code local settings (developer-specific allowlists, not for repo)
 .claude/settings.local.json
+
+# UniFFI generated (scripts/sync-uniffi-from-core.sh / :composeApp:generateUniffiBindings)
+iosApp/iosApp/UniffiGenerated/
+iosApp/iosApp/MetaSecretCoreService/UniffiGenerated/
+composeApp/src/androidMain/kotlin/com/metasecret/core/uniffi/uniffi/

@@ -16,4 +16,7 @@ interface MetaSecretCoreInterface {
     fun declineRecover(claimId: String): String
     fun sendDeclineCompletion(claimId: String): String
     fun showRecovered(secretId: String): String
+    fun metaWsStart(): String
+    fun metaWsStop(): String
+    fun metaWsWaitNextEvent(timeoutMs: UInt): Boolean
 }

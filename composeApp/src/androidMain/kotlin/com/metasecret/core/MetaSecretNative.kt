@@ -50,4 +50,14 @@ object MetaSecretNative {
     @JvmStatic
     fun showRecovered(secretId: String): String =
         uniffi.mobile_uniffi.showRecovered(secretId)
+
+    @JvmStatic
+    fun metaWsStart(): String = uniffi.mobile_uniffi.metaWsStart()
+
+    @JvmStatic
+    fun metaWsStop(): String = uniffi.mobile_uniffi.metaWsStop()
+
+    @JvmStatic
+    fun metaWsWaitNextEvent(timeoutMs: UInt): Boolean =
+        uniffi.mobile_uniffi.metaWsWaitNextEvent(timeoutMs)
 }

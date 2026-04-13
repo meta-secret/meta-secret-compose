@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import core.LogTag
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 import core.BiometricAuthenticatorInterface
@@ -15,7 +16,6 @@ import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.BackupCoordinatorInterface
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
-import core.VaultStatsProviderInterface
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.biometric_description
 
@@ -25,9 +25,11 @@ class SplashScreenViewModel(
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val keyChain: KeyChainInterface,
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
-    val screenMetricsProvider: ScreenMetricsProviderInterface,
-    private val vaultStatsProvider: VaultStatsProviderInterface
+    val screenMetricsProvider: ScreenMetricsProviderInterface
 ) : CommonViewModel() {
+    private companion object {
+        const val AUTH_TIMEOUT_MS = 20_000L
+    }
     private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
 
@@ -88,11 +90,12 @@ class SplashScreenViewModel(
 
         when (isOnboardingComplete()) {
             OnboardingState.COMPLETED -> {
-                when (checkAuth()) {
+                val authState = runCatching { checkAuth() }.getOrElse {
+                    logger.log(LogTag.SplashVM.Message.MoveToSignUp, success = false)
+                    AuthState.NOT_YET_COMPLETED
+                }
+                when (authState) {
                     AuthState.COMPLETED -> {
-                        try {
-                            vaultStatsProvider.refresh()
-                        } catch (_: Throwable) {}
                         logger.log(LogTag.SplashVM.Message.MoveToMain, success = true)
                         _navigationEvent.value = SplashNavigationEvent.NavigateToMain
                     }
@@ -116,7 +119,9 @@ class SplashScreenViewModel(
 
     private suspend fun checkAuth(): AuthState {
         logger.log(LogTag.SplashVM.Message.AuthCheck)
-        return metaSecretAppManager.checkAuth()
+        return withTimeoutOrNull(AUTH_TIMEOUT_MS) {
+            metaSecretAppManager.checkAuth()
+        } ?: AuthState.NOT_YET_COMPLETED
     }
 }
 

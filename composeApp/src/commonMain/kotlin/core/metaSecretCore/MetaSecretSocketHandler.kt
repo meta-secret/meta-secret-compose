@@ -6,8 +6,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -50,8 +48,8 @@ class MetaSecretSocketHandler(
     override val socketActions: SharedFlow<SocketActionModel> = _socketActions
 
     private var actionsToFollow = mutableSetOf<SocketRequestModel>()
-    private var timerJob: Job? = null
-    private val timerScope = CoroutineScope(Dispatchers.IO)
+    private var socketSyncJob: Job? = null
+    private val socketSyncScope = CoroutineScope(Dispatchers.IO)
     private var isPaused = false
     private var processingSecretName: String? = null
     private var lastEmittedReadyToRecoverClaimId: String? = null
@@ -75,7 +73,7 @@ class MetaSecretSocketHandler(
                 it == SocketRequestModel.SHOW_SECRET || it == SocketRequestModel.WAIT_FOR_RECOVER_REQUEST
             }
             if (needsImmediateSync) {
-                timerScope.launch { searchRequest() }
+                socketSyncScope.launch { searchRequest() }
             }
         }
         logger.log(core.LogTag.SocketHandler.Message.ActualActionsToFollow, "$actionsToFollow", success = true)
@@ -92,11 +90,32 @@ class MetaSecretSocketHandler(
     }
 
     private fun startFollowing() {
-        stopTimer()
-        timerJob = timerScope.launch {
+        stopSocketSyncLoop()
+        socketSyncJob = socketSyncScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    metaSecretCore.metaWsStart()
+                }
+            } catch (e: Exception) {
+                logger.log(
+                    core.LogTag.SocketHandler.Message.ErrorGettingState,
+                    "metaWsStart ${e.message}",
+                    success = false
+                )
+            }
+            // Variant B: refresh on metaWsWaitNextEvent timeout (~60s) when subscriptions exist,
+            // not only on push (true), so we still poll getAppState if the server did not emit WS.
             while (isActive) {
+                withContext(Dispatchers.IO) {
+                    metaSecretCore.metaWsWaitNextEvent(60_000u)
+                }
+                if (isPaused) {
+                    continue
+                }
+                if (actionsToFollow.isEmpty()) {
+                    continue
+                }
                 searchRequest()
-                delay(5000)
             }
         }
     }
@@ -112,11 +131,11 @@ class MetaSecretSocketHandler(
             return
         }
 
-        logger.log(core.LogTag.SocketHandler.Message.FireTimer, success = true)
+        logger.log(core.LogTag.SocketHandler.Message.SocketSyncPoll, success = true)
         
         val currentState = try {
             val stateJson = withContext(Dispatchers.IO) {
-                metaSecretCore.getAppState() // MAIN POINT OF GETTING STATE, WHILE WE USE TIMER
+                metaSecretCore.getAppState() // Refresh app state after WS wait (push or 60s fallback)
             }
             val parsedState = AppStateModel.fromJson(stateJson, logger, null)
             appStateCacheProvider.updateCache(parsedState)
@@ -268,10 +287,10 @@ class MetaSecretSocketHandler(
         }
     }
 
-    private fun stopTimer() {
-        logger.log(LogTag.SocketHandler.Message.TimerStopped, success = true)
-        timerJob?.cancel()
-        timerJob = null
+    private fun stopSocketSyncLoop() {
+        logger.log(LogTag.SocketHandler.Message.SocketSyncStopped, success = true)
+        socketSyncJob?.cancel()
+        socketSyncJob = null
     }
 
     override fun pausePolling() {
@@ -282,5 +301,18 @@ class MetaSecretSocketHandler(
     override fun resumePolling() {
         logger.log(LogTag.SocketHandler.Message.PollingResumed, success = true)
         isPaused = false
+        socketSyncScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    metaSecretCore.metaWsStart()
+                } catch (e: Exception) {
+                    logger.log(
+                        LogTag.SocketHandler.Message.ErrorGettingState,
+                        "resumePolling metaWsStart: ${e.message}",
+                        success = false
+                    )
+                }
+            }
+        }
     }
 }

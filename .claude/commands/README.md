@@ -48,6 +48,7 @@ Brief purpose below. Full behavior: `only-*.md` in this folder.
 | `/only-release-manager` | Agent mode: branch, commit, push, open PR — pauses for explicit user approval before git writes. |
 | `/only-issue-coordinator` | Plan mode: fetch a GitHub issue (`gh`) and format a Summary for the planner handoff. |
 | `/only-workflow-pattern-capture` | Plan mode: propose 0–2 workflow improvements from repeated review or process patterns. |
+| `/only-generate-uniffi` | Run **`./gradlew :composeApp:generateUniffiBindings`** (requires Rust **`cargo`** and **meta-secret-core** at **`META_SECRET_CORE_ROOT`** or **`../meta-secret-core`**); see [only-generate-uniffi.md](only-generate-uniffi.md). |
 
 ## Agents
 

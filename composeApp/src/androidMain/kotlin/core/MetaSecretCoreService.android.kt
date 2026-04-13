@@ -256,6 +256,40 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
         }
     }
 
+    override fun metaWsStart(): String {
+        try {
+            val result = MetaSecretNative.metaWsStart()
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingGetState, "metaWsStart $result", success = true)
+            return result
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun metaWsStop(): String {
+        try {
+            val result = MetaSecretNative.metaWsStop()
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingGetState, "metaWsStop $result", success = true)
+            return result
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun metaWsWaitNextEvent(timeoutMs: UInt): Boolean {
+        try {
+            return MetaSecretNative.metaWsWaitNextEvent(timeoutMs)
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
+
     private fun cleanDB() {
         CoroutineScope(Dispatchers.IO).launch {
             logger.log(LogTag.MetaSecretCoreService.Message.CleanDb, success = true)

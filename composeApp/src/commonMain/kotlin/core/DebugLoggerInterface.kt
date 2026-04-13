@@ -64,6 +64,7 @@ sealed class LogTag(val displayName: String) {
             object BiometricAuthFailed : Message("Biometric authentication failed")
             object BiometricAuthFallback : Message("Biometric authentication fallback")
             object ClearingSecretId : Message("Clearing secretIdToShow")
+            object EnterForegroundResumePolling : Message("App entered foreground; resume socket sync polling")
         }
     }
 
@@ -160,8 +161,8 @@ sealed class LogTag(val displayName: String) {
             object Init : Message("init")
             object UpdateActionsToFollow : Message("Update actions to follow")
             object ActualActionsToFollow : Message("Actual actions to follow")
-            object TimerStarted : Message("Timer is started")
-            object FireTimer : Message("Fire the timer!")
+            object SocketSyncStarted : Message("Socket sync loop started")
+            object SocketSyncPoll : Message("Socket sync poll (getAppState)")
             object AppStateReceived : Message("AppState is")
             object NeedShowAskToJoin : Message("Need to show Ask to join pop up")
             object WaitingForJoinResponse : Message("Waiting for join response")
@@ -181,8 +182,8 @@ sealed class LogTag(val displayName: String) {
             object RecoverSentForSecretId : Message("Recover sent for secretId")
             object RecoverDeclinedForSecretId : Message("Recover declined for secretId")
             object MarkingClaimAsDeclined : Message("Marking claim as locally declined")
-            object TimerStopped : Message("Timer is stopped")
-            object TimerRestartSkipped : Message("Timer restart skipped (already restarting)")
+            object SocketSyncStopped : Message("Socket sync loop stopped")
+            object SocketSyncRestartSkipped : Message("Socket sync restart skipped (already restarting)")
             object PollingPaused : Message("Polling paused")
             object PollingResumed : Message("Polling resumed")
             object PollingSkippedWhilePaused : Message("Polling skipped while paused")
