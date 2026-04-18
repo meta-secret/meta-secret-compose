@@ -1,0 +1,54 @@
+---
+description: meta-secret-compose entry point — orient Cursor to KMM UI layer
+alwaysApply: true
+---
+
+# meta-secret-compose — Cursor Entry Point
+
+This is the **Compose/iOS/Android UI layer** of MetaSecret. The AI brain is in `.ai/`.
+
+## First Read (before any code change)
+
+1. **`.ai/ARCHITECTURE.md`** — Project structure & KMM patterns
+2. **`.ai/agents/feature-planner.md`** — How to plan features
+3. **`.ai/agents/code-implementer.md`** — Implementation patterns
+4. **`.ai/skills/kmp-doctor/`** — KMM troubleshooting
+
+## Key Rules
+
+- **MVVM + Coordinator** — State in ViewModel, UI doesn't orchestrate
+- **Shared module** — Business logic in KMM shared, UI platform-specific
+- **Design tokens** — Never hardcode colors/spacing; use theme system
+- **Compose** — Immutable state, proper recomposition scopes
+- **SwiftUI** — @StateObject, @State for local state, proper binding patterns
+- **Testing** — Unit tests for ViewModels, integration tests for UI coordination
+
+## Quick Navigation
+
+| Task | File |
+|------|------|
+| Architecture decisions | `.ai/ARCHITECTURE.md` |
+| Plan a feature | `.ai/agents/feature-planner.md` |
+| Implement feature | `.ai/agents/code-implementer.md` |
+| Debug KMM issues | `.ai/skills/kmp-doctor/SKILL.md` |
+| Test code | `.ai/agents/test-author.md` |
+
+## Cursor Workflow
+
+1. Open **Terminal** (Ctrl+`) in Cursor
+2. Run a command: `/compose-only-planner "your feature"`
+3. Cursor shows guidance and artifact links
+4. Review in editor, continue iterating
+
+## Important Context
+
+- **This is meta-secret-compose** — KMM UI layer only
+- **Meta-secret-core** is separate (crypto/protocol)
+- **MetaSecret root** coordinates both repos
+- To switch repos: go to MetaSecret root, use `/route` or `/core-only-*`
+
+---
+
+**Entry point:** `.cursor/rules/00-entry.mdc`
+**Architecture:** `.ai/ARCHITECTURE.md`
+**Root layer:** `../../.ai/CONFIG.md`

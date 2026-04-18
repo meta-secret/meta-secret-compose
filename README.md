@@ -1,53 +1,129 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# meta-secret-compose
 
-* `/composeApp` is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - `commonMain` is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    `iosMain` would be the right folder for such calls.
+🎯 **KMM (Kotlin Multiplatform Mobile) application** for iOS and Android UI
 
-* `/iosApp` contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform, 
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
-
-## AI-assisted development
-
-This repository defines a **phased workflow** (plan → implement → test → verify → review → release) with **human approval** between phases. Canonical rules live in markdown at the repo root; agents and skills automate the same discipline.
-
-### Read first (everyone)
-
-| Document | Purpose |
-|----------|---------|
-| [CLAUDE.md](CLAUDE.md) | How AI tools should behave in this repo (short index). |
-| [WORKFLOW.md](WORKFLOW.md) | Full pipeline: agents, approvals, optional steps, skills table. |
-| [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) | Product scope, platforms, build commands. |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Layers, MVVM, FFI boundary. |
-| [SECURITY.md](SECURITY.md) | Secrets, logging, permissions. |
-| [CODE_STYLE.md](CODE_STYLE.md) | Kotlin/Swift conventions. |
-
-Skills (templates and playbooks) live under [`.claude/skills/`](.claude/skills/). Subagent prompts are mirrored in [`.cursor/agents/`](.cursor/agents/) and [`.claude/agents/`](.claude/agents/).
+Features: **Jetpack Compose** (Android) + **SwiftUI** (iOS) + **Shared Kotlin** logic
 
 ---
 
-### Claude Code
+## 📖 Documentation
 
-1. **Open this repo** in Claude Code so it picks up [`.claude/`](.claude/).
-2. **Slash commands** are defined in [`.claude/commands/`](.claude/commands/). Use them from the chat input.
+### For AI/Development Workflow
+👉 **Start here:** [`.ai/README.md`](.ai/README.md)
 
-**Start a full delivery chain**
+- [ORCHESTRATOR.md](.ai/ORCHESTRATOR.md) — How agents orchestrate
+- [INDEX.md](.ai/INDEX.md) — Full resource map
+- [Commands](.ai/commands/README.md) — All available `/only-*` commands
 
-| Command | When |
-|---------|------|
-| `/only-issue-coordinator` | You have a GitHub issue number or URL (`gh` available). |
-| `/only-from-prompt` | You only have a free-text feature/bug description. |
+### For Developers
+- Rules: [`.ai/rules/`](.ai/rules/) — Kotlin/Swift style + KMM principles
+- Skills: [`.ai/skills/`](.ai/skills/) — KMP Doctor, iOS Device Doctor, debugging
 
-Each command file lists the exact steps (task brief or issue **Summary** → pause for approval → `feature-planner` → rest of pipeline per [WORKFLOW.md](WORKFLOW.md)).
+### For IDE Setup
+- **Claude Code:** Read [`.claude/INDEX.md`](.claude/INDEX.md)
+- **Cursor:** See [`.cursor/rules/00-entry.mdc`](.cursor/rules/00-entry.mdc) (auto-applies)
+- **Codex CLI:** Read [`.codex/INDEX.md`](.codex/INDEX.md)
 
-**Run a single phase** (no full chain)
+---
 
-| Command | Phase |
-|---------|--------|
-| `/only-issue-coordinator` | GitHub issue summary |
+## 🚀 Quick Start
+
+### Plan a Feature
+```bash
+/only-planner "add dark mode toggle"
+```
+
+### Implement
+```bash
+/only-implementer
+```
+
+### Test & Review
+```bash
+/only-test-author "your feature"
+/only-test-verifier
+/only-reviewer
+```
+
+---
+
+## 📦 Project Structure
+
+```
+meta-secret-compose/
+├── composeApp/          ← Shared KMM module
+│   ├── commonMain/      ← Shared Kotlin code
+│   ├── androidMain/     ← Android-specific (Compose)
+│   ├── iosMain/         ← iOS-specific (SwiftUI)
+├── iosApp/              ← iOS app entry point
+├── .ai/                 ← AI automation brain (NEW)
+│   ├── ORCHESTRATOR.md  ← Brain (agents, commands, flow)
+│   ├── INDEX.md         ← Resource map
+│   ├── agents/          ← AI personas
+│   ├── commands/        ← Slash commands
+│   ├── skills/          ← Reusable workflows
+│   ├── rules/           ← Architecture & style
+│   └── artifacts/       ← Generated outputs (git-ignored)
+├── gradle/              ← Build configuration
+└── docs/                ← Project documentation
+```
+
+---
+
+## 🛠 Build & Run
+
+### Android
+```bash
+./gradlew :composeApp:installDebug
+```
+
+### iOS
+```bash
+cd iosApp && xcodebuild -scheme iosApp
+```
+
+### Tests
+```bash
+./gradlew :composeApp:testDebugUnitTest
+```
+
+---
+
+## 🤖 AI Workflow
+
+This project uses **PlayPal AI pattern** for development automation:
+
+1. **Plan** — `/only-planner` creates implementation plan
+2. **Implement** — `/only-implementer` writes code
+3. **Test** — `/only-test-author` + `/only-test-verifier`
+4. **Review** — `/only-reviewer` checks quality
+5. **Repeat** — Loop until done
+
+All agents defined in [`.ai/agents/`](.ai/agents/) — see each agent’s `.md` file for details.
+
+---
+
+## 📚 Key Resources
+
+| Resource | Purpose |
+|----------|---------|
+| [`.ai/ORCHESTRATOR.md`](.ai/ORCHESTRATOR.md) | Brain (how things run) |
+| [`.ai/INDEX.md`](.ai/INDEX.md) | Full index (find anything) |
+| [`.ai/rules/kmp-principles.md`](.ai/rules/kmp-principles.md) | KMM architecture |
+| [`.ai/skills/kmp-doctor/`](.ai/skills/kmp-doctor/) | KMP troubleshooting |
+| [`.ai/skills/ios-device-doctor/`](.ai/skills/ios-device-doctor/) | iOS issues |
+
+---
+
+## 🔗 Related
+
+- **Parent:** MetaSecret routing layer (for multi-repo coordination)
+- **Sister project:** meta-secret-core (Rust crypto, separate)
+- **Architecture:** MVVM + Coordinator pattern
+
+---
+
+✅ **Ready to code.** Start with [`.ai/README.md`](.ai/README.md) or run `/only-planner "your task"`.
 | `/only-planner` | Plan only (`feature-planner`) |
 | `/only-implementer` | Implement approved plan |
 | `/only-test-author` | Add/update tests |
