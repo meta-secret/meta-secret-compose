@@ -2,9 +2,11 @@
 
 **This is NOT documentation. This is EXECUTABLE INSTRUCTIONS.**
 
-You MUST execute all 9 stages in this exact sequence.
+You MUST execute all 7 stages in this exact sequence.
 After each stage completes → go to next stage.
 No branching. No choices. Just execute.
+
+**Note:** Build (compilation) and Test execution removed - user runs these manually.
 
 ---
 
@@ -14,15 +16,14 @@ Stage 1 ↓
 Stage 2 ↓
 Stage 3 ↓
 Stage 4 ↓
-Stage 5 ↓ (if fails → Stage 5a)
-Stage 6 ↓ (if fails → back to Stage 2, max 2 times)
-Stage 7 ↓ (if fails → back to Stage 2, max 2 times)
-Stage 8 ↓
-Stage 9 ↓ END
+Stage 5 ↓ (if fails → back to Stage 2, max 2 times)
+Stage 6 ↓
+Stage 7 ↓ END
 ```
 
 ---
 
+# 🚀 START HERE: STAGE 1 - STAGE 4 (no changes, keep as is)
 # 🚀 START HERE: STAGE 1
 
 ## STAGE 1: Understanding (Read Issue)
@@ -255,192 +256,10 @@ Artifact from Stage 3: `.ai/artifacts/run/MS-49-003-implementation.md`
 
 ---
 
-# 🔨 STAGE 5: Build
-
-**MANDATORY. Execute now.**
-
-### Command
-```bash
-./gradlew build --no-daemon --parallel --console=plain
-```
-
-### Output Location
-`.ai/artifacts/run/MS-49-005-build.md`
-
-### EXACT STEPS
-
-1. **Print status:**
-   ```bash
-   echo ""
-   echo "🟢 Starting Stage 5: Build"
-   echo "═════════════════════════════════════"
-   echo "🟡 Compiling project (this may take 60-90 seconds)..."
-   ```
-
-2. **Run build (full build with test compilation/linking):**
-   ```bash
-   ./gradlew build --no-daemon --parallel --console=plain 2>&1
-   ```
-
-3. **Capture full output**
-
-4. **Write artifact:**
-   ```markdown
-   # Build Report
-   
-   ## Command
-   ./gradlew build --no-daemon --parallel --console=plain
-   
-   ## Result
-   SUCCESS (or FAILED)
-   
-   ## Duration
-   X seconds
-   
-   ## Output
-   [build logs]
-   ```
-
-5. **Check result & print status:**
-   ```bash
-   # If build SUCCEEDED:
-   echo "✅ Stage 5: Build completed successfully"
-   echo ""
-   # → PROCEED TO STAGE 6
-   
-   # If build FAILED:
-   echo "❌ Stage 5: Build failed"
-   # → PROCEED TO STAGE 5a (Debug/RCA)
-   ```
 
 ---
 
-# 🔍 STAGE 5a: Debug/RCA (ONLY if Build Failed)
-
-**Only execute if Stage 5 FAILED.**
-
-### Agent
-`debug-rca` from `.ai/agents/debug-rca.md`
-
-### Input
-Build error output from Stage 5
-
-### Output Location
-`.ai/artifacts/run/MS-49-005-build-rca-retry-1.md`
-
-### EXACT STEPS
-
-1. **Print status:**
-   ```bash
-   echo ""
-   echo "🔴 Build failed! Running Root Cause Analysis..."
-   echo "═════════════════════════════════════"
-   echo "🟡 Analyzing build error..."
-   ```
-
-2. **Analyze build error:**
-   - What failed?
-   - Why did it fail?
-   - Which file/line?
-
-3. **Suggest fixes:**
-   - Specific code changes
-   - Exact file paths
-   - Root cause
-
-4. **Write artifact:**
-   ```markdown
-   # Build RCA
-   
-   ## Error
-   [error message]
-   
-   ## Root Cause
-   [analysis]
-   
-   ## Suggested Fix
-   [specific changes needed]
-   ```
-
-5. **Print status:**
-   ```bash
-   echo "✅ RCA completed. Replanning and retrying build..."
-   echo ""
-   ```
-
-6. **After RCA complete:**
-   → **GO BACK TO STAGE 2** (Replan with RCA insights)
-   → Replan, re-implement, retry build
-   → Save as: `MS-49-002-planning-retry-1.md`
-   → **Max 2 retries total**
-
----
-
-# 🧬 STAGE 6: Test Run
-
-**MANDATORY. Execute now.**
-
-### Agent
-`test-verifier` from `.ai/agents/test-verifier.md`
-
-### Command
-```bash
-./gradlew testDebugUnitTest --no-daemon --parallel --console=plain
-```
-
-### Output Location
-`.ai/artifacts/run/MS-49-006-test-run.md`
-
-### EXACT STEPS
-
-1. **Print status:**
-   ```bash
-   echo ""
-   echo "🟢 Starting Stage 6: Test Run"
-   echo "═════════════════════════════════════"
-   echo "🟡 Executing unit tests..."
-   ```
-
-2. **Run tests:**
-   ```bash
-   ./gradlew testDebugUnitTest --no-daemon --parallel --console=plain 2>&1
-   ```
-
-3. **Capture results**
-
-4. **Write artifact:**
-   ```markdown
-   # Test Report
-   
-   ## Command
-   ./gradlew testDebugUnitTest --no-daemon --parallel --console=plain
-   
-   ## Result
-   PASSED (or FAILED)
-   
-   ## Summary
-   X tests passed, Y tests failed
-   
-   ## Failed Tests (if any)
-   [list]
-   ```
-
-5. **Check result & print status:**
-   ```bash
-   # If tests PASSED:
-   echo "✅ Stage 6: Test Run completed successfully"
-   echo ""
-   # → PROCEED TO STAGE 7
-   
-   # If tests FAILED:
-   echo "❌ Stage 6: Tests failed"
-   # → GO BACK TO STAGE 2 (Replan)
-   # → Max 2 retries total
-   ```
-
----
-
-# 👁️ STAGE 7: Code Review
+# 👁️ STAGE 5: Code Review
 
 **MANDATORY. Execute now.**
 
@@ -451,14 +270,14 @@ Build error output from Stage 5
 All code changes from Stage 3
 
 ### Output Location
-`.ai/artifacts/run/MS-49-007-review.md`
+`.ai/artifacts/run/MS-49-005-review.md`
 
 ### EXACT STEPS
 
 1. **Print status:**
    ```bash
    echo ""
-   echo "🟢 Starting Stage 7: Code Review"
+   echo "🟢 Starting Stage 5: Code Review"
    echo "═════════════════════════════════════"
    echo "🟡 Reviewing code against rules..."
    ```
@@ -500,19 +319,19 @@ All code changes from Stage 3
 5. **Check result & print status:**
    ```bash
    # If PASSED:
-   echo "✅ Stage 7: Code Review completed successfully"
+   echo "✅ Stage 5: Code Review completed successfully"
    echo ""
-   # → PROCEED TO STAGE 8
+   # → PROCEED TO STAGE 6
    
    # If FAILED:
-   echo "❌ Stage 7: Code review failed"
+   echo "❌ Stage 5: Code review failed"
    # → GO BACK TO STAGE 2 (Replan)
    # → Max 2 retries total
    ```
 
 ---
 
-# 📝 STAGE 8: Commit
+# 📝 STAGE 6: Commit
 
 **MANDATORY. Execute now.**
 
@@ -520,17 +339,17 @@ All code changes from Stage 3
 `release-manager` from `.ai/agents/release-manager.md`
 
 ### Input
-All stages 1-7 completed
+All stages 1-5 completed
 
 ### Output Location
-`.ai/artifacts/run/MS-49-008-commit.md`
+`.ai/artifacts/run/MS-49-006-commit.md`
 
 ### EXACT STEPS
 
 1. **Print status:**
    ```bash
    echo ""
-   echo "🟢 Starting Stage 8: Commit"
+   echo "🟢 Starting Stage 6: Commit"
    echo "═════════════════════════════════════"
    echo "🟡 Creating git commit and pushing..."
    ```
@@ -582,16 +401,16 @@ All stages 1-7 completed
 
 8. **Success message:**
    ```bash
-   echo "✅ Stage 8: Commit completed successfully"
+   echo "✅ Stage 6: Commit completed successfully"
    echo ""
    ```
 
 9. **If SUCCESS:**
-   → **PROCEED TO STAGE 9** immediately
+   → **PROCEED TO STAGE 7** immediately
 
 ---
 
-# 🔗 STAGE 9: Create PR
+# 🔗 STAGE 7: Create PR
 
 **MANDATORY. Execute now. FINAL STAGE.**
 
@@ -599,17 +418,17 @@ All stages 1-7 completed
 `release-manager` from `.ai/agents/release-manager.md`
 
 ### Input
-Branch pushed (Stage 8 completed)
+Branch pushed (Stage 6 completed)
 
 ### Output Location
-`.ai/artifacts/run/MS-49-009-pr.md`
+`.ai/artifacts/run/MS-49-007-pr.md`
 
 ### EXACT STEPS
 
 1. **Print status:**
    ```bash
    echo ""
-   echo "🟢 Starting Stage 9: Create PR (FINAL)"
+   echo "🟢 Starting Stage 7: Create PR (FINAL)"
    echo "═════════════════════════════════════"
    echo "🟡 Creating pull request..."
    ```
@@ -647,10 +466,10 @@ Branch pushed (Stage 8 completed)
 5. **Final success message:**
    ```bash
    echo ""
-   echo "✅ Stage 9: Create PR completed successfully"
+   echo "✅ Stage 7: Create PR completed successfully"
    echo "════════════════════════════════════════════"
    echo "🎉 PIPELINE FINISHED SUCCESSFULLY! 🎉"
-   echo "✨ All 9 stages completed!"
+   echo "✨ All 7 stages completed!"
    echo "📝 PR created and ready for review"
    echo ""
    ```
@@ -662,22 +481,20 @@ Branch pushed (Stage 8 completed)
 
 ## ✅ COMPLETION CHECKLIST
 
-When all 9 stages complete, you should have:
+When all 7 stages complete, you should have:
 
 - [ ] `.ai/artifacts/run/MS-49-001-understanding.md`
 - [ ] `.ai/artifacts/run/MS-49-002-planning.md`
 - [ ] `.ai/artifacts/run/MS-49-003-implementation.md`
 - [ ] `.ai/artifacts/run/MS-49-004-testing.md`
-- [ ] `.ai/artifacts/run/MS-49-005-build.md`
-- [ ] `.ai/artifacts/run/MS-49-006-test-run.md`
-- [ ] `.ai/artifacts/run/MS-49-007-review.md`
-- [ ] `.ai/artifacts/run/MS-49-008-commit.md`
-- [ ] `.ai/artifacts/run/MS-49-009-pr.md`
+- [ ] `.ai/artifacts/run/MS-49-005-review.md`
+- [ ] `.ai/artifacts/run/MS-49-006-commit.md`
+- [ ] `.ai/artifacts/run/MS-49-007-pr.md`
 - [ ] PR created on GitHub
 - [ ] All changes committed and pushed
 
 ---
 
-**Version:** 3.0 (executable instructions, no branching)  
+**Version:** 4.0 (7 stages, build removed)  
 **Last updated:** 2026-04-20  
 **Status:** READY FOR EXECUTION

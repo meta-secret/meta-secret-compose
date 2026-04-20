@@ -158,3 +158,44 @@ The following documents are related to this test plan:
 ## 12. Approval
 
 This test plan is reviewed and approved by the project owner prior to each major release.
+
+---
+
+## 13. Layered Test Strategy (Issue #71 Baseline)
+
+### 13.1 Automated Unit Coverage (commonTest)
+
+Primary goals:
+- Validate critical branching in `MetaSecretAppManager` (missing/invalid master key, init failures).
+- Validate startup navigation and restore orchestration behavior in `SplashScreenViewModel`.
+
+Minimum command:
+
+```bash
+./gradlew :composeApp:test --no-daemon --console=plain
+```
+
+### 13.2 Integration-Oriented Coverage
+
+In this baseline, integration behavior is validated through multi-collaborator tests (ViewModel + backup coordinator + auth manager + state providers) in `commonTest` using deterministic fakes.
+
+Planned expansion:
+- Add explicit integration tests for backup pipeline collaborators and restore retry behavior.
+- Add focused tests for SignIn/Secrets/Devices critical transitions.
+
+### 13.3 E2E / Manual Recovery Coverage
+
+Required manual suite:
+- `tests/manual/recovery.md` (reinstall + restore, missing/corrupt backup input, single-device recovery restriction).
+- Existing feature suites under `tests/manual/` for auth, devices, security, and secrets.
+
+### 13.4 Pass/Fail Criteria
+
+Pass:
+- All automated tests pass on CI/local for the target change.
+- Manual recovery scenarios in `tests/manual/recovery.md` are executed and documented with evidence.
+- No critical security regressions (secret exposure, policy bypass) are observed.
+
+Fail:
+- Any automated test failure in affected modules.
+- Any manual scenario demonstrating restore data loss, policy bypass, or unrecoverable crash.

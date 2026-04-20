@@ -2,9 +2,11 @@
 
 **This is NOT documentation. This is EXECUTABLE INSTRUCTIONS.**
 
-You MUST spawn Tasks for all 9 stages in exact sequence.
+You MUST spawn Tasks for all 7 stages in exact sequence.
 After each Task completes → spawn next Task.
 No branching. No choices. Just execute.
+
+**Note:** Build (compilation) and Test execution removed - user runs these manually.
 
 ---
 
