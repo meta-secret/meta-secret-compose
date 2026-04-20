@@ -1,6 +1,7 @@
 *.iml
 .kotlin
 .gradle
+.gradle-home
 **/build/
 xcuserdata
 !src/**/build/
@@ -29,6 +30,10 @@ meta-secret-mobile.a
 libmetasecret_mobile.so
 **/libs/**/*.so
 **/jniLibs/**/*.so
+.gradle-home
 
 # Claude Code local settings (developer-specific allowlists, not for repo)
 .claude/settings.local.json
+
+# Workflow runtime artifacts
+.ai/artifacts/run/

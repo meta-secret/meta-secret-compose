@@ -33,12 +33,32 @@ This is the **Compose/iOS/Android UI layer** of MetaSecret. The AI brain is in `
 | Debug KMM issues | `.ai/skills/kmp-doctor/SKILL.md` |
 | Test code | `.ai/agents/test-author.md` |
 
-## Cursor Workflow
+## Cursor Workflow — Automated (Run Issue Command)
 
-1. Open **Terminal** (Ctrl+`) in Cursor
-2. Run a command: `/compose-only-planner "your feature"`
-3. Cursor shows guidance and artifact links
-4. Review in editor, continue iterating
+Press **Cmd+K** and type:
+
+```
+run issue 123
+```
+
+or for custom tasks:
+
+```
+run issue "add dark mode toggle"
+```
+
+This executes **9-stage automated workflow** (see **AGENTS.md** for full details):
+- Stage 1-4: Understanding → Planning → Implementation → Testing
+- Stage 5-7: Build → Test Run → Code Review (with auto-retry)
+- Stage 8-9: Commit → PR
+
+All artifacts saved to: `.ai/artifacts/run/MS-<id>/`
+
+---
+
+## Alternative: Manual Step-by-Step
+
+For more control, use individual agent commands (see **.ai/agents/**)
 
 ## Important Context
 

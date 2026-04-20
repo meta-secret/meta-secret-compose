@@ -1,26 +1,32 @@
-# meta-secret-compose — Complete Resource Index
+# meta-secret-compose — AI System Resource Map
 
-**Full map of all AI resources** for the Compose (KMM/iOS/Android) layer.
+**Single source of truth for automated workflow** — Issue → 9-stage pipeline → PR
 
 ---
 
-## 🧭 Quick Navigation
+## 🚀 New: Automated Workflow
 
-### By IDE
+**READ FIRST:** `AGENTS.md` (entry point for all IDEs)
 
-**Claude Code**
-- Entry: `.claude/INDEX.md`
-- Commands: `/only-planner`, `/only-implementer`, `/only-reviewer`, etc.
-- Skills: Referenced automatically
+Then read in order:
+1. `AGENTS.md` — Workflow overview
+2. `.ai/WORKFLOW.md` — Main orchestration
+3. `.ai/PIPELINE.md` — Stage specifications
 
-**Cursor**
-- Entry: `.cursor/rules/00-entry.mdc`
-- Rules: Auto-loaded from `.ai/rules/`
-- Agents: Available in rules
+**Run:** 
+- Claude Code: `/run issue 123`
+- Cursor: `Cmd+K` → `run issue 123`
+- Codex CLI: `codex run issue 123`
 
-**Codex CLI**
-- Entry: `.codex/INDEX.md`
-- Usage: `codex --agent feature-planner --context "..."`
+---
+
+## 📂 IDE Entry Points
+
+| IDE | File | Command |
+|-----|------|---------|
+| **Claude Code** | `.claude/ORCHESTRATE.md` | `/run issue 123` |
+| **Cursor** | `.cursor/WORKFLOW.md` | `Cmd+K: run issue 123` |
+| **Codex CLI** | `.codex/ORCHESTRATE.md` | `codex run issue 123` |
 
 ### By Task Type
 

@@ -5,7 +5,6 @@ import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
-import org.gradle.configurationcache.extensions.capitalized
 import org.jetbrains.kotlin.gradle.tasks.CInteropProcess
 import org.jetbrains.kotlin.konan.target.HostManager
 
@@ -69,4 +68,9 @@ class SwiftKlibPlugin : Plugin<Project> {
 }
 
 private fun getTaskName(cinteropName: String, cinteropTarget: CompileTarget) =
-    "${EXTENSION_NAME}${cinteropName.capitalized()}${cinteropTarget.name.capitalized()}"
+    "${EXTENSION_NAME}${cinteropName.capitalizedCompat()}${cinteropTarget.name.capitalizedCompat()}"
+
+private fun String.capitalizedCompat(): String =
+    replaceFirstChar { first ->
+        if (first.isLowerCase()) first.titlecase() else first.toString()
+    }

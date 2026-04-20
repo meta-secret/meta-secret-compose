@@ -26,8 +26,8 @@ interface StringProviderInterface {
     fun errorRecoverDeclined(): String
     
     fun acceptRequestOnOtherDevice(): String
+    fun nameOccupiedJoinPrompt(): String
     fun recoverPendingExists(): String
     fun recoverRequestSent(): String
 }
-
 

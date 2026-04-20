@@ -87,6 +87,10 @@ kotlin {
             implementation(libs.qr.kit)
             implementation(libs.jetbrains.lifecycle.runtime.compose)
         }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
     }
 }
 
