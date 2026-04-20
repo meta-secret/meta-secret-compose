@@ -46,15 +46,20 @@ DONE
 ```
 Prompt to pass to Task:
 
-"Execute STAGE 1: Understanding
+"🟢 Starting Stage 1: Understanding
+═════════════════════════════════════
+
+Execute STAGE 1: Understanding
 
 Steps:
-1. Read .ai/agents/github-issue-coordinator.md (full file)
-2. Fetch issue 49: gh issue view 49 --json title,body,number
-3. Extract: problem, goal, requirements, assumptions, affected areas
-4. Write EXACT location: .ai/artifacts/run/MS-49-001-understanding.md
-5. Include sections: Problem, Goal, Requirements, Assumptions, Affected Areas
-6. Finish and return
+1. Print: 🟡 Reading GitHub issue...
+2. Read .ai/agents/github-issue-coordinator.md (full file)
+3. Fetch issue 49: gh issue view 49 --json title,body,number
+4. Extract: problem, goal, requirements, assumptions, affected areas
+5. Write EXACT location: .ai/artifacts/run/MS-49-001-understanding.md
+6. Include sections: Problem, Goal, Requirements, Assumptions, Affected Areas
+7. Print: ✅ Stage 1: Understanding completed successfully
+8. Return
 
 If you encounter 'FAILED', '**FAIL**', or '❌' in your work → STOP and report immediately."
 ```
@@ -74,7 +79,11 @@ If you encounter 'FAILED', '**FAIL**', or '❌' in your work → STOP and report
 ```
 Prompt:
 
-"Execute STAGE 2: Planning
+"🟢 Starting Stage 2: Planning
+═════════════════════════════════════
+🟡 Reading requirements and creating plan...
+
+Execute STAGE 2: Planning
 
 Prerequisites:
 - Artifact from Stage 1 exists: .ai/artifacts/run/MS-49-001-understanding.md
@@ -91,7 +100,8 @@ Steps:
    - Deferred: what's out of scope
    - Risks: what could go wrong
 5. Write EXACT location: .ai/artifacts/run/MS-49-002-planning.md
-6. Finish and return
+6. Print: ✅ Stage 2: Planning completed successfully
+7. Return
 
 Check for failure markers. Stop if found."
 ```
@@ -111,7 +121,11 @@ Check for failure markers. Stop if found."
 ```
 Prompt:
 
-"Execute STAGE 3: Implementation
+"🟢 Starting Stage 3: Implementation
+═════════════════════════════════════
+🟡 Writing code changes...
+
+Execute STAGE 3: Implementation
 
 Steps:
 1. Read .ai/agents/code-implementer.md (full file)
@@ -126,7 +140,8 @@ Steps:
    - Summary of changes
    - List of modified files with paths
    - Any deviations from plan + reason
-6. Finish and return
+6. Print: ✅ Stage 3: Implementation completed successfully
+7. Return
 
 Check for failure markers."
 ```
@@ -146,7 +161,11 @@ Check for failure markers."
 ```
 Prompt:
 
-"Execute STAGE 4: Test Writing
+"🟢 Starting Stage 4: Test Writing
+═════════════════════════════════════
+🟡 Writing test cases...
+
+Execute STAGE 4: Test Writing
 
 Steps:
 1. Read .ai/agents/test-author.md (full file)
@@ -161,7 +180,8 @@ Steps:
    - Test files created/modified
    - Coverage summary
    - Edge cases tested
-6. Finish and return
+6. Print: ✅ Stage 4: Test Writing completed successfully
+7. Return
 
 Check for failure markers."
 ```
@@ -181,13 +201,17 @@ Check for failure markers."
 ```
 Prompt:
 
-"Execute STAGE 5: Build
+"🟢 Starting Stage 5: Build
+═════════════════════════════════════
+🟡 Compiling project (this may take 60-90 seconds)...
+
+Execute STAGE 5: Build
 
 Command:
-./gradlew build -x test --no-daemon --parallel --console=plain
+./gradlew build --no-daemon --parallel --console=plain
 
 Steps:
-1. Run build command above
+1. Run build command above (full build with test compilation/linking, no -x test)
 2. Capture FULL output
 3. Write EXACT location: .ai/artifacts/run/MS-49-005-build.md
 4. Include:
@@ -195,7 +219,8 @@ Steps:
    - Result: SUCCESS or FAILED
    - Full build output
    - Duration in seconds
-5. Finish and return
+5. Print: ✅ Stage 5: Build completed successfully (or ❌ if failed)
+6. Return
 
 Artifact should clearly indicate SUCCESS or FAILED."
 ```
@@ -221,7 +246,11 @@ Artifact should clearly indicate SUCCESS or FAILED."
 ```
 Prompt:
 
-"Execute STAGE 5a: Debug/RCA
+"🔴 Build failed! Running Root Cause Analysis...
+═════════════════════════════════════
+🟡 Analyzing build error...
+
+Execute STAGE 5a: Debug/RCA
 
 Input:
 - Build error from: .ai/artifacts/run/MS-49-005-build.md
@@ -238,7 +267,8 @@ Steps:
    - Error summary
    - Root cause analysis
    - Suggested fixes (specific code changes)
-6. Finish and return"
+6. Print: ✅ RCA completed. Replanning and retrying build...
+7. Return"
 ```
 
 ### After Task 5a completes:
@@ -256,7 +286,11 @@ Steps:
 ```
 Prompt:
 
-"Execute STAGE 6: Test Run
+"🟢 Starting Stage 6: Test Run
+═════════════════════════════════════
+🟡 Executing unit tests...
+
+Execute STAGE 6: Test Run
 
 Command:
 ./gradlew testDebugUnitTest --no-daemon --parallel --console=plain
@@ -271,7 +305,8 @@ Steps:
    - Test summary (X passed, Y failed)
    - List failed tests if any
    - Duration
-5. Finish and return
+5. Print: ✅ Stage 6: Test Run completed successfully (or ❌ if failed)
+6. Return
 
 Artifact should clearly indicate PASSED or FAILED."
 ```
@@ -296,7 +331,11 @@ Artifact should clearly indicate PASSED or FAILED."
 ```
 Prompt:
 
-"Execute STAGE 7: Code Review
+"🟢 Starting Stage 7: Code Review
+═════════════════════════════════════
+🟡 Reviewing code against rules...
+
+Execute STAGE 7: Code Review
 
 Steps:
 1. Read .ai/agents/code-reviewer.md (full file)
@@ -317,7 +356,8 @@ Steps:
    - Should-Fix (style issues)
    - Nice-to-Have (improvements)
    - Status: PASSED or FAILED
-6. Finish and return"
+6. Print: ✅ Stage 7: Code Review completed successfully (or ❌ if failed)
+7. Return"
 ```
 
 ### After Task 7 completes:
@@ -340,7 +380,11 @@ Steps:
 ```
 Prompt:
 
-"Execute STAGE 8: Commit
+"🟢 Starting Stage 8: Commit
+═════════════════════════════════════
+🟡 Creating git commit and pushing...
+
+Execute STAGE 8: Commit
 
 Steps:
 1. Read .ai/agents/release-manager.md (full file)
@@ -358,7 +402,8 @@ Steps:
    - Commit SHA
    - Commit message
    - Push status (SUCCESS)
-6. Finish and return"
+6. Print: ✅ Stage 8: Commit completed successfully
+7. Return"
 ```
 
 ### After Task 8 completes:
@@ -375,7 +420,11 @@ Steps:
 ```
 Prompt:
 
-"Execute STAGE 9: Create PR (FINAL STAGE)
+"🟢 Starting Stage 9: Create PR (FINAL STAGE)
+═════════════════════════════════════════════
+🟡 Creating pull request...
+
+Execute STAGE 9: Create PR (FINAL STAGE)
 
 Steps:
 1. Read .ai/agents/release-manager.md (full file)
@@ -394,7 +443,11 @@ Steps:
    - PR URL
    - Base branch
    - Status: CREATED
-6. Finish and return
+6. Print message:
+   🎉 PIPELINE FINISHED SUCCESSFULLY! 🎉
+   ✨ All 9 stages completed!
+   📝 PR created and ready for review
+7. Return
 
 PIPELINE COMPLETE WHEN THIS TASK FINISHES."
 ```

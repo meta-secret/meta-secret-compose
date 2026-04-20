@@ -40,31 +40,46 @@ GitHub issue ID (e.g., 49) or text description
 
 ### EXACT STEPS (Execute in order)
 
-1. **Fetch issue:**
+1. **Print status:**
+   ```bash
+   echo ""
+   echo "🟢 Starting Stage 1: Understanding"
+   echo "═════════════════════════════════════"
+   ```
+
+2. **Fetch issue:**
    ```bash
    gh issue view 49 --json title,body,number
    ```
 
-2. **Extract and write to artifact:**
+3. **Extract and write to artifact:**
    - Problem statement (what's the issue?)
    - Goal (what success looks like)
    - Requirements (numbered list)
    - Assumptions (what you assume to be true)
    - Affected areas (which parts of code)
 
-3. **Write artifact:**
+4. **Write artifact:**
    ```
    File: .ai/artifacts/run/MS-49-001-understanding.md
    Format: markdown with sections above
    ```
 
-4. **Check for FAILURE markers:**
-   ```
-   If artifact contains: FAILED, **FAIL**, ❌, "Return to Planning: YES"
-   → STOP. Report error.
+5. **Check for FAILURE markers:**
+   ```bash
+   echo "🟡 Checking artifact for errors..."
+   # If artifact contains: FAILED, **FAIL**, ❌, "Return to Planning: YES"
+   # → STOP. Report error.
+   # If SUCCESS → continue to next step
    ```
 
-5. **If SUCCESS:**
+6. **Success message:**
+   ```bash
+   echo "✅ Stage 1: Understanding completed successfully"
+   echo ""
+   ```
+
+7. **If SUCCESS:**
    → **PROCEED TO STAGE 2** (see below)
    → Do not wait for approval
    → Go immediately
@@ -87,16 +102,24 @@ GitHub issue ID (e.g., 49) or text description
 
 ### EXACT STEPS
 
-1. **Read Stage 1 artifact** (you just created it)
+1. **Print status:**
+   ```bash
+   echo ""
+   echo "🟢 Starting Stage 2: Planning"
+   echo "═════════════════════════════════════"
+   echo "🟡 Reading requirements..."
+   ```
 
-2. **Read architecture rules:**
+2. **Read Stage 1 artifact** (you just created it)
+
+3. **Read architecture rules:**
    ```
    .ai/rules/kmp-principles.md
    ARCHITECTURE.md
    CODE_STYLE.md
    ```
 
-3. **Create detailed plan:**
+4. **Create detailed plan:**
    - **Scope** — numbered list of implementation steps
    - Each step: file path + description
    - Example: `1. Update SignInScreenViewModel to add nameOccupiedJoinPrompt state`
@@ -104,16 +127,22 @@ GitHub issue ID (e.g., 49) or text description
    - **Deferred items** — what's out of scope
    - **Risks** — what could go wrong
 
-4. **Write artifact:**
+5. **Write artifact:**
    ```
    File: .ai/artifacts/run/MS-49-002-planning.md
    Format: markdown with sections above
    ```
 
-5. **Check for FAILURE markers:**
+6. **Success message:**
+   ```bash
+   echo "✅ Stage 2: Planning completed successfully"
+   echo ""
+   ```
+
+7. **Check for FAILURE markers:**
    If found → STOP. Report.
 
-6. **If SUCCESS:**
+8. **If SUCCESS:**
    → **PROCEED TO STAGE 3** immediately
 
 ---
@@ -133,15 +162,23 @@ Artifact from Stage 2: `.ai/artifacts/run/MS-49-002-planning.md`
 
 ### EXACT STEPS
 
-1. **Read Stage 2 artifact** (the plan)
+1. **Print status:**
+   ```bash
+   echo ""
+   echo "🟢 Starting Stage 3: Implementation"
+   echo "═════════════════════════════════════"
+   echo "🟡 Writing code changes..."
+   ```
 
-2. **Implement code changes:**
+2. **Read Stage 2 artifact** (the plan)
+
+3. **Implement code changes:**
    - Follow plan exactly
    - Modify only files listed in plan
    - Keep changes minimal and scoped
    - No refactoring beyond plan
 
-3. **Write artifact:**
+4. **Write artifact:**
    ```
    File: .ai/artifacts/run/MS-49-003-implementation.md
    Include:
@@ -150,10 +187,16 @@ Artifact from Stage 2: `.ai/artifacts/run/MS-49-002-planning.md`
    - Any deviations from plan + reason
    ```
 
-4. **Check for FAILURE markers:**
+5. **Success message:**
+   ```bash
+   echo "✅ Stage 3: Implementation completed successfully"
+   echo ""
+   ```
+
+6. **Check for FAILURE markers:**
    If found → STOP. Report.
 
-5. **If SUCCESS:**
+7. **If SUCCESS:**
    → **PROCEED TO STAGE 4** immediately
 
 ---
@@ -173,15 +216,23 @@ Artifact from Stage 3: `.ai/artifacts/run/MS-49-003-implementation.md`
 
 ### EXACT STEPS
 
-1. **Read Stage 3 artifact** (the code changes)
+1. **Print status:**
+   ```bash
+   echo ""
+   echo "🟢 Starting Stage 4: Test Writing"
+   echo "═════════════════════════════════════"
+   echo "🟡 Writing test cases..."
+   ```
 
-2. **Write tests:**
+2. **Read Stage 3 artifact** (the code changes)
+
+3. **Write tests:**
    - Unit tests for new functions
    - Integration tests if needed
    - Cover edge cases
    - Update existing tests if affected
 
-3. **Write artifact:**
+4. **Write artifact:**
    ```
    File: .ai/artifacts/run/MS-49-004-testing.md
    Include:
@@ -190,10 +241,16 @@ Artifact from Stage 3: `.ai/artifacts/run/MS-49-003-implementation.md`
    - Edge cases tested
    ```
 
-4. **Check for FAILURE markers:**
+5. **Success message:**
+   ```bash
+   echo "✅ Stage 4: Test Writing completed successfully"
+   echo ""
+   ```
+
+6. **Check for FAILURE markers:**
    If found → STOP. Report.
 
-5. **If SUCCESS:**
+7. **If SUCCESS:**
    → **PROCEED TO STAGE 5** immediately
 
 ---
@@ -204,7 +261,7 @@ Artifact from Stage 3: `.ai/artifacts/run/MS-49-003-implementation.md`
 
 ### Command
 ```bash
-./gradlew build -x test --no-daemon --parallel --console=plain
+./gradlew build --no-daemon --parallel --console=plain
 ```
 
 ### Output Location
@@ -212,19 +269,27 @@ Artifact from Stage 3: `.ai/artifacts/run/MS-49-003-implementation.md`
 
 ### EXACT STEPS
 
-1. **Run build:**
+1. **Print status:**
    ```bash
-   ./gradlew build -x test --no-daemon --parallel --console=plain 2>&1
+   echo ""
+   echo "🟢 Starting Stage 5: Build"
+   echo "═════════════════════════════════════"
+   echo "🟡 Compiling project (this may take 60-90 seconds)..."
    ```
 
-2. **Capture full output**
+2. **Run build (full build with test compilation/linking):**
+   ```bash
+   ./gradlew build --no-daemon --parallel --console=plain 2>&1
+   ```
 
-3. **Write artifact:**
+3. **Capture full output**
+
+4. **Write artifact:**
    ```markdown
    # Build Report
    
    ## Command
-   ./gradlew build -x test --no-daemon --parallel --console=plain
+   ./gradlew build --no-daemon --parallel --console=plain
    
    ## Result
    SUCCESS (or FAILED)
@@ -236,13 +301,16 @@ Artifact from Stage 3: `.ai/artifacts/run/MS-49-003-implementation.md`
    [build logs]
    ```
 
-4. **Check result:**
-   ```
-   If build SUCCEEDED:
-   → PROCEED TO STAGE 6
+5. **Check result & print status:**
+   ```bash
+   # If build SUCCEEDED:
+   echo "✅ Stage 5: Build completed successfully"
+   echo ""
+   # → PROCEED TO STAGE 6
    
-   If build FAILED:
-   → PROCEED TO STAGE 5a (Debug/RCA)
+   # If build FAILED:
+   echo "❌ Stage 5: Build failed"
+   # → PROCEED TO STAGE 5a (Debug/RCA)
    ```
 
 ---
@@ -262,17 +330,25 @@ Build error output from Stage 5
 
 ### EXACT STEPS
 
-1. **Analyze build error:**
+1. **Print status:**
+   ```bash
+   echo ""
+   echo "🔴 Build failed! Running Root Cause Analysis..."
+   echo "═════════════════════════════════════"
+   echo "🟡 Analyzing build error..."
+   ```
+
+2. **Analyze build error:**
    - What failed?
    - Why did it fail?
    - Which file/line?
 
-2. **Suggest fixes:**
+3. **Suggest fixes:**
    - Specific code changes
    - Exact file paths
    - Root cause
 
-3. **Write artifact:**
+4. **Write artifact:**
    ```markdown
    # Build RCA
    
@@ -286,7 +362,13 @@ Build error output from Stage 5
    [specific changes needed]
    ```
 
-4. **After RCA complete:**
+5. **Print status:**
+   ```bash
+   echo "✅ RCA completed. Replanning and retrying build..."
+   echo ""
+   ```
+
+6. **After RCA complete:**
    → **GO BACK TO STAGE 2** (Replan with RCA insights)
    → Replan, re-implement, retry build
    → Save as: `MS-49-002-planning-retry-1.md`
@@ -311,14 +393,22 @@ Build error output from Stage 5
 
 ### EXACT STEPS
 
-1. **Run tests:**
+1. **Print status:**
+   ```bash
+   echo ""
+   echo "🟢 Starting Stage 6: Test Run"
+   echo "═════════════════════════════════════"
+   echo "🟡 Executing unit tests..."
+   ```
+
+2. **Run tests:**
    ```bash
    ./gradlew testDebugUnitTest --no-daemon --parallel --console=plain 2>&1
    ```
 
-2. **Capture results**
+3. **Capture results**
 
-3. **Write artifact:**
+4. **Write artifact:**
    ```markdown
    # Test Report
    
@@ -335,14 +425,17 @@ Build error output from Stage 5
    [list]
    ```
 
-4. **Check result:**
-   ```
-   If tests PASSED:
-   → PROCEED TO STAGE 7
+5. **Check result & print status:**
+   ```bash
+   # If tests PASSED:
+   echo "✅ Stage 6: Test Run completed successfully"
+   echo ""
+   # → PROCEED TO STAGE 7
    
-   If tests FAILED:
-   → GO BACK TO STAGE 2 (Replan)
-   → Max 2 retries total
+   # If tests FAILED:
+   echo "❌ Stage 6: Tests failed"
+   # → GO BACK TO STAGE 2 (Replan)
+   # → Max 2 retries total
    ```
 
 ---
@@ -362,7 +455,15 @@ All code changes from Stage 3
 
 ### EXACT STEPS
 
-1. **Review against rules:**
+1. **Print status:**
+   ```bash
+   echo ""
+   echo "🟢 Starting Stage 7: Code Review"
+   echo "═════════════════════════════════════"
+   echo "🟡 Reviewing code against rules..."
+   ```
+
+2. **Review against rules:**
    ```
    .ai/rules/kmp-principles.md (architecture)
    ARCHITECTURE.md
@@ -370,13 +471,13 @@ All code changes from Stage 3
    SECURITY.md
    ```
 
-2. **Check:**
+3. **Check:**
    - Architecture compliance (MVVM, FFI boundary)
    - Code style (Kotlin/Swift conventions)
    - Security (no secrets, proper error handling)
    - Dead code or issues
 
-3. **Write artifact:**
+4. **Write artifact:**
    ```markdown
    # Code Review
    
@@ -396,14 +497,17 @@ All code changes from Stage 3
    PASSED (or FAILED)
    ```
 
-4. **Check result:**
-   ```
-   If PASSED:
-   → PROCEED TO STAGE 8
+5. **Check result & print status:**
+   ```bash
+   # If PASSED:
+   echo "✅ Stage 7: Code Review completed successfully"
+   echo ""
+   # → PROCEED TO STAGE 8
    
-   If FAILED:
-   → GO BACK TO STAGE 2 (Replan)
-   → Max 2 retries total
+   # If FAILED:
+   echo "❌ Stage 7: Code review failed"
+   # → GO BACK TO STAGE 2 (Replan)
+   # → Max 2 retries total
    ```
 
 ---
@@ -423,35 +527,43 @@ All stages 1-7 completed
 
 ### EXACT STEPS
 
-1. **Parse issue title from Stage 1:**
+1. **Print status:**
+   ```bash
+   echo ""
+   echo "🟢 Starting Stage 8: Commit"
+   echo "═════════════════════════════════════"
+   echo "🟡 Creating git commit and pushing..."
+   ```
+
+2. **Parse issue title from Stage 1:**
    ```
    Extract prefix: [Task], [Feature], or [Bug]
    Example: [Feature] → prefix = "Feature"
    ```
 
-2. **Create branch:**
+3. **Create branch:**
    ```bash
    git fetch origin
    git checkout main
    git checkout -b Feature/kuklin/MS-49
    ```
 
-3. **Stage changes:**
+4. **Stage changes:**
    ```bash
    git add [all modified files from Stage 3]
    ```
 
-4. **Create commit:**
+5. **Create commit:**
    ```bash
    git commit -m "[Issue #49] Summary of changes"
    ```
 
-5. **Push to remote:**
+6. **Push to remote:**
    ```bash
    git push -u origin Feature/kuklin/MS-49
    ```
 
-6. **Write artifact:**
+7. **Write artifact:**
    ```markdown
    # Commit Report
    
@@ -468,7 +580,13 @@ All stages 1-7 completed
    SUCCESS
    ```
 
-7. **If SUCCESS:**
+8. **Success message:**
+   ```bash
+   echo "✅ Stage 8: Commit completed successfully"
+   echo ""
+   ```
+
+9. **If SUCCESS:**
    → **PROCEED TO STAGE 9** immediately
 
 ---
@@ -488,7 +606,15 @@ Branch pushed (Stage 8 completed)
 
 ### EXACT STEPS
 
-1. **Create PR:**
+1. **Print status:**
+   ```bash
+   echo ""
+   echo "🟢 Starting Stage 9: Create PR (FINAL)"
+   echo "═════════════════════════════════════"
+   echo "🟡 Creating pull request..."
+   ```
+
+2. **Create PR:**
    ```bash
    gh pr create \
      --title "[Issue #49] Summary of changes" \
@@ -496,12 +622,12 @@ Branch pushed (Stage 8 completed)
      --base main
    ```
 
-2. **Capture PR info:**
+3. **Capture PR info:**
    - PR URL
    - PR number
    - Status
 
-3. **Write artifact:**
+4. **Write artifact:**
    ```markdown
    # PR Report
    
@@ -518,7 +644,18 @@ Branch pushed (Stage 8 completed)
    main
    ```
 
-4. **When complete:**
+5. **Final success message:**
+   ```bash
+   echo ""
+   echo "✅ Stage 9: Create PR completed successfully"
+   echo "════════════════════════════════════════════"
+   echo "🎉 PIPELINE FINISHED SUCCESSFULLY! 🎉"
+   echo "✨ All 9 stages completed!"
+   echo "📝 PR created and ready for review"
+   echo ""
+   ```
+
+6. **When complete:**
    ✅ **PIPELINE FINISHED**
 
 ---

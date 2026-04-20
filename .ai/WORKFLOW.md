@@ -179,12 +179,12 @@ Return to Planning: YES
 
 ### Stage 5: Build
 
-**Command:** `./gradlew build -x test`
+**Command:** `./gradlew build --no-daemon --parallel --console=plain`
 
 **Actions:**
-1. Run build command
+1. Run build command (full build with test compilation/linking)
 2. Capture output
-3. Check for compilation errors
+3. Check for compilation and linking errors
 
 **Output:** `.ai/artifacts/run/MS-<id>-005-build.md`
 
@@ -435,7 +435,7 @@ If ANY marker found → stop pipeline and report.
 
 ```
 🟢 Starting Stage 5: Build
-Command: ./gradlew build -x test
+Command: ./gradlew build --no-daemon --parallel --console=plain
 ```
 
 (Green, emoji, clear stage name)

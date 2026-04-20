@@ -182,9 +182,9 @@ Invokes `.codex/ORCHESTRATE.md` for CLI-specific execution
 
 ### Build Stage (5)
 
-**Command:** `./gradlew build -x test`
+**Command:** `./gradlew build --no-daemon --parallel --console=plain`
 
-- Compile project
+- Compile project (full build with test compilation/linking)
 - Write: `.ai/artifacts/run/MS-<id>-005-build.md`
 
 **On failure:**
