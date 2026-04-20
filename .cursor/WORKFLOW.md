@@ -44,15 +44,20 @@ DONE
 **Send this exact prompt to Cursor (Cmd+K):**
 
 ```
+🟢 Starting Stage 1: Understanding
+═════════════════════════════════════
+
 Execute STAGE 1: Understanding
 
 Steps:
-1. Read .ai/agents/github-issue-coordinator.md (full file)
-2. Fetch issue 49: gh issue view 49 --json title,body,number
-3. Extract: problem, goal, requirements, assumptions, affected areas
-4. Write to: .ai/artifacts/run/MS-49-001-understanding.md
-5. Include sections: Problem, Goal, Requirements, Assumptions, Affected Areas
-6. When done, tell me you finished and show me the artifact location
+1. Print: 🟡 Reading GitHub issue...
+2. Read .ai/agents/github-issue-coordinator.md (full file)
+3. Fetch issue 49: gh issue view 49 --json title,body,number
+4. Extract: problem, goal, requirements, assumptions, affected areas
+5. Write to: .ai/artifacts/run/MS-49-001-understanding.md
+6. Include sections: Problem, Goal, Requirements, Assumptions, Affected Areas
+7. Print: ✅ Stage 1: Understanding completed successfully
+8. Tell me you finished and show me the artifact location
 
 Do NOT proceed to next stage. Wait for my instruction.
 ```
@@ -70,6 +75,10 @@ Do NOT proceed to next stage. Wait for my instruction.
 **When Stage 1 is done, send this prompt:**
 
 ```
+🟢 Starting Stage 2: Planning
+═════════════════════════════════════
+🟡 Reading requirements and creating plan...
+
 Execute STAGE 2: Planning
 
 Prerequisites:
@@ -87,7 +96,8 @@ Steps:
    - Deferred: out of scope
    - Risks: what could go wrong
 5. Write to: .ai/artifacts/run/MS-49-002-planning.md
-6. When done, tell me you finished
+6. Print: ✅ Stage 2: Planning completed successfully
+7. Tell me you finished
 
 Do NOT proceed to next stage. Wait for my instruction.
 ```
@@ -105,6 +115,10 @@ Do NOT proceed to next stage. Wait for my instruction.
 **When Stage 2 is done, send this prompt:**
 
 ```
+🟢 Starting Stage 3: Implementation
+═════════════════════════════════════
+🟡 Writing code changes...
+
 Execute STAGE 3: Implementation
 
 Steps:
@@ -120,7 +134,8 @@ Steps:
    - Summary of changes
    - List of modified files with paths
    - Any deviations + reason
-6. When done, tell me you finished
+6. Print: ✅ Stage 3: Implementation completed successfully
+7. Tell me you finished
 
 Do NOT proceed. Wait for instruction.
 ```
@@ -137,6 +152,10 @@ Do NOT proceed. Wait for instruction.
 **When Stage 3 is done, send this prompt:**
 
 ```
+🟢 Starting Stage 4: Test Writing
+═════════════════════════════════════
+🟡 Writing test cases...
+
 Execute STAGE 4: Test Writing
 
 Steps:
@@ -152,7 +171,8 @@ Steps:
    - Test files created/modified
    - Coverage summary
    - Edge cases tested
-6. When done, tell me you finished
+6. Print: ✅ Stage 4: Test Writing completed successfully
+7. Tell me you finished
 
 Wait for next instruction.
 ```
@@ -168,13 +188,17 @@ Wait for next instruction.
 **When Stage 4 is done, send this prompt:**
 
 ```
+🟢 Starting Stage 5: Build
+═════════════════════════════════════
+🟡 Compiling project (this may take 60-90 seconds)...
+
 Execute STAGE 5: Build
 
 Command to run:
-./gradlew build -x test --no-daemon --parallel --console=plain
+./gradlew build --no-daemon --parallel --console=plain
 
 Steps:
-1. Run build command above
+1. Run build command above (full build with test compilation/linking, no -x test)
 2. Capture FULL output
 3. Write to: .ai/artifacts/run/MS-49-005-build.md
 4. Include:
@@ -182,7 +206,8 @@ Steps:
    - Result: SUCCESS or FAILED
    - Full build output
    - Duration
-5. When done, tell me the result (SUCCESS or FAILED)
+5. Print: ✅ Stage 5: Build completed successfully (or ❌ if failed)
+6. Tell me the result (SUCCESS or FAILED)
 
 Important: Make sure artifact clearly shows SUCCESS or FAILED.
 ```
@@ -204,6 +229,10 @@ If contains "FAILED":
 **Only send if Stage 5 FAILED.**
 
 ```
+🔴 Build failed! Running Root Cause Analysis...
+═════════════════════════════════════
+🟡 Analyzing build error...
+
 Execute STAGE 5a: Debug/RCA
 
 Input:
@@ -221,7 +250,8 @@ Steps:
    - Error summary
    - Root cause
    - Suggested fixes (code changes)
-6. When done, tell me you finished
+6. Print: ✅ RCA completed. Replanning and retrying build...
+7. Tell me you finished
 
 After this, we go BACK TO STAGE 2 (Replan).
 Max 2 total retries.
@@ -240,6 +270,10 @@ Max 2 total retries.
 **When Stage 5 BUILD SUCCESS, send this prompt:**
 
 ```
+🟢 Starting Stage 6: Test Run
+═════════════════════════════════════
+🟡 Executing unit tests...
+
 Execute STAGE 6: Test Run
 
 Command to run:
@@ -255,7 +289,8 @@ Steps:
    - Test summary (X passed, Y failed)
    - Failed tests list
    - Duration
-5. When done, tell me the result (PASSED or FAILED)
+5. Print: ✅ Stage 6: Test Run completed successfully (or ❌ if failed)
+6. Tell me the result (PASSED or FAILED)
 
 Make sure artifact shows PASSED or FAILED clearly.
 ```
@@ -276,6 +311,10 @@ If FAILED:
 **When Stage 6 PASSED, send this prompt:**
 
 ```
+🟢 Starting Stage 7: Code Review
+═════════════════════════════════════
+🟡 Reviewing code against rules...
+
 Execute STAGE 7: Code Review
 
 Steps:
@@ -297,7 +336,8 @@ Steps:
    - Should-Fix
    - Nice-to-Have
    - Status: PASSED or FAILED
-6. When done, tell me the result (PASSED or FAILED)
+6. Print: ✅ Stage 7: Code Review completed successfully (or ❌ if failed)
+7. Tell me the result (PASSED or FAILED)
 ```
 
 ### After Stage 7 completes:
@@ -316,6 +356,10 @@ If FAILED:
 **When Stage 7 PASSED, send this prompt:**
 
 ```
+🟢 Starting Stage 8: Commit
+═════════════════════════════════════
+🟡 Creating git commit and pushing...
+
 Execute STAGE 8: Commit
 
 Steps:
@@ -334,7 +378,8 @@ Steps:
    - Commit SHA
    - Commit message
    - Push status: SUCCESS
-6. When done, tell me the branch name and commit SHA
+6. Print: ✅ Stage 8: Commit completed successfully
+7. Tell me the branch name and commit SHA
 
 NEXT: Final stage (PR).
 ```
@@ -350,6 +395,10 @@ NEXT: Final stage (PR).
 **When Stage 8 SUCCESS, send this FINAL prompt:**
 
 ```
+🟢 Starting Stage 9: Create PR (FINAL STAGE)
+═════════════════════════════════════════════
+🟡 Creating pull request...
+
 Execute STAGE 9: Create PR (FINAL STAGE)
 
 Steps:
@@ -369,7 +418,11 @@ Steps:
    - PR URL
    - Base branch
    - Status: CREATED
-6. When done, tell me the PR number and URL
+6. Print message:
+   🎉 PIPELINE FINISHED SUCCESSFULLY! 🎉
+   ✨ All 9 stages completed!
+   📝 PR created and ready for review
+7. Tell me the PR number and URL
 
 PIPELINE COMPLETE AFTER THIS STAGE.
 ```

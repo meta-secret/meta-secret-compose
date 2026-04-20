@@ -177,18 +177,20 @@ Return to Planning: YES
 
 ## 📋 Stage 5: Build
 
-**Purpose:** Compile project and verify no build errors.
+**Purpose:** Compile project and verify no build errors (including test target linking).
 
-**Command:** `./gradlew build -x test`
+**Command:** `./gradlew build --no-daemon --parallel --console=plain`
 
-**Why `-x test`:**
-- We run full test suite separately in Stage 6
-- Build just verifies compilation
+**Note on `-x test`:**
+- Previously used `-x test` to skip test execution only
+- **Removed** because it also breaks iOS test linking (undefined UniFFI symbols)
+- Full `build` (without `-x test`) compiles tests AND links them properly, then Stage 6 runs them
+- This ensures iOS simulator arm64 test binary gets proper FFI module map linking
 
 **Actions:**
-1. Run gradle build command
+1. Run gradle build command (full build with test compilation/linking)
 2. Capture all output (stdout + stderr)
-3. Check for compilation errors
+3. Check for compilation and linking errors
 
 **Output Artifact:**
 - File: `.ai/artifacts/run/MS-<id>-005-build.md`
