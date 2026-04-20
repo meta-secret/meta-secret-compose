@@ -1,268 +1,422 @@
-# Claude Code: Execute 9-Stage Pipeline
+# ⚠️ EXECUTE THIS PIPELINE - DO NOT SKIP STAGES
 
-**Command:** `/run issue 123`
+**This is NOT documentation. This is EXECUTABLE INSTRUCTIONS.**
 
----
-
-## 🎯 What This Does
-
-Spawns 9 Tasks in sequence. Each Task:
-1. Reads stage definition below
-2. Runs agent from `.ai/agents/`
-3. Writes artifact to `.ai/artifacts/run/MS-123/`
-4. Checks for failures
-5. Continues or retries
+You MUST spawn Tasks for all 9 stages in exact sequence.
+After each Task completes → spawn next Task.
+No branching. No choices. Just execute.
 
 ---
 
-## 📋 STAGE DEFINITIONS (Self-Contained)
-
-### STAGE 1: Understanding
+## REQUIRED SEQUENCE
 
 ```
-Agent: github-issue-coordinator
-Input: issue ID (e.g., 123)
-Output: .ai/artifacts/run/MS-123-001-understanding.md
-
-Task Prompt:
-"Read .ai/agents/github-issue-coordinator.md
-Execute for issue 123.
-Output MUST go to: .ai/artifacts/run/MS-123-001-understanding.md
-Artifact MUST contain: problem, goal, requirements, assumptions"
-```
-
----
-
-### STAGE 2: Planning
-
-```
-Agent: feature-planner
-Input: artifact from Stage 1
-Output: .ai/artifacts/run/MS-123-002-planning.md
-
-Task Prompt:
-"Read .ai/agents/feature-planner.md
-Read artifact: .ai/artifacts/run/MS-123-001-understanding.md
-Read: .ai/rules/kmp-principles.md
-Create plan (scope, tech stack, deferred items).
-Output to: .ai/artifacts/run/MS-123-002-planning.md"
+Task 1 (Stage 1: Understanding)
+  ↓ (after artifact written)
+Task 2 (Stage 2: Planning)
+  ↓ (after artifact written)
+Task 3 (Stage 3: Implementation)
+  ↓
+Task 4 (Stage 4: Testing)
+  ↓
+Task 5 (Stage 5: Build)
+  ├─ If FAIL → Task 5a (Debug/RCA) → back to Stage 2
+  ↓ (if SUCCESS)
+Task 6 (Stage 6: Test Run)
+  ├─ If FAIL → back to Stage 2 (max 2 times)
+  ↓
+Task 7 (Stage 7: Code Review)
+  ├─ If FAIL → back to Stage 2 (max 2 times)
+  ↓
+Task 8 (Stage 8: Commit)
+  ↓
+Task 9 (Stage 9: PR)
+  ↓
+DONE
 ```
 
 ---
 
-### STAGE 3: Implementation
+# 🎯 START EXECUTION
+
+## TASK 1: STAGE 1 - Understanding
+
+**Spawn this Task immediately. Do not read ahead.**
 
 ```
-Agent: code-implementer
-Input: artifact from Stage 2
-Output: .ai/artifacts/run/MS-123-003-implementation.md
+Prompt to pass to Task:
 
-Task Prompt:
-"Read .ai/agents/code-implementer.md
-Read artifact: .ai/artifacts/run/MS-123-002-planning.md
-Implement code changes.
-Output to: .ai/artifacts/run/MS-123-003-implementation.md
-Include: summary, list of modified files"
+"Execute STAGE 1: Understanding
+
+Steps:
+1. Read .ai/agents/github-issue-coordinator.md (full file)
+2. Fetch issue 49: gh issue view 49 --json title,body,number
+3. Extract: problem, goal, requirements, assumptions, affected areas
+4. Write EXACT location: .ai/artifacts/run/MS-49-001-understanding.md
+5. Include sections: Problem, Goal, Requirements, Assumptions, Affected Areas
+6. Finish and return
+
+If you encounter 'FAILED', '**FAIL**', or '❌' in your work → STOP and report immediately."
 ```
+
+### After Task 1 completes:
+1. Read artifact: `.ai/artifacts/run/MS-49-001-understanding.md`
+2. Check for FAILURE markers (FAILED, **FAIL**, ❌)
+3. If FAILURE → STOP. Report error.
+4. If SUCCESS → **Spawn Task 2 immediately**
 
 ---
 
-### STAGE 4: Test Writing
+## TASK 2: STAGE 2 - Planning
+
+**Spawn this Task after Task 1 succeeds.**
 
 ```
-Agent: test-author
-Input: artifact from Stage 3
-Output: .ai/artifacts/run/MS-123-004-testing.md
+Prompt:
 
-Task Prompt:
-"Read .ai/agents/test-author.md
-Read artifact: .ai/artifacts/run/MS-123-003-implementation.md
-Write tests for the changes.
-Output to: .ai/artifacts/run/MS-123-004-testing.md"
+"Execute STAGE 2: Planning
+
+Prerequisites:
+- Artifact from Stage 1 exists: .ai/artifacts/run/MS-49-001-understanding.md
+- You will read it
+
+Steps:
+1. Read .ai/agents/feature-planner.md (full file)
+2. Read .ai/artifacts/run/MS-49-001-understanding.md (from Stage 1)
+3. Read .ai/rules/kmp-principles.md (architecture rules)
+4. Create detailed plan:
+   - Scope: numbered list of implementation steps
+   - Each step: file path + description
+   - Tech stack alignment: KMM, MVVM, FFI boundary
+   - Deferred: what's out of scope
+   - Risks: what could go wrong
+5. Write EXACT location: .ai/artifacts/run/MS-49-002-planning.md
+6. Finish and return
+
+Check for failure markers. Stop if found."
 ```
+
+### After Task 2 completes:
+1. Read artifact: `.ai/artifacts/run/MS-49-002-planning.md`
+2. Check for FAILURE markers
+3. If FAILURE → STOP. Report.
+4. If SUCCESS → **Spawn Task 3 immediately**
 
 ---
 
-### STAGE 5: Build
+## TASK 3: STAGE 3 - Implementation
+
+**Spawn after Task 2 succeeds.**
 
 ```
-Command: ./gradlew build -x test --no-daemon --parallel
-Output: .ai/artifacts/run/MS-123-005-build.md
+Prompt:
 
-Bash Task:
-"./gradlew build -x test --no-daemon --parallel --console=plain 2>&1 | tee /tmp/build.log
-if [ $? -ne 0 ]; then
-  echo 'FAILED' > /tmp/build-status.txt
-else
-  echo 'SUCCESS' > /tmp/build-status.txt
-fi"
+"Execute STAGE 3: Implementation
 
-Then create artifact with build output.
+Steps:
+1. Read .ai/agents/code-implementer.md (full file)
+2. Read .ai/artifacts/run/MS-49-002-planning.md (from Stage 2)
+3. Implement code changes:
+   - Follow plan exactly
+   - Modify only files listed in plan
+   - Keep changes minimal
+   - No refactoring beyond plan scope
+4. Write EXACT location: .ai/artifacts/run/MS-49-003-implementation.md
+5. Include:
+   - Summary of changes
+   - List of modified files with paths
+   - Any deviations from plan + reason
+6. Finish and return
+
+Check for failure markers."
 ```
+
+### After Task 3 completes:
+1. Read artifact: `.ai/artifacts/run/MS-49-003-implementation.md`
+2. Check for FAILURE markers
+3. If FAILURE → STOP. Report.
+4. If SUCCESS → **Spawn Task 4 immediately**
 
 ---
 
-### STAGE 5a: Debug/RCA (If Stage 5 Failed)
+## TASK 4: STAGE 4 - Test Writing
+
+**Spawn after Task 3 succeeds.**
 
 ```
-Agent: debug-rca
-Input: build error from Stage 5
-Output: .ai/artifacts/run/MS-123-005-build-rca-retry-1.md
+Prompt:
 
-Task Prompt:
-"Read .ai/agents/debug-rca.md
-Analyze build error from: /tmp/build.log
-Write RCA to: .ai/artifacts/run/MS-123-005-build-rca-retry-1.md
-Include: root cause, suggested fixes"
+"Execute STAGE 4: Test Writing
 
-Then GO BACK TO STAGE 2 (Replan based on RCA)
+Steps:
+1. Read .ai/agents/test-author.md (full file)
+2. Read .ai/artifacts/run/MS-49-003-implementation.md (from Stage 3)
+3. Write tests:
+   - Unit tests for new functions
+   - Integration tests if needed
+   - Cover edge cases
+   - Update existing tests if affected
+4. Write EXACT location: .ai/artifacts/run/MS-49-004-testing.md
+5. Include:
+   - Test files created/modified
+   - Coverage summary
+   - Edge cases tested
+6. Finish and return
+
+Check for failure markers."
 ```
+
+### After Task 4 completes:
+1. Read artifact: `.ai/artifacts/run/MS-49-004-testing.md`
+2. Check for FAILURE markers
+3. If FAILURE → STOP. Report.
+4. If SUCCESS → **Spawn Task 5 immediately**
 
 ---
 
-### STAGE 6: Test Run
+## TASK 5: STAGE 5 - Build
+
+**Spawn after Task 4 succeeds.**
 
 ```
-Agent: test-verifier
-Input: build succeeded
-Output: .ai/artifacts/run/MS-123-006-test-run.md
+Prompt:
 
-Task Prompt:
-"Read .ai/agents/test-verifier.md
-Run: ./gradlew testDebugUnitTest --no-daemon --parallel --console=plain
-Capture results.
-Output to: .ai/artifacts/run/MS-123-006-test-run.md
-Include: test summary, passed/failed count"
+"Execute STAGE 5: Build
+
+Command:
+./gradlew build -x test --no-daemon --parallel --console=plain
+
+Steps:
+1. Run build command above
+2. Capture FULL output
+3. Write EXACT location: .ai/artifacts/run/MS-49-005-build.md
+4. Include:
+   - Command used
+   - Result: SUCCESS or FAILED
+   - Full build output
+   - Duration in seconds
+5. Finish and return
+
+Artifact should clearly indicate SUCCESS or FAILED."
 ```
+
+### After Task 5 completes:
+1. Read artifact: `.ai/artifacts/run/MS-49-005-build.md`
+2. Check result:
+   ```
+   If contains "SUCCESS":
+   → Spawn Task 6 immediately
+   
+   If contains "FAILED":
+   → Spawn Task 5a (Debug/RCA)
+   → Then go back to Stage 2
+   ```
 
 ---
 
-### STAGE 7: Code Review
+## TASK 5a: STAGE 5a - Debug/RCA (ONLY if Build Failed)
+
+**Only spawn if Stage 5 FAILED.**
 
 ```
-Agent: code-reviewer
-Input: all changes from Stage 3
-Output: .ai/artifacts/run/MS-123-007-review.md
+Prompt:
 
-Task Prompt:
-"Read .ai/agents/code-reviewer.md
-Review all code changes against:
-  - .ai/rules/kmp-principles.md
-  - ARCHITECTURE.md
-  - CODE_STYLE.md
-Output to: .ai/artifacts/run/MS-123-007-review.md
-Include: summary, must-fix, should-fix, nice-to-have"
+"Execute STAGE 5a: Debug/RCA
+
+Input:
+- Build error from: .ai/artifacts/run/MS-49-005-build.md
+
+Steps:
+1. Read .ai/agents/debug-rca.md (full file)
+2. Analyze build error:
+   - What failed?
+   - Why did it fail?
+   - Which file/line?
+3. Suggest specific fixes
+4. Write EXACT location: .ai/artifacts/run/MS-49-005-build-rca-retry-1.md
+5. Include:
+   - Error summary
+   - Root cause analysis
+   - Suggested fixes (specific code changes)
+6. Finish and return"
 ```
+
+### After Task 5a completes:
+**Go back to Stage 2** (Replan with RCA insights)
+- Create: `MS-49-002-planning-retry-1.md`
+- Continue: Stages 3-5 again
+- Max 2 total retries
 
 ---
 
-### STAGE 8: Commit
+## TASK 6: STAGE 6 - Test Run
+
+**Spawn after Stage 5 BUILD SUCCESS.**
 
 ```
-Agent: release-manager
-Input: all stages passed
-Output: .ai/artifacts/run/MS-123-008-commit.md
+Prompt:
 
-Task Prompt:
-"Read .ai/agents/release-manager.md
-Create branch: {Prefix}/kuklin/MS-123
-Stage all changes.
-Commit message: [Issue #123] Summary
-Push to remote.
-Output to: .ai/artifacts/run/MS-123-008-commit.md
-Include: branch name, commit SHA, push status"
+"Execute STAGE 6: Test Run
+
+Command:
+./gradlew testDebugUnitTest --no-daemon --parallel --console=plain
+
+Steps:
+1. Run test command above
+2. Capture FULL output
+3. Write EXACT location: .ai/artifacts/run/MS-49-006-test-run.md
+4. Include:
+   - Command used
+   - Result: PASSED or FAILED
+   - Test summary (X passed, Y failed)
+   - List failed tests if any
+   - Duration
+5. Finish and return
+
+Artifact should clearly indicate PASSED or FAILED."
 ```
+
+### After Task 6 completes:
+1. Read artifact: `.ai/artifacts/run/MS-49-006-test-run.md`
+2. Check result:
+   ```
+   If contains "PASSED":
+   → Spawn Task 7 immediately
+   
+   If contains "FAILED":
+   → Go back to Stage 2 (max 2 retries total)
+   ```
 
 ---
 
-### STAGE 9: Create PR
+## TASK 7: STAGE 7 - Code Review
+
+**Spawn after Stage 6 SUCCESS.**
 
 ```
-Agent: release-manager
-Input: branch pushed (Stage 8)
-Output: .ai/artifacts/run/MS-123-009-pr.md
+Prompt:
 
-Task Prompt:
-"Read .ai/agents/release-manager.md
-Create PR: gh pr create --title '...' --body '...' --base main
-Output to: .ai/artifacts/run/MS-123-009-pr.md
-Include: PR URL, PR number, status"
+"Execute STAGE 7: Code Review
+
+Steps:
+1. Read .ai/agents/code-reviewer.md (full file)
+2. Review all code changes against:
+   - .ai/rules/kmp-principles.md (architecture)
+   - ARCHITECTURE.md
+   - CODE_STYLE.md
+   - SECURITY.md
+3. Check:
+   - Architecture (MVVM, FFI boundary)
+   - Style (Kotlin/Swift conventions)
+   - Security (no secrets, error handling)
+   - Dead code
+4. Write EXACT location: .ai/artifacts/run/MS-49-007-review.md
+5. Include sections:
+   - Summary
+   - Must-Fix (violations)
+   - Should-Fix (style issues)
+   - Nice-to-Have (improvements)
+   - Status: PASSED or FAILED
+6. Finish and return"
 ```
+
+### After Task 7 completes:
+1. Read artifact: `.ai/artifacts/run/MS-49-007-review.md`
+2. Check for PASSED or FAILED:
+   ```
+   If PASSED:
+   → Spawn Task 8 immediately
+   
+   If FAILED:
+   → Go back to Stage 2 (max 2 retries total)
+   ```
 
 ---
 
-## ⚡ FAILURE CHECKING (After Each Stage)
+## TASK 8: STAGE 8 - Commit
 
-```python
-def check_failure(artifact_path):
-    content = read_file(artifact_path)
-    failure_markers = ["FAILED", "Status: FAILED", "❌"]
-    if any(marker in content for marker in failure_markers):
-        return True
-    return False
+**Spawn after Stage 7 SUCCESS.**
+
+```
+Prompt:
+
+"Execute STAGE 8: Commit
+
+Steps:
+1. Read .ai/agents/release-manager.md (full file)
+2. From Stage 1 artifact, extract issue title prefix: [Task], [Feature], or [Bug]
+3. Git operations:
+   - git fetch origin
+   - git checkout main
+   - git checkout -b {Prefix}/kuklin/MS-49
+   - git add [all modified files]
+   - git commit -m '[Issue #49] Summary of changes'
+   - git push -u origin {Prefix}/kuklin/MS-49
+4. Write EXACT location: .ai/artifacts/run/MS-49-008-commit.md
+5. Include:
+   - Branch name
+   - Commit SHA
+   - Commit message
+   - Push status (SUCCESS)
+6. Finish and return"
 ```
 
-**If Stage N fails:**
-- For Stage 5 (Build): spawn Stage 5a (Debug/RCA) → go to Stage 2
-- For Stage 6 (Tests): go to Stage 2
-- For Stage 7 (Review): go to Stage 2
-- Max 2 retries per failure type
+### After Task 8 completes:
+1. Read artifact: `.ai/artifacts/run/MS-49-008-commit.md`
+2. Check for SUCCESS
+3. If SUCCESS → **Spawn Task 9 immediately (FINAL STAGE)**
 
 ---
 
-## 🔄 RETRY LOGIC
+## TASK 9: STAGE 9 - Create PR
+
+**Spawn after Stage 8 SUCCESS. FINAL TASK.**
 
 ```
-Attempt 1: Build fails
-  ├─ Stage 5a (Debug/RCA) 
-  └─ Stage 2 (Replan)
-     → Stages 3-5
+Prompt:
 
-Attempt 2: Build fails again
-  ├─ Stage 5a (Debug/RCA 2nd time)
-  └─ Stage 2 (Replan 2nd time)
-     → Stages 3-5
+"Execute STAGE 9: Create PR (FINAL STAGE)
 
-If still fails: STOP (max retries reached)
+Steps:
+1. Read .ai/agents/release-manager.md (full file)
+2. Create PR:
+   gh pr create \\
+     --title '[Issue #49] Summary of changes' \\
+     --body 'Implementation of issue #49 requirements' \\
+     --base main
+3. Capture PR info:
+   - PR number
+   - PR URL
+   - Status
+4. Write EXACT location: .ai/artifacts/run/MS-49-009-pr.md
+5. Include:
+   - PR number
+   - PR URL
+   - Base branch
+   - Status: CREATED
+6. Finish and return
+
+PIPELINE COMPLETE WHEN THIS TASK FINISHES."
 ```
+
+### After Task 9 completes:
+✅ **ENTIRE PIPELINE FINISHED**
+
+All 9 stages complete. Check artifacts:
+- `.ai/artifacts/run/MS-49-001-understanding.md` ✓
+- `.ai/artifacts/run/MS-49-002-planning.md` ✓
+- `.ai/artifacts/run/MS-49-003-implementation.md` ✓
+- `.ai/artifacts/run/MS-49-004-testing.md` ✓
+- `.ai/artifacts/run/MS-49-005-build.md` ✓
+- `.ai/artifacts/run/MS-49-006-test-run.md` ✓
+- `.ai/artifacts/run/MS-49-007-review.md` ✓
+- `.ai/artifacts/run/MS-49-008-commit.md` ✓
+- `.ai/artifacts/run/MS-49-009-pr.md` ✓
+
+PR created on GitHub. Done.
 
 ---
 
-## 🎯 INPUT HANDLING
-
-When user says: `/run issue 123`
-
-```python
-if isinstance(input_str, int):
-    issue_id = input_str
-    timestamp = None
-else:
-    # Custom text input
-    timestamp = time.strftime("%Y%m%d%H%M%S")
-    issue_id = timestamp
-```
-
----
-
-## 📦 ARTIFACT DIRECTORY
-
-Create before starting:
-```bash
-mkdir -p .ai/artifacts/run/
-```
-
-All artifacts: `.ai/artifacts/run/MS-<id>-<stage-number>-<stage-name>.md`
-
----
-
-## ✅ SUCCESS CRITERIA
-
-Pipeline complete when:
-- Stage 9 succeeds
-- PR created
-- All artifacts in `.ai/artifacts/run/MS-<id>/`
-
----
-
-**Version:** 2.0 (explicit instructions)  
-**Last updated:** 2026-04-20
+**Version:** 3.0 (explicit Task sequence, no branching)  
+**Last updated:** 2026-04-20  
+**Status:** READY FOR EXECUTION

@@ -1,260 +1,546 @@
-# Codex: Execute 9-Stage Pipeline
+# ⚠️ EXECUTE THIS PIPELINE - DO NOT SKIP STAGES
 
-**Purpose:** Run `run issue 49` and execute all 9 stages automatically.
+**This is NOT documentation. This is EXECUTABLE INSTRUCTIONS.**
+
+You MUST execute all 9 stages in this exact sequence.
+After each stage completes → go to next stage.
+No branching. No choices. Just execute.
 
 ---
 
-## 📋 Quick Reference (Copy-Paste These Commands)
-
-```bash
-# Stage 1: Read issue
-gh issue view 49 --json title,body,number
-
-# Stage 2-9: Spawn agent for each stage (see below)
+## REQUIRED ORDER
+```
+Stage 1 ↓
+Stage 2 ↓
+Stage 3 ↓
+Stage 4 ↓
+Stage 5 ↓ (if fails → Stage 5a)
+Stage 6 ↓ (if fails → back to Stage 2, max 2 times)
+Stage 7 ↓ (if fails → back to Stage 2, max 2 times)
+Stage 8 ↓
+Stage 9 ↓ END
 ```
 
 ---
 
-## 🚀 STEP-BY-STEP EXECUTION
+# 🚀 START HERE: STAGE 1
 
-### STAGE 1: Understanding (Read Issue)
+## STAGE 1: Understanding (Read Issue)
 
-**Agent:** `github-issue-coordinator`  
-**Input:** GitHub issue #49  
-**Output:** `.ai/artifacts/run/MS-49-001-understanding.md`
+**MANDATORY. Execute now. Do not read ahead.**
 
-**DO THIS:**
-1. Run: `gh issue view 49 --json title,body,number`
-2. Extract: problem, goal, requirements
-3. Write artifact to: `.ai/artifacts/run/MS-49-001-understanding.md`
-4. **STOP** — check artifact for failures before continuing
+### Agent
+`github-issue-coordinator` from `.ai/agents/github-issue-coordinator.md`
 
-**Failure check:** If artifact contains `FAILED` or `❌` → stop and report
+### Input
+GitHub issue ID (e.g., 49) or text description
+
+### Output Location
+`.ai/artifacts/run/MS-49-001-understanding.md`
+
+### EXACT STEPS (Execute in order)
+
+1. **Fetch issue:**
+   ```bash
+   gh issue view 49 --json title,body,number
+   ```
+
+2. **Extract and write to artifact:**
+   - Problem statement (what's the issue?)
+   - Goal (what success looks like)
+   - Requirements (numbered list)
+   - Assumptions (what you assume to be true)
+   - Affected areas (which parts of code)
+
+3. **Write artifact:**
+   ```
+   File: .ai/artifacts/run/MS-49-001-understanding.md
+   Format: markdown with sections above
+   ```
+
+4. **Check for FAILURE markers:**
+   ```
+   If artifact contains: FAILED, **FAIL**, ❌, "Return to Planning: YES"
+   → STOP. Report error.
+   ```
+
+5. **If SUCCESS:**
+   → **PROCEED TO STAGE 2** (see below)
+   → Do not wait for approval
+   → Go immediately
 
 ---
 
-### STAGE 2: Planning (Create Plan)
+# 📋 STAGE 2: Planning
 
-**Agent:** `feature-planner`  
-**Input:** artifact from Stage 1  
-**Output:** `.ai/artifacts/run/MS-49-002-planning.md`
+**MANDATORY. Execute now.**
 
-**DO THIS:**
-1. Read: `.ai/artifacts/run/MS-49-001-understanding.md`
-2. Read: `.ai/rules/kmp-principles.md` (architecture rules)
-3. Create plan:
-   - List files to modify (with paths)
-   - Tech stack alignment (MVVM, FFI boundary)
-   - Risks
-4. Write artifact: `.ai/artifacts/run/MS-49-002-planning.md`
-5. **STOP** — check artifact for failures
+### Agent
+`feature-planner` from `.ai/agents/feature-planner.md`
+
+### Input
+- Artifact from Stage 1: `.ai/artifacts/run/MS-49-001-understanding.md`
+- Read: `.ai/rules/kmp-principles.md` (architecture rules)
+
+### Output Location
+`.ai/artifacts/run/MS-49-002-planning.md`
+
+### EXACT STEPS
+
+1. **Read Stage 1 artifact** (you just created it)
+
+2. **Read architecture rules:**
+   ```
+   .ai/rules/kmp-principles.md
+   ARCHITECTURE.md
+   CODE_STYLE.md
+   ```
+
+3. **Create detailed plan:**
+   - **Scope** — numbered list of implementation steps
+   - Each step: file path + description
+   - Example: `1. Update SignInScreenViewModel to add nameOccupiedJoinPrompt state`
+   - **Tech stack alignment** — KMM, MVVM, FFI boundary
+   - **Deferred items** — what's out of scope
+   - **Risks** — what could go wrong
+
+4. **Write artifact:**
+   ```
+   File: .ai/artifacts/run/MS-49-002-planning.md
+   Format: markdown with sections above
+   ```
+
+5. **Check for FAILURE markers:**
+   If found → STOP. Report.
+
+6. **If SUCCESS:**
+   → **PROCEED TO STAGE 3** immediately
 
 ---
 
-### STAGE 3: Implementation (Write Code)
+# 💻 STAGE 3: Implementation
 
-**Agent:** `code-implementer`  
-**Input:** artifact from Stage 2  
-**Output:** `.ai/artifacts/run/MS-49-003-implementation.md`
+**MANDATORY. Execute now.**
 
-**DO THIS:**
-1. Read: `.ai/artifacts/run/MS-49-002-planning.md`
-2. Implement code changes per plan
-3. Create `.ai/artifacts/run/MS-49-003-implementation.md` with:
+### Agent
+`code-implementer` from `.ai/agents/code-implementer.md`
+
+### Input
+Artifact from Stage 2: `.ai/artifacts/run/MS-49-002-planning.md`
+
+### Output Location
+`.ai/artifacts/run/MS-49-003-implementation.md`
+
+### EXACT STEPS
+
+1. **Read Stage 2 artifact** (the plan)
+
+2. **Implement code changes:**
+   - Follow plan exactly
+   - Modify only files listed in plan
+   - Keep changes minimal and scoped
+   - No refactoring beyond plan
+
+3. **Write artifact:**
+   ```
+   File: .ai/artifacts/run/MS-49-003-implementation.md
+   Include:
    - Summary of changes
-   - List of modified files
-4. **STOP** — check for failures
+   - List of modified files (with paths)
+   - Any deviations from plan + reason
+   ```
+
+4. **Check for FAILURE markers:**
+   If found → STOP. Report.
+
+5. **If SUCCESS:**
+   → **PROCEED TO STAGE 4** immediately
 
 ---
 
-### STAGE 4: Test Writing
+# 🧪 STAGE 4: Test Writing
 
-**Agent:** `test-author`  
-**Input:** artifact from Stage 3  
-**Output:** `.ai/artifacts/run/MS-49-004-testing.md`
+**MANDATORY. Execute now.**
 
-**DO THIS:**
-1. Read: `.ai/artifacts/run/MS-49-003-implementation.md`
-2. Write tests for changes
-3. Create artifact: `.ai/artifacts/run/MS-49-004-testing.md`
-4. **STOP** — check for failures
+### Agent
+`test-author` from `.ai/agents/test-author.md`
 
----
+### Input
+Artifact from Stage 3: `.ai/artifacts/run/MS-49-003-implementation.md`
 
-### STAGE 5: Build
+### Output Location
+`.ai/artifacts/run/MS-49-004-testing.md`
 
-**Command:** `./gradlew build -x test`  
-**Output:** `.ai/artifacts/run/MS-49-005-build.md`
+### EXACT STEPS
 
-**DO THIS:**
-1. Run: `./gradlew build -x test --no-daemon --parallel --console=plain`
-2. Capture output
-3. Write artifact with:
-   - Command used
-   - Result (SUCCESS or FAILED)
-   - Any errors
-4. **CHECK FOR FAILURE:**
-   - If FAILED: go to Stage 5a (Debug/RCA)
-   - If SUCCESS: go to Stage 6
+1. **Read Stage 3 artifact** (the code changes)
 
----
+2. **Write tests:**
+   - Unit tests for new functions
+   - Integration tests if needed
+   - Cover edge cases
+   - Update existing tests if affected
 
-### STAGE 5a: Debug/RCA (If Build Failed)
+3. **Write artifact:**
+   ```
+   File: .ai/artifacts/run/MS-49-004-testing.md
+   Include:
+   - Test files created/modified
+   - Coverage summary
+   - Edge cases tested
+   ```
 
-**Agent:** `debug-rca`  
-**Input:** build error output  
-**Output:** `.ai/artifacts/run/MS-49-005-build-rca-retry-1.md`
+4. **Check for FAILURE markers:**
+   If found → STOP. Report.
 
-**DO THIS (only if Stage 5 FAILED):**
-1. Read build error
-2. Analyze root cause
-3. Suggest fixes
-4. Write artifact: `.ai/artifacts/run/MS-49-005-build-rca-retry-1.md`
-5. **GO BACK TO STAGE 2** (Replan with RCA insights)
-6. After replan: continue Stages 3-5 again
-7. **MAX 2 retries** (if still fails after retry 2: STOP)
+5. **If SUCCESS:**
+   → **PROCEED TO STAGE 5** immediately
 
 ---
 
-### STAGE 6: Test Run
+# 🔨 STAGE 5: Build
 
-**Agent:** `test-verifier`  
-**Input:** Stage 5 succeeded  
-**Output:** `.ai/artifacts/run/MS-49-006-test-run.md`
+**MANDATORY. Execute now.**
 
-**DO THIS:**
-1. Run: `./gradlew testDebugUnitTest --no-daemon --parallel --console=plain`
-2. Capture test results
-3. Write artifact:
-   - Command used
-   - Result (PASSED or FAILED)
-   - Test summary
-4. **CHECK FOR FAILURE:**
-   - If FAILED: go back to Stage 2 (Replan, max 2 retries)
-   - If PASSED: go to Stage 7
+### Command
+```bash
+./gradlew build -x test --no-daemon --parallel --console=plain
+```
 
----
+### Output Location
+`.ai/artifacts/run/MS-49-005-build.md`
 
-### STAGE 7: Code Review
+### EXACT STEPS
 
-**Agent:** `code-reviewer`  
-**Input:** all changes from Stage 3  
-**Output:** `.ai/artifacts/run/MS-49-007-review.md`
+1. **Run build:**
+   ```bash
+   ./gradlew build -x test --no-daemon --parallel --console=plain 2>&1
+   ```
 
-**DO THIS:**
-1. Review all changes against:
-   - `.ai/rules/kmp-principles.md` (architecture)
-   - Code style rules
-   - Security rules
-2. Write artifact with:
-   - Summary
-   - Must-fix issues
-   - Should-fix issues
-3. **CHECK FOR FAILURE:**
-   - If FAILED: go back to Stage 2 (Replan, max 2 retries)
-   - If PASSED: go to Stage 8
+2. **Capture full output**
 
----
+3. **Write artifact:**
+   ```markdown
+   # Build Report
+   
+   ## Command
+   ./gradlew build -x test --no-daemon --parallel --console=plain
+   
+   ## Result
+   SUCCESS (or FAILED)
+   
+   ## Duration
+   X seconds
+   
+   ## Output
+   [build logs]
+   ```
 
-### STAGE 8: Commit
-
-**Agent:** `release-manager`  
-**Input:** all stages 1-7 passed  
-**Output:** `.ai/artifacts/run/MS-49-008-commit.md`
-
-**DO THIS:**
-1. Parse issue title from Stage 1 to extract prefix (Task/Feature/Bug)
-2. Create branch: `{Prefix}/kuklin/MS-49`
-3. Stage all changes
-4. Create commit message: `[Issue #49] Brief summary`
-5. Commit and push
-6. Write artifact with:
-   - Branch name
-   - Commit SHA
-   - Push status
+4. **Check result:**
+   ```
+   If build SUCCEEDED:
+   → PROCEED TO STAGE 6
+   
+   If build FAILED:
+   → PROCEED TO STAGE 5a (Debug/RCA)
+   ```
 
 ---
 
-### STAGE 9: Create PR
+# 🔍 STAGE 5a: Debug/RCA (ONLY if Build Failed)
 
-**Agent:** `release-manager`  
-**Input:** Stage 8 succeeded  
-**Output:** `.ai/artifacts/run/MS-49-009-pr.md`
+**Only execute if Stage 5 FAILED.**
 
-**DO THIS:**
-1. Create PR targeting `main`
-2. Use commit message as title
-3. Run: `gh pr create --title "..." --body "..." --base main`
-4. Write artifact with:
+### Agent
+`debug-rca` from `.ai/agents/debug-rca.md`
+
+### Input
+Build error output from Stage 5
+
+### Output Location
+`.ai/artifacts/run/MS-49-005-build-rca-retry-1.md`
+
+### EXACT STEPS
+
+1. **Analyze build error:**
+   - What failed?
+   - Why did it fail?
+   - Which file/line?
+
+2. **Suggest fixes:**
+   - Specific code changes
+   - Exact file paths
+   - Root cause
+
+3. **Write artifact:**
+   ```markdown
+   # Build RCA
+   
+   ## Error
+   [error message]
+   
+   ## Root Cause
+   [analysis]
+   
+   ## Suggested Fix
+   [specific changes needed]
+   ```
+
+4. **After RCA complete:**
+   → **GO BACK TO STAGE 2** (Replan with RCA insights)
+   → Replan, re-implement, retry build
+   → Save as: `MS-49-002-planning-retry-1.md`
+   → **Max 2 retries total**
+
+---
+
+# 🧬 STAGE 6: Test Run
+
+**MANDATORY. Execute now.**
+
+### Agent
+`test-verifier` from `.ai/agents/test-verifier.md`
+
+### Command
+```bash
+./gradlew testDebugUnitTest --no-daemon --parallel --console=plain
+```
+
+### Output Location
+`.ai/artifacts/run/MS-49-006-test-run.md`
+
+### EXACT STEPS
+
+1. **Run tests:**
+   ```bash
+   ./gradlew testDebugUnitTest --no-daemon --parallel --console=plain 2>&1
+   ```
+
+2. **Capture results**
+
+3. **Write artifact:**
+   ```markdown
+   # Test Report
+   
+   ## Command
+   ./gradlew testDebugUnitTest --no-daemon --parallel --console=plain
+   
+   ## Result
+   PASSED (or FAILED)
+   
+   ## Summary
+   X tests passed, Y tests failed
+   
+   ## Failed Tests (if any)
+   [list]
+   ```
+
+4. **Check result:**
+   ```
+   If tests PASSED:
+   → PROCEED TO STAGE 7
+   
+   If tests FAILED:
+   → GO BACK TO STAGE 2 (Replan)
+   → Max 2 retries total
+   ```
+
+---
+
+# 👁️ STAGE 7: Code Review
+
+**MANDATORY. Execute now.**
+
+### Agent
+`code-reviewer` from `.ai/agents/code-reviewer.md`
+
+### Input
+All code changes from Stage 3
+
+### Output Location
+`.ai/artifacts/run/MS-49-007-review.md`
+
+### EXACT STEPS
+
+1. **Review against rules:**
+   ```
+   .ai/rules/kmp-principles.md (architecture)
+   ARCHITECTURE.md
+   CODE_STYLE.md
+   SECURITY.md
+   ```
+
+2. **Check:**
+   - Architecture compliance (MVVM, FFI boundary)
+   - Code style (Kotlin/Swift conventions)
+   - Security (no secrets, proper error handling)
+   - Dead code or issues
+
+3. **Write artifact:**
+   ```markdown
+   # Code Review
+   
+   ## Summary
+   [what was reviewed]
+   
+   ## Must-Fix
+   [architecture/security violations]
+   
+   ## Should-Fix
+   [style/clarity issues]
+   
+   ## Nice-to-Have
+   [optional improvements]
+   
+   ## Status
+   PASSED (or FAILED)
+   ```
+
+4. **Check result:**
+   ```
+   If PASSED:
+   → PROCEED TO STAGE 8
+   
+   If FAILED:
+   → GO BACK TO STAGE 2 (Replan)
+   → Max 2 retries total
+   ```
+
+---
+
+# 📝 STAGE 8: Commit
+
+**MANDATORY. Execute now.**
+
+### Agent
+`release-manager` from `.ai/agents/release-manager.md`
+
+### Input
+All stages 1-7 completed
+
+### Output Location
+`.ai/artifacts/run/MS-49-008-commit.md`
+
+### EXACT STEPS
+
+1. **Parse issue title from Stage 1:**
+   ```
+   Extract prefix: [Task], [Feature], or [Bug]
+   Example: [Feature] → prefix = "Feature"
+   ```
+
+2. **Create branch:**
+   ```bash
+   git fetch origin
+   git checkout main
+   git checkout -b Feature/kuklin/MS-49
+   ```
+
+3. **Stage changes:**
+   ```bash
+   git add [all modified files from Stage 3]
+   ```
+
+4. **Create commit:**
+   ```bash
+   git commit -m "[Issue #49] Summary of changes"
+   ```
+
+5. **Push to remote:**
+   ```bash
+   git push -u origin Feature/kuklin/MS-49
+   ```
+
+6. **Write artifact:**
+   ```markdown
+   # Commit Report
+   
+   ## Branch
+   Feature/kuklin/MS-49
+   
+   ## Commit SHA
+   [sha]
+   
+   ## Commit Message
+   [Issue #49] Summary of changes
+   
+   ## Push Status
+   SUCCESS
+   ```
+
+7. **If SUCCESS:**
+   → **PROCEED TO STAGE 9** immediately
+
+---
+
+# 🔗 STAGE 9: Create PR
+
+**MANDATORY. Execute now. FINAL STAGE.**
+
+### Agent
+`release-manager` from `.ai/agents/release-manager.md`
+
+### Input
+Branch pushed (Stage 8 completed)
+
+### Output Location
+`.ai/artifacts/run/MS-49-009-pr.md`
+
+### EXACT STEPS
+
+1. **Create PR:**
+   ```bash
+   gh pr create \
+     --title "[Issue #49] Summary of changes" \
+     --body "Implementation of issue #49 requirements" \
+     --base main
+   ```
+
+2. **Capture PR info:**
    - PR URL
    - PR number
    - Status
 
----
+3. **Write artifact:**
+   ```markdown
+   # PR Report
+   
+   ## PR Number
+   #456
+   
+   ## PR URL
+   https://github.com/.../pull/456
+   
+   ## Status
+   CREATED
+   
+   ## Base Branch
+   main
+   ```
 
-## ⚠️ FAILURE HANDLING
-
-### Retry Logic
-
-```
-Build FAILED (Stage 5)?
-  → Debug/RCA (5a)
-  → Replan (Stage 2)
-  → Retry (Stages 3-5)
-  → Max 2 times
-
-Test FAILED (Stage 6)?
-  → Replan (Stage 2)
-  → Retry (Stages 3-6)
-  → Max 2 times
-
-Review FAILED (Stage 7)?
-  → Replan (Stage 2)
-  → Retry (Stages 3-7)
-  → Max 2 times
-```
+4. **When complete:**
+   ✅ **PIPELINE FINISHED**
 
 ---
 
-## 🎯 RESUME FROM STAGE
+## ✅ COMPLETION CHECKLIST
 
-If previous run failed at Stage 6:
+When all 9 stages complete, you should have:
 
-```
-codex run issue 49 --from stage-2
-```
-
-This skips Stages 1-5 (already done). All prior artifacts already on disk.
-
----
-
-## 📝 Artifact Naming
-
-```
-MS-49-001-understanding.md
-MS-49-002-planning.md
-MS-49-003-implementation.md
-MS-49-004-testing.md
-MS-49-005-build.md
-MS-49-005-build-rca-retry-1.md      (if build failed)
-MS-49-005-build-retry-1.md           (retry)
-MS-49-006-test-run.md
-MS-49-007-review.md
-MS-49-008-commit.md
-MS-49-009-pr.md
-```
-
-All in: `.ai/artifacts/run/`
+- [ ] `.ai/artifacts/run/MS-49-001-understanding.md`
+- [ ] `.ai/artifacts/run/MS-49-002-planning.md`
+- [ ] `.ai/artifacts/run/MS-49-003-implementation.md`
+- [ ] `.ai/artifacts/run/MS-49-004-testing.md`
+- [ ] `.ai/artifacts/run/MS-49-005-build.md`
+- [ ] `.ai/artifacts/run/MS-49-006-test-run.md`
+- [ ] `.ai/artifacts/run/MS-49-007-review.md`
+- [ ] `.ai/artifacts/run/MS-49-008-commit.md`
+- [ ] `.ai/artifacts/run/MS-49-009-pr.md`
+- [ ] PR created on GitHub
+- [ ] All changes committed and pushed
 
 ---
 
-## ✅ Done
-
-When Stage 9 completes: **PR created**
-
-All artifacts in: `.ai/artifacts/run/MS-49/`
-
----
-
-**Version:** 2.0 (explicit instructions)  
-**Last updated:** 2026-04-20
+**Version:** 3.0 (executable instructions, no branching)  
+**Last updated:** 2026-04-20  
+**Status:** READY FOR EXECUTION
