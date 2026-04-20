@@ -14,10 +14,31 @@ data class AppStateResult (
     val error: AppErrors?
 )
 
+enum class VaultAvailability {
+    AVAILABLE,
+    EXISTS,
+}
+
+data class PrepareSignUpResult(
+    val availability: VaultAvailability?,
+    val error: AppErrors?
+)
+
+internal fun mapVaultAvailability(vaultInfo: VaultFullInfo?): VaultAvailability? {
+    return when (vaultInfo) {
+        is VaultFullInfo.NotExists -> VaultAvailability.AVAILABLE
+        is VaultFullInfo.Outsider -> VaultAvailability.EXISTS
+        is VaultFullInfo.Member -> VaultAvailability.AVAILABLE
+        null -> null
+    }
+}
+
 interface MetaSecretStateResolverInterface {
-    suspend fun startFirstSignUp(
+    suspend fun prepareSignUp(
         vaultName: String
-    ): AppStateResult
+    ): PrepareSignUpResult
+    suspend fun continueSignUp(): AppStateResult
+    fun clearPreparedSignUp()
 }
 
 interface AppState
@@ -49,7 +70,7 @@ open class LocalState(
         return result
     }
 
-    suspend fun generateNewCreds(): VaultState? {
+    suspend fun generateNewCreds(): PrepareSignUpResult {
         logger.log(core.LogTag.StateResolver.Message.StartGenerateNewCreds, success = true)
         val jsonResult = withContext(Dispatchers.IO) {
             metaSecretCore.generateUserCreds(vaultName)
@@ -61,30 +82,35 @@ open class LocalState(
         val vaultInfo = coreStateModel.getVaultFullInfo()
         logger.setVaultState(stateModel?.description())
 
-        val result: VaultState? = if (isSuccess && stateModel is State.Vault) {
+        val result: PrepareSignUpResult = if (isSuccess && stateModel is State.Vault) {
             logger.log(core.LogTag.StateResolver.Message.CurrentStateIsVault, success = true)
-            VaultState(metaSecretCore, logger)
-        } else if (isSuccess && vaultInfo is VaultFullInfo.Outsider) {
-            logger.log(core.LogTag.StateResolver.Message.CurrentStateIsOutsider, success = true)
-            when (vaultInfo.outsider.status) {
-                UserDataOutsiderStatus.NON_MEMBER -> {
-                    logger.log(core.LogTag.StateResolver.Message.CurrentStateIsNonMember, success = true)
-                    VaultState(metaSecretCore, logger)
+            when (mapVaultAvailability(vaultInfo)) {
+                VaultAvailability.AVAILABLE -> {
+                    PrepareSignUpResult(VaultAvailability.AVAILABLE, null)
                 }
-                UserDataOutsiderStatus.PENDING -> {
-                    logger.log(core.LogTag.StateResolver.Message.CurrentStateIsPending, success = true)
-                    // TODO: #47 Show alert that tells user to accept the request
-                    null
+                VaultAvailability.EXISTS -> {
+                    logger.log(core.LogTag.StateResolver.Message.CurrentStateIsOutsider, success = true)
+                    when ((vaultInfo as? VaultFullInfo.Outsider)?.outsider?.status) {
+                        UserDataOutsiderStatus.NON_MEMBER -> {
+                            logger.log(core.LogTag.StateResolver.Message.CurrentStateIsNonMember, success = true)
+                            PrepareSignUpResult(VaultAvailability.EXISTS, null)
+                        }
+                        UserDataOutsiderStatus.PENDING -> {
+                            logger.log(core.LogTag.StateResolver.Message.CurrentStateIsPending, success = true)
+                            PrepareSignUpResult(VaultAvailability.EXISTS, null)
+                        }
+                        UserDataOutsiderStatus.DECLINED -> {
+                            logger.log(core.LogTag.StateResolver.Message.CurrentStateIsDeclined, success = true)
+                            PrepareSignUpResult(VaultAvailability.EXISTS, null)
+                        }
+                        null -> PrepareSignUpResult(null, AppErrors.CredsGenerationError)
+                    }
                 }
-                UserDataOutsiderStatus.DECLINED -> {
-                    logger.log(core.LogTag.StateResolver.Message.CurrentStateIsDeclined, success = true)
-                    //  TODO: #47 Show alert that request has been declined
-                    null
-                }
+                null -> PrepareSignUpResult(null, AppErrors.CredsGenerationError)
             }
         } else {
             logger.log(core.LogTag.StateResolver.Message.SwwWithVaultState, success = false)
-            null
+            PrepareSignUpResult(null, AppErrors.CredsGenerationError)
         }
 
         return result

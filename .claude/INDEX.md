@@ -1,109 +1,99 @@
-# Claude Code — meta-secret-compose Entry Point
+# Claude Code — Automated Workflow Entry Point
 
-> This is the entry point for Claude Code when working specifically in the **meta-secret-compose** repository.
-> This is a KMM (Kotlin Multiplatform Mobile) project for iOS and Android UI.
+> Execute automated 9-stage workflow: Issue → PR
+> Brain: `.ai/WORKFLOW.md` · Execution: `.claude/ORCHESTRATE.md`
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
-### Plan a feature
+### Run Full Workflow
+
 ```bash
-/compose-only-planner "add dark mode toggle"
+/run issue 123
 ```
 
-### Implement a feature
-```bash
-/compose-only-implementer "your task"
+→ Automatic execution (9 stages, auto-retry, ANSI output)  
+→ All artifacts: `.ai/artifacts/run/MS-<id>/`
+
+---
+
+## 🎯 What Happens
+
+```
+Stage 1: Understanding (read issue)
+  ↓
+Stage 2: Planning (create plan)
+  ↓
+Stage 3: Implementation (write code)
+  ↓
+Stage 4: Testing (write tests)
+  ↓
+Stage 5: Build (compile)
+  │ ❌ FAIL? → Debug/RCA → Replan (max 2 times)
+  ↓
+Stage 6: Test Run (execute tests)
+  │ ❌ FAIL? → Replan (max 2 times)
+  ↓
+Stage 7: Code Review (review changes)
+  │ ❌ FAIL? → Replan (max 2 times)
+  ↓
+Stage 8: Commit (git commit + push)
+  ↓
+Stage 9: PR (create pull request)
+  ↓
+✅ Done
 ```
 
-### Review code
-```bash
-/compose-only-reviewer
-```
+---
 
-### Run tests
-```bash
-/compose-only-test-verifier
-```
+## 📚 Documentation
+
+| Document | Purpose |
+|----------|---------|
+| **AGENTS.md** | Entry point overview (root level) |
+| **.ai/WORKFLOW.md** | Main orchestration brain |
+| **.ai/PIPELINE.md** | Detailed stage specifications |
+| **.claude/ORCHESTRATE.md** | Claude Code execution details |
+| **.ai/agents/** | Individual agent definitions |
+| **.ai/rules/** | Architecture & style rules |
 
 ---
 
-## What To Read First
+## 🔧 Commands
 
-1. **`.ai/ARCHITECTURE.md`** — Project structure, KMM setup, UI patterns
-2. **`.ai/agents/feature-planner.md`** — How to plan features
-3. **`.ai/agents/code-implementer.md`** — Implementation approach
-4. **`.ai/skills/`** — Helper skills (kmp-doctor, systematic-debugging, etc.)
-
----
-
-## Available Commands
-
-| Command | Does What |
-|---------|-----------|
-| `/compose-only-planner <task>` | Plan a feature for compose |
-| `/compose-only-implementer <task>` | Implement a feature |
-| `/compose-only-reviewer` | Review current changes |
-| `/compose-only-test-author <task>` | Write tests |
-| `/compose-only-test-verifier` | Run and verify tests |
-| `/compose-only-debug-rca` | Root-cause analysis for bugs |
-| `/help` | List all commands |
+| Command | Effect |
+|---------|--------|
+| `/run issue 123` | Full pipeline (stages 1-9) |
+| `/run issue 123 --from stage-6` | Resume from stage 6 |
+| `/run issue "my task"` | Custom task (timestamp-based) |
 
 ---
 
-## Project Context
+## ⚙️ How It Works (For Developers)
 
-| Aspect | Details |
-|--------|---------|
-| **Type** | KMM (Kotlin Multiplatform Mobile) |
-| **Platforms** | iOS (Swift/SwiftUI) + Android (Jetpack Compose) |
-| **Architecture** | MVVM + Coordinator pattern |
-| **Build system** | Gradle (shared module) |
-
----
-
-## Key Rules
-
-- **MVVM + Coordinator** — State lives in ViewModel, UI doesn't orchestrate
-- **Shared via KMM** — Logic in shared module, platform-specific UI only
-- **Design tokens** — No hardcoded colors/spacing; use theme system
-- **Compose best practices** — Immutable state, proper recomposition scopes
-- **SwiftUI patterns** — State management via @StateObject, @State as needed
+1. **Parse input** — issue ID or custom text
+2. **Create artifacts dir** — `.ai/artifacts/run/`
+3. **For each stage:**
+   - Spawn isolated Task (fresh context)
+   - Task reads `.ai/WORKFLOW.md` for stage definition
+   - Task runs agent from `.ai/agents/`
+   - Check artifact for failure markers
+   - Handle retries if needed
+4. **All artifacts** — stored in `.ai/artifacts/run/MS-<id>/`
 
 ---
 
-## Important Files
+## ✅ Checklist Before Running
 
-| File | Purpose |
-|------|---------|
-| `.ai/ARCHITECTURE.md` | Full architecture decisions |
-| `.ai/agents/feature-planner.md` | How to plan features |
-| `.ai/skills/kmp-doctor/` | KMM troubleshooting guide |
-| `.ai/skills/systematic-debugging/` | Debugging framework |
+- [ ] Repository is clean (`git status`)
+- [ ] You're on `main` branch
+- [ ] GitHub issue number exists (or use text description)
+- [ ] All agents in `.ai/agents/` are available
 
 ---
 
-## Workflow
+**Status:** Ready to use  
+**Last updated:** 2026-04-20
 
-1. **Plan** — Use `/compose-only-planner` to create implementation plan
-2. **Implement** — Use `/compose-only-implementer` to write code
-3. **Test** — Use `/compose-only-test-author` + `/compose-only-test-verifier`
-4. **Review** — Use `/compose-only-reviewer` for code review
-5. **Debug** — Use `/compose-only-debug-rca` if issues arise
-
----
-
-## Multi-Repo Context
-
-This is **meta-secret-compose** (UI layer). There's also **meta-secret-core** (crypto/protocol).
-
-To switch repos, go back to the **MetaSecret folder** and use:
-- `/route "task"` — Smart routing to core or compose
-- `/core-only-*` — Direct core commands
-
----
-
-**Entry point:** `.claude/INDEX.md`  
-**Architecture:** `.ai/ARCHITECTURE.md`  
-**Root coordination:** `../../.ai/CONFIG.md` (MetaSecret layer)
+→ Read **AGENTS.md** for full overview

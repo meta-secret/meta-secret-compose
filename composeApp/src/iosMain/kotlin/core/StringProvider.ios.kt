@@ -34,8 +34,8 @@ class StringProviderIos : StringProviderInterface {
     override fun errorSecretAddFailed() = s(Res.string.errorSecretAddFailed)
     override fun errorRecoverDeclined() = s(Res.string.errorRecoverDeclined)
     override fun acceptRequestOnOtherDevice() = s(Res.string.accept_request_on_other_device)
+    override fun nameOccupiedJoinPrompt() = s(Res.string.name_occupied_join_prompt)
     override fun recoverPendingExists() = s(Res.string.recoverPendingExists)
     override fun recoverRequestSent() = s(Res.string.recoverRequestSent)
 }
-
 

@@ -47,6 +47,8 @@
     <string name = "removeSecretConfirmation">Do you really want to delete </string>
     <string name = "remove">Remove</string>
     <string name = "cancel">Cancel</string>
+    <string name = "join">Join</string>
+    <string name = "joining">Joining...</string>
     <string name = "copySecret">Copy secret</string>
     <string name = "show">Show</string>
     <string name = "hide">Hide</string>
@@ -92,6 +94,7 @@
     <string name = "accept">Accept</string>
     <string name = "decline">Decline</string>
     <string name = "accept_request_on_other_device">Accept the request on your other device</string>
+    <string name = "name_occupied_join_prompt">This name is already taken. Do you still want to join?</string>
     <string name = "recoverPendingExists">Recovery request already sent. Please accept it on your other device</string>
     <string name = "recoverRequestSent">Recovery request sent. Please accept it on your other device</string>
     <string name = "unexpected_login">"Unexpected loading state"</string>

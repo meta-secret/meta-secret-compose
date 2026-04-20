@@ -1,7 +1,7 @@
 [versions]
 accompanistPager = "0.36.0"
 activityKtx = "1.12.3"
-agp = "8.13.2"
+agp = "9.1.1"
 android-minSdk = "25"
 android-targetSdk = "34"
 androidx-activityCompose = "1.12.3"

@@ -1,77 +1,79 @@
-# Codex CLI — meta-secret-compose Entry Point
+# Codex CLI — Automated Workflow Entry Point
 
-> This is the entry point for OpenAI Codex CLI when working with **meta-secret-compose** (KMM UI layer).
+> Execute automated 9-stage workflow from CLI.
+> Brain: `.ai/WORKFLOW.md` · Execution: `.codex/ORCHESTRATE.md`
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
+
+### Run Full Workflow
 
 ```bash
-# Plan a feature
-codex --agent feature-planner --context "add dark mode"
+codex run issue 123
+```
 
-# Implement a feature
-codex --agent code-implementer --context "add dark mode toggle"
+→ Automatic execution (9 stages, auto-retry)  
+→ All artifacts: `.ai/artifacts/run/MS-<id>/`
 
-# Review code
-codex --agent code-reviewer --context "$(cat your-changes.diff)"
+---
+
+## 🎯 Commands
+
+| Command | Effect |
+|---------|--------|
+| `codex run issue 123` | Full pipeline (stages 1-9) |
+| `codex run issue 123 --from stage-6` | Resume from stage 6 |
+| `codex run issue "my task"` | Custom task (timestamp-based) |
+
+---
+
+## 📚 Documentation
+
+| Document | Purpose |
+|----------|---------|
+| **AGENTS.md** | Entry point overview (root) |
+| **.ai/WORKFLOW.md** | Main orchestration |
+| **.ai/PIPELINE.md** | Stage specifications |
+| **.codex/ORCHESTRATE.md** | CLI execution details |
+| **.ai/agents/** | Agent definitions |
+
+---
+
+## 🔄 Workflow Stages
+
+```
+1. Understanding (read issue)
+2. Planning (create plan)
+3. Implementation (write code)
+4. Testing (write tests)
+5. Build (compile)
+   └─ Auto-retry on failure (max 2)
+6. Test Run (execute tests)
+   └─ Auto-retry on failure (max 2)
+7. Code Review (review)
+   └─ Auto-retry on failure (max 2)
+8. Commit (git commit + push)
+9. PR (create pull request)
 ```
 
 ---
 
-## Available Agents
+## 📦 Artifacts
 
-| Agent | Purpose |
-|-------|---------|
-| `feature-planner` | Plan UI/KMM features |
-| `code-implementer` | Write implementation code |
-| `code-reviewer` | Review code changes |
-| `test-author` | Write tests |
-| `test-verifier` | Run and verify tests |
-| `debug-rca` | Root-cause analysis |
+All output stored in:
 
-All agents are in `.ai/agents/`.
-
----
-
-## Project Type
-
-- **Language:** Kotlin (shared), Swift/Kotlin (platforms)
-- **Pattern:** KMM (Kotlin Multiplatform Mobile)
-- **UI:** Jetpack Compose (Android) + SwiftUI (iOS)
-- **Architecture:** MVVM + Coordinator
-
----
-
-## Key References
-
-| What | Where |
-|------|-------|
-| Architecture | `.ai/ARCHITECTURE.md` |
-| Agents | `.ai/agents/*.md` |
-| KMM help | `.ai/skills/kmp-doctor/SKILL.md` |
-| Debugging | `.ai/skills/systematic-debugging/SKILL.md` |
-
----
-
-## Example Usage
-
-```bash
-cd meta-secret-compose
-codex --agent feature-planner --context "add biometric auth UI"
-# Agent reads from .ai/ automatically, returns plan
+```
+.ai/artifacts/run/
+├── MS-20260420143022-001-understanding.md
+├── MS-20260420143022-002-planning.md
+├── ...
+└── MS-20260420143022-009-pr.md
 ```
 
 ---
 
-## This is KMM UI
+**Status:** Ready to use  
+**Last updated:** 2026-04-20
 
-- **meta-secret-compose** = Compose/iOS UI
-- **meta-secret-core** = Crypto/protocol (separate)
-- **MetaSecret root** = Coordination layer
-
----
-
-**Entry point:** `.codex/INDEX.md`
-**Agents:** `.ai/agents/`
-**Architecture:** `.ai/ARCHITECTURE.md`
+→ Read **AGENTS.md** for full overview

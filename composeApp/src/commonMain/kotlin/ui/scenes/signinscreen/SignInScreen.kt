@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,6 +53,9 @@ import kotlinproject.composeapp.generated.resources.nicknameError
 import kotlinproject.composeapp.generated.resources.placeholder
 import kotlinproject.composeapp.generated.resources.scan
 import kotlinproject.composeapp.generated.resources.start
+import kotlinproject.composeapp.generated.resources.cancel
+import kotlinproject.composeapp.generated.resources.join
+import kotlinproject.composeapp.generated.resources.joining
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -86,6 +90,9 @@ class SignInScreen : Screen {
         val isNameError by viewModel.isNameError.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
         val navigationEvent by viewModel.navigationEvent.collectAsState()
+        val showJoinDecision by viewModel.showJoinDecision.collectAsState()
+        val showJoinPending by viewModel.showJoinPending.collectAsState()
+        val isNameInputLocked by viewModel.isNameInputLocked.collectAsState()
 
         LaunchedEffect(navigationEvent) {
             if (navigationEvent) {
@@ -197,7 +204,7 @@ class SignInScreen : Screen {
                                 text = stringResource(Res.string.placeholder)
                             )
                         },
-                        enabled = !isLoading,
+                        enabled = !isLoading && !isNameInputLocked,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
@@ -246,14 +253,47 @@ class SignInScreen : Screen {
                     }
                 }
 
-                ClassicButton(
-                    {
-                        focusManager.clearFocus()
-                        viewModel.handle(SignInViewEvents.StartSignInProcess(scannedText))
-                    },
-                    stringResource(Res.string.forward),
-                    isEnabled = !isLoading
-                )
+                if (showJoinDecision || showJoinPending) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        ClassicButton(
+                            action = {
+                                focusManager.clearFocus()
+                                viewModel.handle(SignInViewEvents.CancelJoin)
+                            },
+                            text = stringResource(Res.string.cancel),
+                            isEnabled = !isLoading,
+                            color = AppColors.Warning,
+                            modifier = Modifier.weight(1f)
+                        )
+                        ClassicButton(
+                            action = {
+                                if (!showJoinPending) {
+                                    focusManager.clearFocus()
+                                    viewModel.handle(SignInViewEvents.JoinExistingVault)
+                                }
+                            },
+                            text = if (showJoinPending) {
+                                stringResource(Res.string.joining)
+                            } else {
+                                stringResource(Res.string.join)
+                            },
+                            isEnabled = !isLoading && !showJoinPending,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    ClassicButton(
+                        {
+                            focusManager.clearFocus()
+                            viewModel.handle(SignInViewEvents.StartSignInProcess(scannedText))
+                        },
+                        stringResource(Res.string.forward),
+                        isEnabled = !isLoading
+                    )
+                }
             }
             
             if (isLoading) {
