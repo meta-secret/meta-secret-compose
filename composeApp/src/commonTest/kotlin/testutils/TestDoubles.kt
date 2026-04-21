@@ -27,7 +27,7 @@ class FakeDebugLogger : DebugLoggerInterface {
     var backupDbExists: Boolean? = null
     var appManagerCreated: Boolean? = null
     var masterKeyGenerated: Boolean? = null
-    var vaultState: String? = null
+    var lastVaultState: String? = null
 
     override fun <T : LogTag> log(message: LogTag.Message<T>, extra: String?, success: Boolean?) = Unit
     override fun setLoggerVisibility() = Unit
@@ -42,7 +42,7 @@ class FakeDebugLogger : DebugLoggerInterface {
         masterKeyGenerated = generated
     }
     override fun setVaultState(state: String?) {
-        vaultState = state
+        lastVaultState = state
     }
     override fun setDeviceId(deviceId: String?) = Unit
     override fun setClaimsStats(
