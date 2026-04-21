@@ -33,9 +33,9 @@ class ShowSecretViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _recoveredSecret = MutableStateFlow<String?>(null)
-    val recoveredSecret: StateFlow<String?> = _recoveredSecret
-    
+    private val _revealedSecret = MutableStateFlow<RevealedSecretContent?>(null)
+    val revealedSecret: StateFlow<RevealedSecretContent?> = _revealedSecret
+
     private var currentSecretName: String? = null
     private var userRequestedRecovery = false
 
@@ -63,7 +63,7 @@ class ShowSecretViewModel(
                     socketHandler.pausePolling()
                     findClaim(event.secretName)
                 }
-                
+
                 is ShowSecretEvents.SecretReadyToShow -> {
                     if (!userRequestedRecovery) {
                         logger.log(LogTag.ShowSecretVM.Message.IgnoringAutoRecovery, event.secretId, success = true)
@@ -77,7 +77,7 @@ class ShowSecretViewModel(
 
                 ShowSecretEvents.HideSecret -> {
                     logger.log(LogTag.ShowSecretVM.Message.HideSecret, success = true)
-                    _recoveredSecret.value = null
+                    _revealedSecret.value = null
                     currentSecretName = null
                     userRequestedRecovery = false
                 }
@@ -89,13 +89,13 @@ class ShowSecretViewModel(
         _isLoading.value = true
         logger.log(LogTag.ShowSecretVM.Message.StartRecovering, success = true)
 
-        if (devicesCount.value < 2) { // TODO: Should be resolved inside the Lib
+        if (devicesCount.value < 2) {
             logger.log(LogTag.ShowSecretVM.Message.SingleDeviceMode, success = true)
             showRecoveredSecret(secretName)
             socketHandler.resumePolling()
             return
         }
-        
+
         viewModelScope.launch {
             try {
                 val existingClaim = withContext(Dispatchers.IO) {
@@ -112,14 +112,16 @@ class ShowSecretViewModel(
                         notificationCoordinator.showSuccess(stringProvider.recoverRequestSent())
                         socketHandler.resumePolling()
                     }
+
                     ClaimStatus.SENT -> {
-                        if (existingClaim?.senderStatus == ClaimStatus.DELIVERED) {
+                        if (existingClaim.senderStatus == ClaimStatus.DELIVERED) {
                             recoverSecret(secretName)
                         } else {
                             showRecoveredSecret(secretName)
                         }
                         socketHandler.resumePolling()
                     }
+
                     else -> recoverSecret(secretName)
                 }
             } catch (t: Throwable) {
@@ -129,7 +131,7 @@ class ShowSecretViewModel(
             }
         }
     }
-    
+
     private suspend fun recoverSecret(secretName: String) {
         socketHandler.setProcessingSecretName(secretName)
         withContext(Dispatchers.IO) {
@@ -147,8 +149,15 @@ class ShowSecretViewModel(
                 val recoveredSecretValue = withContext(Dispatchers.IO) {
                     metaSecretAppManager.showRecovered(SecretModel(secretId, null))
                 }
-                if (recoveredSecretValue != null) {
-                    _recoveredSecret.value = recoveredSecretValue
+                if (!recoveredSecretValue.isNullOrBlank()) {
+                    val parsed = parseSecretValue(recoveredSecretValue)
+                    _revealedSecret.value = when (parsed.type) {
+                        SecretValueType.PASSWORD -> RevealedSecretContent.Password(recoveredSecretValue)
+                        SecretValueType.SEED_PHRASE -> RevealedSecretContent.SeedPhrase(
+                            words = parsed.words,
+                            count = parsed.count ?: parsed.words.size
+                        )
+                    }
                     userRequestedRecovery = false
                     logger.log(LogTag.ShowSecretVM.Message.RecoveredSecretLoaded, success = true)
                 } else {
@@ -171,4 +180,33 @@ sealed class ShowSecretEvents : CommonViewModelEventsInterface {
     data class ShowSecret(val secretName: String) : ShowSecretEvents()
     data class SecretReadyToShow(val secretId: String) : ShowSecretEvents()
     data object HideSecret : ShowSecretEvents()
+}
+
+enum class SecretValueType {
+    PASSWORD,
+    SEED_PHRASE,
+}
+
+data class ParsedSecretValue(
+    val type: SecretValueType,
+    val words: List<String> = emptyList(),
+    val count: Int? = null,
+)
+
+sealed class RevealedSecretContent {
+    data class Password(val value: String) : RevealedSecretContent()
+    data class SeedPhrase(val words: List<String>, val count: Int) : RevealedSecretContent()
+}
+
+fun parseSecretValue(value: String): ParsedSecretValue {
+    val words = value.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+    return if (words.size == 12 || words.size == 24) {
+        ParsedSecretValue(
+            type = SecretValueType.SEED_PHRASE,
+            words = words,
+            count = words.size,
+        )
+    } else {
+        ParsedSecretValue(type = SecretValueType.PASSWORD)
+    }
 }
