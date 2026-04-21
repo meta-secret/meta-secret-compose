@@ -2,6 +2,7 @@ package core
 
 import android.content.Context
 import android.content.ContentValues
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -41,10 +42,14 @@ class KeyChainManagerAndroid(
         private const val STORAGE_DIRECTORY = "MetaSecret"
         private const val STORAGE_RELATIVE_PATH = "Download/MetaSecret/"
         private const val STORAGE_RELATIVE_PATH_NO_SLASH = "Download/MetaSecret"
+        private const val STORAGE_RELATIVE_PATH_DOWNLOADS = "Downloads/MetaSecret/"
+        private const val STORAGE_RELATIVE_PATH_DOWNLOADS_NO_SLASH = "Downloads/MetaSecret"
         private const val STORAGE_MIME_TYPE = "text/plain"
         private const val IV_SUFFIX = "_iv"
         private const val MASTER_KEY_STORAGE_KEY = "master_key"
         private const val PERMISSION_REQUEST_CODE = 123
+        private const val MASTER_KEY_CACHE_PREFS = "metasecret_master_key_cache"
+        private const val MASTER_KEY_CACHE_FIELD = "master_key_cached_value"
     }
 
     init {
@@ -78,6 +83,9 @@ class KeyChainManagerAndroid(
         try {
             if (isPersistentPlaintextKey(key)) {
                 val saved = saveToExternalStorage(key, value)
+                if (saved) {
+                    cacheMasterKey(value)
+                }
                 if (!saved) {
                     logger.log(LogTag.KeyChainManager.Message.ErrorSaving, "key=$key", success = false)
                 }
@@ -119,8 +127,10 @@ class KeyChainManagerAndroid(
             if (isPersistentPlaintextKey(key)) {
                 val persistentValue = readFromExternalStorage(key)
                 if (persistentValue != null) {
+                    cacheMasterKey(persistentValue)
                     return@withContext persistentValue
                 }
+                return@withContext getCachedMasterKey()
             }
 
             val encryptedValue = readFromExternalStorage(key) ?: return@withContext null
@@ -147,6 +157,7 @@ class KeyChainManagerAndroid(
             deleteFromExternalStorage(key)
 
             if (isPersistentPlaintextKey(key)) {
+                clearCachedMasterKey()
                 // Clean legacy encrypted IV artifact if it exists from old versions.
                 deleteFromExternalStorage(key + IV_SUFFIX)
                 return@withContext true
@@ -172,7 +183,7 @@ class KeyChainManagerAndroid(
     
     override suspend fun containsKey(key: String): Boolean = withContext(Dispatchers.IO) {
         if (isPersistentPlaintextKey(key)) {
-            fileExists(key)
+            fileExists(key) || !getCachedMasterKey().isNullOrEmpty()
         } else {
             fileExists(key) && fileExists(key + IV_SUFFIX)
         }
@@ -183,7 +194,7 @@ class KeyChainManagerAndroid(
             logger.log(LogTag.KeyChainManager.Message.StartingClearAll, "isCleanDB: $isCleanDB", success = true)
             val masterKey = getString("master_key")
             if (masterKey != null) {
-                removeKey(masterKey)
+                removeKey("master_key")
             }
 
             if (isCleanDB) {
@@ -241,6 +252,10 @@ class KeyChainManagerAndroid(
         KeyStore.getInstance(KEYSTORE_PROVIDER).apply {
             load(null)
         }
+    }
+
+    private val masterKeyCache: SharedPreferences by lazy {
+        context.getSharedPreferences(MASTER_KEY_CACHE_PREFS, Context.MODE_PRIVATE)
     }
     
     private fun fileExists(key: String): Boolean {
@@ -329,8 +344,14 @@ class KeyChainManagerAndroid(
         context.contentResolver.query(
             MediaStore.Downloads.EXTERNAL_CONTENT_URI,
             arrayOf(MediaStore.Downloads._ID),
-            "${MediaStore.Downloads.DISPLAY_NAME}=? AND (${MediaStore.Downloads.RELATIVE_PATH}=? OR ${MediaStore.Downloads.RELATIVE_PATH}=?)",
-            arrayOf(fileName, STORAGE_RELATIVE_PATH, STORAGE_RELATIVE_PATH_NO_SLASH),
+            "${MediaStore.Downloads.DISPLAY_NAME}=? AND (${MediaStore.Downloads.RELATIVE_PATH}=? OR ${MediaStore.Downloads.RELATIVE_PATH}=? OR ${MediaStore.Downloads.RELATIVE_PATH}=? OR ${MediaStore.Downloads.RELATIVE_PATH}=?)",
+            arrayOf(
+                fileName,
+                STORAGE_RELATIVE_PATH,
+                STORAGE_RELATIVE_PATH_NO_SLASH,
+                STORAGE_RELATIVE_PATH_DOWNLOADS,
+                STORAGE_RELATIVE_PATH_DOWNLOADS_NO_SLASH
+            ),
             null
         )?.use { cursor ->
             if (cursor.moveToFirst()) {
@@ -379,8 +400,14 @@ class KeyChainManagerAndroid(
         context.contentResolver.query(
             MediaStore.Downloads.EXTERNAL_CONTENT_URI,
             arrayOf(MediaStore.Downloads._ID),
-            "(${MediaStore.Downloads.RELATIVE_PATH}=? OR ${MediaStore.Downloads.RELATIVE_PATH}=?) AND ${MediaStore.Downloads.DISPLAY_NAME} LIKE ?",
-            arrayOf(STORAGE_RELATIVE_PATH, STORAGE_RELATIVE_PATH_NO_SLASH, "ms_%"),
+            "(${MediaStore.Downloads.RELATIVE_PATH}=? OR ${MediaStore.Downloads.RELATIVE_PATH}=? OR ${MediaStore.Downloads.RELATIVE_PATH}=? OR ${MediaStore.Downloads.RELATIVE_PATH}=?) AND ${MediaStore.Downloads.DISPLAY_NAME} LIKE ?",
+            arrayOf(
+                STORAGE_RELATIVE_PATH,
+                STORAGE_RELATIVE_PATH_NO_SLASH,
+                STORAGE_RELATIVE_PATH_DOWNLOADS,
+                STORAGE_RELATIVE_PATH_DOWNLOADS_NO_SLASH,
+                "ms_%"
+            ),
             null
         )?.use { cursor ->
             val idIndex = cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID)
@@ -402,6 +429,18 @@ class KeyChainManagerAndroid(
 
     private fun isPersistentPlaintextKey(key: String): Boolean {
         return key == MASTER_KEY_STORAGE_KEY
+    }
+
+    private fun cacheMasterKey(masterKey: String) {
+        masterKeyCache.edit().putString(MASTER_KEY_CACHE_FIELD, masterKey).apply()
+    }
+
+    private fun getCachedMasterKey(): String? {
+        return masterKeyCache.getString(MASTER_KEY_CACHE_FIELD, null)
+    }
+
+    private fun clearCachedMasterKey() {
+        masterKeyCache.edit().remove(MASTER_KEY_CACHE_FIELD).apply()
     }
 
     private fun getLegacyPublicDirectory(): File {

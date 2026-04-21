@@ -2,6 +2,9 @@ package core
 
 import com.metasecret.core.MetaSecretNative
 import android.content.Context
+import android.system.Os
+import com.sun.jna.Library
+import com.sun.jna.Native
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.putJsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -16,6 +19,10 @@ import java.io.File
 
 class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
 
+    private interface LibC : Library {
+        fun chdir(path: String): Int
+    }
+
     private val context: Context by inject(Context::class.java)
     private val databasePathProvider: DatabasePathProviderInterface by inject(DatabasePathProviderInterface::class.java)
     private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.java)
@@ -24,6 +31,9 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     companion object {
         private var loggerInstance: DebugLoggerInterface? = null
         private var logFormatterInstance: LogFormatterInterface? = null
+        @Volatile
+        private var workingDirectoryConfigured: Boolean = false
+        private val libc: LibC by lazy { Native.load("c", LibC::class.java) as LibC }
         
         fun setLogger(logger: DebugLoggerInterface) {
             loggerInstance = logger
@@ -52,6 +62,45 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     init {
         setLogger(logger)
         setLogFormatter(logFormatter)
+        ensureWritableWorkingDirectory()
+    }
+
+    private fun ensureWritableWorkingDirectory() {
+        if (workingDirectoryConfigured) return
+
+        synchronized(MetaSecretCoreServiceAndroid::class.java) {
+            if (workingDirectoryConfigured) return
+
+            val targetDir = context.noBackupFilesDir ?: context.filesDir
+            if (!targetDir.exists() && !targetDir.mkdirs()) {
+                throw IllegalStateException("Failed to create writable directory for native DB: ${targetDir.absolutePath}")
+            }
+            if (!targetDir.canWrite()) {
+                throw IllegalStateException("Native DB directory is not writable: ${targetDir.absolutePath}")
+            }
+
+            val nativeDatabaseDir = File(targetDir, "database")
+            if (!nativeDatabaseDir.exists() && !nativeDatabaseDir.mkdirs()) {
+                throw IllegalStateException("Failed to create native database directory: ${nativeDatabaseDir.absolutePath}")
+            }
+
+            val result = libc.chdir(targetDir.absolutePath)
+            if (result != 0) {
+                throw IllegalStateException(
+                    "Failed to set native working directory to ${targetDir.absolutePath}, errno=${Native.getLastError()}"
+                )
+            }
+            System.setProperty("user.dir", targetDir.absolutePath)
+            System.setProperty("user.home", targetDir.absolutePath)
+            runCatching { Os.setenv("HOME", targetDir.absolutePath, true) }
+            runCatching { Os.setenv("TMPDIR", context.cacheDir.absolutePath, true) }
+            logger.log(
+                LogTag.MetaSecretCoreService.Message.CallingInitAppManager,
+                "Configured native working directory: ${targetDir.absolutePath}",
+                success = true
+            )
+            workingDirectoryConfigured = true
+        }
     }
 
     override fun generateMasterKey(): String {

@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractExecutable
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import java.io.File
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -14,6 +15,12 @@ plugins {
     alias(libs.plugins.detekt)
     id("io.github.ttypic.swiftklib")
 }
+
+val rustlsPlatformVerifierAar: File? = fileTree("${System.getProperty("user.home")}/.cargo/registry/src") {
+    include("**/rustls-platform-verifier-android-*/maven/rustls/rustls-platform-verifier/*/rustls-platform-verifier-*.aar")
+}
+    .files
+    .maxByOrNull { it.lastModified() }
 
 kotlin {
     // BACKLOG(AGP 9+): migrate KMP + Android app to recommended multi-module layout —
@@ -102,6 +109,15 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.koin.android.compat)
             runtimeOnly(libs.androidx.ui)
+
+            if (rustlsPlatformVerifierAar != null) {
+                implementation(files(rustlsPlatformVerifierAar))
+            } else {
+                logger.warn(
+                    "rustls-platform-verifier Android AAR not found under ~/.cargo/registry/src. " +
+                        "Android TLS verifier class may be missing at runtime."
+                )
+            }
         }
 
         iosMain.dependencies {
