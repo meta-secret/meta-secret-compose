@@ -56,6 +56,7 @@ class FakeDebugLogger : DebugLoggerInterface {
 
 class FakeKeyChain(
     private val values: MutableMap<String, String> = mutableMapOf(),
+    private val scriptedReads: MutableMap<String, ArrayDeque<String?>> = mutableMapOf(),
 ) : KeyChainInterface {
     var clearAllCalls = 0
     var clearAllIsCleanDb: Boolean? = null
@@ -65,7 +66,13 @@ class FakeKeyChain(
         return true
     }
 
-    override suspend fun getString(key: String): String? = values[key]
+    override suspend fun getString(key: String): String? {
+        val sequence = scriptedReads[key]
+        if (sequence != null && sequence.isNotEmpty()) {
+            return sequence.removeFirst()
+        }
+        return values[key]
+    }
     override suspend fun removeKey(key: String): Boolean = values.remove(key) != null
     override suspend fun containsKey(key: String): Boolean = values.containsKey(key)
 
@@ -211,9 +218,15 @@ class FakeBackupCoordinator(
 
 class FakeMetaSecretCore : MetaSecretCoreInterface {
     var initAppManagerResult: Result<String> = Result.success("ok")
+    var initAppManagerCalls: Int = 0
+    var lastInitMasterKey: String? = null
 
     override fun generateMasterKey(): String = "master-key"
-    override fun initAppManager(masterKey: String): String = initAppManagerResult.getOrThrow()
+    override fun initAppManager(masterKey: String): String {
+        initAppManagerCalls += 1
+        lastInitMasterKey = masterKey
+        return initAppManagerResult.getOrThrow()
+    }
     override fun getAppState(): String = "{}"
     override fun generateUserCreds(vaultName: String): String = vaultName
     override fun signUp(): String = "{}"

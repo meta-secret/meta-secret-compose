@@ -1,6 +1,8 @@
 package com.metasecret.compose
 
 import android.app.Application
+import android.util.Log
+import com.metasecret.core.MetaSecretNative
 
 class MainApplication : Application() {
 
@@ -19,8 +21,13 @@ class MainApplication : Application() {
 
             System.setProperty("uniffi.component.mobile_uniffi.libraryOverride", "metasecret_mobile")
             System.loadLibrary("metasecret_mobile")
+
+            val verifierInitOk = MetaSecretNative.initRustlsPlatformVerifier(applicationContext)
+            if (!verifierInitOk) {
+                Log.e("MainApplication", "rustls-platform-verifier initialization returned false")
+            }
         } catch (t: Throwable) {
-            android.util.Log.e("MainApplication", "UniFFI/JNA preload failed", t)
+            Log.e("MainApplication", "UniFFI/JNA preload failed", t)
         }
     }
 }

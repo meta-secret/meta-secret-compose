@@ -42,16 +42,17 @@ class MetaSecretAppManager(
 ): MetaSecretAppManagerInterface {
     
     private var _isAppManagerInitialized = false
+    private var initializedMasterKey: String? = null
 
     override suspend fun initWithSavedKey(): InitResult {
-        if (_isAppManagerInitialized) {
+        val masterKey = readMasterKeyWithRecovery()
+        logger.log(LogTag.AppManager.Message.MasterKeyExist, "${masterKey != null}", success = true)
+        logger.setMasterKeyGenerated(!masterKey.isNullOrEmpty())
+
+        if (_isAppManagerInitialized && !masterKey.isNullOrEmpty() && initializedMasterKey == masterKey) {
             logger.log(LogTag.AppManager.Message.IsInitiated, "Already initialized", success = true)
             return InitResult.Success("Already initialized")
         }
-        
-        val masterKey = keyChainInterface.getString("master_key")
-        logger.log(LogTag.AppManager.Message.MasterKeyExist, "${masterKey != null}", success = true)
-        logger.setMasterKeyGenerated(!masterKey.isNullOrEmpty())
         
         return if (!masterKey.isNullOrEmpty()) {
             try {
@@ -61,6 +62,7 @@ class MetaSecretAppManager(
                 logger.log(LogTag.AppManager.Message.IsInitiated, appManagerResult, success = true)
                 logger.setAppManagerCreated(true)
                 _isAppManagerInitialized = true
+                initializedMasterKey = masterKey
                 InitResult.Success(appManagerResult)
             } catch (e: Exception) {
                 logger.log(LogTag.AppManager.Message.InitError, "${e.message}", success = false)
@@ -73,9 +75,24 @@ class MetaSecretAppManager(
         } else {
             logger.log(LogTag.AppManager.Message.InitErrorNoMasterKey, success = false)
             logger.setAppManagerCreated(false)
+            _isAppManagerInitialized = false
+            initializedMasterKey = null
             keyChainInterface.clearAll(isCleanDB = true)
             InitResult.Error("No master key found")
         }
+    }
+
+    private suspend fun readMasterKeyWithRecovery(): String? {
+        val primaryRead = keyChainInterface.getString("master_key")
+        if (!primaryRead.isNullOrEmpty()) {
+            return primaryRead
+        }
+
+        if (!keyChainInterface.containsKey("master_key")) {
+            return null
+        }
+
+        return keyChainInterface.getString("master_key")
     }
 
     override suspend fun getStateModel(): AppStateModel? {

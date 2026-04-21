@@ -45,6 +45,21 @@ class MetaSecretAppManagerTest {
     }
 
     @Test
+    fun `initWithSavedKey retries key read when key exists but first read misses`() = kotlinx.coroutines.test.runTest {
+        val keyChain = FakeKeyChain(
+            values = mutableMapOf("master_key" to "mk"),
+            scriptedReads = mutableMapOf("master_key" to ArrayDeque(listOf(null, "mk"))),
+        )
+        val manager = createManager(keyChain = keyChain)
+
+        val result = manager.initWithSavedKey()
+
+        val success = assertIs<InitResult.Success>(result)
+        assertEquals("ok", success.result)
+        assertEquals(0, keyChain.clearAllCalls)
+    }
+
+    @Test
     fun `initWithSavedKey maps init exception to user-facing notification`() = kotlinx.coroutines.test.runTest {
         val keyChain = FakeKeyChain(mutableMapOf("master_key" to "mk"))
         val core = FakeMetaSecretCore().apply {
@@ -71,6 +86,57 @@ class MetaSecretAppManagerTest {
         val state = manager.checkAuth()
 
         assertEquals(AuthState.NOT_YET_COMPLETED, state)
+    }
+
+    @Test
+    fun `initWithSavedKey does not reinit when the same key is already initialized`() = kotlinx.coroutines.test.runTest {
+        val keyChain = FakeKeyChain(mutableMapOf("master_key" to "mk1"))
+        val core = FakeMetaSecretCore()
+        val manager = createManager(core = core, keyChain = keyChain)
+
+        val first = manager.initWithSavedKey()
+        val second = manager.initWithSavedKey()
+
+        assertIs<InitResult.Success>(first)
+        val secondSuccess = assertIs<InitResult.Success>(second)
+        assertEquals("Already initialized", secondSuccess.result)
+        assertEquals(1, core.initAppManagerCalls)
+        assertEquals("mk1", core.lastInitMasterKey)
+    }
+
+    @Test
+    fun `initWithSavedKey reinitializes when master key changes`() = kotlinx.coroutines.test.runTest {
+        val keyChain = FakeKeyChain(mutableMapOf("master_key" to "mk1"))
+        val core = FakeMetaSecretCore()
+        val manager = createManager(core = core, keyChain = keyChain)
+
+        val first = manager.initWithSavedKey()
+        keyChain.saveString("master_key", "mk2")
+        val second = manager.initWithSavedKey()
+
+        assertIs<InitResult.Success>(first)
+        assertIs<InitResult.Success>(second)
+        assertEquals(2, core.initAppManagerCalls)
+        assertEquals("mk2", core.lastInitMasterKey)
+    }
+
+    @Test
+    fun `initWithSavedKey resets initialized state when key is missing`() = kotlinx.coroutines.test.runTest {
+        val keyChain = FakeKeyChain(mutableMapOf("master_key" to "mk1"))
+        val core = FakeMetaSecretCore()
+        val manager = createManager(core = core, keyChain = keyChain)
+
+        manager.initWithSavedKey()
+        keyChain.clearAll(isCleanDB = true)
+        val missing = manager.initWithSavedKey()
+        keyChain.saveString("master_key", "mk2")
+        val reinit = manager.initWithSavedKey()
+
+        val missingError = assertIs<InitResult.Error>(missing)
+        assertEquals("No master key found", missingError.message)
+        assertIs<InitResult.Success>(reinit)
+        assertEquals(2, core.initAppManagerCalls)
+        assertEquals("mk2", core.lastInitMasterKey)
     }
 
     private fun createManager(

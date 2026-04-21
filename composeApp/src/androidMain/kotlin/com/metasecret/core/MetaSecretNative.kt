@@ -1,6 +1,11 @@
 package com.metasecret.core
 
+import android.content.Context
+
 object MetaSecretNative {
+    @JvmStatic
+    external fun initRustlsPlatformVerifier(context: Context): Boolean
+
     @JvmStatic
     fun generateMasterKey(): String = uniffi.mobile_uniffi.generateMasterKey()
 
