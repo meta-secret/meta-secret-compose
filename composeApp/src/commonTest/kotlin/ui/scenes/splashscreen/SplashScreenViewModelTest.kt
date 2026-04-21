@@ -30,6 +30,7 @@ import org.koin.dsl.module
 import testutils.FakeBackupCoordinator
 import testutils.FakeBiometricAuthenticator
 import testutils.FakeDebugLogger
+import testutils.FakeKeyChain
 import testutils.FakeKeyValueStorage
 import testutils.FakeScreenMetricsProvider
 import testutils.FakeVaultStatsProvider
@@ -115,6 +116,7 @@ class SplashScreenViewModelTest {
             keyValueStorage = keyValueStorage,
             biometricAuthenticator = FakeBiometricAuthenticator(),
             metaSecretAppManager = appManager,
+            keyChain = FakeKeyChain(),
             backupCoordinatorInterface = backupCoordinator,
             screenMetricsProvider = FakeScreenMetricsProvider(),
             vaultStatsProvider = vaultStatsProvider,

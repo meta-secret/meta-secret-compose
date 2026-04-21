@@ -99,7 +99,9 @@ data class UserMembership(
 @Serializable
 data class SecretApiModel(
     val id: String,
-    val name: String
+    val name: String,
+    val type: String? = null,
+    val wordCount: Int? = null,
 )
 
 @Serializable

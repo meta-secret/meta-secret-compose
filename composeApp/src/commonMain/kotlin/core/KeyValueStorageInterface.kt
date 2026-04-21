@@ -27,7 +27,10 @@ interface KeyValueStorageInterface {
 data class LoginInfo(val username: String, val password: String)
 
 @Serializable
-data class Secret(val secretId: String, val secretName: String)
+data class Secret(
+    val secretId: String,
+    val secretName: String
+)
 
 @Serializable
 data class Device(val deviceMake: String, val username: String)
