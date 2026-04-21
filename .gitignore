@@ -37,3 +37,6 @@ libmetasecret_mobile.so
 
 # Workflow runtime artifacts
 .ai/artifacts/run/
+
+# Design
+design/
