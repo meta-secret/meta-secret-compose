@@ -2,6 +2,7 @@ package ui.screenContent
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -97,15 +98,20 @@ fun SecretsContent(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(5.dp),
                     ) {
-                        Text(
-                            modifier = Modifier.height(22.dp),
-                            text = secret.secretName,
-                            style = TextStyle(
-                                fontSize = 18.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-                                color = AppColors.White
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                modifier = Modifier.height(22.dp),
+                                text = secret.secretName,
+                                style = TextStyle(
+                                    fontSize = 18.sp,
+                                    fontFamily = FontFamily(Font(Res.font.manrope_bold)),
+                                    color = AppColors.White
+                                )
                             )
-                        )
+                        }
                         Row(
                             modifier = Modifier.height(24.dp)
                         ) {

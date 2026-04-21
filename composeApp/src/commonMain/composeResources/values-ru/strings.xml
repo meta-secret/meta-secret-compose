@@ -22,6 +22,12 @@
     <string name = "secretsHeader">Секреты</string>
     <string name = "secret">секрет</string>
     <string name = "secretCapital">Секрет</string>
+    <string name = "passwordType">Пароль</string>
+    <string name = "seedPhraseType">Seed-фраза</string>
+    <string name = "seedWordCount">Количество слов:</string>
+    <string name = "pasteSeedPhrase">Вставить seed-фразу</string>
+    <string name = "pasteSeedHint">Скопируйте фразу и нажмите здесь, чтобы заполнить слова автоматически</string>
+    <string name = "wordPlaceholder">···</string>
     <string name = "secrets_4">секрета</string>
     <string name = "secrets_5">секретов</string>
     <string name = "secretName">Название секрета</string>

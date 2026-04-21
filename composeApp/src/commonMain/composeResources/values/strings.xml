@@ -22,6 +22,12 @@
     <string name = "secretsHeader">Secrets</string>
     <string name = "secret">secret</string>
     <string name = "secretCapital">Secret</string>
+    <string name = "passwordType">Password</string>
+    <string name = "seedPhraseType">Seed phrase</string>
+    <string name = "seedWordCount">Word count:</string>
+    <string name = "pasteSeedPhrase">Paste seed phrase</string>
+    <string name = "pasteSeedHint">Copy phrase and tap here to fill words automatically</string>
+    <string name = "wordPlaceholder">···</string>
     <string name = "secrets_4">secrets</string>
     <string name = "secrets_5">secrets</string>
     <string name = "secretName">Secret name</string>
