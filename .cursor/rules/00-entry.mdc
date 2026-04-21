@@ -1,74 +1,31 @@
 ---
-description: meta-secret-compose entry point — orient Cursor to KMM UI layer
+description: meta-secret-compose entry point
 alwaysApply: true
 ---
 
-# meta-secret-compose — Cursor Entry Point
+# Cursor Entry
 
-This is the **Compose/iOS/Android UI layer** of MetaSecret. The AI brain is in `.ai/`.
+For `run issue ...`, do not use duplicated local stage scripts.
 
-## First Read (before any code change)
+Use:
+- `.ai/WORKFLOW.md` as orchestration source
+- `.ai/PIPELINE.md` for stage details
+- `.ai/agents/` for stage behaviors
 
-1. **`.ai/ARCHITECTURE.md`** — Project structure & KMM patterns
-2. **`.ai/agents/feature-planner.md`** — How to plan features
-3. **`.ai/agents/code-implementer.md`** — Implementation patterns
-4. **`.ai/skills/kmp-doctor/`** — KMM troubleshooting
+Workflow stages:
+1. Issue Intake (+ optional Figma)
+2. Planning
+3. Implementation (Logic + UI)
+4. Build (no tests, max 10 min)
+5. Code Review
+6. Design Review (if Figma)
+7. Test Authoring
+8. Test Run
+9. Branch + Commit + PR
 
-## Key Rules
+Required logs per stage:
+- `Start stage <n>: <name>`
+- `Stage <n>: <name> completed`
 
-- **MVVM + Coordinator** — State in ViewModel, UI doesn't orchestrate
-- **Shared module** — Business logic in KMM shared, UI platform-specific
-- **Design tokens** — Never hardcode colors/spacing; use theme system
-- **Compose** — Immutable state, proper recomposition scopes
-- **SwiftUI** — @StateObject, @State for local state, proper binding patterns
-- **Testing** — Unit tests for ViewModels, integration tests for UI coordination
-
-## Quick Navigation
-
-| Task | File |
-|------|------|
-| Architecture decisions | `.ai/ARCHITECTURE.md` |
-| Plan a feature | `.ai/agents/feature-planner.md` |
-| Implement feature | `.ai/agents/code-implementer.md` |
-| Debug KMM issues | `.ai/skills/kmp-doctor/SKILL.md` |
-| Test code | `.ai/agents/test-author.md` |
-
-## Cursor Workflow — Automated (Run Issue Command)
-
-Press **Cmd+K** and type:
-
-```
-run issue 123
-```
-
-or for custom tasks:
-
-```
-run issue "add dark mode toggle"
-```
-
-This executes **9-stage automated workflow** (see **AGENTS.md** for full details):
-- Stage 1-4: Understanding → Planning → Implementation → Testing
-- Stage 5-7: Build → Test Run → Code Review (with auto-retry)
-- Stage 8-9: Commit → PR
-
-All artifacts saved to: `.ai/artifacts/run/MS-<id>/`
-
----
-
-## Alternative: Manual Step-by-Step
-
-For more control, use individual agent commands (see **.ai/agents/**)
-
-## Important Context
-
-- **This is meta-secret-compose** — KMM UI layer only
-- **Meta-secret-core** is separate (crypto/protocol)
-- **MetaSecret root** coordinates both repos
-- To switch repos: go to MetaSecret root, use `/route` or `/core-only-*`
-
----
-
-**Entry point:** `.cursor/rules/00-entry.mdc`
-**Architecture:** `.ai/ARCHITECTURE.md`
-**Root layer:** `../../.ai/CONFIG.md`
+Artifacts:
+- `.ai/artifacts/run/MS-<run-id>-<stage>-<name>.md`
