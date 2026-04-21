@@ -2,6 +2,8 @@ import io.gitlab.arturbosch.detekt.Detekt
 import io.github.ttypic.swiftklib.gradle.task.CompileSwiftTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractExecutable
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -23,14 +25,50 @@ kotlin {
         }
     }
 
+    // Rust static libraries for iOS (from core build-ios.sh)
+    val metaSecretRustIosLibsDir = rootProject.file("iosApp/Libs")
+    val metaSecretRustIosDeviceLib = metaSecretRustIosLibsDir.resolve("libmetasecret_mobile-ios-arm64.a")
+    val metaSecretRustIosSimulatorLib = metaSecretRustIosLibsDir.resolve("libmetasecret_mobile-ios-simulator-arm64.a")
+
     listOf(
         iosArm64(),
-        iosSimulatorArm64()
+        iosSimulatorArm64(),
     ).forEach { iosTarget ->
+        val rustStaticLib = when (iosTarget.name) {
+            "iosArm64" -> metaSecretRustIosDeviceLib
+            "iosSimulatorArm64" -> metaSecretRustIosSimulatorLib
+            else -> error("Unexpected iOS target: ${iosTarget.name}")
+        }
+
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
             binaryOption("bundleId", "metasecret.project.com")
+
+            // Link Rust static library (UniFFI); required for SwiftBridge / mobile_uniffi
+            if (rustStaticLib.exists()) {
+                linkerOpts("-force_load", rustStaticLib.absolutePath)
+            } else {
+                logger.warn(
+                    "Rust iOS library not found at: {}. Run: ./meta-secret/mobile/scripts/build-mobile.sh ios",
+                    rustStaticLib.absolutePath,
+                )
+            }
+        }
+
+        // Test executable (linkDebugTest*) is linked separately and does not inherit framework linkerOpts.
+        iosTarget.binaries.all {
+            if (name == "debugTest") {
+                val testExe = this as AbstractExecutable
+                if (rustStaticLib.exists()) {
+                    testExe.linkerOpts("-force_load", rustStaticLib.absolutePath)
+                } else {
+                    logger.warn(
+                        "Rust iOS library not found at: {}. iOS unit test link will fail without it. Run: ./meta-secret/mobile/scripts/build-mobile.sh ios",
+                        rustStaticLib.absolutePath,
+                    )
+                }
+            }
         }
 
         iosTarget.compilations {
@@ -42,9 +80,18 @@ kotlin {
         }
     }
 
+    targets.withType<KotlinNativeTarget>().configureEach {
+        compilerOptions {
+            freeCompilerArgs.add("-Xoverride-konan-properties=platform.ios_simulator_arm64.version_min=14.0")
+            freeCompilerArgs.add("-Xoverride-konan-properties=platform.ios_arm64.version_min=14.0")
+        }
+    }
+
     sourceSets {
         androidMain.dependencies {
-            implementation("net.java.dev.jna:jna:5.15.0")
+            // Android requires the AAR variant so libjnidispatch.so is packaged into APK.
+            // JNA 5.17+: correct libjnidispatch.so for Android 15+ 16 KB pages (arm64 JNI_OnLoad SIGSEGV with older JNA; see java-native-access/jna#1647).
+            implementation("net.java.dev.jna:jna:${libs.versions.jna.get()}@aar")
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.ui.android)
@@ -106,6 +153,8 @@ android {
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].resources.srcDirs("src/commonMain/composeResources")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
+    // Native libraries are in source folder (populated by build-android.sh)
+    // sourceSets["main"].jniLibs.srcDirs(project.file("src/androidMain/jniLibs")) // default location
 
 
     defaultConfig {
@@ -158,15 +207,6 @@ swiftklib {
     create("SwiftBridge") {
         path = file("../iosApp/iosApp/MetaSecretCoreService/")
         packageName("com.metaSecret.ios")
-    }
-}
-
-// swiftklib: patched plugin in plugins/swiftklib-patched adds Package.swift swiftSettings with
-// -fmodule-map-file for UniFFI (MetaSecretCoreService/UniffiGenerated/mobile_uniffiFFI.modulemap).
-
-tasks.withType<CompileSwiftTask>().configureEach {
-    doFirst {
-        logger.debug("swiftklib task ${name}: swiftBuildDir=${swiftBuildDir.absolutePath}")
     }
 }
 
