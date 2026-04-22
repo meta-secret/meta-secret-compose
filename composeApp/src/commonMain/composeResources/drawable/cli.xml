@@ -1,0 +1,47 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="58dp"
+    android:height="44dp"
+    android:viewportWidth="58"
+    android:viewportHeight="44">
+  <!-- Background fill -->
+  <path
+      android:pathData="M4,1L54,1A3,3 0,0 1,57 4L57,41A3,3 0,0 1,54 44L4,44A3,3 0,0 1,1 41L1,4A3,3 0,0 1,4 1z"
+      android:fillColor="#415573"/>
+  <!-- Title bar strip -->
+  <path
+      android:pathData="M1,12L57,12L57,4A3,3 0,0 0,54 1L4,1A3,3 0,0 0,1 4Z"
+      android:fillColor="#2E3F58"/>
+  <!-- Traffic light dots -->
+  <path android:pathData="M9,6.5 m-2.2,0 a2.2,2.2 0,1,0 4.4,0 a2.2,2.2 0,1,0 -4.4,0"
+      android:fillColor="#91BDFF" android:fillAlpha="0.4"/>
+  <path android:pathData="M16.5,6.5 m-2.2,0 a2.2,2.2 0,1,0 4.4,0 a2.2,2.2 0,1,0 -4.4,0"
+      android:fillColor="#91BDFF" android:fillAlpha="0.4"/>
+  <path android:pathData="M24,6.5 m-2.2,0 a2.2,2.2 0,1,0 4.4,0 a2.2,2.2 0,1,0 -4.4,0"
+      android:fillColor="#91BDFF" android:fillAlpha="0.4"/>
+  <!-- Prompt chevron ">" -->
+  <path
+      android:pathData="M8,22 L14,28 L8,34"
+      android:strokeWidth="2.2"
+      android:fillColor="#00000000"
+      android:strokeColor="#91BDFF"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round"/>
+  <!-- Cursor line -->
+  <path
+      android:pathData="M17,28 L33,28"
+      android:strokeWidth="2.2"
+      android:fillColor="#00000000"
+      android:strokeColor="#91BDFF"
+      android:strokeLineCap="round"/>
+  <!-- Blinking cursor block -->
+  <path
+      android:pathData="M35,23 L39,23 L39,33 L35,33 Z"
+      android:fillColor="#91BDFF"
+      android:fillAlpha="0.85"/>
+  <!-- Outer border -->
+  <path
+      android:pathData="M4,1L54,1A3,3 0,0 1,57 4L57,41A3,3 0,0 1,54 44L4,44A3,3 0,0 1,1 41L1,4A3,3 0,0 1,4 1z"
+      android:strokeWidth="2"
+      android:fillColor="#00000000"
+      android:strokeColor="#91BDFF"/>
+</vector>

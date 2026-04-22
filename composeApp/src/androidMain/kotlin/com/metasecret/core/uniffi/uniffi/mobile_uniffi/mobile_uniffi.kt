@@ -743,6 +743,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -776,7 +780,11 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_metasecret_mobile_fn_func_init_android(`masterKey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_metasecret_mobile_fn_func_init_android_with_device(`masterKey`: RustBuffer.ByValue,`deviceName`: RustBuffer.ByValue,`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_metasecret_mobile_fn_func_init_ios(`masterKey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_metasecret_mobile_fn_func_init_ios_with_device(`masterKey`: RustBuffer.ByValue,`deviceName`: RustBuffer.ByValue,`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_metasecret_mobile_fn_func_recover(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -920,7 +928,11 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_metasecret_mobile_checksum_func_init_android(
     ): Short
+    fun uniffi_metasecret_mobile_checksum_func_init_android_with_device(
+    ): Short
     fun uniffi_metasecret_mobile_checksum_func_init_ios(
+    ): Short
+    fun uniffi_metasecret_mobile_checksum_func_init_ios_with_device(
     ): Short
     fun uniffi_metasecret_mobile_checksum_func_recover(
     ): Short
@@ -978,7 +990,13 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_metasecret_mobile_checksum_func_init_android() != 63776.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_metasecret_mobile_checksum_func_init_android_with_device() != 36034.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_metasecret_mobile_checksum_func_init_ios() != 21626.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_metasecret_mobile_checksum_func_init_ios_with_device() != 63540.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_recover() != 36000.toShort()) {
@@ -1182,11 +1200,29 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     )
     }
     
+ fun `initAndroidWithDevice`(`masterKey`: kotlin.String, `deviceName`: kotlin.String, `deviceType`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_metasecret_mobile_fn_func_init_android_with_device(
+        FfiConverterString.lower(`masterKey`),FfiConverterString.lower(`deviceName`),FfiConverterString.lower(`deviceType`),_status)
+}
+    )
+    }
+    
  fun `initIos`(`masterKey`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_metasecret_mobile_fn_func_init_ios(
         FfiConverterString.lower(`masterKey`),_status)
+}
+    )
+    }
+    
+ fun `initIosWithDevice`(`masterKey`: kotlin.String, `deviceName`: kotlin.String, `deviceType`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_metasecret_mobile_fn_func_init_ios_with_device(
+        FfiConverterString.lower(`masterKey`),FfiConverterString.lower(`deviceName`),FfiConverterString.lower(`deviceType`),_status)
 }
     )
     }

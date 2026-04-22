@@ -64,7 +64,7 @@ class DevicesScreen : Screen {
                             device,
                             viewModel.currentDeviceId,
                             onClick = {
-                                if (device.status != DeviceStatus.Member) {
+                                if (device.status == DeviceStatus.Pending || device.status == DeviceStatus.Declined) {
                                     viewModel.handle(DeviceViewEvents.SelectDevice(device.id))
                                 }
                             }

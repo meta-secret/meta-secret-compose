@@ -1,0 +1,49 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp"
+    android:height="56dp"
+    android:viewportWidth="56"
+    android:viewportHeight="56">
+  <!-- WiFi arcs (above the box) -->
+  <path
+      android:pathData="M23,26 A5,5 0,0,0 33,26"
+      android:strokeWidth="2.2"
+      android:fillColor="#00000000"
+      android:strokeColor="#91BDFF"
+      android:strokeLineCap="round"/>
+  <path
+      android:pathData="M18,26 A10,10 0,0,0 38,26"
+      android:strokeWidth="2.2"
+      android:fillColor="#00000000"
+      android:strokeColor="#91BDFF"
+      android:strokeLineCap="round"/>
+  <path
+      android:pathData="M13,26 A15,15 0,0,0 43,26"
+      android:strokeWidth="2.2"
+      android:fillColor="#00000000"
+      android:strokeColor="#91BDFF"
+      android:strokeLineCap="round"/>
+  <!-- WiFi center dot -->
+  <path
+      android:pathData="M28,26 m-2,0 a2,2 0,1,0 4,0 a2,2 0,1,0 -4,0"
+      android:fillColor="#91BDFF"/>
+  <!-- Box body fill -->
+  <path
+      android:pathData="M8,28 L48,28 A4,4 0,0 1,52 32L52,50 A4,4 0,0 1,48 54L8,54 A4,4 0,0 1,4 50L4,32 A4,4 0,0 1,8 28z"
+      android:fillColor="#415573"/>
+  <!-- LED indicator dots -->
+  <path
+      android:pathData="M18,41 m-2.5,0 a2.5,2.5 0,1,0 5,0 a2.5,2.5 0,1,0 -5,0"
+      android:fillColor="#91BDFF"/>
+  <path
+      android:pathData="M28,41 m-2.5,0 a2.5,2.5 0,1,0 5,0 a2.5,2.5 0,1,0 -5,0"
+      android:fillColor="#91BDFF"/>
+  <path
+      android:pathData="M38,41 m-2.5,0 a2.5,2.5 0,1,0 5,0 a2.5,2.5 0,1,0 -5,0"
+      android:fillColor="#91BDFF"/>
+  <!-- Box body stroke -->
+  <path
+      android:pathData="M8,28 L48,28 A4,4 0,0 1,52 32L52,50 A4,4 0,0 1,48 54L8,54 A4,4 0,0 1,4 50L4,32 A4,4 0,0 1,8 28z"
+      android:strokeWidth="2"
+      android:fillColor="#00000000"
+      android:strokeColor="#91BDFF"/>
+</vector>

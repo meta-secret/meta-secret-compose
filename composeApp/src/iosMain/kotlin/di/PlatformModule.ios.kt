@@ -11,6 +11,8 @@ import core.BackupCoordinatorInterface
 import core.BackupCoordinatorInterfaceIos
 import core.StringProviderInterface
 import core.StringProviderIos
+import core.ClientDeviceInfoProviderInterface
+import core.ClientDeviceInfoProviderIos
 import core.DeviceInfoProviderInterface
 import core.DeviceInfoProviderIos
 import core.ScreenMetricsProviderInterface
@@ -25,8 +27,9 @@ import kotlinx.cinterop.ExperimentalForeignApi
 
 @OptIn(ExperimentalForeignApi::class)
 val iosPlatformModule = module {
-    single<MetaSecretCoreInterface> { MetaSecretCoreServiceIos(get()) }
+    single<MetaSecretCoreInterface> { MetaSecretCoreServiceIos(get(), get()) }
     single<StringProviderInterface> { StringProviderIos() }
+    single<ClientDeviceInfoProviderInterface> { ClientDeviceInfoProviderIos() }
     single<DeviceInfoProviderInterface> { DeviceInfoProviderIos() }
     single<ScreenMetricsProviderInterface> { ScreenMetricsProviderIos() }
     single<BiometricAuthenticatorInterface> { BiometricAuthenticatorIos(get()) }

@@ -24,7 +24,7 @@ Perform **root-cause analysis** for errors, failing tests, or unexpected runtime
 
 ## Canonical project documents
 
-Align with `ARCHITECTURE.md`, `CODE_STYLE.md`, and `PROJECT_CONTEXT.md` (especially iOS physical-device expectations).
+Align with `AGENTS.md`, `.ai/WORKFLOW.md`, `.ai/PIPELINE.md`, `.ai/rules/kmp-principles.md`, and `README.md` (especially iOS physical-device expectations).
 
 ## Process
 

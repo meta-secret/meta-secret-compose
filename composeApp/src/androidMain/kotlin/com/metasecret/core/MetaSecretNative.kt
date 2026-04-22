@@ -13,6 +13,10 @@ object MetaSecretNative {
     fun init(masterKey: String): String = uniffi.mobile_uniffi.initAndroid(masterKey)
 
     @JvmStatic
+    fun initWithDevice(masterKey: String, deviceName: String, deviceType: String): String =
+        uniffi.mobile_uniffi.initAndroidWithDevice(masterKey, deviceName, deviceType)
+
+    @JvmStatic
     fun getState(): String = uniffi.mobile_uniffi.getState()
 
     @JvmStatic

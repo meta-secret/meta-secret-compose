@@ -167,18 +167,23 @@ class DevicesScreenViewModel(
         val vaultSummary = withContext(Dispatchers.IO) {
             appManager.getVaultSummary(isSocketAction)
         }
+        val currentId = keyValueStorage.cachedDeviceId
 
         return vaultSummary?.users?.map { (_, userInfo) ->
+            val baseStatus = when (userInfo.status) {
+                UserStatus.MEMBER -> DeviceStatus.Member
+                UserStatus.PENDING -> DeviceStatus.Pending
+                UserStatus.DECLINED -> DeviceStatus.Declined
+                UserStatus.NON_MEMBER -> DeviceStatus.Member
+            }
             DeviceCellModel(
                 id = userInfo.deviceId,
-                status = when (userInfo.status) {
-                    UserStatus.MEMBER -> DeviceStatus.Member
-                    UserStatus.PENDING -> DeviceStatus.Pending
-                    else -> DeviceStatus.Unknown
-                },
+                status = if (userInfo.deviceId == currentId) DeviceStatus.Current else baseStatus,
                 secretsCount = vaultStatsProvider.secretsCount.value,
                 devicesCount = vaultStatsProvider.devicesCount.value,
-                vaultName = vaultStatsProvider.vaultName.value ?: vaultSummary.vaultName
+                vaultName = vaultStatsProvider.vaultName.value ?: vaultSummary.vaultName,
+                deviceName = userInfo.deviceName,
+                deviceType = userInfo.deviceType
             )
         } ?: emptyList()
     }

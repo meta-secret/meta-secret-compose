@@ -436,101 +436,119 @@ fileprivate struct FfiConverterString: FfiConverter {
         writeBytes(&buf, value.utf8)
     }
 }
-public func uniffiMobileAcceptRecover(claimId: String) -> String {
+public func acceptRecover(claimId: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_accept_recover(
         FfiConverterString.lower(claimId),$0
     )
 })
 }
-public func uniffiMobileCleanUpDatabase() -> String {
+public func cleanUpDatabase() -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_clean_up_database($0
     )
 })
 }
-public func uniffiMobileDeclineRecover(claimId: String) -> String {
+public func declineRecover(claimId: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_decline_recover(
         FfiConverterString.lower(claimId),$0
     )
 })
 }
-public func uniffiMobileFindClaimBy(secretId: String) -> String {
+public func findClaimBy(secretId: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_find_claim_by(
         FfiConverterString.lower(secretId),$0
     )
 })
 }
-public func uniffiMobileFindClaimIdBy(secretId: String) -> String {
+public func findClaimIdBy(secretId: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_find_claim_id_by(
         FfiConverterString.lower(secretId),$0
     )
 })
 }
-public func uniffiMobileGenerateMasterKey() -> String {
+public func generateMasterKey() -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_generate_master_key($0
     )
 })
 }
-public func uniffiMobileGenerateUserCreds(vaultName: String) -> String {
+public func generateUserCreds(vaultName: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_generate_user_creds(
         FfiConverterString.lower(vaultName),$0
     )
 })
 }
-public func uniffiMobileGetState() -> String {
+public func getState() -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_get_state($0
     )
 })
 }
-public func uniffiMobileInitAndroid(masterKey: String) -> String {
+public func initAndroid(masterKey: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_init_android(
         FfiConverterString.lower(masterKey),$0
     )
 })
 }
-public func uniffiMobileInitIos(masterKey: String) -> String {
+public func initAndroidWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_init_android_with_device(
+        FfiConverterString.lower(masterKey),
+        FfiConverterString.lower(deviceName),
+        FfiConverterString.lower(deviceType),$0
+    )
+})
+}
+public func initIos(masterKey: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_init_ios(
         FfiConverterString.lower(masterKey),$0
     )
 })
 }
-public func uniffiMobileRecover(secretId: String) -> String {
+public func initIosWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_init_ios_with_device(
+        FfiConverterString.lower(masterKey),
+        FfiConverterString.lower(deviceName),
+        FfiConverterString.lower(deviceType),$0
+    )
+})
+}
+public func recover(secretId: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_recover(
         FfiConverterString.lower(secretId),$0
     )
 })
 }
-public func uniffiMobileSendDeclineCompletion(claimId: String) -> String {
+public func sendDeclineCompletion(claimId: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_send_decline_completion(
         FfiConverterString.lower(claimId),$0
     )
 })
 }
-public func uniffiMobileShowRecovered(secretId: String) -> String {
+public func showRecovered(secretId: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_show_recovered(
         FfiConverterString.lower(secretId),$0
     )
 })
 }
-public func uniffiMobileSignUp() -> String {
+public func signUp() -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_sign_up($0
     )
 })
 }
-public func uniffiMobileSplitSecret(secretId: String, secret: String) -> String {
+public func splitSecret(secretId: String, secret: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_split_secret(
         FfiConverterString.lower(secretId),
@@ -538,7 +556,7 @@ public func uniffiMobileSplitSecret(secretId: String, secret: String) -> String 
     )
 })
 }
-public func uniffiMobileUpdateMembership(candidate: String, actionUpdate: String) -> String {
+public func updateMembership(candidate: String, actionUpdate: String) -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_update_membership(
         FfiConverterString.lower(candidate),
@@ -589,7 +607,13 @@ private let initializationResult: InitializationResult = {
     if (uniffi_metasecret_mobile_checksum_func_init_android() != 63776) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_metasecret_mobile_checksum_func_init_android_with_device() != 36034) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_metasecret_mobile_checksum_func_init_ios() != 21626) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_metasecret_mobile_checksum_func_init_ios_with_device() != 63540) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_recover() != 36000) {
@@ -626,3 +650,31 @@ private func uniffiEnsureInitialized() {
 }
 
 // swiftlint:enable all
+
+// Backward-compatible aliases used by existing SwiftBridge code.
+public func uniffiMobileGenerateMasterKey() -> String { generateMasterKey() }
+public func uniffiMobileInitIos(masterKey: String) -> String { initIos(masterKey: masterKey) }
+public func uniffiMobileInitIosWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String {
+    initIosWithDevice(masterKey: masterKey, deviceName: deviceName, deviceType: deviceType)
+}
+public func uniffiMobileInitAndroid(masterKey: String) -> String { initAndroid(masterKey: masterKey) }
+public func uniffiMobileInitAndroidWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String {
+    initAndroidWithDevice(masterKey: masterKey, deviceName: deviceName, deviceType: deviceType)
+}
+public func uniffiMobileGetState() -> String { getState() }
+public func uniffiMobileGenerateUserCreds(vaultName: String) -> String { generateUserCreds(vaultName: vaultName) }
+public func uniffiMobileSignUp() -> String { signUp() }
+public func uniffiMobileUpdateMembership(candidate: String, actionUpdate: String) -> String {
+    updateMembership(candidate: candidate, actionUpdate: actionUpdate)
+}
+public func uniffiMobileSplitSecret(secretId: String, secret: String) -> String {
+    splitSecret(secretId: secretId, secret: secret)
+}
+public func uniffiMobileFindClaimBy(secretId: String) -> String { findClaimBy(secretId: secretId) }
+public func uniffiMobileFindClaimIdBy(secretId: String) -> String { findClaimIdBy(secretId: secretId) }
+public func uniffiMobileRecover(secretId: String) -> String { recover(secretId: secretId) }
+public func uniffiMobileAcceptRecover(claimId: String) -> String { acceptRecover(claimId: claimId) }
+public func uniffiMobileDeclineRecover(claimId: String) -> String { declineRecover(claimId: claimId) }
+public func uniffiMobileSendDeclineCompletion(claimId: String) -> String { sendDeclineCompletion(claimId: claimId) }
+public func uniffiMobileShowRecovered(secretId: String) -> String { showRecovered(secretId: secretId) }
+public func uniffiMobileCleanUpDatabase() -> String { cleanUpDatabase() }

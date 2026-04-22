@@ -1,0 +1,33 @@
+package core
+
+internal fun mapIosModelIdentifierToDisplayName(identifier: String): String = when (identifier) {
+    "iPhone17,5" -> "iPhone 16e"
+    "iPhone17,4" -> "iPhone 16 Plus"
+    "iPhone17,3" -> "iPhone 16"
+    "iPhone17,2" -> "iPhone 16 Pro Max"
+    "iPhone17,1" -> "iPhone 16 Pro"
+    "iPhone16,2" -> "iPhone 15 Pro Max"
+    "iPhone16,1" -> "iPhone 15 Pro"
+    "iPhone15,5" -> "iPhone 15 Plus"
+    "iPhone15,4" -> "iPhone 15"
+    "iPhone14,8" -> "iPhone 14 Plus"
+    "iPhone14,7" -> "iPhone 14"
+    "iPhone15,3" -> "iPhone 14 Pro Max"
+    "iPhone15,2" -> "iPhone 14 Pro"
+    "iPhone14,6" -> "iPhone SE (3rd generation)"
+    "iPhone14,5" -> "iPhone 13"
+    "iPhone14,4" -> "iPhone 13 mini"
+    "iPhone14,3" -> "iPhone 13 Pro Max"
+    "iPhone14,2" -> "iPhone 13 Pro"
+    "iPhone13,4" -> "iPhone 12 Pro Max"
+    "iPhone13,3" -> "iPhone 12 Pro"
+    "iPhone13,2" -> "iPhone 12"
+    "iPhone13,1" -> "iPhone 12 mini"
+    "iPad16,6", "iPad16,5" -> "iPad Pro 13-inch (M4)"
+    "iPad16,4", "iPad16,3" -> "iPad Pro 11-inch (M4)"
+    "iPad14,6", "iPad14,5" -> "iPad Pro 12.9-inch (6th generation)"
+    "iPad14,4", "iPad14,3" -> "iPad Pro 11-inch (4th generation)"
+    "iPad13,19", "iPad13,18" -> "iPad (10th generation)"
+    "iPad14,2", "iPad14,1" -> "iPad mini (6th generation)"
+    else -> identifier
+}

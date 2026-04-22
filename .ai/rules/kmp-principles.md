@@ -28,7 +28,8 @@
 ## Shared Kotlin
 
 - Pure business logic in `commonMain/`
-- Use `expect/actual` for platform-specific APIs
+- Platform abstractions must be done via `interface + DI` (platform implementations in `androidMain/` and `iosMain/`)
+- `expect/actual` is forbidden in this project
 - No UI framework imports in commonMain
 - Result<T, E> for error handling
 - Sealed classes for state machines

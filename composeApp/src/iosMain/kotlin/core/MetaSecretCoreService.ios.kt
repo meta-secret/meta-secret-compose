@@ -10,7 +10,8 @@ import kotlinx.serialization.json.JsonPrimitive
 
 @OptIn(ExperimentalForeignApi::class)
 class MetaSecretCoreServiceIos(
-    private val logger: DebugLoggerInterface
+    private val logger: DebugLoggerInterface,
+    private val clientDeviceInfoProvider: ClientDeviceInfoProviderInterface
 ): MetaSecretCoreInterface {
     private val swiftBridge = SwiftBridge()
 
@@ -31,8 +32,17 @@ class MetaSecretCoreServiceIos(
     @OptIn(ExperimentalForeignApi::class)
     override fun initAppManager(masterKey: String): String {
         try {
-            logger.log(LogTag.MetaSecretCoreService.Message.CallingInitAppManager, "with: $masterKey", success = true)
-            val result = swiftBridge.initWithMasterKey(masterKey)
+            val clientDeviceInfo = clientDeviceInfoProvider.current()
+            logger.log(
+                LogTag.MetaSecretCoreService.Message.CallingInitAppManager,
+                "with: $masterKey; deviceName=${clientDeviceInfo.deviceName}; deviceType=${clientDeviceInfo.deviceType}",
+                success = true
+            )
+            val result = swiftBridge.initWithMasterKeyAndDevice(
+                masterKey,
+                clientDeviceInfo.deviceName,
+                clientDeviceInfo.deviceType,
+            )
             logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitResult, result, success = true)
             return result
         } catch (e: Exception) {
@@ -98,6 +108,7 @@ class MetaSecretCoreServiceIos(
                 putJsonObject("device") {
                     put("deviceId", JsonPrimitive(candidate.device.deviceId))
                     put("deviceName", JsonPrimitive(candidate.device.deviceName))
+                    put("deviceType", JsonPrimitive(candidate.device.deviceType))
                     putJsonObject("keys") {
                         put("dsaPk", JsonPrimitive(candidate.device.keys.dsaPk))
                         put("transportPk", JsonPrimitive(candidate.device.keys.transportPk))

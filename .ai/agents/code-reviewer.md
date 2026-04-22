@@ -16,6 +16,7 @@ Stage: 5 (Code Review)
    - architecture rules
    - code style rules
    - security rules
+   - `interface + DI` rule for platform abstractions (`expect/actual` is forbidden)
 3. Write report using template:
    - `.ai/artifacts/review-report-template.md`
    - output: `.ai/artifacts/run/MS-<run-id>-005-review.md`
@@ -28,3 +29,4 @@ Stage: 5 (Code Review)
 
 - Do not modify code in this stage.
 - Blocking issues must reference concrete files.
+- Always fail review if new `expect/actual` usage is introduced.

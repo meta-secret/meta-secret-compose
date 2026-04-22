@@ -12,17 +12,18 @@ Implement **only** what the user has approved in a prior plan. Keep changes mini
 
 Follow:
 
-- `CLAUDE.md`
-- `PROJECT_CONTEXT.md`
-- `ARCHITECTURE.md`
-- `SECURITY.md`
-- `CODE_STYLE.md`
+- `AGENTS.md`
+- `.ai/WORKFLOW.md`
+- `.ai/PIPELINE.md`
+- `.ai/rules/kmp-principles.md`
+- `README.md`
 
-If architecture or layering is unclear, read **`.claude/skills/architecture-guardian/`** (`SKILL.md`)—do not duplicate long rules; align with `ARCHITECTURE.md` and the guardian skill.
+If architecture or layering is unclear, read **`.ai/skills/architecture-guardian/SKILL.md`** and align with `.ai/rules/kmp-principles.md`.
 
 ## Rules
 
 - Match existing patterns (packages, DI, ViewModels, FFI façade).
+- Enforce platform abstractions via `interface + DI`; do not use `expect/actual`.
 - Do **not** edit Rust or native artifacts in this repository.
 - Do **not** call FFI outside the approved boundary; never from UI layers.
 - Do **not** change signing, provisioning, certificates, or team IDs.
