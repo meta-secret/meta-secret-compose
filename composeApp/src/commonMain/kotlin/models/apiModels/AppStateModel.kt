@@ -228,7 +228,7 @@ data class OpenBox(
 data class DeviceData(
     val deviceId: String,
     val deviceName: String,
-    val deviceType: String = "Other",
+    val deviceType: String,
     val keys: OpenBox
 )
 

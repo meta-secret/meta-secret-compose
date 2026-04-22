@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -84,12 +83,17 @@ fun DeviceContent(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(resolveDeviceIcon(model.deviceType, model.deviceName)),
-                        contentDescription = null,
-                        contentScale = ContentScale.FillBounds,
-                        modifier = Modifier.width(44.dp).size(36.dp)
-                    )
+                    Box(
+                        modifier = Modifier.size(44.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(resolveDeviceIcon(model.deviceType, model.deviceName)),
+                            contentDescription = null,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
                     Column(
                         modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.Start
@@ -128,17 +132,7 @@ fun DeviceContent(
 
 private fun resolveDeviceIcon(deviceTypeRaw: String, deviceNameRaw: String): DrawableResource {
     val type = deviceTypeRaw.trim().lowercase()
-    val name = deviceNameRaw.trim().lowercase()
-
-    fun inferByName(): DrawableResource = when {
-        "iphone" in name || "ios" in name -> Res.drawable.devices
-        "ipad" in name || "tablet" in name -> Res.drawable.tablet
-        "android" in name || "pixel" in name || "galaxy" in name -> Res.drawable.android
-        "web" in name || "browser" in name || "chrome" in name || "safari" in name || "firefox" in name -> Res.drawable.web
-        "cli" in name || "terminal" in name || "console" in name -> Res.drawable.cli
-        "desktop" in name || "laptop" in name || "macbook" in name || "mac" in name || "windows" in name || "linux" in name -> Res.drawable.laptop
-        else -> Res.drawable.other
-    }
+    // Name is intentionally ignored; icon mapping is based strictly on deviceType.
 
     return when (type) {
         "iphone", "ios", "phone" -> Res.drawable.devices
@@ -147,8 +141,8 @@ private fun resolveDeviceIcon(deviceTypeRaw: String, deviceNameRaw: String): Dra
         "desktop", "laptop", "macos", "windows", "linux" -> Res.drawable.laptop
         "web", "browser" -> Res.drawable.web
         "cli", "terminal" -> Res.drawable.cli
-        "other", "" -> inferByName()
-        else -> inferByName()
+        "other", "" -> Res.drawable.other
+        else -> Res.drawable.other
     }
 }
 
