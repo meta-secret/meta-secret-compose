@@ -56,8 +56,11 @@
     <string name = "join">Присоединиться</string>
     <string name = "joining">Присоединение...</string>
     <string name = "copySecret">Копировать секрет</string>
+    <string name = "copyPhrase">Копировать фразу</string>
     <string name = "show">Показать</string>
     <string name = "hide">Скрыть</string>
+    <string name = "secretEncryptedTitle">Секрет зашифрован</string>
+    <string name = "secretEncryptedSubtitle">Нажмите «Показать», чтобы расшифровать и увидеть содержимое</string>
     <string name = "secretAdded">Секрет успешно добавлен</string>
     <string name = "secretRemoved">Секрет успешно удалён</string>
     <string name = "secretNotAdded">Не удалось добавить секрет</string>

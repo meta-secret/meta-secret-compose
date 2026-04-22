@@ -56,8 +56,11 @@
     <string name = "join">Join</string>
     <string name = "joining">Joining...</string>
     <string name = "copySecret">Copy secret</string>
+    <string name = "copyPhrase">Copy phrase</string>
     <string name = "show">Show</string>
     <string name = "hide">Hide</string>
+    <string name = "secretEncryptedTitle">Secret is encrypted</string>
+    <string name = "secretEncryptedSubtitle">Tap 'Show' to decrypt and reveal the content</string>
     <string name = "secretAdded">A secret successfully added</string>
     <string name = "secretRemoved">A secret successfully removed</string>
     <string name = "secretNotAdded">We were unable to add the secret</string>
