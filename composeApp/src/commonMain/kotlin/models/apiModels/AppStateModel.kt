@@ -228,6 +228,7 @@ data class OpenBox(
 data class DeviceData(
     val deviceId: String,
     val deviceName: String,
+    val deviceType: String,
     val keys: OpenBox
 )
 
@@ -375,8 +376,14 @@ data class AppStateModel(
                         membership.outsider != null -> membership.outsider.userData.device.deviceName
                         else -> ""
                     }
+
+                    val deviceType = when {
+                        membership.member != null -> membership.member.userData.device.deviceType
+                        membership.outsider != null -> membership.outsider.userData.device.deviceType
+                        else -> "Other"
+                    }
                     
-                    users[deviceId] = UserInfo(deviceId, deviceName, status)
+                    users[deviceId] = UserInfo(deviceId, deviceName, deviceType, status)
                 }
                 
                 VaultSummary(
@@ -422,6 +429,7 @@ enum class UserStatus {
 data class UserInfo(
     val deviceId: String,
     val deviceName: String,
+    val deviceType: String = "Other",
     val status: UserStatus
 )
 

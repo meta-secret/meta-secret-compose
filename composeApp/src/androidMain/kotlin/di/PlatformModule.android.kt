@@ -11,6 +11,8 @@ import core.MetaSecretCoreServiceAndroid
 import core.metaSecretCore.MetaSecretCoreInterface
 import core.StringProviderAndroid
 import core.StringProviderInterface
+import core.ClientDeviceInfoProviderAndroid
+import core.ClientDeviceInfoProviderInterface
 import core.DeviceInfoProviderAndroid
 import core.DeviceInfoProviderInterface
 import core.ScreenMetricsProviderAndroid
@@ -36,6 +38,7 @@ val androidPlatformModule = module {
     }
 
     single<StringProviderInterface> { StringProviderAndroid(get()) }
+    single<ClientDeviceInfoProviderInterface> { ClientDeviceInfoProviderAndroid() }
     single<DeviceInfoProviderInterface> { DeviceInfoProviderAndroid() }
     single<ScreenMetricsProviderInterface> { ScreenMetricsProviderAndroid() }
     single<DatabasePathProviderInterface> { DatabasePathProviderAndroid(get()) }

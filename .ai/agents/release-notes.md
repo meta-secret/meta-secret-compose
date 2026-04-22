@@ -22,7 +22,7 @@ Use what the user provides: diff summary, commit list, issue title, or file list
 
 ## Canonical tone
 
-Stay consistent with product context in `PROJECT_CONTEXT.md` and security wording in `SECURITY.md` (no secret material).
+Stay consistent with product context in `README.md` and architecture/security wording in `.ai/rules/kmp-principles.md` (no secret material).
 
 ## Output
 

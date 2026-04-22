@@ -54,6 +54,7 @@ class MetaSecretStateResolverInterfaceTest {
             device = DeviceData(
                 deviceId = "device-id",
                 deviceName = "device-name",
+                deviceType = "CLI",
                 keys = OpenBox(dsaPk = "dsa", transportPk = "transport")
             ),
             vaultName = vaultName

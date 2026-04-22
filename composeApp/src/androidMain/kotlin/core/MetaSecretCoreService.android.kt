@@ -27,6 +27,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     private val databasePathProvider: DatabasePathProviderInterface by inject(DatabasePathProviderInterface::class.java)
     private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.java)
     private val logFormatter: LogFormatterInterface by inject(LogFormatterInterface::class.java)
+    private val clientDeviceInfoProvider: ClientDeviceInfoProviderInterface by inject(ClientDeviceInfoProviderInterface::class.java)
     
     companion object {
         private var loggerInstance: DebugLoggerInterface? = null
@@ -118,8 +119,17 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
 
     override fun initAppManager(masterKey: String): String {
         try {
-            logger.log(LogTag.MetaSecretCoreService.Message.CallingInitAppManager, "with: $masterKey", success = true)
-            val result = MetaSecretNative.init(masterKey)
+            val clientDeviceInfo = clientDeviceInfoProvider.current()
+            logger.log(
+                LogTag.MetaSecretCoreService.Message.CallingInitAppManager,
+                "with: $masterKey; deviceName=${clientDeviceInfo.deviceName}; deviceType=${clientDeviceInfo.deviceType}",
+                success = true
+            )
+            val result = MetaSecretNative.initWithDevice(
+                masterKey = masterKey,
+                deviceName = clientDeviceInfo.deviceName,
+                deviceType = clientDeviceInfo.deviceType,
+            )
             logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitResult, result, success = true)
             return result
         } catch (e: Exception) {
@@ -188,6 +198,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
                 putJsonObject("device") {
                     put("deviceId", JsonPrimitive(candidate.device.deviceId))
                     put("deviceName", JsonPrimitive(candidate.device.deviceName))
+                    put("deviceType", JsonPrimitive(candidate.device.deviceType))
                     putJsonObject("keys") {
                         put("dsaPk", JsonPrimitive(candidate.device.keys.dsaPk))
                         put("transportPk", JsonPrimitive(candidate.device.keys.transportPk))

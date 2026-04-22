@@ -1,0 +1,33 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="54dp"
+    android:height="54dp"
+    android:viewportWidth="54"
+    android:viewportHeight="54">
+  <!-- Background fill -->
+  <path
+      android:pathData="M27,3 A24,24 0,1,0 27,51 A24,24 0,1,0 27,3 Z"
+      android:fillColor="#415573"/>
+  <!-- Lines clipped to circle -->
+  <group>
+    <clip-path
+        android:pathData="M27,3 A24,24 0,1,0 27,51 A24,24 0,1,0 27,3 Z"/>
+    <!-- Longitude ellipse -->
+    <path
+        android:pathData="M16,27 A11,24 0,1,0 38,27 A11,24 0,1,0 16,27 Z"
+        android:strokeWidth="1.6"
+        android:fillColor="#00000000"
+        android:strokeColor="#91BDFF"/>
+    <!-- Latitude lines -->
+    <path android:pathData="M3,16 L51,16" android:strokeWidth="1.6" android:fillColor="#00000000" android:strokeColor="#91BDFF"/>
+    <path android:pathData="M3,27 L51,27" android:strokeWidth="1.6" android:fillColor="#00000000" android:strokeColor="#91BDFF"/>
+    <path android:pathData="M3,38 L51,38" android:strokeWidth="1.6" android:fillColor="#00000000" android:strokeColor="#91BDFF"/>
+    <!-- Vertical center line -->
+    <path android:pathData="M27,3 L27,51" android:strokeWidth="1.6" android:fillColor="#00000000" android:strokeColor="#91BDFF"/>
+  </group>
+  <!-- Outline circle -->
+  <path
+      android:pathData="M27,3 A24,24 0,1,0 27,51 A24,24 0,1,0 27,3 Z"
+      android:strokeWidth="2"
+      android:fillColor="#00000000"
+      android:strokeColor="#91BDFF"/>
+</vector>

@@ -20,6 +20,18 @@ import UIKit
         uniffiMobileInitIos(masterKey: masterKey)
     }
 
+    @objc public func initWithMasterKeyAndDevice(
+        _ masterKey: String,
+        deviceName: String,
+        deviceType: String
+    ) -> String {
+        uniffiMobileInitIosWithDevice(
+            masterKey: masterKey,
+            deviceName: deviceName,
+            deviceType: deviceType
+        )
+    }
+
     @objc public func getState() -> String {
         let resultString = uniffiMobileGetState()
         if resultString.isEmpty {

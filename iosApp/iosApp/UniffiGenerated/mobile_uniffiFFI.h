@@ -299,9 +299,19 @@ RustBuffer uniffi_metasecret_mobile_fn_func_get_state(RustCallStatus *_Nonnull o
 RustBuffer uniffi_metasecret_mobile_fn_func_init_android(RustBuffer master_key, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_INIT_ANDROID_WITH_DEVICE
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_INIT_ANDROID_WITH_DEVICE
+RustBuffer uniffi_metasecret_mobile_fn_func_init_android_with_device(RustBuffer master_key, RustBuffer device_name, RustBuffer device_type, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_INIT_IOS
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_INIT_IOS
 RustBuffer uniffi_metasecret_mobile_fn_func_init_ios(RustBuffer master_key, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_INIT_IOS_WITH_DEVICE
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_INIT_IOS_WITH_DEVICE
+RustBuffer uniffi_metasecret_mobile_fn_func_init_ios_with_device(RustBuffer master_key, RustBuffer device_name, RustBuffer device_type, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_RECOVER
@@ -669,9 +679,21 @@ uint16_t uniffi_metasecret_mobile_checksum_func_init_android(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_ANDROID_WITH_DEVICE
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_ANDROID_WITH_DEVICE
+uint16_t uniffi_metasecret_mobile_checksum_func_init_android_with_device(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_IOS
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_IOS
 uint16_t uniffi_metasecret_mobile_checksum_func_init_ios(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_IOS_WITH_DEVICE
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_IOS_WITH_DEVICE
+uint16_t uniffi_metasecret_mobile_checksum_func_init_ios_with_device(void
     
 );
 #endif
