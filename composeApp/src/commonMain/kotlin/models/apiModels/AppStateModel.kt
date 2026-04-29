@@ -225,10 +225,30 @@ data class OpenBox(
 )
 
 @Serializable
+enum class DeviceUiCategory {
+    @SerialName("android")
+    Android,
+    @SerialName("iphone")
+    Iphone,
+    @SerialName("tablet")
+    Tablet,
+    @SerialName("desktop")
+    Desktop,
+    @SerialName("cli")
+    Cli,
+    @SerialName("web")
+    Web,
+    @SerialName("other")
+    Other,
+}
+
+@Serializable
 data class DeviceData(
     val deviceId: String,
     val deviceName: String,
     val deviceType: String,
+    @SerialName("uiCategory")
+    val uiCategory: DeviceUiCategory? = null,
     val keys: OpenBox
 )
 
@@ -382,8 +402,13 @@ data class AppStateModel(
                         membership.outsider != null -> membership.outsider.userData.device.deviceType
                         else -> "Other"
                     }
+                    val deviceUiCategory = when {
+                        membership.member != null -> membership.member.userData.device.uiCategory
+                        membership.outsider != null -> membership.outsider.userData.device.uiCategory
+                        else -> null
+                    } ?: detectDeviceUiCategory(deviceType)
                     
-                    users[deviceId] = UserInfo(deviceId, deviceName, deviceType, status)
+                    users[deviceId] = UserInfo(deviceId, deviceName, deviceType, deviceUiCategory, status)
                 }
                 
                 VaultSummary(
@@ -412,6 +437,19 @@ data class AppStateModel(
             }
         }
     }
+
+    private fun detectDeviceUiCategory(deviceType: String): DeviceUiCategory {
+        val normalized = deviceType.trim().lowercase()
+        return when {
+            normalized.contains("android") -> DeviceUiCategory.Android
+            normalized.contains("iphone") || normalized.contains("ios") -> DeviceUiCategory.Iphone
+            normalized.contains("ipad") || normalized.contains("tablet") -> DeviceUiCategory.Tablet
+            normalized.contains("web") || normalized.contains("browser") || normalized.contains("chrome") || normalized.contains("safari") || normalized.contains("firefox") -> DeviceUiCategory.Web
+            normalized.contains("cli") || normalized.contains("terminal") || normalized.contains("console") -> DeviceUiCategory.Cli
+            normalized.contains("desktop") || normalized.contains("mac") || normalized.contains("windows") || normalized.contains("linux") || normalized.contains("pc") -> DeviceUiCategory.Desktop
+            else -> DeviceUiCategory.Other
+        }
+    }
 }
 
 @Serializable
@@ -430,6 +468,7 @@ data class UserInfo(
     val deviceId: String,
     val deviceName: String,
     val deviceType: String = "Other",
+    val deviceUiCategory: DeviceUiCategory? = null,
     val status: UserStatus
 )
 

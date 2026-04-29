@@ -27,6 +27,14 @@ import androidx.compose.ui.unit.sp
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.android
 import kotlinproject.composeapp.generated.resources.cli
+import kotlinproject.composeapp.generated.resources.device_ui_category_android
+import kotlinproject.composeapp.generated.resources.device_ui_category_cli
+import kotlinproject.composeapp.generated.resources.device_ui_category_desktop
+import kotlinproject.composeapp.generated.resources.device_ui_category_iphone
+import kotlinproject.composeapp.generated.resources.device_ui_category_other
+import kotlinproject.composeapp.generated.resources.device_ui_category_tablet
+import kotlinproject.composeapp.generated.resources.device_ui_category_unknown
+import kotlinproject.composeapp.generated.resources.device_ui_category_web
 import kotlinproject.composeapp.generated.resources.devices
 import kotlinproject.composeapp.generated.resources.laptop
 import kotlinproject.composeapp.generated.resources.manrope_bold
@@ -37,6 +45,7 @@ import kotlinproject.composeapp.generated.resources.secrets_4
 import kotlinproject.composeapp.generated.resources.secrets_5
 import kotlinproject.composeapp.generated.resources.tablet
 import kotlinproject.composeapp.generated.resources.web
+import models.apiModels.DeviceUiCategory
 import models.appInternalModels.DeviceCellModel
 import models.appInternalModels.DeviceStatus
 import org.jetbrains.compose.resources.Font
@@ -88,7 +97,7 @@ fun DeviceContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(resolveDeviceIcon(model.deviceType, model.deviceName)),
+                            painter = painterResource(resolveDeviceIcon(model.deviceUiCategory)),
                             contentDescription = null,
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.size(36.dp)
@@ -107,7 +116,7 @@ fun DeviceContent(
                             )
                         )
                         Text(
-                            text = model.deviceName.ifBlank { model.deviceType },
+                            text = model.deviceName.ifBlank { stringResource(resolveDeviceCategoryLabel(model.deviceUiCategory)) },
                             style = TextStyle(
                                 fontSize = 12.sp,
                                 fontFamily = FontFamily(Font(Res.font.manrope_regular)),
@@ -130,20 +139,27 @@ fun DeviceContent(
 //    )
 }
 
-private fun resolveDeviceIcon(deviceTypeRaw: String, deviceNameRaw: String): DrawableResource {
-    val type = deviceTypeRaw.trim().lowercase()
-    // Name is intentionally ignored; icon mapping is based strictly on deviceType.
-
-    return when (type) {
-        "iphone", "ios", "phone" -> Res.drawable.devices
-        "android" -> Res.drawable.android
-        "tablet", "ipad" -> Res.drawable.tablet
-        "desktop", "laptop", "macos", "windows", "linux" -> Res.drawable.laptop
-        "web", "browser" -> Res.drawable.web
-        "cli", "terminal" -> Res.drawable.cli
-        "other", "" -> Res.drawable.other
-        else -> Res.drawable.other
+private fun resolveDeviceIcon(category: DeviceUiCategory?): DrawableResource {
+    return when (category) {
+        DeviceUiCategory.Iphone -> Res.drawable.devices
+        DeviceUiCategory.Android -> Res.drawable.android
+        DeviceUiCategory.Tablet -> Res.drawable.tablet
+        DeviceUiCategory.Desktop -> Res.drawable.laptop
+        DeviceUiCategory.Web -> Res.drawable.web
+        DeviceUiCategory.Cli -> Res.drawable.cli
+        DeviceUiCategory.Other, null -> Res.drawable.other
     }
+}
+
+private fun resolveDeviceCategoryLabel(category: DeviceUiCategory?) = when (category) {
+    DeviceUiCategory.Android -> Res.string.device_ui_category_android
+    DeviceUiCategory.Iphone -> Res.string.device_ui_category_iphone
+    DeviceUiCategory.Tablet -> Res.string.device_ui_category_tablet
+    DeviceUiCategory.Desktop -> Res.string.device_ui_category_desktop
+    DeviceUiCategory.Cli -> Res.string.device_ui_category_cli
+    DeviceUiCategory.Web -> Res.string.device_ui_category_web
+    DeviceUiCategory.Other -> Res.string.device_ui_category_other
+    null -> Res.string.device_ui_category_unknown
 }
 
 @Composable

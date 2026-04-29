@@ -183,7 +183,8 @@ class DevicesScreenViewModel(
                 devicesCount = vaultStatsProvider.devicesCount.value,
                 vaultName = vaultStatsProvider.vaultName.value ?: vaultSummary.vaultName,
                 deviceName = userInfo.deviceName,
-                deviceType = userInfo.deviceType
+                deviceType = userInfo.deviceType,
+                deviceUiCategory = userInfo.deviceUiCategory
             )
         } ?: emptyList()
     }

@@ -116,4 +116,12 @@
     <string name = "ok">Ок</string>
     <string name = "currentDevice">Текущее устройство</string>
     <string name = "wanna_recover">Показать ваш секрет?</string>
+    <string name = "device_ui_category_android">Android</string>
+    <string name = "device_ui_category_iphone">iPhone</string>
+    <string name = "device_ui_category_tablet">Планшет</string>
+    <string name = "device_ui_category_desktop">Ноутбук</string>
+    <string name = "device_ui_category_cli">CLI</string>
+    <string name = "device_ui_category_web">Веб</string>
+    <string name = "device_ui_category_other">Другое</string>
+    <string name = "device_ui_category_unknown">Неизвестное устройство</string>
 </resources>

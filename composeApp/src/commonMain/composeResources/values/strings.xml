@@ -116,4 +116,12 @@
     <string name = "ok">Ok</string>
     <string name = "currentDevice">Current device</string>
     <string name = "wanna_recover">Wanna show the secret?</string>
+    <string name = "device_ui_category_android">Android</string>
+    <string name = "device_ui_category_iphone">iPhone</string>
+    <string name = "device_ui_category_tablet">Tablet</string>
+    <string name = "device_ui_category_desktop">Laptop</string>
+    <string name = "device_ui_category_cli">CLI</string>
+    <string name = "device_ui_category_web">Web</string>
+    <string name = "device_ui_category_other">Other</string>
+    <string name = "device_ui_category_unknown">Unknown device</string>
 </resources>
