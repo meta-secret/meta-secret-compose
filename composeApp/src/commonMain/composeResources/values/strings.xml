@@ -115,6 +115,12 @@
     <string name = "backup_choose_path_warning">If you do not choose a path, your data may be lost when the app is uninstalled</string>
     <string name = "ok">Ok</string>
     <string name = "currentDevice">Current device</string>
+    <string name = "removeDeviceConfirmTitle">Remove device?</string>
+    <string name = "removeDeviceConfirmMessage">Do you really want to remove %1 from all your devices?</string>
+    <string name = "deviceRemovedSuccess">Device removed successfully</string>
+    <string name = "removeDeviceSelfError">You cannot remove the current device</string>
+    <string name = "removeDeviceLastMemberError">You cannot remove the last device in the vault</string>
+    <string name = "removeDeviceGenericError">Failed to remove device</string>
     <string name = "wanna_recover">Wanna show the secret?</string>
     <string name = "device_ui_category_android">Android</string>
     <string name = "device_ui_category_iphone">iPhone</string>

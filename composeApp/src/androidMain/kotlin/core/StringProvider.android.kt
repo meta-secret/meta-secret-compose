@@ -38,5 +38,9 @@ class StringProviderAndroid(private val context: Context) : StringProviderInterf
     override fun nameOccupiedJoinPrompt() = s(Res.string.name_occupied_join_prompt)
     override fun recoverPendingExists() = s(Res.string.recoverPendingExists)
     override fun recoverRequestSent() = s(Res.string.recoverRequestSent)
+    override fun removeDeviceSuccess() = s(Res.string.deviceRemovedSuccess)
+    override fun removeDeviceSelfError() = s(Res.string.removeDeviceSelfError)
+    override fun removeDeviceLastMemberError() = s(Res.string.removeDeviceLastMemberError)
+    override fun removeDeviceGenericError() = s(Res.string.removeDeviceGenericError)
 }
 

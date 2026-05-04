@@ -46,6 +46,9 @@ class DevicesScreenViewModel(
     private val _currentDeviceId = MutableStateFlow<String?>(null)
     val currentDeviceId: String?
         get() = keyValueStorage.cachedDeviceId
+    
+    private val _isRemoving = MutableStateFlow(false)
+    val isRemoving = _isRemoving.asStateFlow()
 
     val vaultName = vaultStatsProvider.vaultName
     
@@ -90,6 +93,7 @@ class DevicesScreenViewModel(
                 DeviceViewEvents.OnAppear -> loadDevicesList(false)
                 DeviceViewEvents.Accept -> authenticateAndUpdateMembership(true)
                 DeviceViewEvents.Decline -> authenticateAndUpdateMembership(false)
+                is DeviceViewEvents.RemoveDevice -> removeDevice(event.deviceId)
                 is DeviceViewEvents.SelectDevice -> {
                     selectCurrentDevice(event.deviceId)
                     event.deviceId?.let { deviceId ->
@@ -193,6 +197,42 @@ class DevicesScreenViewModel(
         logger.log(LogTag.DevicesVM.Message.SelectDevice, "$deviceId", success = true)
         _currentDeviceId.value = deviceId
     }
+
+    private fun removeDevice(deviceId: String) {
+        viewModelScope.launch {
+            val currentId = keyValueStorage.cachedDeviceId
+            if (deviceId == currentId) {
+                notificationCoordinator.showError(stringProvider.removeDeviceSelfError())
+                return@launch
+            }
+
+            val currentMembers = _devicesList.value.count { it.status == DeviceStatus.Member || it.status == DeviceStatus.Current }
+            if (currentMembers <= 1) {
+                notificationCoordinator.showError(stringProvider.removeDeviceLastMemberError())
+                return@launch
+            }
+
+            _isRemoving.value = true
+            try {
+                val candidate = withContext(Dispatchers.IO) { appManager.getUserDataBy(deviceId) }
+                if (candidate == null) {
+                    notificationCoordinator.showError(stringProvider.removeDeviceGenericError())
+                    return@launch
+                }
+                val result = withContext(Dispatchers.IO) { appManager.updateMember(candidate, UpdateMemberActionModel.Decline.name) }
+                if (result?.success == true) {
+                    notificationCoordinator.showSuccess(stringProvider.removeDeviceSuccess())
+                    _devicesList.value = fetchDevicesList(isSocketAction = false)
+                } else {
+                    notificationCoordinator.showError(result?.error ?: stringProvider.removeDeviceGenericError())
+                }
+            } catch (_: Exception) {
+                notificationCoordinator.showError(stringProvider.removeDeviceGenericError())
+            } finally {
+                _isRemoving.value = false
+            }
+        }
+    }
 }
 
 sealed class DeviceViewEvents : CommonViewModelEventsInterface {
@@ -200,4 +240,5 @@ sealed class DeviceViewEvents : CommonViewModelEventsInterface {
     data object Accept : DeviceViewEvents()
     data object Decline : DeviceViewEvents()
     data class SelectDevice(val deviceId: String?) : DeviceViewEvents()
+    data class RemoveDevice(val deviceId: String) : DeviceViewEvents()
 }
