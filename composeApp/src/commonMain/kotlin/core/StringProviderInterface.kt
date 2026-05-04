@@ -29,5 +29,8 @@ interface StringProviderInterface {
     fun nameOccupiedJoinPrompt(): String
     fun recoverPendingExists(): String
     fun recoverRequestSent(): String
+    fun removeDeviceSuccess(): String
+    fun removeDeviceSelfError(): String
+    fun removeDeviceLastMemberError(): String
+    fun removeDeviceGenericError(): String
 }
-
