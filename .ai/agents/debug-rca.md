@@ -22,3 +22,17 @@ Analyze failed artifacts and test failures. Identify root causes and propose dia
 
 - skills/systematic-debugging/
 - skills/kmp-doctor/
+
+## Execution Logging
+
+When agent starts:
+- 🤖 Print: `Agent <name> started`
+
+When reading required rules:
+- 📋 Print: `Using rule: <rule-name>`
+
+When using required skills:
+- 🛠️ Print: `Using skill: <skill-name>`
+
+When agent completes:
+- ✅ Print: `Agent <name> completed`

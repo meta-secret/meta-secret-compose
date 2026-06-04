@@ -22,3 +22,17 @@ Review implementation for architecture compliance, style consistency, and best p
 
 - skills/architecture-guardian/
 - skills/systematic-debugging/
+
+## Execution Logging
+
+When agent starts:
+- 🤖 Print: `Agent <name> started`
+
+When reading required rules:
+- 📋 Print: `Using rule: <rule-name>`
+
+When using required skills:
+- 🛠️ Print: `Using skill: <skill-name>`
+
+When agent completes:
+- ✅ Print: `Agent <name> completed`

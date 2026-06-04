@@ -21,3 +21,17 @@ Review UI implementation against Figma design specifications. Verify design comp
 ## Required Skills
 
 - skills/ios-device-doctor/
+
+## Execution Logging
+
+When agent starts:
+- 🤖 Print: `Agent <name> started`
+
+When reading required rules:
+- 📋 Print: `Using rule: <rule-name>`
+
+When using required skills:
+- 🛠️ Print: `Using skill: <skill-name>`
+
+When agent completes:
+- ✅ Print: `Agent <name> completed`

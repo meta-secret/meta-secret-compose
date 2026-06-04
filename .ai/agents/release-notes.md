@@ -21,3 +21,17 @@ Generate user-facing release notes and pull request description from implementat
 ## Required Skills
 
 - skills/workflow-mr-body/
+
+## Execution Logging
+
+When agent starts:
+- 🤖 Print: `Agent <name> started`
+
+When reading required rules:
+- 📋 Print: `Using rule: <rule-name>`
+
+When using required skills:
+- 🛠️ Print: `Using skill: <skill-name>`
+
+When agent completes:
+- ✅ Print: `Agent <name> completed`

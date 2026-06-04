@@ -25,17 +25,18 @@ Example:
 - `Start stage 4: Build`
 - `Stage 4: Build completed`
 
-## 9-Stage Pipeline
+## 10-Stage Pipeline
 
 1. Stage 1: Issue Intake + Optional Figma Context
-2. Stage 2: Planning
-3. Stage 3: Implementation (Logic + UI)
-4. Stage 4: Build (no tests, max 10 minutes)
-5. Stage 5: Code Review
-6. Stage 6: Design Review (only if Figma link exists; may run in parallel with Stage 5)
-7. Stage 7: Test Authoring
-8. Stage 8: Test Run
-9. Stage 9: Branch + Commit + PR
+2. Stage 2: Grill Me (Clarification & Deep Dive)
+3. Stage 3: Planning
+4. Stage 4: Implementation (Logic + UI)
+5. Stage 5: Build (no tests, max 10 minutes)
+6. Stage 6: Code Review
+7. Stage 7: Design Review (only if Figma link exists; may run in parallel with Stage 6)
+8. Stage 8: Test Authoring
+9. Stage 9: Test Run
+10. Stage 10: Branch + Commit + PR
 
 ## Stage Specs
 
@@ -53,39 +54,64 @@ Required behavior:
 - Produce output following issue-analysis template
 - Include: `Figma Present: YES/NO`
 
-### Stage 2: Planning
+### Stage 2: Grill Me (Clarification & Deep Dive)
+
+Primary agent: `requirements-clarifier`
+Template: `.ai/artifacts/clarification-template.md`
+Input:
+- Stage 1 artifact
+Output: `.ai/artifacts/run/MS-<run-id>-002-clarification.md`
+
+Duration (adaptive - stop when shared understanding reached):
+- Simple tasks (button color, text fix): 5-10 minutes
+- Medium tasks (feature addition): 15-25 minutes
+- Complex tasks (architecture, encryption): 30-45 minutes
+
+Required behavior:
+- Use "Grill Me" methodology: walk decision tree, resolve dependencies
+- Ask clarifying questions about unclear/risky areas ONLY (not all possible questions)
+- Provide recommendations for each question
+- Explore codebase if questions can be answered by code
+- Identify and map decision dependencies
+- Get explicit user approval before proceeding
+- Document all clarifications in artifact
+
+### Stage 3: Planning
 
 Agent: `feature-planner`
 Template: `.ai/artifacts/implementation-plan-template.md`
 Input:
 - Stage 1 artifact
-- If retry: failed artifact from Stage 4/5/6/8
-Output: `.ai/artifacts/run/MS-<run-id>-002-planning.md`
+- Stage 2 artifact (clarifications)
+- If retry: failed artifact from Stage 5/6/7/9
+Output: `.ai/artifacts/run/MS-<run-id>-003-planning.md`
 
 Required behavior:
 - Create implementation plan aligned with architecture/security/style
+- Incorporate all clarifications from Stage 2
 - If Figma present, include design constraints and acceptance checks
 - If retry, add explicit fix plan derived from failure artifact
 
-### Stage 3: Implementation (Logic + UI)
+### Stage 4: Implementation (Logic + UI)
 
 Agents:
 - `logic-implementer`
 - `ui-implementer`
 
 Input:
-- Stage 2 artifact
+- Stage 3 artifact
 - Stage 1 artifact (for Figma-derived constraints)
+- Stage 2 artifact (for clarifications)
 Output:
-- `.ai/artifacts/run/MS-<run-id>-003-implementation-logic.md`
-- `.ai/artifacts/run/MS-<run-id>-003-implementation-ui.md`
-- `.ai/artifacts/run/MS-<run-id>-003-implementation.md` (merged summary)
+- `.ai/artifacts/run/MS-<run-id>-004-implementation-logic.md`
+- `.ai/artifacts/run/MS-<run-id>-004-implementation-ui.md`
+- `.ai/artifacts/run/MS-<run-id>-004-implementation.md` (merged summary)
 
 Execution model:
 - Prefer parallel execution when file ownership is disjoint
 - If overlap exists, run logic first then UI
 
-### Stage 4: Build (no tests)
+### Stage 5: Build (no tests)
 
 Command:
 - `./gradlew build -x test --no-daemon --parallel --console=plain`
@@ -94,107 +120,87 @@ Timeout:
 - hard limit 10 minutes (600 seconds)
 
 Template: `.ai/artifacts/build-report-template.md`
-Output: `.ai/artifacts/run/MS-<run-id>-004-build.md`
+Output: `.ai/artifacts/run/MS-<run-id>-005-build.md`
 
 Required behavior:
 - Capture command, duration, and status
-- Mark `Status: PASSED` or `Status: FAILED`
+- If build fails, produce root-cause analysis
+- Retry once on failure, then escalate to debug-rca
 
-### Stage 5: Code Review
+### Stage 6: Code Review
 
 Agent: `code-reviewer`
 Template: `.ai/artifacts/review-report-template.md`
-Input: code diff + architecture/style/security rules
-Output: `.ai/artifacts/run/MS-<run-id>-005-review.md`
+Output: `.ai/artifacts/run/MS-<run-id>-006-review.md`
 
 Required behavior:
-- Output `Status: PASSED` or `Status: FAILED`
-- When failed: include concrete blocking issues
+- Review against architecture and style rules
+- Check for security issues
+- Verify Stage 2 clarifications are addressed
+- Pass condition: `Status: PASSED`
 
-### Stage 6: Design Review (conditional)
+### Stage 7: Design Review (conditional)
 
-Condition:
-- Run only if Stage 1 indicates `Figma Present: YES`
-
+Condition: run only when Stage 1 has Figma link
 Agent: `design-reviewer`
 Template: `.ai/artifacts/design-review-report-template.md`
-Input: Stage 1 Figma analysis + current UI implementation
-Output: `.ai/artifacts/run/MS-<run-id>-006-design-review.md`
-
-Execution model:
-- May run in parallel with Stage 5
+Output: `.ai/artifacts/run/MS-<run-id>-007-design-review.md`
 
 Required behavior:
-- Output `Status: PASSED` or `Status: FAILED`
-- On failure, include exact mismatches and fixes
+- Review UI against Figma specifications
+- Verify design constraints from Stage 2 are met
+- Pass condition: `Status: PASSED`
 
-### Stage 7: Test Authoring
+### Stage 8: Test Authoring
 
 Agent: `test-author`
-Input:
-- Stage 3 implementation artifacts
-- Stage 5/6 findings (if any)
-Output: `.ai/artifacts/run/MS-<run-id>-007-testing.md`
+Template: `.ai/artifacts/test-authoring-template.md`
+Output: `.ai/artifacts/run/MS-<run-id>-008-testing.md`
 
 Required behavior:
-- Add/update automated tests for changed behavior
-- Cover edge cases from plan and review feedback
+- Write unit and integration tests
+- Cover boundary cases from Stage 2
+- Cover error handling scenarios from Stage 2
 
-### Stage 8: Test Run
+### Stage 9: Test Run
 
 Agent: `test-verifier`
+Command: `./gradlew test --no-daemon --parallel --console=plain`
 Template: `.ai/artifacts/test-report-template.md`
-Command suggestion:
-- `./gradlew test --no-daemon --parallel --console=plain`
-Output: `.ai/artifacts/run/MS-<run-id>-008-test-run.md`
+Output: `.ai/artifacts/run/MS-<run-id>-009-test-run.md`
 
 Required behavior:
-- Output `Status: PASSED` or `Status: FAILED`
-- Include failed test list and root-cause summary
+- Execute all tests
+- Report pass/fail
+- Capture failing test details
+- Pass condition: `Status: PASSED`
 
-### Stage 9: Branch + Commit + PR
+### Stage 10: Branch + Commit + PR
 
 Agent: `release-manager`
-Output: `.ai/artifacts/run/MS-<run-id>-009-pr.md`
+Output: `.ai/artifacts/run/MS-<run-id>-010-pr.md`
 
 Required behavior:
-- Create branch: `{Prefix}/kuklin/MS-{issueNumber}` for numeric issues
-- Commit and push
-- Open PR to `main`
+- Create feature branch
+- Stage and commit changes
+- Create pull request with description
 
-## Automatic Recovery Loops
+## Retry Rules
 
-If any of these stages fails:
-- Stage 4 (Build)
-- Stage 5 (Code Review)
-- Stage 6 (Design Review)
-- Stage 8 (Test Run)
+Retry trigger:
+- Build failed (Stage 5)
+- Code review failed (Stage 6)
+- Design review failed (Stage 7)
+- Test run failed (Stage 9)
 
-Then run recovery loop:
-
-1. Feed failed artifact into Stage 2 planning as mandatory context
-2. Re-run Stage 3 -> Stage 4 -> Stage 5 (+Stage 6 if applicable) -> Stage 7 -> Stage 8
-3. Stop when all pass, then continue to Stage 9
-4. Max retries: 2
-
-On retry artifacts, append `-retry-1` / `-retry-2`.
+Retry path:
+- Return to Stage 3 (Planning) with failed artifact as input
+- Re-run stages from Stage 4 onward
+- Max retries: 2
 
 ## Failure Markers
-
-Pipeline must stop if artifact contains any marker:
 
 - `Status: FAILED`
 - `Return to Planning: YES`
 - `**FAIL**`
 - `FAIL`
-- `❌`
-
-## IDE Entry Points
-
-- Claude Code: `.claude/ORCHESTRATE.md`
-- Cursor: `.cursor/WORKFLOW.md`
-- Codex CLI: `.codex/ORCHESTRATE.md`
-
-All entry points must delegate orchestration logic to this file to avoid duplication.
-
-Last updated: 2026-04-22

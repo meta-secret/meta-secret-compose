@@ -23,14 +23,15 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
 - `.ai/QUICK-START.md` — Quick reference guide
 
 ### Commands & Flows
-- `.ai/commands/run.md` — Execute full 9-stage workflow
+- `.ai/commands/run.md` — Execute full 10-stage workflow
 - `.ai/commands/only-issue-coordinator.md` — Run stage 1 only
-- `.ai/commands/only-planner.md` — Run stage 2 only
-- `.ai/commands/only-implementer.md` — Run stage 3 only
-- `.ai/commands/only-reviewer.md` — Run stage 5 only
-- `.ai/commands/only-test-author.md` — Run stage 7 only
-- `.ai/commands/only-test-verifier.md` — Run stage 8 only
-- `.ai/commands/only-release-manager.md` — Run stage 9 only
+- `.ai/commands/only-grill-me.md` — Run stage 2 (clarification) only
+- `.ai/commands/only-planner.md` — Run stage 3 only
+- `.ai/commands/only-implementer.md` — Run stage 4 only
+- `.ai/commands/only-reviewer.md` — Run stage 6 only
+- `.ai/commands/only-test-author.md` — Run stage 8 only
+- `.ai/commands/only-test-verifier.md` — Run stage 9 only
+- `.ai/commands/only-release-manager.md` — Run stage 10 only
 - `.ai/commands/only-from-prompt.md` — Start from manual description
 - `.ai/commands/only-debug-rca.md` — Debug failed artifacts
 - `.ai/commands/only-release-notes.md` — Generate release notes
@@ -41,6 +42,8 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
 ### Agents & Skills
 - `.ai/agents/` — Agent definitions and behaviors
 - `.ai/skills/` — Reusable skill implementations
+  - `skills/grill-me/` — Relentless interviewing methodology (Stage 2)
+  - `skills/requirements-probing/` — Structured question categories
 - `.ai/hooks/` — Lifecycle hooks and callbacks
 
 ### Rules & Templates

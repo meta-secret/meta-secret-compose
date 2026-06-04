@@ -28,3 +28,17 @@ Analyze GitHub issue or free-text task. Extract requirements, goals, assumptions
 
 - skills/workflow-issue-handoff/
 - skills/feature-brainstorm/
+
+## Execution Logging
+
+When agent starts:
+- 🤖 Print: `Agent <name> started`
+
+When reading required rules:
+- 📋 Print: `Using rule: <rule-name>`
+
+When using required skills:
+- 🛠️ Print: `Using skill: <skill-name>`
+
+When agent completes:
+- ✅ Print: `Agent <name> completed`

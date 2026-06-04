@@ -28,3 +28,17 @@ Create detailed implementation plan from issue analysis. Align with architecture
 
 - skills/write-implementation-plan/
 - skills/architecture-guardian/
+
+## Execution Logging
+
+When agent starts:
+- 🤖 Print: `Agent <name> started`
+
+When reading required rules:
+- 📋 Print: `Using rule: <rule-name>`
+
+When using required skills:
+- 🛠️ Print: `Using skill: <skill-name>`
+
+When agent completes:
+- ✅ Print: `Agent <name> completed`

@@ -20,3 +20,17 @@ Identify and document repeated workflow patterns. Propose new skills, commands, 
 ## Required Skills
 
 - skills/workflow-pattern-capture/
+
+## Execution Logging
+
+When agent starts:
+- 🤖 Print: `Agent <name> started`
+
+When reading required rules:
+- 📋 Print: `Using rule: <rule-name>`
+
+When using required skills:
+- 🛠️ Print: `Using skill: <skill-name>`
+
+When agent completes:
+- ✅ Print: `Agent <name> completed`

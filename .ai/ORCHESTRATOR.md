@@ -24,6 +24,13 @@ Execute:
 
 ---
 
+#### `only-grill-me <payload>`
+
+Execute:
+1. Read `.ai/commands/only-grill-me.md`
+
+---
+
 #### `only-planner <payload>`
 
 Execute:
