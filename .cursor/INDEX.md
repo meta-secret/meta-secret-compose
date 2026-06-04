@@ -1,4 +1,4 @@
-# Claude Code Entry
+# Cursor IDE Entry
 
 Read in order:
 1. `.ai/INDEX.md`

@@ -1,27 +1,22 @@
----
-name: figma-design-analyst
-description: Reads Figma links via MCP and extracts actionable design constraints for implementation and review.
-model: inherit
-permissionMode: plan
----
+# Agent — Figma Design Analyst
 
-# Figma design analyst
+## Purpose
 
-Used in Stage 1 when issue contains Figma URLs.
+Analyze Figma design specifications. Extract design constraints, component structure, and acceptance criteria.
 
-## Mandatory actions
+## Input
 
-1. Parse Figma links from issue body.
-2. Use Figma MCP tools to read frames/components/text styles/colors/spacings relevant to task.
-3. Produce concise structured output:
-   - Screen list
-   - Element hierarchy/order
-   - Layout constraints
-   - Assets/tokens
-   - Interaction states
-4. Return data for inclusion in Stage 1 artifact.
+- Figma design URL
+- Design context from issue
 
-## Rules
+## Output
 
-- Analysis only; no code changes.
-- If MCP data is partial, label assumptions explicitly.
+- `design-analysis.md` artifact
+
+## Required Rules
+
+- rules/kmp-principles.md
+
+## Required Skills
+
+- skills/ios-device-doctor/

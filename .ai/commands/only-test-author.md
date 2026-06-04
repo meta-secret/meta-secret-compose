@@ -1,36 +1,29 @@
----
-description: Run test-author only — Agent mode, formatted summary, next-step hints.
----
+# Command — Test Author
 
-# Only test author
+## Trigger
 
-Arguments: what to cover (plan snippet, file list, or changed behavior). Example: `/only-test-author Add tests for use case X`
+```
+only-test-author <payload>
+```
 
-Delegate to subagent **test-author** with input: `$ARGUMENTS`
+## Purpose
 
-## Session mode
+Write automated test cases for implementation.
 
-- **Use Agent mode** — adding or changing test files requires **Write** / **Edit**.
-- **Yes:** this command is for **writing or updating automated tests** (not running the full suite — use test-verifier for that).
+## Flow
 
-## Presentation (required)
+Executes **test-author** agent:
+- Reads implementation artifacts
+- Identifies test scenarios
+- Writes unit and integration tests
+- Covers edge cases
 
-When reporting results to the user:
+## Expected Input
 
-1. Use **Markdown** with **emoji section headers** (examples: test tube for new tests, layers for common vs platform tests).
-2. **Bold** test file paths and covered scenarios; list **edge cases** briefly.
-3. Note any **skipped** or **deferred** tests and why.
+- Implementation summary
+- Code changes
 
-## Next steps — pick a command
+## Output
 
-- If workspace root is **MetaSecret**, use **`/compose-only-*`**; if only **meta-secret-compose**, use **`/only-*`**.
-
-| Slash (MetaSecret) | Slash (repo only) | What it does |
-|--------------------|-------------------|--------------|
-| `/compose-only-test-verifier` | `/only-test-verifier` | Run Gradle / KMP tests and report results |
-| `/compose-only-reviewer` | `/only-reviewer` | Review tests + code together |
-| `/compose-only-debug-rca` | `/only-debug-rca` | If tests fail or are flaky |
-
-Typical next step: **`/compose-only-test-verifier`** (MetaSecret) or **`/only-test-verifier`** (repo root).
-
-See [WORKFLOW.md](../WORKFLOW.md).
+- Test code files
+- Test summary artifact

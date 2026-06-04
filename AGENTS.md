@@ -1,89 +1,60 @@
-# AGENTS.md — meta-secret-compose
+# meta-secret-compose AI System (Codex)
 
-Unified automation entry for Claude Code, Cursor, and Codex CLI.
+You are operating inside the meta-secret-compose AI framework via Codex CLI.
 
-## Run Command
+## Mandatory startup sequence:
 
-- `run issue 123`
-- `run issue "my custom task"`
-- `run issue 123 --from stage-4`
+1. Read `.ai/INDEX.md`
+2. Read `.ai/ORCHESTRATOR.md`
+3. Follow command routing rules from ORCHESTRATOR
+4. Load only files required for the current task
+5. Do not load the entire framework unless explicitly required
 
-## Single Source of Truth
+## Command execution:
 
-- Brain: `.ai/WORKFLOW.md`
-- Detailed contracts: `.ai/PIPELINE.md`
-- Agent definitions: `.ai/agents/`
+- Commands are defined in `.ai/commands/`
+- Flows are defined in `.ai/flows/`
+- Agents are defined in `.ai/agents/`
+- Rules are defined in `.ai/rules/`
+- Skills are defined in `.ai/skills/`
 
-IDE entrypoints must delegate to `.ai/WORKFLOW.md` and must not duplicate stage logic.
+## Behavior:
 
-## 9-Stage Automatic Flow
+- Follow the active flow strictly
+- Do not skip stages
+- Do not invent requirements
+- Respect architecture and design-system rules
+- Prefer deterministic execution
+- Do not edit Rust sources (consume via FFI only from meta-secret-core)
 
-1. Issue Intake + optional Figma analysis
-2. Planning
-3. Implementation split (Logic + UI)
-4. Build (no tests, max 10 minutes)
-5. Code Review
-6. Design Review (only when Figma link exists; can run in parallel with stage 5)
-7. Test Authoring
-8. Test Run
-9. Branch + Commit + PR
+## Agent output conventions
 
-## Required Stage Logs
+Applies to **Codex CLI**:
 
-Each stage must print exact lines:
+1. **Activity logging:** Log each significant action to make progress visible:
+   - `📖 Reading <filename>` — when opening architecture files (CLAUDE.md, AGENTS.md, .ai/*, .claude/*, .cursor/*, .codex/*)
+   - `⚙️ Running <command>` — when executing shell commands, build commands, or AI orchestration commands
+   - `🤖 Invoking <agent-name>` — when delegating work to a sub-agent
+   - `🛠️ Using <skill-name> skill` — when applying a skill
+   - `✏️ Editing <filename>` — when modifying a file
+   - `💾 Writing <filename>` — when creating a file
 
-- `Start stage <n>: <name>`
-- `Stage <n>: <name> completed`
+2. **Emojis:** Use emojis consistently in terminal and text outputs — at least one per major section or bullet group (status, warnings, steps, results).
 
-## Artifacts
+3. **Visual separation:** Use markdown formatting (**`##` headings**, **bold**, **list items**) to structure the output to be human-readable.
 
-Directory:
-- `.ai/artifacts/run/`
+## Project Context:
 
-Naming:
-- `MS-<run-id>-<stage-number>-<stage-name>.md`
-- Retry suffix: `-retry-1`, `-retry-2`
+- **Language:** Kotlin
+- **Platforms:** iOS (SwiftUI) + Android (Jetpack Compose)
+- **Architecture:** MVVM + Coordinator
+- **FFI:** UniFFI to meta-secret-core Rust library
 
-Examples:
-- `MS-123-001-understanding.md`
-- `MS-123-004-build.md`
-- `MS-123-005-review-retry-1.md`
+## If a command is not recognized:
 
-## Required Output Templates
+- Consult `.ai/commands/`
+- Consult `.ai/ORCHESTRATOR.md`
 
-- Stage 1: `.ai/artifacts/issue-analysis-template.md`
-- Stage 2: `.ai/artifacts/implementation-plan-template.md`
-- Stage 4: `.ai/artifacts/build-report-template.md`
-- Stage 5: `.ai/artifacts/review-report-template.md`
-- Stage 6: `.ai/artifacts/design-review-report-template.md`
-- Stage 8: `.ai/artifacts/test-report-template.md`
+---
 
-## Automatic Recovery Rules
-
-If stage fails at Build, Code Review, Design Review, or Test Run:
-
-1. Take failed stage artifact as mandatory input
-2. Return to Stage 2 (Planning)
-3. Re-run stages from Stage 3 onward
-4. Maximum retries: 2
-5. If still failing: stop and ask user
-
-## Figma Rules
-
-- If issue contains Figma link, run Figma analysis through MCP in Stage 1.
-- Planning, UI implementation, and design review must use that context.
-- If Figma MCP fails, continue with warning in artifact.
-
-## Branch Rules
-
-For issue-based runs:
-- `{Prefix}/kuklin/MS-{issueNumber}`
-- Prefix from issue title tags: `Task`, `Feature`, `Bug` (default `Task`)
-
-For custom text runs:
-- `Task/kuklin/MS-<run-id>`
-
-## Status
-
-- Last updated: 2026-04-22
-- Workflow status: Active
+The AI framework located in `.ai/` is the source of truth.

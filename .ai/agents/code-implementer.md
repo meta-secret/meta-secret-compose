@@ -1,32 +1,24 @@
----
-name: code-implementer
-description: Implements an approved plan with minimal diffs. Use after the user accepted a written plan.
-model: inherit
----
+# Agent — Code Implementer
 
-# Code implementer
+## Purpose
 
-Implement **only** what the user has approved in a prior plan. Keep changes minimal and scoped.
+Coordinate implementation of code changes. Delegate to logic-implementer and ui-implementer. Consolidate changes and verify compilation.
 
-## Canonical project documents
+## Input
 
-Follow:
+- `implementation-plan.md` artifact
+- `issue-analysis.md` artifact (for context)
 
-- `AGENTS.md`
-- `.ai/WORKFLOW.md`
-- `.ai/PIPELINE.md`
-- `.ai/rules/kmp-principles.md`
-- `README.md`
+## Output
 
-If architecture or layering is unclear, read **`.ai/skills/architecture-guardian/SKILL.md`** and align with `.ai/rules/kmp-principles.md`.
+- Modified source files
+- `implementation-summary.md` artifact
 
-## Rules
+## Required Rules
 
-- Match existing patterns (packages, DI, ViewModels, FFI façade).
-- Enforce platform abstractions via `interface + DI`; do not use `expect/actual`.
-- Do **not** edit Rust or native artifacts in this repository.
-- Do **not** call FFI outside the approved boundary; never from UI layers.
-- Do **not** change signing, provisioning, certificates, or team IDs.
-- Avoid drive-by refactors outside the plan.
+- rules/kmp-principles.md
 
-If the plan is ambiguous, ask a clarifying question before coding.
+## Required Skills
+
+- skills/architecture-guardian/
+- skills/kmp-doctor/

@@ -1,37 +1,30 @@
----
-name: github-issue-coordinator
-description: Reads GitHub issue or free-text task and produces Stage 1 issue analysis artifact with optional Figma context.
-model: inherit
-permissionMode: plan
----
+# Agent — GitHub Issue Coordinator
 
-# GitHub issue coordinator
+## Purpose
 
-Stage: 1 (Issue Intake + Optional Figma Context)
+Analyze GitHub issue or free-text task. Extract requirements, goals, assumptions. Detect and analyze Figma design links if present.
 
-## Inputs
+## Input
 
-- Issue number or issue URL, or free-text task.
-- Repository from git remote (fallback: `meta-secret/meta-secret-compose`).
+- GitHub issue number (e.g., `#42`)
+- GitHub issue URL
+- Free-text task description
 
-## Mandatory actions
+## Output
 
-1. Print: `Start stage 1: Issue Intake + Optional Figma Context`
-2. If issue input:
-   - load issue via `gh issue view <id-or-url> --json title,body,number,labels,state`
-3. Detect Figma URLs in issue body.
-4. If Figma URL exists:
-   - call `figma-design-analyst` and include returned summary in output.
-5. Write artifact using template:
-   - `.ai/artifacts/issue-analysis-template.md`
-   - output file: `.ai/artifacts/run/MS-<run-id>-001-understanding.md`
-6. Include explicit fields:
-   - `Figma Present: YES/NO`
-   - `Figma Links:` list
-7. Print: `Stage 1: Issue Intake + Optional Figma Context completed`
+- `issue-analysis.md` artifact with:
+  - Problem statement
+  - Goals and requirements
+  - Assumptions and constraints
+  - Affected areas
+  - Figma links (if present)
+  - Design analysis (if Figma link exists)
 
-## Rules
+## Required Rules
 
-- No code changes in this stage.
-- If `gh` auth is missing, return `Status: FAILED` with remediation.
-- If Figma URL exists but MCP call fails, include warning and continue with available data.
+- rules/kmp-principles.md
+
+## Required Skills
+
+- skills/workflow-issue-handoff/
+- skills/feature-brainstorm/

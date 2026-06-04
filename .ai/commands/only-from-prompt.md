@@ -1,25 +1,28 @@
----
-description: Start delivery from a manual feature/bug description — task brief then plan; no GitHub issue required.
----
+# Command — From Prompt
 
-# Only from prompt
+## Trigger
 
-Arguments: free-text task description. Example: `/only-from-prompt Fix crash when opening vault on Android`
+```
+only-from-prompt "<description>"
+```
 
-1. Apply skill **workflow-manual-task-brief** (`.claude/skills/workflow-manual-task-brief/`) and fill **manual-task-brief-template.md** from the user text.
-2. **Stop.** Wait for user approval of the task brief (edit if needed).
-3. Run **feature-planner** with the approved brief as input.
-4. Continue the pipeline per [WORKFLOW.md](../WORKFLOW.md) after plan approval.
+## Purpose
 
-## Next steps — pick a command
+Start workflow from manual feature/bug description without GitHub issue.
 
-- If workspace root is **MetaSecret**, use **`/compose-only-*`**; if only **meta-secret-compose**, use **`/only-*`**.
+## Flow
 
-| Slash (MetaSecret) | Slash (repo only) | What it does |
-|--------------------|-------------------|--------------|
-| `/compose-only-planner` | `/only-planner` | Re-plan or refine if the brief was wrong |
-| `/compose-only-implementer` | `/only-implementer` | After plan approval |
+1. Apply **workflow-manual-task-brief** skill
+2. Generate task brief from description
+3. Get user approval
+4. Execute **feature-planner** with approved brief
+5. Continue with normal workflow
 
-Typical path after brief approval: **`/compose-only-planner`** (MetaSecret) or **`/only-planner`** (repo root) with the approved brief.
+## Expected Input
 
-See [WORKFLOW.md](../WORKFLOW.md).
+- Free-text task description (e.g., "Fix crash when opening vault on Android")
+
+## Output
+
+- Task brief artifact
+- Implementation plan artifact

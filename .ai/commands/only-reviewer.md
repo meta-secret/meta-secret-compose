@@ -1,36 +1,27 @@
----
-description: Run code-reviewer only — Plan mode, formatted review, next-step hints.
----
+# Command — Reviewer
 
-# Only reviewer
+## Trigger
 
-Arguments: optional scope (files, or “review last changes”). Example: `/only-reviewer`
+```
+only-reviewer <payload>
+```
 
-Delegate to subagent **code-reviewer** with input: `$ARGUMENTS`
+## Purpose
 
-## Session mode
+Review implementation for architecture, style, and best practices.
 
-- **Use Plan mode** — review is **read-only** (no edits from this subagent).
-- **Pause:** After the review, **stop** and wait for the user to **accept**, **dispute**, or **prioritize** findings before suggesting or applying fixes elsewhere.
+## Flow
 
-## Presentation (required)
+Executes **code-reviewer** agent:
+- Reviews code changes
+- Checks against architecture rules
+- Checks against KMP best practices
+- Provides feedback and recommendations
 
-When presenting the review:
+## Expected Input
 
-1. Use **Markdown** — group by severity (must-fix vs nice-to-have) with **emoji** (examples: stop for blockers, warning for important, sparkles for optional).
-2. **Bold** file:line references; use bullet lists; keep excerpts in **fenced code blocks** when quoting code.
-3. End with a **short summary** paragraph (overall verdict).
+- Implementation changes (staged or committed)
 
-## Next steps — pick a command
+## Output
 
-- If workspace root is **MetaSecret**, use **`/compose-only-*`**; if only **meta-secret-compose**, use **`/only-*`**.
-
-| Slash (MetaSecret) | Slash (repo only) | What it does |
-|--------------------|-------------------|--------------|
-| `/compose-only-implementer` | `/only-implementer` | Address must-fix review items |
-| `/compose-only-planner` | `/only-planner` | Rework plan if architecture must change |
-| `/compose-only-test-verifier` | `/only-test-verifier` | Re-run tests after fixes |
-
-Typical next step if there are must-fix items: **`/compose-only-implementer`** (MetaSecret) or **`/only-implementer`** (repo root).
-
-See [WORKFLOW.md](../WORKFLOW.md).
+- Code review report with findings and recommendations

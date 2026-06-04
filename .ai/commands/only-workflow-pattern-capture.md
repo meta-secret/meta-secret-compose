@@ -1,37 +1,28 @@
----
-description: Run workflow-pattern-capture only — Plan mode, formatted proposals, next-step hints.
----
+# Command — Workflow Pattern Capture
 
-# Only workflow pattern capture
+## Trigger
 
-Arguments: context (e.g. repeated review feedback, error class, or “after large feature X”). Example: `/only-workflow-pattern-capture Same FFI boundary mistake in last 3 reviews`
+```
+only-workflow-pattern-capture <payload>
+```
 
-Delegate to subagent **workflow-pattern-capture** with input: `$ARGUMENTS`
+## Purpose
 
-Use skill **workflow-pattern-capture** for triggers and output shape. See [WORKFLOW.md](../WORKFLOW.md).
+Capture and document workflow patterns for future reuse.
 
-## Session mode
+## Flow
 
-- **Use Plan mode** — default output is **0–2 text proposals** (skill/command/rule); **no repo writes** unless the user explicitly asks to apply a change in this turn.
-- **Pause:** If proposals need product/owner buy-in, **stop** and wait for the user before implementing anything.
+Executes **workflow-pattern-capture** agent:
+- Analyzes repeated patterns
+- Documents learnings
+- Proposes new skills/commands/rules
+- Uses **workflow-pattern-capture** skill
 
-## Presentation (required)
+## Expected Input
 
-When presenting results:
+- Context (e.g., repeated issues, error patterns, or workflow observations)
 
-1. Use **Markdown** with **emoji section headers** (examples: sparkles for proposals, no-entry if “no change”).
-2. List **triggers** satisfied; cap output at **0–2** concrete proposals per the skill.
-3. If **No changes recommended**, state that in **one clear line** with a brief reason.
+## Output
 
-## Next steps — pick a command
-
-- If workspace root is **MetaSecret**, use **`/compose-only-*`**; if only **meta-secret-compose**, use **`/only-*`**.
-
-| Slash (MetaSecret) | Slash (repo only) | What it does |
-|--------------------|-------------------|--------------|
-| `/compose-only-planner` | `/only-planner` | If a proposal requires a feature plan |
-| `/compose-only-implementer` | `/only-implementer` | If user approved a small concrete edit |
-
-Often this command is a **terminal** optional step — return to normal delivery only if a proposal was accepted.
-
-See [WORKFLOW.md](../WORKFLOW.md).
+- Pattern analysis artifact
+- Proposed skills, commands, or rules

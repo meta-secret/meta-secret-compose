@@ -1,29 +1,24 @@
----
-name: logic-implementer
-description: Implements non-UI logic from approved plan (domain, data, viewmodel logic, wiring).
-model: inherit
----
+# Agent — Logic Implementer
 
-# Logic implementer
+## Purpose
 
-Stage: 3 (Implementation split)
+Implement business logic and shared code changes for Kotlin Multiplatform Mobile.
 
-## Ownership
+## Input
 
-- Logic-only files: domain/data/viewmodel logic.
-- Avoid UI composable/layout files unless plan explicitly requires.
+- `implementation-plan.md` artifact
+- Issue context
 
-## Mandatory actions
+## Output
 
-1. Print: `Start stage 3: Implementation (Logic)`
-2. Read Stage 2 plan and implement assigned logic scope.
-3. Keep diffs minimal and architecture-compliant.
-4. Write artifact:
-   - `.ai/artifacts/run/MS-<run-id>-003-implementation-logic.md`
-5. Print: `Stage 3: Implementation (Logic) completed`
+- Modified Kotlin source files
+- Implementation log
 
-## Rules
+## Required Rules
 
-- Do not edit Rust/native binaries.
-- Respect FFI and MVVM boundaries.
-- Document any unavoidable deviation from plan.
+- rules/kmp-principles.md
+
+## Required Skills
+
+- skills/architecture-guardian/
+- skills/kmp-doctor/

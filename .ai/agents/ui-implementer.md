@@ -1,29 +1,25 @@
----
-name: ui-implementer
-description: Implements UI layer from approved plan and Figma constraints when available.
-model: inherit
----
+# Agent — UI Implementer
 
-# UI implementer
+## Purpose
 
-Stage: 3 (Implementation split)
+Implement UI changes for iOS (SwiftUI) and Android (Jetpack Compose) platforms.
 
-## Ownership
+## Input
 
-- UI files only: composables/views/styles/navigation wiring.
-- Consume existing logic APIs; do not reimplement business logic.
+- `implementation-plan.md` artifact
+- `design-analysis.md` artifact (if Figma present)
+- Issue context
 
-## Mandatory actions
+## Output
 
-1. Print: `Start stage 3: Implementation (UI)`
-2. Read Stage 2 plan and Stage 1 Figma context when present.
-3. Implement UI according to design and architecture rules.
-4. Write artifact:
-   - `.ai/artifacts/run/MS-<run-id>-003-implementation-ui.md`
-5. Print: `Stage 3: Implementation (UI) completed`
+- Modified iOS/Android UI source files
+- Implementation log
 
-## Rules
+## Required Rules
 
-- Do not hardcode design tokens when DS tokens exist.
-- Keep layout structure aligned with Figma hierarchy.
-- Document any design deviations with reason.
+- rules/kmp-principles.md
+
+## Required Skills
+
+- skills/architecture-guardian/
+- skills/ios-device-doctor/

@@ -1,145 +1,63 @@
-# CLAUDE.md — meta-secret-compose
+# meta-secret-compose AI System
 
-> Entry point for Claude Code.
-> Automated 9-stage workflow: GitHub Issue → PR
+You are operating inside the meta-secret-compose AI framework.
 
----
+## Mandatory startup sequence:
 
-## 🚀 Quick Start
+1. Read `.ai/INDEX.md`
+2. Read `.ai/ORCHESTRATOR.md`
+3. Follow command routing rules from ORCHESTRATOR
+4. Load only files required for the current task
+5. Do not load the entire framework unless explicitly required
 
-```bash
-/run issue 123                # Full pipeline
-/run issue 123 --from stage-6 # Resume from stage 6
-/run issue "my custom task"   # Use text instead of issue
-```
+## Command execution:
 
----
+- Commands are defined in `.ai/commands/`
+- Flows are defined in `.ai/flows/`
+- Agents are defined in `.ai/agents/`
+- Rules are defined in `.ai/rules/`
+- Skills are defined in `.ai/skills/`
 
-## 📋 What It Does
+## Behavior:
 
-Executes complete workflow automatically:
+- Follow the active flow strictly
+- Do not skip stages
+- Do not invent requirements
+- Respect architecture and design-system rules
+- Prefer deterministic execution
+- Do not edit Rust sources (consume via FFI only from meta-secret-core)
 
-1. **Understanding** — Read issue/prompt
-2. **Planning** — Create implementation plan
-3. **Implementation** — Write code
-4. **Testing** — Write tests
-5. **Build** — Compile (auto-retry on failure)
-6. **Test Run** — Execute tests (auto-retry on failure)
-7. **Code Review** — Review changes (auto-retry on failure)
-8. **Commit** — Git commit + push
-9. **PR** — Create pull request
+## Agent output conventions
 
-**All artifacts:** `.ai/artifacts/run/MS-<timestamp>-<stage>-<name>.md`
+Applies to **Claude Code** and its automated sub-steps (planners, implementers, reviewers):
 
----
+1. **Activity logging:** Log each significant action to make progress visible:
+   - `📖 Reading <filename>` — when opening architecture files (CLAUDE.md, AGENTS.md, .ai/*, .claude/*, .cursor/*, .codex/*)
+   - `⚙️ Running <command>` — when executing shell commands, build commands, or AI orchestration commands
+   - `🤖 Invoking <agent-name>` — when delegating work to a sub-agent
+   - `🛠️ Using <skill-name> skill` — when applying a skill
+   - `✏️ Editing <filename>` — when modifying a file
+   - `💾 Writing <filename>` — when creating a file
 
-## 📖 Read First
+2. **Emojis:** Use emojis consistently in replies — at least one per major section or bullet group (status, warnings, steps, results).
 
-1. **AGENTS.md** — Overview of workflow
-2. **.ai/WORKFLOW.md** — Orchestration details
-3. **.ai/PIPELINE.md** — Stage-by-stage specifications
-4. **.ai/rules/kmp-principles.md** — Architecture rules
+3. **Visual separation:** Plain markdown has no universal text color; you must still **visually separate** content so readers can scan quickly:
+   - Use **`##` / `###` headings** with emojis in the title line.
+   - Use **bold** for role labels and key terms.
+   - Use **blockquotes** (`>`) for caveats or notes.
 
----
+## Project Context:
 
-## 🔗 Where Things Live
-
-| What | Where |
-|------|-------|
-| Workflow orchestration | `.ai/WORKFLOW.md` |
-| Stage specifications | `.ai/PIPELINE.md` |
-| Claude Code execution | `.claude/ORCHESTRATE.md` |
-| Agents (10 total) | `.ai/agents/<name>.md` |
-| Architecture rules | `.ai/rules/` |
-| Skills (helpers) | `.ai/skills/*/SKILL.md` |
-| Generated artifacts | `.ai/artifacts/run/` |
-
----
-
-## 🎨 Terminal Output
-
-Each stage prints colored ANSI output:
-
-```
-🟢 Starting Stage 3: Implementation
-🟡 Implementing... (in progress)
-✅ Stage 3 completed successfully
-```
-
-**On failure:**
-```
-❌ Stage 5: Build failed
-Reason: Compilation error in xyz.kt
-Next: run issue 123 --from stage-2 (to replan)
-```
-
----
-
-## 🔄 Auto-Retry Logic
-
-| Stage | Fails? | Retry? | Max |
-|-------|--------|--------|-----|
-| Build (5) | ✓ | Debug/RCA → Replan | 2 |
-| Test Run (6) | ✓ | Replan | 2 |
-| Code Review (7) | ✓ | Replan | 2 |
-
-**Other stages:** No retry (stop on failure)
-
----
-
-## ⚡ Advanced
-
-### Resume From Specific Stage
-
-If stage 6 fails:
-```bash
-/run issue 123 --from stage-2
-```
-
-Skips stages 1-5 (already done).  
-All prior artifacts read automatically.
-
-### Check Artifacts
-
-```bash
-cat .ai/artifacts/run/MS-<timestamp>-001-understanding.md
-cat .ai/artifacts/run/MS-<timestamp>-005-build.md
-```
-
-### Debug Failed Build
-
-```bash
-cat .ai/artifacts/run/MS-<timestamp>-005-build-rca-retry-1.md
-```
-
-RCA analysis explains root cause.
-
----
-
-## 🎯 Project Context
-
-- **Type:** KMM (Kotlin Multiplatform Mobile)
+- **Language:** Kotlin
 - **Platforms:** iOS (SwiftUI) + Android (Jetpack Compose)
 - **Architecture:** MVVM + Coordinator
-- **Build:** Gradle + KMM plugin
-- **FFI:** UniFFI for Rust integration
+- **FFI:** UniFFI to meta-secret-core Rust library
+
+## If a command is not recognized:
+
+- Consult `.ai/commands/`
+- Consult `.ai/ORCHESTRATOR.md`
 
 ---
 
-## ✅ Before Running
-
-- [ ] You're on `main` branch
-- [ ] Working tree is clean
-- [ ] GitHub issue exists (or use text)
-- [ ] `gh` CLI is available (for fetching issues)
-
----
-
-## 📚 More Info
-
-See **AGENTS.md** for complete system overview.
-
----
-
-**Status:** Production-ready  
-**Last updated:** 2026-04-20
+The AI framework located in `.ai/` is the source of truth.

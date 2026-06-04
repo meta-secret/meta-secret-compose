@@ -1,38 +1,29 @@
----
-description: Run feature-planner only — Plan mode, formatted plan output, next-step hints.
----
+# Command — Planner
 
-# Only planner
+## Trigger
 
-Arguments: context for the plan (issue Summary, task brief, or user notes). Example: `/only-planner <paste context>`
+```
+only-planner <payload>
+```
 
-Delegate to subagent **feature-planner** with input: `$ARGUMENTS`
+## Purpose
 
-Use skill **workflow-plan-output** for expected plan shape. See [WORKFLOW.md](../WORKFLOW.md).
+Create detailed implementation plan from issue analysis.
 
-## Session mode
+## Flow
 
-- **Use Plan mode** for this session (no repo writes from the planner subagent).
-- **Pause:** After you output the plan, **stop** and wait for the user to **approve, edit, or reject** the plan before any implementation.
+Executes **feature-planner** agent:
+- Reads issue analysis artifact
+- Reads design analysis (if Figma present)
+- Creates file-level execution plan
+- Documents risks and edge cases
+- Aligns with architecture rules
 
-## Presentation (required)
+## Expected Input
 
-When presenting the plan to the user:
+- `issue-analysis.md` artifact
+- `design-analysis.md` artifact (if Figma)
 
-1. Use **Markdown** — `##` / `###` headings, **bold** for goals, constraints, and decisions.
-2. Add **emoji section labels** for scanability (examples: target for scope, memo for approach, warning for risks, checklist for steps).
-3. Keep the plan **actionable** and aligned with **workflow-plan-output**; avoid dumping raw file trees unless needed.
+## Output
 
-## Next steps — pick a command
-
-- If workspace root is **MetaSecret**, use **`/compose-only-*`**; if only **meta-secret-compose**, use **`/only-*`**.
-
-| Slash (MetaSecret) | Slash (repo only) | What it does |
-|--------------------|-------------------|--------------|
-| `/compose-only-implementer` | `/only-implementer` | Apply the **approved** plan in code |
-| `/compose-only-reviewer` | `/only-reviewer` | Review a change set before merge |
-| `/compose-only-debug-rca` | `/only-debug-rca` | If requirements are unclear or blocked by an error |
-
-Typical next step after plan approval: **`/compose-only-implementer`** (MetaSecret) or **`/only-implementer`** (repo root).
-
-See [WORKFLOW.md](../WORKFLOW.md).
+- `implementation-plan.md` artifact with detailed steps and considerations

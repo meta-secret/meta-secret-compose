@@ -1,27 +1,66 @@
 ---
-description: List meta-secret-compose slash commands (read-only, formatted); never edit code or project files.
+description: Display available commands with descriptions
 ---
 
-# Help — meta-secret-compose AI slash commands
+# Help
 
-**Arguments:** `$ARGUMENTS` (optional filter keywords to narrow sections).
+## 🚀 Full Workflow
 
-## Read-only scope (Ask-style)
+**`run <payload>`**  
+Execute complete 9-stage automated workflow.
 
-Treat this command like **Ask mode**: **informational only**.
+**`run <payload> --from stage-<n>`**  
+Resume workflow from specific stage (for retries/debugging).
 
-- **Do not** modify, create, delete, or refactor any source files, configs, or project assets.
-- **Do not** run builds, tests, installs, formatters, or git write operations as part of this command.
-- **Allowed:** read **`.claude/commands/README.md`** in this repository (same directory as this file). That file is the **single source of truth** for the catalog.
+Where `<payload>`:
+- Issue number (e.g., `#42`)
+- Issue URL
+- Free-text task description
 
-## Instructions for the assistant
+---
 
-1. Read **`.claude/commands/README.md`** at `meta-secret-compose/.claude/commands/README.md`.
+## 📋 Individual Stages
 
-2. Reply with **Markdown**: clear **`##` / `###` headings**, **tables** for slash commands, **bold** slash names (e.g. **`/only-planner`**). Use **emoji section labels** for grouping (consistent with the MetaSecret root `CLAUDE.md` agent output conventions when this repo sits under the MetaSecret workspace).
+**`only-issue-coordinator <payload>`**  
+Stage 1: Analyze GitHub issue or task description. Detect Figma links.
 
-3. Reproduce the **Description** and **Action** columns from the README; do not substitute bare “delegates to …” file paths for those columns.
+**`only-planner <payload>`**  
+Stage 2: Create detailed implementation plan from issue analysis.
 
-4. Mention that **`/help`** in this repo reads **this** README; the MetaSecret parent workspace has a separate catalog with `/compose-*` prefixes if the user uses that layout.
+**`only-implementer <payload>`**  
+Stage 3: Implement code changes (Logic + UI).
 
-5. Do **not** invent commands not listed in the README.
+**`only-reviewer <payload>`**  
+Stage 5: Code review of implementation.
+
+**`only-test-author <payload>`**  
+Stage 7: Write test cases.
+
+**`only-test-verifier <payload>`**  
+Stage 8: Execute tests and verify results.
+
+**`only-release-manager <payload>`**  
+Stage 9: Create branch, commit, and pull request.
+
+---
+
+## 🛠️ Utilities
+
+**`only-from-prompt "<description>"`**  
+Start workflow from manual feature/bug description (no GitHub issue needed).
+
+**`only-debug-rca <failed-artifact>`**  
+Analyze failed workflow artifact and generate root cause analysis.
+
+**`only-release-notes <payload>`**  
+Generate release notes from implementation.
+
+**`only-workflow-pattern-capture <payload>`**  
+Capture and document workflow patterns for future reuse.
+
+---
+
+## 📖 Documentation
+
+See `.ai/WORKFLOW.md` for complete 9-stage workflow specification.  
+See `.ai/ORCHESTRATOR.md` for command routing details.

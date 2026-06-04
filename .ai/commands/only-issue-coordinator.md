@@ -1,35 +1,30 @@
----
-description: Run github-issue-coordinator only — Plan mode, formatted Summary, next-step hints (GitHub / gh).
----
+# Command — Issue Coordinator
 
-# Only issue coordinator
+## Trigger
 
-Arguments: GitHub issue number or URL. Example: `/only-issue-coordinator 42`
+```
+only-issue-coordinator <payload>
+```
 
-Delegate to subagent **github-issue-coordinator** with input: `$ARGUMENTS`
+## Purpose
 
-Use skill **workflow-issue-handoff** to format the **Summary** for the planner.
+Analyze GitHub issue or task description. Detect and extract Figma design links if present.
 
-## Session mode
+## Flow
 
-- **Use Plan mode** — fetch and summarize **only**; no implementation; no git writes (see agent).
-- **Pause:** Present the **Summary** and wait for user **approval** before planning or coding.
+Executes **github-issue-coordinator** agent:
+- Reads GitHub issue (or free-text task)
+- Extracts: problem, goals, requirements, assumptions
+- Detects Figma links
+- Produces issue analysis artifact
 
-## Presentation (required)
+## Expected Input
 
-When presenting the GitHub issue Summary:
+- GitHub issue number (e.g., `#42`)
+- GitHub issue URL
+- Free-text task description
 
-1. Use **Markdown** with **emoji section labels** (ticket, memo, checkmark, warning as appropriate).
-2. **Bold** issue id and title; bullets for labels and acceptance.
+## Output
 
-## Next steps — pick a command
-
-- If workspace root is **MetaSecret**, use **`/compose-only-*`**; if only **meta-secret-compose**, use **`/only-*`**.
-
-| Slash (MetaSecret) | Slash (repo only) | What it does |
-|--------------------|-------------------|--------------|
-| `/compose-only-planner` | `/only-planner` | Plan from the approved Summary |
-
-Typical next step: **`/compose-only-planner`** (MetaSecret) or **`/only-planner`** (repo root) with the approved Summary text.
-
-See [WORKFLOW.md](../WORKFLOW.md).
+- `issue-analysis.md` artifact with structured issue summary
+- Figma present: YES/NO indicator
