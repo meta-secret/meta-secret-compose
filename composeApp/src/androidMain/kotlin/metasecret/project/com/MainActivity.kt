@@ -1,5 +1,6 @@
 package metasecret.project.com
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.window.OnBackInvokedDispatcher
@@ -11,6 +12,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.FragmentActivity
 import di.appModule
 import di.androidPlatformModule
+import core.email.AndroidAppleAuthGateway
+import core.email.AndroidEmailAuthEnvironment
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.loadKoinModules
@@ -66,6 +69,9 @@ class MainActivity : FragmentActivity() {
             loadedActivityModule = activityModule
         }
 
+        AndroidEmailAuthEnvironment.activity = this
+        AndroidAppleAuthGateway.handleRedirect(intent)
+
         val keyValueStorage: KeyValueStorageInterface = org.koin.java.KoinJavaComponent.getKoin().get()
         keyValueStorage.resetKeyValueStorage()
 
@@ -91,5 +97,17 @@ class MainActivity : FragmentActivity() {
         setContent {
             App()
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        AndroidAppleAuthGateway.handleRedirect(intent)
+    }
+
+    override fun onDestroy() {
+        if (AndroidEmailAuthEnvironment.activity === this) {
+            AndroidEmailAuthEnvironment.activity = null
+        }
+        super.onDestroy()
     }
 }

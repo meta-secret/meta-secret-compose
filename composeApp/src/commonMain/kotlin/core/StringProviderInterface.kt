@@ -24,10 +24,13 @@ interface StringProviderInterface {
     fun errorBiometricAuthFailed(): String
     fun errorSecretAddFailed(): String
     fun errorRecoverDeclined(): String
+
+    fun emailSelectionCouldNotGetEmail(): String
+    fun emailSelectionInvalidEmail(): String
+    fun emailSelectionPrivateRelayMessage(): String
     
     fun acceptRequestOnOtherDevice(): String
     fun nameOccupiedJoinPrompt(): String
     fun recoverPendingExists(): String
     fun recoverRequestSent(): String
 }
-

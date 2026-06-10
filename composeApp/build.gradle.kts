@@ -22,6 +22,10 @@ val rustlsPlatformVerifierAar: File? = fileTree("${System.getProperty("user.home
     .files
     .maxByOrNull { it.lastModified() }
 
+val googleClientId = providers.gradleProperty("GOOGLE_CLIENT_ID").orNull ?: ""
+val appleClientId = providers.gradleProperty("APPLE_CLIENT_ID").orNull ?: ""
+val appleRedirectUri = providers.gradleProperty("APPLE_REDIRECT_URI").orNull ?: "metasecret://apple-auth"
+
 kotlin {
     // BACKLOG(AGP 9+): migrate KMP + Android app to recommended multi-module layout —
     // https://kotl.in/kmp-project-structure-migration (see also ARCHITECTURE.md "KMP layout vs AGP 9+")
@@ -106,6 +110,10 @@ kotlin {
             implementation(libs.accompanist.pager.indicators)
             implementation(libs.androidx.core)
             implementation(libs.androidx.biometric)
+            implementation(libs.androidx.browser)
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.services.auth)
+            implementation(libs.googleid)
             implementation(libs.koin.android)
             implementation(libs.koin.android.compat)
             runtimeOnly(libs.androidx.ui)
@@ -181,6 +189,9 @@ android {
         versionName = "1.0.0"
 
         buildConfigField("String", "APP_VERSION", "\"${versionName}\"")
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"$googleClientId\"")
+        buildConfigField("String", "APPLE_CLIENT_ID", "\"$appleClientId\"")
+        buildConfigField("String", "APPLE_REDIRECT_URI", "\"$appleRedirectUri\"")
 
     }
     packaging {

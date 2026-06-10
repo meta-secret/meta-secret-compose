@@ -8,6 +8,13 @@ import core.LogTag
 import core.NotificationCoordinatorInterface
 import core.ScreenMetricsProviderInterface
 import core.StringProviderInterface
+import core.email.EmailProvider
+import core.email.EmailSelectionCoordinatorInterface
+import core.email.EmailSelectionPlatformConfig
+import core.email.EmailSelectionResult
+import core.email.isApplePrivateRelayEmail
+import core.email.isValidEmail
+import core.email.normalizeEmailInput
 import core.metaSecretCore.InitResult
 import core.metaSecretCore.MemberState
 import core.metaSecretCore.MetaSecretAppManagerInterface
@@ -42,6 +49,8 @@ class SignInScreenViewModel(
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val notificationCoordinator: NotificationCoordinatorInterface,
+    private val emailSelectionCoordinator: EmailSelectionCoordinatorInterface,
+    private val emailSelectionPlatformConfig: EmailSelectionPlatformConfig,
     private val stringProvider: StringProviderInterface,
 ) : CommonViewModel() {
 
@@ -51,11 +60,25 @@ class SignInScreenViewModel(
     private val _navigationEvent = MutableStateFlow(false)
     val navigationEvent: StateFlow<Boolean> = _navigationEvent
 
-    private val _nameText = MutableStateFlow("")
-    val nameText: StateFlow<String> = _nameText
+    private val _emailSelectionStep = MutableStateFlow(EmailSelectionStep.PROVIDER_OPTIONS)
+    val emailSelectionStep: StateFlow<EmailSelectionStep> = _emailSelectionStep
 
-    private val _isNameError = MutableStateFlow(false)
-    val isNameError: StateFlow<Boolean> = _isNameError
+    private val _selectedEmail = MutableStateFlow("")
+    val selectedEmail: StateFlow<String> = _selectedEmail
+
+    private val _manualEmail = MutableStateFlow("")
+    val manualEmail: StateFlow<String> = _manualEmail
+
+    private val _manualEmailError = MutableStateFlow<String?>(null)
+    val manualEmailError: StateFlow<String?> = _manualEmailError
+
+    private val _statusMessage = MutableStateFlow<String?>(null)
+    val statusMessage: StateFlow<String?> = _statusMessage
+
+    private val _selectedProvider = MutableStateFlow<EmailProvider?>(null)
+    val selectedProvider: StateFlow<EmailProvider?> = _selectedProvider
+
+    val providerOrder: List<EmailProvider> = emailSelectionPlatformConfig.providerOrder
 
     private val _showJoinDecision = MutableStateFlow(false)
     val showJoinDecision: StateFlow<Boolean> = _showJoinDecision
@@ -63,8 +86,8 @@ class SignInScreenViewModel(
     private val _showJoinPending = MutableStateFlow(false)
     val showJoinPending: StateFlow<Boolean> = _showJoinPending
 
-    private val _isNameInputLocked = MutableStateFlow(false)
-    val isNameInputLocked: StateFlow<Boolean> = _isNameInputLocked
+    private val _isEmailInputLocked = MutableStateFlow(false)
+    val isEmailInputLocked: StateFlow<Boolean> = _isEmailInputLocked
 
     private var currentState: SignInFlowState? by Delegates.observable(null) { _, _, _ ->
         viewModelScope.launch {
@@ -83,12 +106,27 @@ class SignInScreenViewModel(
     override fun handle(event: CommonViewModelEventsInterface) {
         if (event is SignInViewEvents) {
             when (event) {
-                is SignInViewEvents.StartSignInProcess -> {
-                    _nameText.value = event.name
-                    startSignInProcess()
+                is SignInViewEvents.SelectProvider -> {
+                    selectProvider(event.provider)
                 }
-                is SignInViewEvents.UpdateName -> {
-                    _nameText.value = event.name
+                SignInViewEvents.StartManualEntry -> {
+                    openManualEntry()
+                }
+                is SignInViewEvents.UpdateManualEmail -> {
+                    _manualEmail.value = event.email
+                    _manualEmailError.value = null
+                }
+                SignInViewEvents.SubmitManualEmail -> {
+                    submitManualEmail()
+                }
+                SignInViewEvents.ConfirmEmail -> {
+                    confirmSelectedEmail()
+                }
+                SignInViewEvents.RetryCurrent -> {
+                    retryCurrentSelection()
+                }
+                SignInViewEvents.BackToProviderOptions -> {
+                    backToProviderOptions()
                 }
                 SignInViewEvents.JoinExistingVault -> {
                     currentState = SignInFlowState.VAULT_AVAILABLE
@@ -143,7 +181,13 @@ class SignInScreenViewModel(
                 _isLoading.value = false
                 _showJoinDecision.value = false
                 _showJoinPending.value = false
-                _isNameInputLocked.value = false
+                _isEmailInputLocked.value = false
+                _selectedEmail.value = ""
+                _manualEmail.value = ""
+                _manualEmailError.value = null
+                _statusMessage.value = null
+                _selectedProvider.value = null
+                _emailSelectionStep.value = EmailSelectionStep.PROVIDER_OPTIONS
                 logger.log(LogTag.SignInVM.Message.WaitingForSignUp, success = true)
             }
             SignInFlowState.CHECKING_VAULT -> checkVaultState()
@@ -152,7 +196,9 @@ class SignInScreenViewModel(
                 _isLoading.value = false
                 _showJoinDecision.value = true
                 _showJoinPending.value = false
-                _isNameInputLocked.value = true
+                _isEmailInputLocked.value = true
+                _emailSelectionStep.value = EmailSelectionStep.CONFIRMATION
+                _statusMessage.value = null
                 showNotification(stringProvider.nameOccupiedJoinPrompt(), isError = false)
                 socketHandler.actionsToFollow(
                     add = null,
@@ -166,29 +212,180 @@ class SignInScreenViewModel(
                 _isLoading.value = false
                 _showJoinDecision.value = false
                 _showJoinPending.value = false
-                _isNameInputLocked.value = false
+                _isEmailInputLocked.value = false
+                _emailSelectionStep.value = EmailSelectionStep.ERROR
+                _statusMessage.value = stringProvider.errorInternal()
                 showNotification(message = stringProvider.errorInternal(), isError = true)
             }
             SignInFlowState.NONE, null -> {}
         }
     }
 
-    private fun startSignInProcess() {
-        _isNameError.value = false
-        _showJoinDecision.value = false
-        _showJoinPending.value = false
-        val name = _nameText.value
-        if (isValidName(name)) {
-            currentState = SignInFlowState.CHECKING_VAULT
-        } else {
-            _isNameError.value = true
+    private fun selectProvider(provider: EmailProvider) {
+        viewModelScope.launch {
+            _selectedProvider.value = provider
+            _selectedEmail.value = ""
+            _manualEmail.value = ""
+            _manualEmailError.value = null
+            _statusMessage.value = null
+            _emailSelectionStep.value = EmailSelectionStep.PROVIDER_OPTIONS
+            _isLoading.value = true
+
+            val result = runCatching {
+                emailSelectionCoordinator.selectEmail(provider)
+            }.getOrElse { throwable ->
+                EmailSelectionResult.Error(
+                    message = throwable.message ?: stringProvider.emailSelectionCouldNotGetEmail(),
+                    provider = provider,
+                    cause = throwable::class.simpleName,
+                )
+            }
+
+            _isLoading.value = false
+
+            when (result) {
+                is EmailSelectionResult.Success -> {
+                    val normalizedEmail = normalizeEmailInput(result.email)
+                    when {
+                        normalizedEmail.isBlank() || !isValidEmail(normalizedEmail) -> {
+                            setSelectionError(
+                                message = stringProvider.emailSelectionCouldNotGetEmail(),
+                                provider = provider,
+                            )
+                        }
+                        isApplePrivateRelayEmail(normalizedEmail) -> {
+                            setPrivateRelayState(normalizedEmail, provider)
+                        }
+                        else -> {
+                            _selectedProvider.value = result.provider
+                            _selectedEmail.value = normalizedEmail
+                            _statusMessage.value = null
+                            _manualEmailError.value = null
+                            _emailSelectionStep.value = EmailSelectionStep.CONFIRMATION
+                        }
+                    }
+                }
+                is EmailSelectionResult.PrivateRelay -> {
+                    val normalizedEmail = normalizeEmailInput(result.email)
+                    setPrivateRelayState(normalizedEmail, result.provider)
+                }
+                EmailSelectionResult.Cancelled -> {
+                    _statusMessage.value = null
+                    _emailSelectionStep.value = EmailSelectionStep.PROVIDER_OPTIONS
+                }
+                is EmailSelectionResult.Error -> {
+                    setSelectionError(
+                        message = result.message.ifBlank { stringProvider.emailSelectionCouldNotGetEmail() },
+                        provider = result.provider ?: provider,
+                    )
+                }
+            }
         }
     }
 
+    private fun openManualEntry() {
+        _manualEmailError.value = null
+        _statusMessage.value = null
+        _manualEmail.value = if (_emailSelectionStep.value == EmailSelectionStep.CONFIRMATION) {
+            _selectedEmail.value
+        } else {
+            ""
+        }
+        _selectedProvider.value = EmailProvider.MANUAL
+        _emailSelectionStep.value = EmailSelectionStep.MANUAL_ENTRY
+    }
+
+    private fun submitManualEmail() {
+        val normalizedEmail = normalizeEmailInput(_manualEmail.value)
+        when {
+            normalizedEmail.isBlank() || !isValidEmail(normalizedEmail) -> {
+                _manualEmailError.value = stringProvider.emailSelectionInvalidEmail()
+            }
+            isApplePrivateRelayEmail(normalizedEmail) -> {
+                setPrivateRelayState(normalizedEmail, EmailProvider.MANUAL)
+            }
+            else -> {
+                _selectedProvider.value = EmailProvider.MANUAL
+                _selectedEmail.value = normalizedEmail
+                _manualEmailError.value = null
+                _statusMessage.value = null
+                _emailSelectionStep.value = EmailSelectionStep.CONFIRMATION
+            }
+        }
+    }
+
+    private fun confirmSelectedEmail() {
+        val normalizedEmail = normalizeEmailInput(_selectedEmail.value)
+        when {
+            normalizedEmail.isBlank() || !isValidEmail(normalizedEmail) -> {
+                setSelectionError(
+                    message = stringProvider.emailSelectionCouldNotGetEmail(),
+                    provider = _selectedProvider.value,
+                )
+            }
+            isApplePrivateRelayEmail(normalizedEmail) -> {
+                setPrivateRelayState(normalizedEmail, _selectedProvider.value ?: EmailProvider.APPLE)
+            }
+            else -> {
+                _selectedEmail.value = normalizedEmail
+                _statusMessage.value = null
+                _manualEmailError.value = null
+                _emailSelectionStep.value = EmailSelectionStep.CONFIRMATION
+                currentState = SignInFlowState.CHECKING_VAULT
+            }
+        }
+    }
+
+    private fun retryCurrentSelection() {
+        val normalizedEmail = normalizeEmailInput(_selectedEmail.value)
+        if (normalizedEmail.isNotBlank() && isValidEmail(normalizedEmail) && !isApplePrivateRelayEmail(normalizedEmail)) {
+            confirmSelectedEmail()
+            return
+        }
+
+        val provider = _selectedProvider.value
+        if (provider != null && provider != EmailProvider.MANUAL) {
+            selectProvider(provider)
+        } else {
+            backToProviderOptions()
+        }
+    }
+
+    private fun backToProviderOptions() {
+        _isLoading.value = false
+        _showJoinDecision.value = false
+        _showJoinPending.value = false
+        _isEmailInputLocked.value = false
+        _manualEmailError.value = null
+        _statusMessage.value = null
+        _manualEmail.value = ""
+        _emailSelectionStep.value = EmailSelectionStep.PROVIDER_OPTIONS
+        if (_selectedProvider.value != EmailProvider.MANUAL) {
+            _selectedProvider.value = null
+        }
+    }
+
+    private fun setSelectionError(message: String, provider: EmailProvider?) {
+        _selectedProvider.value = provider
+        _statusMessage.value = message
+        _manualEmailError.value = null
+        _emailSelectionStep.value = EmailSelectionStep.ERROR
+    }
+
+    private fun setPrivateRelayState(email: String, provider: EmailProvider) {
+        _selectedProvider.value = provider
+        _selectedEmail.value = normalizeEmailInput(email)
+        _manualEmailError.value = null
+        _statusMessage.value = stringProvider.emailSelectionPrivateRelayMessage()
+        _emailSelectionStep.value = EmailSelectionStep.PRIVATE_RELAY
+    }
+
     private suspend fun checkVaultState() {
-        val vaultName = _nameText.value
-        if (vaultName.isBlank()) {
-            _isNameError.value = true
+        val vaultName = normalizeEmailInput(_selectedEmail.value)
+        if (vaultName.isBlank() || !isValidEmail(vaultName)) {
+            _manualEmailError.value = stringProvider.emailSelectionInvalidEmail()
+            _statusMessage.value = stringProvider.emailSelectionCouldNotGetEmail()
+            _emailSelectionStep.value = EmailSelectionStep.ERROR
             currentState = SignInFlowState.IDLE
             return
         }
@@ -196,7 +393,7 @@ class SignInScreenViewModel(
         _isLoading.value = true
         _showJoinDecision.value = false
         _showJoinPending.value = false
-        _isNameInputLocked.value = true
+        _isEmailInputLocked.value = true
 
         if (!generateMasterKey()) {
             currentState = SignInFlowState.FAILED
@@ -221,7 +418,7 @@ class SignInScreenViewModel(
         _isLoading.value = true
         _showJoinDecision.value = false
         _showJoinPending.value = false
-        _isNameInputLocked.value = true
+        _isEmailInputLocked.value = true
 
         try {
             val signUpResult = metaSecretStateResolver.continueSignUp()
@@ -246,7 +443,7 @@ class SignInScreenViewModel(
         _isLoading.value = false
         _showJoinDecision.value = false
         _showJoinPending.value = true
-        _isNameInputLocked.value = true
+        _isEmailInputLocked.value = true
         showNotification(stringProvider.acceptRequestOnOtherDevice(), isError = false)
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE),
@@ -266,9 +463,13 @@ class SignInScreenViewModel(
         )
         _showJoinDecision.value = false
         _showJoinPending.value = false
-        _isNameInputLocked.value = false
-        _isNameError.value = false
-        _nameText.value = ""
+        _isEmailInputLocked.value = false
+        _manualEmailError.value = null
+        _statusMessage.value = null
+        _selectedEmail.value = ""
+        _manualEmail.value = ""
+        _selectedProvider.value = null
+        _emailSelectionStep.value = EmailSelectionStep.PROVIDER_OPTIONS
         currentState = SignInFlowState.IDLE
     }
 
@@ -278,11 +479,6 @@ class SignInScreenViewModel(
         } else {
             notificationCoordinator.showSuccess(message)
         }
-    }
-
-    private fun isValidName(name: String): Boolean {
-        val regex = "^[A-Za-z0-9_]{2,20}$"
-        return name.matches(regex.toRegex()) && name != keyValueStorage.signInInfo?.username
     }
 
     private suspend fun generateMasterKey(): Boolean {
@@ -392,10 +588,23 @@ class SignInScreenViewModel(
 }
 
 sealed class SignInViewEvents : CommonViewModelEventsInterface {
-    data class StartSignInProcess(val name: String) : SignInViewEvents()
-    data class UpdateName(val name: String) : SignInViewEvents()
+    data class SelectProvider(val provider: EmailProvider) : SignInViewEvents()
+    data object StartManualEntry : SignInViewEvents()
+    data class UpdateManualEmail(val email: String) : SignInViewEvents()
+    data object SubmitManualEmail : SignInViewEvents()
+    data object ConfirmEmail : SignInViewEvents()
+    data object RetryCurrent : SignInViewEvents()
+    data object BackToProviderOptions : SignInViewEvents()
     data object JoinExistingVault : SignInViewEvents()
     data object CancelJoin : SignInViewEvents()
+}
+
+enum class EmailSelectionStep {
+    PROVIDER_OPTIONS,
+    MANUAL_ENTRY,
+    CONFIRMATION,
+    PRIVATE_RELAY,
+    ERROR,
 }
 
 private enum class SignInFlowState {

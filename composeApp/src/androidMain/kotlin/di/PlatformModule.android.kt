@@ -21,9 +21,26 @@ import core.DatabasePathProviderInterface
 import core.DatabasePathProviderAndroid
 import core.LogFormatterInterface
 import core.LogFormatterAndroid
+import core.email.AndroidEmailSelectionCoordinator
+import core.email.AndroidEmailAuthConfig
+import core.email.EmailProvider
+import core.email.EmailSelectionCoordinatorInterface
+import core.email.EmailSelectionPlatformConfig
+import core.email.androidEmailAuthConfig
 
 val androidPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceAndroid() }
+    single<EmailSelectionPlatformConfig> {
+        EmailSelectionPlatformConfig(
+            providerOrder = listOf(
+                EmailProvider.GOOGLE,
+                EmailProvider.APPLE,
+                EmailProvider.MANUAL,
+            )
+        )
+    }
+    single<AndroidEmailAuthConfig> { androidEmailAuthConfig() }
+    single<EmailSelectionCoordinatorInterface> { AndroidEmailSelectionCoordinator(get(), get()) }
 
     factory<KeyChainInterface> { (context: Context) ->
         KeyChainManagerAndroid(context, get())

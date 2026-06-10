@@ -34,9 +34,11 @@ class StringProviderAndroid(private val context: Context) : StringProviderInterf
     override fun errorBiometricAuthFailed() = s(Res.string.errorBiometricAuthFailed)
     override fun errorSecretAddFailed() = s(Res.string.errorSecretAddFailed)
     override fun errorRecoverDeclined() = s(Res.string.errorRecoverDeclined)
+    override fun emailSelectionCouldNotGetEmail() = s(Res.string.emailSelectionCouldNotGetEmail)
+    override fun emailSelectionInvalidEmail() = s(Res.string.emailSelectionInvalidEmail)
+    override fun emailSelectionPrivateRelayMessage() = s(Res.string.emailSelectionPrivateRelayMessage)
     override fun acceptRequestOnOtherDevice() = s(Res.string.accept_request_on_other_device)
     override fun nameOccupiedJoinPrompt() = s(Res.string.name_occupied_join_prompt)
     override fun recoverPendingExists() = s(Res.string.recoverPendingExists)
     override fun recoverRequestSent() = s(Res.string.recoverRequestSent)
 }
-

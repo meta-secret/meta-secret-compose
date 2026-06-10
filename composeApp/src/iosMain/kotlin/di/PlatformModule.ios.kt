@@ -23,11 +23,25 @@ import core.DebugLoggerInterface
 import core.DebugLoggerIos
 import core.LogFormatterInterface
 import core.LogFormatterIos
+import core.email.EmailProvider
+import core.email.EmailSelectionCoordinatorInterface
+import core.email.EmailSelectionPlatformConfig
+import core.email.EmailSelectionCoordinatorIos
 import kotlinx.cinterop.ExperimentalForeignApi
 
 @OptIn(ExperimentalForeignApi::class)
 val iosPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceIos(get(), get()) }
+    single<EmailSelectionPlatformConfig> {
+        EmailSelectionPlatformConfig(
+            providerOrder = listOf(
+                EmailProvider.APPLE,
+                EmailProvider.GOOGLE,
+                EmailProvider.MANUAL,
+            )
+        )
+    }
+    single<EmailSelectionCoordinatorInterface> { EmailSelectionCoordinatorIos() }
     single<StringProviderInterface> { StringProviderIos() }
     single<ClientDeviceInfoProviderInterface> { ClientDeviceInfoProviderIos() }
     single<DeviceInfoProviderInterface> { DeviceInfoProviderIos() }

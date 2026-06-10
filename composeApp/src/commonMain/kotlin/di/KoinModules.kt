@@ -31,6 +31,8 @@ import core.DebugLoggerInterface
 import core.AppStateCacheProvider
 import core.AppStateCacheProviderInterface
 import core.errors.ErrorMapper
+import core.email.EmailSelectionCoordinatorInterface
+import core.email.EmailSelectionPlatformConfig
 
 val appModule = module {
     single<KeyValueStorageInterface> { KeyValueStorageImpl(get()) }
@@ -47,7 +49,7 @@ val appModule = module {
     single { MainScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
-    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { ProfileScreenViewModel(get(), get(), get()) }
     factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { SecretsScreenViewModel(get(), get(), get(), get(), get()) }

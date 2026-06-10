@@ -16,6 +16,9 @@ import core.ScreenMetricsProviderInterface
 import core.Secret
 import core.StringProviderInterface
 import core.VaultStatsProviderInterface
+import core.email.EmailProvider
+import core.email.EmailSelectionCoordinatorInterface
+import core.email.EmailSelectionResult
 import core.metaSecretCore.MetaSecretCoreInterface
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -167,6 +170,9 @@ class FakeStringProvider : StringProviderInterface {
     override fun errorBiometricAuthFailed() = "biometric failed"
     override fun errorSecretAddFailed() = "secret add failed"
     override fun errorRecoverDeclined() = "recover declined"
+    override fun emailSelectionCouldNotGetEmail() = "could not get email"
+    override fun emailSelectionInvalidEmail() = "invalid email"
+    override fun emailSelectionPrivateRelayMessage() = "private relay email"
     override fun acceptRequestOnOtherDevice() = "approve on other device"
     override fun nameOccupiedJoinPrompt() = "join existing vault"
     override fun recoverPendingExists() = "recover pending exists"
@@ -238,4 +244,14 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
     override fun declineRecover(claimId: String): String = "{}"
     override fun sendDeclineCompletion(claimId: String): String = "{}"
     override fun showRecovered(secretId: String): String = "{}"
+}
+
+class FakeEmailSelectionCoordinator : EmailSelectionCoordinatorInterface {
+    var lastProvider: EmailProvider? = null
+    var scriptedResult: EmailSelectionResult = EmailSelectionResult.Cancelled
+
+    override suspend fun selectEmail(provider: EmailProvider): EmailSelectionResult {
+        lastProvider = provider
+        return scriptedResult
+    }
 }
