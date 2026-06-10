@@ -264,3 +264,88 @@ Retry path:
 - `Return to Planning: YES`
 - `**FAIL**`
 - `FAIL`
+
+---
+
+## Artifact System
+
+### Every Stage Creates an Artifact
+
+Each stage writes output to `.ai/artifacts/run/` following naming convention:
+
+```
+MS-<run-id>-<stage-number>-<stage-name>[ -retry-N ].md
+```
+
+**Example:** `MS-42-005-build.md` or `MS-42-005-build -retry-1.md`
+
+### Status Field (REQUIRED)
+
+Every artifact must have **Status** at the top:
+
+```markdown
+**Status:** Success | Failed | Skipped
+```
+
+Validation stages use:
+```markdown
+**Status:** Pass | Fail | Skipped
+```
+
+### Artifact Templates
+
+All templates are in `.ai/artifacts/`:
+- `issue-analysis-template.md` (Stage 1)
+- `clarification-template.md` (Stage 2)
+- `implementation-plan-template.md` (Stage 3)
+- `constraint-validation-template.md` (Stage 3.5)
+- `test-authoring-template.md` (Stage 4a)
+- `implementation-template.md` (Stage 4b)
+- `refactoring-template.md` (Stage 4c)
+- `build-report-template.md` (Stage 5)
+- `review-report-template.md` (Stage 6)
+- `design-review-report-template.md` (Stage 7)
+- `coverage-report-template.md` (Stage 8)
+- `test-report-template.md` (Stage 9)
+- `pr-template.md` (Stage 10)
+
+### How Agents Use Artifacts
+
+1. **Read template** from `.ai/artifacts/`
+2. **Fill content** following template structure
+3. **Set Status field** at the top (Success/Failed/Skipped)
+4. **Write output** to `.ai/artifacts/run/MS-<id>-<stage>-<name>.md`
+5. **Print logs** to console:
+   ```
+   Start stage <n>: <name>
+   [... work ...]
+   Stage <n>: <name> completed
+   ```
+
+### Complete Workflow Artifacts Example
+
+After running `run issue #42`:
+
+```
+.ai/artifacts/run/
+├── MS-42-001-understanding.md        ✅ Issue Analysis
+├── MS-42-002-clarification.md        ✅ Clarifications
+├── MS-42-003-planning.md             ✅ Implementation Plan
+├── MS-42-0035-constraints.md         ✅ Constraint Check (Pass or Fail?)
+├── MS-42-004a-tests.md               ✅ Test Cases (all failing)
+├── MS-42-004b-implementation.md      ✅ Red-Green Implementation
+├── MS-42-004c-refactored.md          ✅ Major Refactor
+├── MS-42-005-build.md                ✅ Build Report
+├── MS-42-006-review.md               ✅ Code Review
+├── MS-42-007-design-review.md        ✅ Design Review (if Figma)
+├── MS-42-008-coverage.md             ✅ Coverage Check (Pass or Fail?)
+├── MS-42-009-test-run.md             ✅ Final Tests
+└── MS-42-010-pr.md                   ✅ Pull Request Created
+```
+
+Each file contains full documentation of what happened, findings, and Status.
+
+### For Detailed Information
+
+- **How to write artifacts:** See `.ai/rules/artifact-writing-guide.md`
+- **How agents integrate artifacts:** See `.ai/rules/agent-artifact-integration.md`

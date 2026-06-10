@@ -1,48 +1,44 @@
-# Build Report
+# Stage 5: Build Report
 
-Save as: `.ai/artifacts/run/MS-<run-id>-004-build.md`
+**Status:** Success | Failed | Skipped
 
-## Summary
+---
 
-| Metric | Value |
-|------|------|
-| Build Status | PASSED / FAILED |
-| Duration (sec) | |
-| Timeout Limit (sec) | 600 |
+## Build Command
 
-## Build Steps
+```
+./gradlew build -x test --no-daemon --parallel --console=plain
+```
 
-| Step | Status | Notes |
-|------|--------|------|
-| Compile | PASSED / FAILED | |
-| Packaging | PASSED / FAILED | |
+---
 
-## Command
+## Build Result
 
-`./gradlew build -x test --no-daemon --parallel --console=plain`
+- **Status:** ✅ SUCCESS / ❌ FAILED
+- **Duration:** [seconds]
+- **Start time:** [timestamp]
+- **End time:** [timestamp]
 
-## Errors
+---
 
-| Module | Error |
-|--------|------|
-|        |      |
+## Build Output
 
-## Logs Summary
+If successful:
+- All modules compiled
+- No warnings/errors
 
-- Key error messages:
-- Stack traces (if relevant):
+If failed:
+- **Error message:** [exact error from gradle]
+- **Root cause:** [analysis]
+- **Affected module:** [name]
+- **Solution:** [how to fix]
 
-## Analysis
+---
 
-- Root cause:
-- Affected components:
-- Risk level:
+## Retry Status
 
-## Next Steps
+- Retry #: [1 or 2]
+- Ready for Stage 6: YES / NO
 
-- Fix required: YES / NO
-- Return to Planning: YES / NO
-
-## Status
-
-Status: PASSED / FAILED
+If failed after 2 retries:
+- Escalate to `only-debug-rca`

@@ -1,54 +1,66 @@
-# Implementation Plan
+# Stage 3: Implementation Plan
 
-Save as: `.ai/artifacts/run/MS-<run-id>-002-planning.md`
+**Status:** Success | Failed | Skipped
+
+---
 
 ## Summary
 
-- Feature:
-- Scope:
-- Complexity:
-- Retry context source (if retry):
+Overview of implementation approach.
 
-## Design Constraints (only when Figma exists)
+---
 
-- 
+## Architecture Alignment
 
-## Affected Layers
+How this design aligns with MetaSecret architecture:
+- MVVM layers affected: [list]
+- Coordinator flow: [description]
+- Data flow: [description]
 
-- UI:
-- ViewModel:
-- Domain:
-- Data:
+---
 
-## Files to Modify
+## Feature Breakdown
 
-| File | Change |
-|------|--------|
-|      |        |
+### Feature 1: [Name]
+- **Description:** [What it does]
+- **Tests required:** [number]
+- **Files to create/modify:** [list]
+- **Dependencies:** [list]
 
-## New Files
+### Feature 2: [Name]
+- **Description:** [What it does]
+- **Tests required:** [number]
+- **Files to create/modify:** [list]
+- **Dependencies:** [list]
 
-| File | Purpose |
-|------|--------|
-|      |        |
+---
 
-## Risks
+## Constraint Compliance Preview
 
-- 
+Key constraints to validate (Stage 3.5):
+- Vault model: [how design respects k=n-1]
+- Device storage: [DMK handling, backup strategy]
+- Approval model: [when approval required]
+- Biometry: [if applicable]
 
-## Edge Cases
+---
 
-- 
+## Test Strategy
 
-## Fix Plan From Failures (retry only)
+- Total tests planned: [number]
+- Coverage target: 80%+ (90%+ for business logic)
+- Test tools: Kotlin Test + XCTest
 
-- 
+---
 
-## Notes
+## Timeline & Effort
 
-- 
+- Estimated cycles: 3-5 red-green cycles
+- Major refactor: [scope]
+- Total effort: [estimate]
 
-## Status
+---
 
-Status: PASSED / FAILED
-Return to Planning: YES / NO
+## Ready for Stage 3.5 Constraint Validation
+
+Proceed to constraint check: YES / NO

@@ -1,45 +1,43 @@
-# Test Report
+# Stage 9: Test Run Report
 
-Save as: `.ai/artifacts/run/MS-<run-id>-008-test-run.md`
+**Status:** Success | Failed | Skipped
 
-## Summary
+---
 
-| Metric | Value |
-|------|------|
-| Total Tests | |
-| Passed | |
-| Failed | |
-| Pass Rate | |
-| Coverage | |
+## Test Execution
 
-## Command
+Command: `./gradlew test --no-daemon --parallel --console=plain`
 
-`./gradlew test --no-daemon --parallel --console=plain`
+---
 
 ## Test Results
 
-| Test Name | Status | Notes |
-|----------|--------|------|
-| exampleTest1 | PASSED | |
-| exampleTest2 | FAILED | Assertion error |
+- **Total tests:** [number]
+- **Passed:** [number] ✅
+- **Failed:** [number] ❌
+- **Skipped:** [number] ⏭️
+- **Coverage:** [%]
+
+---
 
 ## Failed Tests
 
-| Test Name | Reason |
-|----------|--------|
-| exampleTest2 | Assertion failed: expected X, got Y |
+If any tests failed:
 
-## Analysis
+### Test 1: [test name]
+- **Module:** [name]
+- **Failure reason:** [assertion that failed]
+- **Stack trace:** [first 5 lines]
+- **Fix required:** [what to do]
 
-- Root cause:
-- Affected components:
-- Risk level:
+---
 
-## Next Steps
+## Pass/Fail
 
-- Fix required: YES / NO
-- Return to Planning: YES / NO
+- **Status:** PASSED ✅ / FAILED ❌
+- **Coverage >= 80%:** YES / NO
+- **Ready for Stage 10:** YES / NO
 
-## Status
-
-Status: PASSED / FAILED
+If failed:
+- Root cause: [analysis]
+- Escalate to debug-rca: YES / NO

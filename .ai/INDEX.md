@@ -74,8 +74,23 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
   - `rules/constraint-checking.md` — Mandatory constraint validation workflow
   - `rules/tdd-principles.md` — Test-Driven Development principles and practices
   - `rules/kmp-principles.md` — KMM architecture principles
-- `.ai/artifacts/` — Output templates for workflows
-- `.ai/artifacts/run/` — Generated artifacts from runs
+  - `rules/artifact-writing-guide.md` — How to create and name artifacts
+  - `rules/agent-artifact-integration.md` — How agents integrate artifacts into workflow
+- `.ai/artifacts/` — Output templates for all stages:
+  - `issue-analysis-template.md` — Stage 1
+  - `clarification-template.md` — Stage 2
+  - `implementation-plan-template.md` — Stage 3
+  - `constraint-validation-template.md` — Stage 3.5
+  - `test-authoring-template.md` — Stage 4a
+  - `implementation-template.md` — Stage 4b
+  - `refactoring-template.md` — Stage 4c
+  - `build-report-template.md` — Stage 5
+  - `review-report-template.md` — Stage 6
+  - `design-review-report-template.md` — Stage 7
+  - `coverage-report-template.md` — Stage 8
+  - `test-report-template.md` — Stage 9
+  - `pr-template.md` — Stage 10
+- `.ai/artifacts/run/` — Generated artifacts from runs (one per stage, with Status field)
 
 ### IDE Entry Points
 - `.claude/INDEX.md` — Claude Code entry (→ read `.ai/INDEX.md`)

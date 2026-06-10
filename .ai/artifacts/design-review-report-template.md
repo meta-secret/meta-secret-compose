@@ -1,31 +1,41 @@
-# Design Review Report
+# Stage 7: Design Review Report
 
-Save as: `.ai/artifacts/run/MS-<run-id>-006-design-review.md`
+**Status:** Success | Failed | Skipped
 
-## Summary
+---
 
-| Check | Status | Notes |
-|---|---|---|
-| Element completeness | PASSED / FAILED | all required elements are present |
-| No invented elements | PASSED / FAILED | no extra elements not in design |
-| Element order | PASSED / FAILED | order matches design |
-| Layout direction | PASSED / FAILED | Column/Row and spacing are aligned |
-| Asset usage | PASSED / FAILED | approved assets only |
-| No hardcoded tokens | PASSED / FAILED | colors/typography from DS |
+## Design Comparison
 
-## Failed Checks
+### From Figma (Expected)
+- [Component 1]: [expected state]
+- [Component 2]: [expected behavior]
 
-| Check | File | Description | How to fix |
+### In Code (Actual)
+- [Component 1]: [actual state]
+- [Component 2]: [actual behavior]
+
+---
+
+## Component Verification
+
+| Component | Figma Design | Code Implementation | Match? |
 |---|---|---|---|
-| | | | |
+| [name] | [description] | [description] | ✅/❌ |
+| [name] | [description] | [description] | ✅/❌ |
 
-## Warnings (non-blocking)
+---
 
-| File | Description |
-|---|---|
-| | |
+## Issues Found
 
-## Status
+### Issue 1: [Severity: Critical/Major/Minor]
+- **Component:** [name]
+- **Expected:** [from Figma]
+- **Actual:** [in code]
+- **Fix:** [solution]
 
-Status: PASSED / FAILED
-Return to Planning: YES / NO
+---
+
+## Pass/Fail
+
+- **Status:** PASSED ✅ / FAILED ❌
+- **Ready for Stage 8:** YES / NO

@@ -39,3 +39,27 @@ See `.ai/WORKFLOW.md` for complete 10-stage specification.
 ## Output
 
 - Pull Request with implementation, tests, and documentation
+
+---
+
+## Artifacts Generated
+
+Each stage creates an artifact in `.ai/artifacts/run/`:
+
+- **Stage 1:** `MS-<run-id>-001-understanding.md` — Issue analysis
+- **Stage 2:** `MS-<run-id>-002-clarification.md` — Clarifications & decisions
+- **Stage 3:** `MS-<run-id>-003-planning.md` — Implementation plan
+- **Stage 3.5:** `MS-<run-id>-0035-constraints.md` — Constraint validation
+- **Stage 4a:** `MS-<run-id>-004a-tests.md` — Failing test cases
+- **Stage 4b:** `MS-<run-id>-004b-implementation.md` — Implementation (red-green cycles)
+- **Stage 4c:** `MS-<run-id>-004c-refactored.md` — Refactored code
+- **Stage 5:** `MS-<run-id>-005-build.md` — Build report
+- **Stage 6:** `MS-<run-id>-006-review.md` — Code review findings
+- **Stage 7:** `MS-<run-id>-007-design-review.md` — Design review (if Figma)
+- **Stage 8:** `MS-<run-id>-008-coverage.md` — Coverage verification
+- **Stage 9:** `MS-<run-id>-009-test-run.md` — Test execution results
+- **Stage 10:** `MS-<run-id>-010-pr.md` — PR details
+
+Each artifact includes **Status: Success / Failed / Skipped**.
+
+See `.ai/rules/artifact-writing-guide.md` for artifact specification.
