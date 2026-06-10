@@ -16,6 +16,7 @@ Analyze failed artifacts and test failures. Identify root causes and propose dia
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

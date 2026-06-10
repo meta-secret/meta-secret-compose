@@ -1,0 +1,7 @@
+appId: org.metasecret.vault
+---
+- launchApp
+- tapOn: "Passcode field"
+- inputText: "1111"
+- pressKey: Enter
+- tapOn: ".*Continue.*"

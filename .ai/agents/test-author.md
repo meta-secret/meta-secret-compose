@@ -17,6 +17,7 @@ Write comprehensive automated tests covering implementation changes. Include uni
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

@@ -22,6 +22,7 @@ Create detailed implementation plan from issue analysis. Align with architecture
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

@@ -15,6 +15,7 @@ Execute test suite and report results. Identify failing tests and collect diagno
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

@@ -15,6 +15,7 @@ Identify and document repeated workflow patterns. Propose new skills, commands, 
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

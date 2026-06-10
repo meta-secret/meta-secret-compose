@@ -20,6 +20,7 @@ Conduct adaptive clarification session. Analyze issue to identify what's unclear
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 - rules/questioning-guide.md (new)
 

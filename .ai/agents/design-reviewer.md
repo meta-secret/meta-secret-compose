@@ -16,6 +16,7 @@ Review UI implementation against Figma design specifications. Verify design comp
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

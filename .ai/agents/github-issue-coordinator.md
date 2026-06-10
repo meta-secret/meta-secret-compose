@@ -22,6 +22,7 @@ Analyze GitHub issue or free-text task. Extract requirements, goals, assumptions
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

@@ -17,6 +17,7 @@ Implement UI changes for iOS (SwiftUI) and Android (Jetpack Compose) platforms.
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

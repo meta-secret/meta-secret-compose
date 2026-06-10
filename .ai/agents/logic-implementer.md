@@ -16,6 +16,7 @@ Implement business logic and shared code changes for Kotlin Multiplatform Mobile
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

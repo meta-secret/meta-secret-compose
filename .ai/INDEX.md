@@ -8,6 +8,25 @@ meta-secret-compose is a KMM (Kotlin Multiplatform Mobile) application for iOS a
 **Languages:** Kotlin (shared), Swift (iOS), Kotlin (Android)  
 **Key constraint:** Do not edit Rust sources; consume via UniFFI from `meta-secret-core`
 
+## Architecture Constraints
+
+**CONSTRAINTS.md** is the single source of truth for MetaSecret architecture and design rules.
+- All planning must reference CONSTRAINTS.md
+- All implementation must comply with CONSTRAINTS.md (35 confirmed rules)
+- Validation is **MANDATORY** before coding (Stage 3.5)
+- Use `only-constraint-validator` command to validate
+
+See `.ai/CONSTRAINTS.md` for complete architecture specification.
+
+## Unified Vocabulary
+
+**GLOSSARY.md** is the single source of truth for project terminology.
+- All agents use glossary terms in communication
+- All code should reflect glossary naming
+- Update glossary as codebase grows via `only-glossary-update` command
+
+See `.ai/GLOSSARY.md` for complete project vocabulary.
+
 ## Command Routing
 
 See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
@@ -27,15 +46,17 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
 - `.ai/commands/only-issue-coordinator.md` — Run stage 1 only
 - `.ai/commands/only-grill-me.md` — Run stage 2 (clarification) only
 - `.ai/commands/only-planner.md` — Run stage 3 only
-- `.ai/commands/only-implementer.md` — Run stage 4 only
+- `.ai/commands/only-constraint-validator.md` — Run stage 3.5 (constraint validation) only
+- `.ai/commands/only-tdd-test-author.md` — Run stage 4a (TDD test authoring) only
+- `.ai/commands/only-tdd-implementer.md` — Run stage 4b (red-green-refactor) only
+- `.ai/commands/only-tdd-refactorer.md` — Run stage 4c (major refactor) only
 - `.ai/commands/only-reviewer.md` — Run stage 6 only
-- `.ai/commands/only-test-author.md` — Run stage 8 only
-- `.ai/commands/only-test-verifier.md` — Run stage 9 only
 - `.ai/commands/only-release-manager.md` — Run stage 10 only
 - `.ai/commands/only-from-prompt.md` — Start from manual description
 - `.ai/commands/only-debug-rca.md` — Debug failed artifacts
 - `.ai/commands/only-release-notes.md` — Generate release notes
 - `.ai/commands/only-workflow-pattern-capture.md` — Capture workflow patterns
+- `.ai/commands/only-glossary-update.md` — Build/update project glossary
 - `.ai/commands/help.md` — Help command
 - `.ai/flows/` — Workflow and stage orchestrations
 
@@ -44,10 +65,15 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
 - `.ai/skills/` — Reusable skill implementations
   - `skills/grill-me/` — Relentless interviewing methodology (Stage 2)
   - `skills/requirements-probing/` — Structured question categories
+  - `skills/test-driven-development/` — TDD methodology and best practices (Stage 4)
+  - `skills/red-green-refactor/` — Red-Green-Refactor cycle execution (Stage 4b)
 - `.ai/hooks/` — Lifecycle hooks and callbacks
 
 ### Rules & Templates
 - `.ai/rules/` — Architecture and design-system rules
+  - `rules/constraint-checking.md` — Mandatory constraint validation workflow
+  - `rules/tdd-principles.md` — Test-Driven Development principles and practices
+  - `rules/kmp-principles.md` — KMM architecture principles
 - `.ai/artifacts/` — Output templates for workflows
 - `.ai/artifacts/run/` — Generated artifacts from runs
 
@@ -56,4 +82,4 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
 - `.cursor/INDEX.md` — Cursor IDE entry (→ read `.ai/INDEX.md`)
 - `.codex/INDEX.md` — Codex CLI entry (→ read `.ai/INDEX.md`)
 
-Last updated: 2026-06-04
+Last updated: 2026-06-10

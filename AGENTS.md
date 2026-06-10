@@ -27,6 +27,13 @@ You are operating inside the meta-secret-compose AI framework via Codex CLI.
 - Prefer deterministic execution
 - Do not edit Rust sources (consume via FFI only from meta-secret-core)
 
+## Vocabulary
+
+**CRITICAL:** All communication uses `.ai/GLOSSARY.md` terminology.
+- Always use glossary terms when discussing domain concepts
+- Never invent new terms; update glossary if needed
+- Ensure consistency between AI, code, documentation, and user communication
+
 ## Agent output conventions
 
 Applies to **Codex CLI**:

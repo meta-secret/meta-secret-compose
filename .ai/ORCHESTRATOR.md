@@ -38,10 +38,38 @@ Execute:
 
 ---
 
+#### `only-constraint-validator <payload>`
+
+Execute:
+1. Read `.ai/commands/only-constraint-validator.md`
+
+---
+
 #### `only-implementer <payload>`
 
 Execute:
 1. Read `.ai/commands/only-implementer.md`
+
+---
+
+#### `only-tdd-test-author <payload>`
+
+Execute:
+1. Read `.ai/commands/only-tdd-test-author.md`
+
+---
+
+#### `only-tdd-implementer <payload>`
+
+Execute:
+1. Read `.ai/commands/only-tdd-implementer.md`
+
+---
+
+#### `only-tdd-refactorer <payload>`
+
+Execute:
+1. Read `.ai/commands/only-tdd-refactorer.md`
 
 ---
 
@@ -74,6 +102,13 @@ Execute:
 ---
 
 ### Utilities
+
+#### `only-glossary-update "<feature-description>"`
+
+Execute:
+1. Read `.ai/commands/only-glossary-update.md`
+
+---
 
 #### `only-from-prompt "<description>"`
 
@@ -111,4 +146,4 @@ Execute:
 1. Read `.ai/commands/help.md`
 
 
-Last updated: 2026-06-04
+Last updated: 2026-06-10

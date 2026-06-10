@@ -16,6 +16,7 @@ Coordinate implementation of code changes. Delegate to logic-implementer and ui-
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

@@ -16,6 +16,7 @@ Generate user-facing release notes and pull request description from implementat
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

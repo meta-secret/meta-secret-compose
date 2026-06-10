@@ -18,6 +18,7 @@ Create feature branch, stage and commit changes, create pull request. Requires e
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

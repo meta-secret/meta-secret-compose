@@ -15,6 +15,7 @@ Analyze Figma design specifications. Extract design constraints, component struc
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
 
 ## Required Skills

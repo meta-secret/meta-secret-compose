@@ -2,20 +2,28 @@
 
 ## Purpose
 
-Review implementation for architecture compliance, style consistency, and best practices. Provide actionable feedback.
+Review implementation for architecture compliance, style consistency, and best practices. Verify 80% minimum test coverage. Re-check constraint compliance. Provide actionable feedback.
 
 ## Input
 
 - Implementation changes
 - `implementation-plan.md` artifact
+- `constraint-validation-report.md` artifact (from Stage 3.5)
 - Code diff
+- Test coverage report (koverReport output)
 
 ## Output
 
-- `review-report.md` artifact
+- `review-report.md` artifact with:
+  - Architecture compliance check
+  - Constraint re-validation (ensure no deviations from plan)
+  - Coverage verification: PASS/FAIL (minimum 80%)
+  - Style and best practices check
 
 ## Required Rules
 
+- .ai/GLOSSARY.md (use consistent terminology)
+- .ai/rules/tdd-principles.md (test coverage requirements: 80% minimum)
 - rules/kmp-principles.md
 
 ## Required Skills

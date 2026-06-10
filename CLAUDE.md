@@ -27,6 +27,13 @@ You are operating inside the meta-secret-compose AI framework.
 - Prefer deterministic execution
 - Do not edit Rust sources (consume via FFI only from meta-secret-core)
 
+## Vocabulary
+
+**CRITICAL:** All communication uses `.ai/GLOSSARY.md` terminology.
+- Always use glossary terms when discussing domain concepts
+- Never invent new terms; update glossary if needed
+- Ensure consistency between AI, code, documentation, and user communication
+
 ## Agent output conventions
 
 Applies to **Claude Code** and its automated sub-steps (planners, implementers, reviewers):

@@ -30,17 +30,20 @@ Stage 2: "Grill Me" interview session (adaptive duration). Simple task = 5 min. 
 **`only-planner <payload>`**  
 Stage 3: Create detailed implementation plan from issue analysis and clarifications.
 
-**`only-implementer <payload>`**  
-Stage 4: Implement code changes (Logic + UI).
+**`only-constraint-validator <payload>`**  
+Stage 3.5: Validate plan against MetaSecret architecture constraints. MANDATORY before implementation.
+
+**`only-tdd-test-author <payload>`**  
+Stage 4a: Write failing tests from implementation plan (TDD).
+
+**`only-tdd-implementer <payload>`**  
+Stage 4b: Red-Green-Refactor cycle (TDD). Implement minimal code to pass tests.
+
+**`only-tdd-refactorer <payload>`**  
+Stage 4c: Major refactoring after 3-5 red-green cycles. Clean code, extract utilities, add docs.
 
 **`only-reviewer <payload>`**  
-Stage 6: Code review of implementation.
-
-**`only-test-author <payload>`**  
-Stage 8: Write test cases.
-
-**`only-test-verifier <payload>`**  
-Stage 9: Execute tests and verify results.
+Stage 6: Code review of implementation + 80% coverage check.
 
 **`only-release-manager <payload>`**  
 Stage 10: Create branch, commit, and pull request.
@@ -48,6 +51,9 @@ Stage 10: Create branch, commit, and pull request.
 ---
 
 ## 🛠️ Utilities
+
+**`only-glossary-update "<feature>"`**  
+Build or update project glossary. Run monthly or when codebase grows. Ensures consistent terminology across AI, code, docs, and communication.
 
 **`only-from-prompt "<description>"`**  
 Start workflow from manual feature/bug description (no GitHub issue needed).

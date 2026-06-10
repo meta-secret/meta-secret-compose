@@ -25,16 +25,19 @@ Example:
 - `Start stage 4: Build`
 - `Stage 4: Build completed`
 
-## 10-Stage Pipeline
+## 10-Stage Pipeline (with TDD)
 
 1. Stage 1: Issue Intake + Optional Figma Context
 2. Stage 2: Grill Me (Clarification & Deep Dive)
 3. Stage 3: Planning
-4. Stage 4: Implementation (Logic + UI)
+4. Stage 4: TDD Implementation
+   - 4a: Test Author (write failing tests)
+   - 4b: Red-Green-Refactor (implement minimal code)
+   - 4c: Major Refactor (clean up after 3-5 cycles)
 5. Stage 5: Build (no tests, max 10 minutes)
-6. Stage 6: Code Review
+6. Stage 6: Code Review (with 80% coverage check)
 7. Stage 7: Design Review (only if Figma link exists; may run in parallel with Stage 6)
-8. Stage 8: Test Authoring
+8. Stage 8: Test Coverage Verification
 9. Stage 9: Test Run
 10. Stage 10: Branch + Commit + PR
 
@@ -92,24 +95,78 @@ Required behavior:
 - If Figma present, include design constraints and acceptance checks
 - If retry, add explicit fix plan derived from failure artifact
 
-### Stage 4: Implementation (Logic + UI)
+### Stage 3.5: Constraint Validation
 
-Agents:
-- `logic-implementer`
-- `ui-implementer`
-
+Agent: `constraint-validator`
+Template: `.ai/artifacts/constraint-validation-template.md`
 Input:
-- Stage 3 artifact
-- Stage 1 artifact (for Figma-derived constraints)
-- Stage 2 artifact (for clarifications)
-Output:
-- `.ai/artifacts/run/MS-<run-id>-004-implementation-logic.md`
-- `.ai/artifacts/run/MS-<run-id>-004-implementation-ui.md`
-- `.ai/artifacts/run/MS-<run-id>-004-implementation.md` (merged summary)
+- Stage 3 artifact (implementation plan)
+- Stage 2 artifact (clarifications)
+- `.ai/CONSTRAINTS.md` (full reference)
+Output: `.ai/artifacts/run/MS-<run-id>-0035-constraints.md`
 
-Execution model:
-- Prefer parallel execution when file ownership is disjoint
-- If overlap exists, run logic first then UI
+Required behavior:
+- Validate plan against all 35 confirmed constraints (Section 28 of CONSTRAINTS.md)
+- Check: Device Master Key handling, Vault model, Shamir distribution, biometry, approval model
+- Identify affected constraints
+- Check: PASS or FAIL for each constraint
+- If FAIL: block Stage 4, return to Stage 3 with required changes
+- If PASS: provide sign-off to proceed to implementation
+
+**MANDATORY GATE:** Do not proceed to implementation if constraints violated.
+
+### Stage 4: TDD Implementation
+
+**TDD (Test-Driven Development)** is mandatory. Write test first, then implement minimal code, then refactor.
+
+#### Stage 4a: Test Author
+
+Agent: `tdd-test-author`
+Template: `.ai/artifacts/test-template.md`
+Input:
+- Stage 3 artifact (implementation plan with breakdown)
+- Stage 2 artifact (clarifications)
+Output: `.ai/artifacts/run/MS-<run-id>-004a-tests.md`
+
+Required behavior:
+- Write failing test cases for each requirement in plan
+- Tests must fail (feature doesn't exist)
+- Use `kotlin("test")` for Kotlin, `XCTest` for Swift
+- Test naming: `test<Function><Scenario>`
+
+#### Stage 4b: Red-Green-Refactor Cycle
+
+Agent: `tdd-implementer`
+Input:
+- Test files (failing)
+- Stage 3 artifact
+Output: `.ai/artifacts/run/MS-<run-id>-004b-implementation.md`
+
+Required behavior:
+- For each test:
+  - **RED:** Confirm test fails
+  - **GREEN:** Write minimal code to pass (and only that)
+  - **REFACTOR:** Skip mini refactor, continue to next test
+- Repeat for 3 consecutive tests
+- All tests passing at end of batch
+
+#### Stage 4c: Major Refactor (every 3-5 cycles)
+
+Agent: `tdd-refactorer`
+Input:
+- Implementation code (from red-green cycles)
+- All passing tests
+- Stage 3 artifact
+Output: `.ai/artifacts/run/MS-<run-id>-004c-refactored.md`
+
+Required behavior:
+- Clean up code from 3-5 red-green cycles
+- Extract duplication, improve naming
+- Add documentation and comments
+- Run full test suite: all tests must pass
+- Ensure code quality and maintainability
+
+**Flow:** Test Author → (3x Red-Green-Refactor) → Major Refactor → Repeat until all features done
 
 ### Stage 5: Build (no tests)
 
@@ -151,18 +208,21 @@ Required behavior:
 - Verify design constraints from Stage 2 are met
 - Pass condition: `Status: PASSED`
 
-### Stage 8: Test Authoring
+### Stage 8: Test Coverage Verification
 
-Agent: `test-author`
-Template: `.ai/artifacts/test-authoring-template.md`
-Output: `.ai/artifacts/run/MS-<run-id>-008-testing.md`
+Agent: `code-reviewer`
+Command: `./gradlew koverReport`
+Template: `.ai/artifacts/coverage-report-template.md`
+Output: `.ai/artifacts/run/MS-<run-id>-008-coverage.md`
 
 Required behavior:
-- Write unit and integration tests
-- Cover boundary cases from Stage 2
-- Cover error handling scenarios from Stage 2
+- Verify test coverage is 80% minimum
+- Business logic: 90%+ preferred
+- Report uncovered lines
+- Fail if coverage < 80%
+- Pass condition: `Coverage: >=80%`
 
-### Stage 9: Test Run
+### Stage 9: Test Run (Final Validation)
 
 Agent: `test-verifier`
 Command: `./gradlew test --no-daemon --parallel --console=plain`
@@ -173,7 +233,7 @@ Required behavior:
 - Execute all tests
 - Report pass/fail
 - Capture failing test details
-- Pass condition: `Status: PASSED`
+- Pass condition: `Status: PASSED` + `Coverage: >=80%`
 
 ### Stage 10: Branch + Commit + PR
 
