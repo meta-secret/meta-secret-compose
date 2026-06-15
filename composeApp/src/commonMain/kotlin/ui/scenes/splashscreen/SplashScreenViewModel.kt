@@ -9,24 +9,22 @@ import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 import core.BiometricAuthenticatorInterface
 import core.BiometricState
-import core.KeyChainInterface
 import core.metaSecretCore.AuthState
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.BackupCoordinatorInterface
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.biometric_description
+import core.StringProviderInterface
 
 class SplashScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
-    private val keyChain: KeyChainInterface,
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
-    private val vaultStatsProvider: VaultStatsProviderInterface
+    private val vaultStatsProvider: VaultStatsProviderInterface,
+    private val stringProvider: StringProviderInterface
 ) : CommonViewModel() {
     private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
@@ -42,20 +40,11 @@ class SplashScreenViewModel(
         if (event is SplashViewEvents) {
             when (event) {
                 SplashViewEvents.ON_APPEAR -> {
-                    viewModelScope.launch {
-//                        clearAll()
-                    }
                     authenticateWithBiometrics()
                 }
                 SplashViewEvents.BIOMETRIC_SUCCEEDED -> biometricSucceeded()
             }
         }
-    }
-
-    private suspend fun clearAll() {
-        logger.log(LogTag.SplashVM.Message.DataCleanupStart)
-        val clearResult = keyChain.clearAll(isCleanDB = true)
-        logger.log(LogTag.SplashVM.Message.DataCleanupCompleted, " $clearResult")
     }
 
     private fun authenticateWithBiometrics() {
@@ -70,7 +59,7 @@ class SplashScreenViewModel(
             },
             onFallback = {
                 logger.log(LogTag.SplashVM.Message.BiometricProhibited, success = false)
-                _biometricState.value = BiometricState.Error(Res.string.biometric_description.toString())
+                _biometricState.value = BiometricState.Error(stringProvider.biometricDescription())
             }
         )
     }
@@ -136,4 +125,3 @@ private enum class OnboardingState {
     COMPLETED,
     NOT_YET_COMPLETED
 }
-

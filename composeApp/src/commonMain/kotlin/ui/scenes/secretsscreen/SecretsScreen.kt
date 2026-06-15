@@ -1,5 +1,9 @@
 package ui.scenes.secretsscreen
 
+import core.AppString
+
+import core.appString
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -58,6 +62,7 @@ import kotlinproject.composeapp.generated.resources.secretAddFailed
 import org.koin.compose.koinInject
 import ui.screenContent.CommonBackground
 import ui.screenContent.SecretsContent
+import ui.theme.AppTextStyles
 
 class SecretsScreen : Screen {
     @Composable
@@ -75,9 +80,9 @@ class SecretsScreen : Screen {
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
         val secretIdToShow by mainScreenViewModel.secretIdToShow.collectAsState()
         
-        val secretAddSuccessText = stringResource(Res.string.secretAdded)
-        val secretAddFailedText = stringResource(Res.string.secretAddFailed)
-        val secretRemovedText = stringResource(Res.string.secretRemoved)
+        val secretAddSuccessText = appString(AppString.secretAdded)
+        val secretAddFailedText = appString(AppString.secretAddFailed)
+        val secretRemovedText = appString(AppString.secretRemoved)
 
         LaunchedEffect(Unit) {
             delay(3000)
@@ -104,7 +109,7 @@ class SecretsScreen : Screen {
             viewModel.handle(SecretsEvents.SetTabIndex(index = 1))
         }
 
-        CommonBackground(Res.string.secretsHeader) {
+        CommonBackground(AppString.secretsHeader) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize(),
@@ -205,19 +210,17 @@ class SecretsScreen : Screen {
                         )
                     }
                     Text(
-                        text = stringResource(Res.string.noSecretsHeader),
+                        text = appString(AppString.noSecretsHeader),
                         color = AppColors.White,
-                        fontSize = 22.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        style = AppTextStyles.SubsectionTitle(),
                         modifier = Modifier
                             .padding(top = 14.dp)
                     )
                     Text(
-                        text = stringResource(Res.string.noSecrets),
+                        text = appString(AppString.noSecrets),
                         color = AppColors.White75,
                         textAlign = TextAlign.Center,
-                        fontSize = 15.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        style = AppTextStyles.Paragraph(),
                         modifier = Modifier
                             .padding(vertical = 7.dp)
                     )

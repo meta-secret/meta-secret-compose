@@ -25,6 +25,7 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import core.AppColors
 import core.ScreenMetricsProviderInterface
+import ui.theme.AppTextStyles
 
 @Composable
 fun RemoveButton(
@@ -52,8 +53,7 @@ fun RemoveButton(
                 text = description,
                 textAlign = TextAlign.Center,
                 color = AppColors.White,
-                fontSize = 11.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                style = AppTextStyles.Micro(),
                 modifier = Modifier
                     .padding(horizontal = 18.5.dp)
             )

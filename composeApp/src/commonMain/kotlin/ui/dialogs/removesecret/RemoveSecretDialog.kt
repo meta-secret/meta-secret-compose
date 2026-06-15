@@ -1,5 +1,9 @@
 package ui.dialogs.removesecret
 
+import core.AppString
+
+import core.appString
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,6 +42,7 @@ import core.AppColors
 import core.ScreenMetricsProviderInterface
 import core.Secret
 import ui.ClassicButton
+import ui.theme.AppTextStyles
 
 @Composable
 fun RemoveSecret(
@@ -90,17 +95,15 @@ fun RemoveSecret(
                     modifier = Modifier.padding(top = 20.dp, bottom = 30.dp)
                 ) {
                     Text(
-                        text = stringResource(Res.string.removeSecret) + "?",
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        text = appString(AppString.removeSecret) + "?",
+                        style = AppTextStyles.SectionTitle(),
                         color = AppColors.White,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
                     Text(
                         text = text,
-                        fontSize = 15.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        style = AppTextStyles.Paragraph(),
                         color = AppColors.White75,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = 10.dp)
@@ -111,7 +114,7 @@ fun RemoveSecret(
                             buttonVisibility(false)
                             dialogVisibility(false)
                         },
-                        stringResource(Res.string.remove),
+                        appString(AppString.remove),
                         color = AppColors.RedError
                     )
                     ClassicButton(
@@ -119,7 +122,7 @@ fun RemoveSecret(
                             buttonVisibility(false)
                             dialogVisibility(false)
                         },
-                        stringResource(Res.string.cancel),
+                        appString(AppString.cancel),
                         color = Color.Transparent,
                         borderColor = AppColors.White50
                     )

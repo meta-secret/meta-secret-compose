@@ -1,5 +1,9 @@
 package ui.scenes.mainscreen
 
+import core.AppString
+
+import core.appString
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -43,7 +47,7 @@ object SecretsTab : Tab {
         @Composable
         get() {
             val icon = painterResource(Res.drawable.secrets_logo)
-            val title = stringResource(Res.string.secretsHeader)
+            val title = appString(AppString.secretsHeader)
             val index: UShort = 0U
 
             return TabOptions(
@@ -64,7 +68,7 @@ object DevicesTab : Tab{
         @Composable
         get() {
             val icon = painterResource(Res.drawable.devices_logo)
-            val title = stringResource(Res.string.devicesList)
+            val title = appString(AppString.devicesList)
             val index: UShort = 1U
 
             return TabOptions(
@@ -78,7 +82,7 @@ object DevicesTab : Tab{
             val icon = painterResource(Res.drawable.devices_logo)
             Icon(
                 painter = icon,
-                contentDescription = stringResource(Res.string.devicesList),
+                contentDescription = appString(AppString.devicesList),
                 tint = Color.White.copy(alpha = 0.75f)
             )
             
@@ -114,7 +118,7 @@ object ProfileTab : Tab{
         @Composable
         get() {
             val icon = painterResource(Res.drawable.profile_logo)
-            val title = stringResource(Res.string.profile)
+            val title = appString(AppString.profile)
             val index: UShort = 2U
 
             return TabOptions(

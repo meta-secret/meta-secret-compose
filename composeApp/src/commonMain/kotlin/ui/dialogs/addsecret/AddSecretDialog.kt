@@ -1,5 +1,9 @@
 package ui.dialogs.addsecret
 
+import core.AppString
+
+import core.appString
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -83,6 +87,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import ui.ClassicButton
+import ui.theme.AppTextStyles
 
 private enum class SecretInputMode {
     PASSWORD,
@@ -245,9 +250,8 @@ fun AddSecret(
                             }
 
                             Text(
-                                text = stringResource(Res.string.addSecret),
-                                fontSize = 24.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                                text = appString(AppString.addSecret),
+                                style = AppTextStyles.SectionTitle(),
                                 color = AppColors.White,
                                 modifier = Modifier.align(Alignment.Start)
                             )
@@ -258,7 +262,7 @@ fun AddSecret(
                             )
 
                             TextInput(
-                                placeholderText = stringResource(Res.string.secretName),
+                                placeholderText = appString(AppString.secretName),
                                 value = secretName,
                                 onTextChange = { secretName = it }
                             )
@@ -274,7 +278,7 @@ fun AddSecret(
                                 when (mode) {
                                     SecretInputMode.PASSWORD -> {
                                         TextInput(
-                                            placeholderText = stringResource(Res.string.secretCapital),
+                                            placeholderText = appString(AppString.secretCapital),
                                             value = passwordSecret,
                                             onTextChange = { passwordSecret = it }
                                         )
@@ -321,7 +325,7 @@ fun AddSecret(
                                     }
                                     viewModel.handle(event)
                                 },
-                                text = stringResource(Res.string.addSecret),
+                                text = appString(AppString.addSecret),
                                 isEnabled = isAddEnabled,
                             )
                         }
@@ -359,14 +363,14 @@ private fun SecretModeSegmentedControl(
         SecretModeChip(
             modifier = Modifier.weight(1f),
             iconEmoji = "🔑",
-            text = stringResource(Res.string.passwordType),
+            text = appString(AppString.passwordType),
             selected = selectedMode == SecretInputMode.PASSWORD,
             onClick = { onModeSelected(SecretInputMode.PASSWORD) }
         )
         SecretModeChip(
             modifier = Modifier.weight(1f),
             iconEmoji = "🌱",
-            text = stringResource(Res.string.seedPhraseType),
+            text = appString(AppString.seedPhraseType),
             selected = selectedMode == SecretInputMode.SEED_PHRASE,
             onClick = { onModeSelected(SecretInputMode.SEED_PHRASE) }
         )
@@ -402,13 +406,12 @@ private fun SecretModeChip(
         ) {
             Text(
                 text = iconEmoji,
-                fontSize = 14.sp,
+                style = AppTextStyles.Tiny(),
                 color = AppColors.White
             )
             Text(
                 text = text,
-                fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
-                fontSize = 14.sp,
+                style = AppTextStyles.TinyStrong(),
                 color = AppColors.White
             )
         }
@@ -430,10 +433,9 @@ private fun SeedPhraseEditor(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(Res.string.seedWordCount),
+                text = appString(AppString.seedWordCount),
                 color = AppColors.White50,
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_semi_bold))
+                style = AppTextStyles.BodyStrong()
             )
             Row(
                 modifier = Modifier
@@ -475,16 +477,14 @@ private fun SeedPhraseEditor(
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = stringResource(Res.string.pasteSeedPhrase),
+                        text = appString(AppString.pasteSeedPhrase),
                         color = AppColors.White,
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold))
+                        style = AppTextStyles.CaptionStrong()
                     )
                     Text(
-                        text = stringResource(Res.string.pasteSeedHint),
+                        text = appString(AppString.pasteSeedHint),
                         color = AppColors.White50,
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular))
+                        style = AppTextStyles.Tiny()
                     )
                 }
             }
@@ -523,8 +523,7 @@ private fun SeedCountChip(
         Text(
             text = text,
             color = if (selected) AppColors.White else AppColors.White50,
-            fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
-            fontSize = 14.sp
+            style = AppTextStyles.CaptionStrong()
         )
     }
 }
@@ -586,8 +585,7 @@ private fun SeedWordInput(
         Text(
             text = "${index + 1}.",
             color = AppColors.White50,
-            fontSize = 12.sp,
-            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+            style = AppTextStyles.Tiny(),
             modifier = Modifier.width(20.dp)
         )
         BasicTextField(
@@ -598,11 +596,7 @@ private fun SeedWordInput(
                 .padding(horizontal = 1.dp)
                 .onFocusChanged { isFocused = it.isFocused },
             cursorBrush = SolidColor(AppColors.White),
-            textStyle = TextStyle(
-                fontSize = 14.sp,
-                color = AppColors.White,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular))
-            ),
+            textStyle = AppTextStyles.Caption().copy(color = AppColors.White),
             maxLines = 1,
             singleLine = true,
             keyboardOptions = KeyboardOptions.Default.copy(
@@ -616,10 +610,9 @@ private fun SeedWordInput(
                 ) {
                     if (value.isBlank()) {
                         Text(
-                            text = stringResource(Res.string.wordPlaceholder),
-                            fontSize = 12.sp,
+                            text = appString(AppString.wordPlaceholder),
+                            style = AppTextStyles.Tiny(),
                             color = AppColors.White30,
-                            fontFamily = FontFamily(Font(Res.font.manrope_regular))
                         )
                     }
                     innerTextField()
@@ -644,9 +637,8 @@ private fun TextInput(
         shape = RoundedCornerShape(8.dp),
         placeholder = {
             Text(
-                fontSize = 16.sp,
-                color = Color.White.copy(alpha = 0.5f),
-                text = placeholderText
+                text = placeholderText,
+                style = AppTextStyles.Body().copy(color = Color.White.copy(alpha = 0.5f)),
             )
         },
         modifier = Modifier
@@ -665,7 +657,7 @@ private fun TextInput(
             keyboardType = KeyboardType.Text,
             imeAction = ImeAction.Done
         ),
-        textStyle = TextStyle(fontSize = 16.sp, color = Color.White),
+        textStyle = AppTextStyles.Body().copy(color = Color.White),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = AppColors.White5,
             unfocusedContainerColor = AppColors.White5,

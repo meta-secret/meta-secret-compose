@@ -11,11 +11,13 @@ object AppColors {
     val White30 = Color(0xFFFFFFFF).copy(alpha = 0.3f)
     val White10 = Color(0xFFFFFFFF).copy(alpha = 0.10f)
     val White5 = Color(0xFF263752)
+    val BorderColor = Color(0xFF20324e)
 
     //Blue
     val ActionLink = Color(0xFF90BDFF)
     val ActionMain = Color(0xFF0368FF)
     val ActionPremium = Color(0xFF3C8AFF)
+    val DarkBlue = Color(0xFF0e1a2e)
 
     //Red
     val RedError = Color(0xFFFF0952)

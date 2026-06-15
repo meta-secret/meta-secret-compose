@@ -1,5 +1,11 @@
 package ui.scenes.profilescreen
 
+import core.AppString
+
+import core.appString
+
+import ui.theme.AppTextStyles
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,7 +49,7 @@ import ui.screenContent.CommonBackground
 class ProfileScreen : Screen {
     @Composable
     override fun Content() {
-        CommonBackground(Res.string.profile) {
+        CommonBackground(AppString.profile) {
             ProfileBody()
         }
     }
@@ -54,9 +60,9 @@ fun ProfileBody() {
     val viewModel: ProfileScreenViewModel = koinViewModel()
     val secretsCount by viewModel.secretsCount.collectAsState()
     val devicesCount by viewModel.devicesCount.collectAsState()
-    val secrets = stringResource(Res.string.secretsHeader)
-    val devices = stringResource(Res.string.devicesList)
-    val nickname = stringResource(Res.string.nickname)
+    val secrets = appString(AppString.secretsHeader)
+    val devices = appString(AppString.devicesList)
+    val nickname = appString(AppString.nickname)
     val vaultName by viewModel.vaultName.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -104,7 +110,7 @@ fun ProfileBody() {
 //                    viewModel.completeSignIn(false)
 //                    navigator.popUntilRoot()
 //                },
-//                stringResource(Res.string.signOut),
+//                appString(AppString.signOut),
 //                color = AppColors.RedError
 //            )
             Column(
@@ -113,10 +119,10 @@ fun ProfileBody() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 TextCell(
-                    (stringResource(Res.string.version) + " " + viewModel.deviceInfoProvider.getAppVersion()),
+                    (appString(AppString.version) + " " + viewModel.deviceInfoProvider.getAppVersion()),
                     16
                 )
-                TextCell(stringResource(Res.string.poweredBy), 0)
+                TextCell(appString(AppString.poweredBy), 0)
             }
         }
     }
@@ -141,17 +147,13 @@ fun ProfileTextCell(header: String, content: String, alignment: Alignment.Horizo
             modifier = Modifier
                 .height(22.dp),
             text = header,
-            color = AppColors.White75,
-            fontSize = 15.sp,
-            fontFamily = FontFamily(Font(Res.font.manrope_regular))
+            style = AppTextStyles.Paragraph().copy(color = AppColors.White75)
         )
         Text(
             modifier = Modifier
                 .height(32.dp),
             text = content,
-            color = AppColors.White,
-            fontSize = 24.sp,
-            fontFamily = FontFamily(Font(Res.font.manrope_bold)),
+            style = AppTextStyles.DialogTitle().copy(color = AppColors.White),
             textAlign = TextAlign.Center
         )
     }
@@ -161,9 +163,7 @@ fun ProfileTextCell(header: String, content: String, alignment: Alignment.Horizo
 fun TextCell(content: String, padding: Int) {
     Text(
         text = content,
-        fontSize = 15.sp,
-        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-        color = AppColors.White75,
+        style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
         modifier = Modifier
             .padding(top = padding.dp)
             .height(22.dp)

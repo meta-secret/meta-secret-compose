@@ -20,12 +20,15 @@
     <string name = "start">Let's start</string>
     <string name = "nicknameError">This username contains prohibited characters. Please try a different one.</string>
     <string name = "emailSelectionTitle">Choose your email</string>
-    <string name = "emailSelectionDescription">Apple and Google are only used to get a verified email address. MetaSecret uses that email as your Vault name.</string>
+    <string name = "emailSelectionDescription">Your email becomes your unique Vault name — used only to create or find your Vault across your devices. It never stores your secrets.</string>
     <string name = "emailSelectionConfirmTitle">Confirm your email</string>
     <string name = "emailSelectionConfirmDescription">This email will be used as your Vault name. Make sure it is the address you want to keep using.</string>
     <string name = "emailSelectionManualTitle">Enter your email</string>
     <string name = "emailSelectionManualDescription">Type the email you want as your Vault name.</string>
+    <string name = "or">or</string>
     <string name = "emailSelectionManualHint">We’ll use it to create or find your Vault.</string>
+    <string name = "emailSelectionManualHintLine1">This is your Vault name - it isn't a login or password.</string>
+    <string name = "emailSelectionManualHintLine2">Stored only on your device, never on a server.</string>
     <string name = "emailSelectionGoogle">Continue with Google</string>
     <string name = "emailSelectionApple">Continue with Apple</string>
     <string name = "emailSelectionManual">Enter email manually</string>
@@ -93,6 +96,8 @@
     <string name = "errorBiometricAuthFailed">Biometric authentication failed</string>
     <string name = "errorSecretAddFailed">Failed to add secret</string>
     <string name = "errorRecoverDeclined">Secret recovery was declined</string>
+    <string name = "yes">Yes</string>
+    <string name = "no">No</string>
     <string name = "lackOfDevices">Not having enough devices?</string>
     <string name = "useMetaSecret">MetaSecret Cloud Device - you can use our cloud as a device</string>
     <string name = "lackOfDevices_start">You need to add </string>
@@ -127,6 +132,8 @@
     <string name = "recoverRequestSent">Recovery request sent. Please accept it on your other device</string>
     <string name = "unexpected_login">"Unexpected loading state"</string>
     <string name = "reject_join">"Registration denied. You may be connecting to the wrong account."</string>
+    <string name = "resetAllData">Reset all data</string>
+    <string name = "resetAllDataWarning">If you tap Reset, all data will be lost. Are you sure?</string>
     <string name = "biometric_error">Biometric authentification error. Please, try again later</string>
     <string name = "goto_devices_tab">Go to the Devices tab and add the necessary ones to your network</string>
     <string name = "wanna_join">Do you want to join this device to your cluster?</string>

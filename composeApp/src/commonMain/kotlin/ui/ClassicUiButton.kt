@@ -12,8 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import core.AppColors
+import ui.theme.AppTextStyles
 
 @Composable
 fun ClassicButton(
@@ -52,7 +52,7 @@ fun ClassicButton(
     ) {
         Text(
             text = text,
-            fontSize = 16.sp,
+            style = AppTextStyles.BodyStrong(),
             color = AppColors.White,
             modifier = Modifier.height(22.dp)
         )

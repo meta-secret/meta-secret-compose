@@ -1,5 +1,9 @@
 package ui.dialogs
 
+import core.AppString
+
+import core.appString
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -53,14 +57,14 @@ fun AlertProvider(
     }
     
     val title = when (alertType) {
-        AlertType.JoinRequest -> stringResource(Res.string.wanna_join)
+        AlertType.JoinRequest -> appString(AppString.wanna_join)
         AlertType.RecoveryRequest -> {
             val restoreData = (recoveryRequestState as? RecoveryRequestAlertState.Visible)?.restoreData
                 ?: (recoveryRequestState as? RecoveryRequestAlertState.Processing)?.restoreData
             if (restoreData != null) {
-                "${stringResource(Res.string.wanna_recover)} \"${restoreData.secretId}\"?"
+                "${appString(AppString.wanna_recover)} \"${restoreData.secretId}\"?"
             } else {
-                stringResource(Res.string.wanna_recover)
+                appString(AppString.wanna_recover)
             }
         }
         null -> ""

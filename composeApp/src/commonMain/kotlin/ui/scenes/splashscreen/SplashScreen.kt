@@ -1,5 +1,9 @@
 package ui.scenes.splashscreen
 
+import core.AppString
+
+import core.appString
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,7 +47,7 @@ class SplashScreen : Screen {
         val viewModel: SplashScreenViewModel = koinViewModel()
         val navigator: Navigator? = LocalNavigator.current
 
-        val biometricError = stringResource(Res.string.enable_biometric_required)
+        val biometricError = appString(AppString.enable_biometric_required)
         val backgroundMain = painterResource(Res.drawable.background_main)
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)

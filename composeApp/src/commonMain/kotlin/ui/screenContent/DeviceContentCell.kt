@@ -1,5 +1,11 @@
 package ui.screenContent
 
+import core.AppString
+
+import core.appString
+
+import ui.theme.AppTextStyles
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -62,14 +68,14 @@ fun DeviceContent(
 ) {
     val effectiveStatus = if (model.id == currentDeviceId) DeviceStatus.Current else model.status
     val secretText = when {
-        model.secretsCount == 0 || model.secretsCount > 4 -> stringResource(Res.string.secrets_5)
-        model.secretsCount in 2..4 -> stringResource(Res.string.secrets_4)
-        else -> stringResource(Res.string.secret)
+        model.secretsCount == 0 || model.secretsCount > 4 -> appString(AppString.secrets_5)
+        model.secretsCount in 2..4 -> appString(AppString.secrets_4)
+        else -> appString(AppString.secret)
     }
     // TODO: We don't have device deletion functionality. I'm gonna uncomment it later.
 //    SwipeableItem(
 //        itemsCount = model.devicesCount,
-//        buttonText = stringResource(Res.string.removeDevice),
+//        buttonText = appString(AppString.removeDevice),
 //        isRevealed = false,
 //        screenMetricsProvider,
 //        action = {},
@@ -109,27 +115,15 @@ fun DeviceContent(
                     ) {
                         Text(
                             text = model.vaultName,
-                            style = TextStyle(
-                                fontSize = 15.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-                                color = AppColors.White
-                            )
+                            style = AppTextStyles.ParagraphStrong().copy(color = AppColors.White)
                         )
                         Text(
-                            text = model.deviceName.ifBlank { stringResource(resolveDeviceCategoryLabel(model.deviceUiCategory)) },
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                                color = Color(0xFF7A9ABF)
-                            )
+                            text = model.deviceName.ifBlank { appString(resolveDeviceCategoryLabel(model.deviceUiCategory)) },
+                            style = AppTextStyles.Tiny().copy(color = Color(0xFF7A9ABF))
                         )
                         Text(
                             text = "${model.secretsCount} $secretText",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                                color = Color(0xFF4E6A88)
-                            )
+                            style = AppTextStyles.Tiny().copy(color = Color(0xFF4E6A88))
                         )
                     }
                     StatusBadge(status = effectiveStatus)
@@ -152,14 +146,14 @@ private fun resolveDeviceIcon(category: DeviceUiCategory?): DrawableResource {
 }
 
 private fun resolveDeviceCategoryLabel(category: DeviceUiCategory?) = when (category) {
-    DeviceUiCategory.Android -> Res.string.device_ui_category_android
-    DeviceUiCategory.Iphone -> Res.string.device_ui_category_iphone
-    DeviceUiCategory.Tablet -> Res.string.device_ui_category_tablet
-    DeviceUiCategory.Desktop -> Res.string.device_ui_category_desktop
-    DeviceUiCategory.Cli -> Res.string.device_ui_category_cli
-    DeviceUiCategory.Web -> Res.string.device_ui_category_web
-    DeviceUiCategory.Other -> Res.string.device_ui_category_other
-    null -> Res.string.device_ui_category_unknown
+    DeviceUiCategory.Android -> AppString.device_ui_category_android
+    DeviceUiCategory.Iphone -> AppString.device_ui_category_iphone
+    DeviceUiCategory.Tablet -> AppString.device_ui_category_tablet
+    DeviceUiCategory.Desktop -> AppString.device_ui_category_desktop
+    DeviceUiCategory.Cli -> AppString.device_ui_category_cli
+    DeviceUiCategory.Web -> AppString.device_ui_category_web
+    DeviceUiCategory.Other -> AppString.device_ui_category_other
+    null -> AppString.device_ui_category_unknown
 }
 
 @Composable
@@ -189,11 +183,7 @@ private fun StatusBadge(status: DeviceStatus) {
 
     Text(
         text = status.value,
-        style = TextStyle(
-            fontSize = 10.sp,
-            fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-            color = textColor
-        ),
+        style = AppTextStyles.Nano().copy(color = textColor),
         modifier = Modifier
             .background(backgroundColor, RoundedCornerShape(20.dp))
             .border(1.dp, borderColor, RoundedCornerShape(20.dp))

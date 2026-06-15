@@ -1,5 +1,9 @@
 package ui.dialogs.showsecret
 
+import core.AppString
+
+import core.appString
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -74,6 +78,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.platform.LocalClipboardManager
 import ui.ClassicButton
+import ui.theme.AppTextStyles
 
 @Composable
 fun ShowSecret(
@@ -98,9 +103,9 @@ fun ShowSecret(
     }
 
     val deviceText = when {
-        devicesCount == 0 || devicesCount > 4 -> stringResource(Res.string.devices_5)
-        devicesCount in 2..4 -> stringResource(Res.string.devices_4)
-        else -> stringResource(Res.string.device)
+        devicesCount == 0 || devicesCount > 4 -> appString(AppString.devices_5)
+        devicesCount in 2..4 -> appString(AppString.devices_4)
+        else -> appString(AppString.device)
     }
 
     Dialog(
@@ -152,9 +157,8 @@ fun ShowSecret(
                         .verticalScroll(rememberScrollState())
                 ) {
                     Text(
-                        text = stringResource(Res.string.showSecret),
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        text = appString(AppString.showSecret),
+                        style = AppTextStyles.SectionTitle(),
                         color = AppColors.White,
                         textAlign = TextAlign.Center
                     )
@@ -189,7 +193,7 @@ fun ShowSecret(
                                     viewModel.handle(ShowSecretEvents.ShowSecret(secret.secretName))
                                 }
                             },
-                            text = stringResource(Res.string.show)
+                            text = appString(AppString.show)
                         )
                     } else {
                         val copyText = when (val content = revealedSecret) {
@@ -198,9 +202,9 @@ fun ShowSecret(
                             null -> ""
                         }
                         val buttonText = when (revealedSecret) {
-                            is RevealedSecretContent.Password -> stringResource(Res.string.copySecret)
-                            is RevealedSecretContent.SeedPhrase -> stringResource(Res.string.copyPhrase)
-                            null -> stringResource(Res.string.copySecret)
+                            is RevealedSecretContent.Password -> appString(AppString.copySecret)
+                            is RevealedSecretContent.SeedPhrase -> appString(AppString.copyPhrase)
+                            null -> appString(AppString.copySecret)
                         }
 
                         CopyButton(
@@ -248,16 +252,14 @@ private fun SecretNameField(secretName: String, seedCount: Int?) {
         ) {
             Text(
                 text = secretName,
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                style = AppTextStyles.Body(),
                 color = AppColors.White,
             )
 
             if (seedCount == 12 || seedCount == 24) {
                 Text(
                     text = "SEED · $seedCount",
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                    style = AppTextStyles.MicroStrong(),
                     color = Color(0xFF3A7BFF),
                     modifier = Modifier
                         .background(
@@ -301,17 +303,15 @@ private fun LockedSecretStub() {
             }
 
             Text(
-                text = stringResource(Res.string.secretEncryptedTitle),
-                fontSize = 14.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                text = appString(AppString.secretEncryptedTitle),
+                style = AppTextStyles.CaptionStrong(),
                 color = AppColors.White,
                 textAlign = TextAlign.Center
             )
 
             Text(
-                text = stringResource(Res.string.secretEncryptedSubtitle),
-                fontSize = 13.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                text = appString(AppString.secretEncryptedSubtitle),
+                style = AppTextStyles.Small(),
                 color = Color(0x8CFFFFFF),
                 textAlign = TextAlign.Center
             )
@@ -351,8 +351,7 @@ private fun PasswordSecretField(value: String) {
         ) {
             Text(
                 text = value,
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                style = AppTextStyles.Body(),
                 color = AppColors.White,
                 modifier = Modifier
                     .weight(1f)
@@ -398,16 +397,14 @@ private fun SeedPhraseGrid(words: List<String>) {
                         ) {
                             Text(
                                 text = "$index",
-                                fontSize = 11.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                                style = AppTextStyles.MicroStrong(),
                                 color = Color(0x4DFFFFFF),
                                 textAlign = TextAlign.End,
                                 modifier = Modifier.widthIn(min = 18.dp)
                             )
                             Text(
                                 text = word,
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                                style = AppTextStyles.Caption(),
                                 color = AppColors.White,
                                 modifier = Modifier.padding(start = 8.dp)
                             )
@@ -432,11 +429,7 @@ private fun DevicesRow(devicesCount: Int, deviceText: String) {
         )
         Text(
             text = "$devicesCount $deviceText",
-            style = TextStyle(
-                fontSize = 15.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                color = AppColors.White75
-            ),
+            style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
             modifier = Modifier.height(20.dp)
         )
     }
@@ -471,7 +464,7 @@ private fun CopyButton(text: String, onClick: () -> Unit) {
         )
         Text(
             text = text,
-            fontSize = 16.sp,
+            style = AppTextStyles.BodyStrong(),
             modifier = Modifier.padding(start = 8.dp)
         )
     }

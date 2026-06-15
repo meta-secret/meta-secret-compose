@@ -1,5 +1,7 @@
 package ui.scenes.devicesscreen
 
+import core.AppString
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -51,7 +53,7 @@ class DevicesScreen : Screen {
             viewModel.handle(DeviceViewEvents.OnAppear)
         }
 
-        CommonBackground(Res.string.devicesList) {
+        CommonBackground(AppString.devicesList) {
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
                     modifier = Modifier

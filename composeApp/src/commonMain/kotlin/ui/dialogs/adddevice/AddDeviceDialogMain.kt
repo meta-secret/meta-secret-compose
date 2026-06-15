@@ -1,5 +1,11 @@
 package ui.dialogs.adddevice
 
+import core.AppString
+
+import core.appString
+
+import ui.theme.AppTextStyles
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -76,9 +82,8 @@ fun AddingDevice(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = stringResource(Res.string.addDevice),
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        text = appString(AppString.addDevice),
+                        style = AppTextStyles.SectionTitle(),
                         color = AppColors.White,
                         modifier = Modifier
                             .align(Alignment.Start)
@@ -95,10 +100,8 @@ fun AddingDevice(
                                 .background(AppColors.White5, RoundedCornerShape(12.dp))
                         )
                         Text(
-                            text = stringResource(Res.string.downloadMetasecret),
-                            fontSize = 15.sp,
-                            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                            color = AppColors.White75,
+                            text = appString(AppString.downloadMetasecret),
+                            style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
                                 .padding(vertical = 24.dp)
@@ -114,10 +117,8 @@ fun AddingDevice(
                        verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
                         Text(
-                            text = stringResource(Res.string.orUseQR),
-                            fontSize = 15.sp,
-                            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                            color = AppColors.White75,
+                            text = appString(AppString.orUseQR),
+                            style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
                                 .padding(top = 10.dp)

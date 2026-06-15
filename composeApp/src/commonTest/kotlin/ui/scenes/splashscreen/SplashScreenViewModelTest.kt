@@ -116,10 +116,10 @@ class SplashScreenViewModelTest {
             keyValueStorage = keyValueStorage,
             biometricAuthenticator = FakeBiometricAuthenticator(),
             metaSecretAppManager = appManager,
-            keyChain = FakeKeyChain(),
             backupCoordinatorInterface = backupCoordinator,
             screenMetricsProvider = FakeScreenMetricsProvider(),
             vaultStatsProvider = vaultStatsProvider,
+            stringProvider = FakeStringProvider(),
         )
     }
 }

@@ -138,6 +138,45 @@ Execute:
 
 ---
 
+### Maestro Testing
+
+#### `write test-flow "<description>"`
+
+Execute:
+1. Read `.ai/commands/write-test-flow.md`
+
+---
+
+#### `check test-flow <test-name>`
+
+Execute:
+1. Read `.ai/commands/check-test-flow.md`
+
+---
+
+#### `check-simulators [ios|android]`
+
+Execute:
+1. Read `.ai/commands/check-simulators.md`
+
+---
+
+### Quick App Launch
+
+#### `launch ios`
+
+Execute:
+1. Read `.ai/commands/launch-ios.md`
+
+---
+
+#### `launch android`
+
+Execute:
+1. Read `.ai/commands/launch-android.md`
+
+---
+
 ### Help
 
 #### `help`
@@ -146,4 +185,4 @@ Execute:
 1. Read `.ai/commands/help.md`
 
 
-Last updated: 2026-06-10
+Last updated: 2026-06-11

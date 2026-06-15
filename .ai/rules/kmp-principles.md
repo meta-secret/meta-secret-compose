@@ -55,3 +55,62 @@
 - `composeApp` is the shared KMP module
 - Platform-specific build variants in `androidMain/` and `iosMain/`
 - CocoaPods for iOS native dependencies
+
+## File Structure & Modularity
+
+### File Size Constraint
+- **Maximum 400 lines per file** — This is hard limit
+- If file exceeds 400 lines → split into logical modules
+- Example: If `SettingsScreen.kt` grows beyond 400 lines:
+  - Extract subcomposables to separate files
+  - Move utility functions to `SettingsUtils.kt`
+  - Create `SettingsDialog.kt`, `SettingsList.kt` for reusable components
+
+### Component Reusability
+- **If UI element is used 2+ times** → extract to separate file
+- Shared components location: `ui/` directory
+- Example:
+  - ❌ Don't: Define `CustomButton` twice in different screens
+  - ✅ Do: Create `ui/components/CustomButton.kt`, import everywhere
+
+### Method Parameters
+- **Maximum 5 parameters per method/function** (hard limit)
+- If need more parameters → create **Input data class**
+- Example:
+  ```kotlin
+  // ❌ Bad (6 parameters)
+  fun createVault(
+    name: String,
+    description: String,
+    threshold: Int,
+    timeout: Int,
+    autoSync: Boolean,
+    notifications: Boolean
+  ) { }
+  
+  // ✅ Good (use Input model)
+  data class CreateVaultInput(
+    val name: String,
+    val description: String,
+    val threshold: Int,
+    val timeout: Int,
+    val autoSync: Boolean,
+    val notifications: Boolean
+  )
+  fun createVault(input: CreateVaultInput) { }
+  ```
+
+## Visibility & Encapsulation
+
+- **Maximize `private` visibility** — Default to private, expose only what's necessary
+- All helper functions should be `private`
+- All data models should be `private` unless used across modules
+- All state should be `private` unless explicitly exposed via public API
+- Example:
+  ```kotlin
+  class VaultManager {
+    private fun validateInput() { }      // private, not public
+    private val internalState = State()  // private
+    val publicState = State()            // public only if needed
+  }
+  ```

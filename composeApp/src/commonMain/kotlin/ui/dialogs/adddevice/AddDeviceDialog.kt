@@ -1,5 +1,11 @@
 package ui.dialogs.adddevice
 
+import core.AppString
+
+import core.appString
+
+import ui.theme.AppTextStyles
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -83,16 +89,14 @@ fun PopUpDevice(
                     modifier = Modifier.padding(top = 30.dp, bottom = 40.dp)
                 ) {
                     Text(
-                        text = stringResource(Res.string.addDevice),
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        text = appString(AppString.addDevice),
+                        style = AppTextStyles.SectionTitle(),
                         color = AppColors.White,
                         modifier = Modifier.align(Alignment.Start)
                     )
                     Text(
-                        text = stringResource(Res.string.addDeviceAdvice),
-                        fontSize = 15.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        text = appString(AppString.addDeviceAdvice),
+                        style = AppTextStyles.Paragraph(),
                         color = AppColors.White75,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
@@ -107,24 +111,20 @@ fun PopUpDevice(
                             contentDescription = null
                         )
                         Text(
-                            text = stringResource(Res.string.lackOfDevices),
-                            fontSize = 18.sp,
-                            fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-                            color = AppColors.White,
+                            text = appString(AppString.lackOfDevices),
+                            style = AppTextStyles.Strong18().copy(color = AppColors.White),
                             modifier = Modifier.align(Alignment.Start)
                         )
                         Text(
-                            text = stringResource(Res.string.useMetaSecret),
-                            fontSize = 15.sp,
-                            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                            color = AppColors.White75,
+                            text = appString(AppString.useMetaSecret),
+                            style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
                             modifier = Modifier.align(Alignment.Start)
                         )
                     }
                     ClassicButton({
                             dialogVisibility(false)
                             mainDialogVisibility(true) },
-                        stringResource(Res.string.addDevice)
+                        appString(AppString.addDevice)
                     )
                 }
             }

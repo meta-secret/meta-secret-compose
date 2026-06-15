@@ -16,9 +16,6 @@ import core.ScreenMetricsProviderInterface
 import core.Secret
 import core.StringProviderInterface
 import core.VaultStatsProviderInterface
-import core.email.EmailProvider
-import core.email.EmailSelectionCoordinatorInterface
-import core.email.EmailSelectionResult
 import core.metaSecretCore.MetaSecretCoreInterface
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -148,37 +145,6 @@ class FakeAppStateCacheProvider : AppStateCacheProviderInterface {
     }
 }
 
-class FakeStringProvider : StringProviderInterface {
-    override fun biometricTitle() = "title"
-    override fun biometricSubtitle() = "subtitle"
-    override fun biometricDescription() = "description"
-    override fun biometricFallback() = "fallback"
-    override fun biometricNotAvailable() = "not available"
-    override fun biometricErrorNoHardware() = "no hardware"
-    override fun biometricErrorNoEnrolled() = "no enrolled"
-    override fun biometricPermissionRequired() = "permission required"
-    override fun biometricPromptReason() = "prompt reason"
-    override fun biometricPermissionSettings() = "permission settings"
-    override fun backupChoosePathMessage() = "backup message"
-    override fun backupChoosePathWarning() = "backup warning"
-    override fun ok() = "ok"
-    override fun errorNetwork() = "network error"
-    override fun errorInternal() = "internal error"
-    override fun errorParse() = "parse error"
-    override fun errorValidation() = "validation error"
-    override fun errorUnknownPrefix() = "unknown: "
-    override fun errorBiometricAuthFailed() = "biometric failed"
-    override fun errorSecretAddFailed() = "secret add failed"
-    override fun errorRecoverDeclined() = "recover declined"
-    override fun emailSelectionCouldNotGetEmail() = "could not get email"
-    override fun emailSelectionInvalidEmail() = "invalid email"
-    override fun emailSelectionPrivateRelayMessage() = "private relay email"
-    override fun acceptRequestOnOtherDevice() = "approve on other device"
-    override fun nameOccupiedJoinPrompt() = "join existing vault"
-    override fun recoverPendingExists() = "recover pending exists"
-    override fun recoverRequestSent() = "recover request sent"
-}
-
 class FakeBiometricAuthenticator : BiometricAuthenticatorInterface {
     override fun isBiometricAvailable(): Boolean = true
     override fun authenticate(onSuccess: () -> Unit, onError: (String) -> Unit, onFallback: () -> Unit) = onSuccess()
@@ -244,14 +210,4 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
     override fun declineRecover(claimId: String): String = "{}"
     override fun sendDeclineCompletion(claimId: String): String = "{}"
     override fun showRecovered(secretId: String): String = "{}"
-}
-
-class FakeEmailSelectionCoordinator : EmailSelectionCoordinatorInterface {
-    var lastProvider: EmailProvider? = null
-    var scriptedResult: EmailSelectionResult = EmailSelectionResult.Cancelled
-
-    override suspend fun selectEmail(provider: EmailProvider): EmailSelectionResult {
-        lastProvider = provider
-        return scriptedResult
-    }
 }
