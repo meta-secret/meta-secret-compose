@@ -171,6 +171,10 @@ class FakeStringProvider : StringProviderInterface {
     override fun nameOccupiedJoinPrompt() = "join existing vault"
     override fun recoverPendingExists() = "recover pending exists"
     override fun recoverRequestSent() = "recover request sent"
+    override fun removeDeviceSuccess() = "device removed"
+    override fun removeDeviceSelfError() = "self remove denied"
+    override fun removeDeviceLastMemberError() = "last member remove denied"
+    override fun removeDeviceGenericError() = "remove failed"
 }
 
 class FakeBiometricAuthenticator : BiometricAuthenticatorInterface {

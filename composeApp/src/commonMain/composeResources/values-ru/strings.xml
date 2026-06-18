@@ -115,6 +115,12 @@
     <string name = "backup_choose_path_warning">Если вы не укажите путь, ваши данные будут утеряны при деинсталяции приложения</string>
     <string name = "ok">Ок</string>
     <string name = "currentDevice">Текущее устройство</string>
+    <string name = "removeDeviceConfirmTitle">Удалить девайс?</string>
+    <string name = "removeDeviceConfirmMessage">Вы действительно хотите удалить %1 со всех ваших устройств?</string>
+    <string name = "deviceRemovedSuccess">Девайс успешно удален</string>
+    <string name = "removeDeviceSelfError">Нельзя удалить текущее устройство</string>
+    <string name = "removeDeviceLastMemberError">Нельзя удалить последнее устройство в хранилище</string>
+    <string name = "removeDeviceGenericError">Не удалось удалить устройство</string>
     <string name = "wanna_recover">Показать ваш секрет?</string>
     <string name = "device_ui_category_android">Android</string>
     <string name = "device_ui_category_iphone">iPhone</string>

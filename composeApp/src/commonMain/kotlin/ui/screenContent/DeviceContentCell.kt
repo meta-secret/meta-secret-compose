@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +44,9 @@ import kotlinproject.composeapp.generated.resources.other
 import kotlinproject.composeapp.generated.resources.secret
 import kotlinproject.composeapp.generated.resources.secrets_4
 import kotlinproject.composeapp.generated.resources.secrets_5
+import kotlinproject.composeapp.generated.resources.shield_l1
 import kotlinproject.composeapp.generated.resources.tablet
+import kotlinproject.composeapp.generated.resources.trashbox
 import kotlinproject.composeapp.generated.resources.web
 import models.apiModels.DeviceUiCategory
 import models.appInternalModels.DeviceCellModel
@@ -58,6 +61,9 @@ import org.jetbrains.compose.resources.DrawableResource
 fun DeviceContent(
     model: DeviceCellModel,
     currentDeviceId: String?,
+    isRemoving: Boolean,
+    canRemove: Boolean,
+    onRemoveClick: () -> Unit,
     onClick: ()-> Unit
 ) {
     val effectiveStatus = if (model.id == currentDeviceId) DeviceStatus.Current else model.status
@@ -130,6 +136,24 @@ fun DeviceContent(
                                 fontFamily = FontFamily(Font(Res.font.manrope_regular)),
                                 color = Color(0xFF4E6A88)
                             )
+                        )
+                    }
+                    if (canRemove) {
+                        IconButton(
+                            onClick = onRemoveClick,
+                            enabled = !isRemoving
+                        ) {
+                            Image(
+                                painter = painterResource(Res.drawable.trashbox),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    } else {
+                        Image(
+                            painter = painterResource(Res.drawable.shield_l1),
+                            contentDescription = null,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                     StatusBadge(status = effectiveStatus)

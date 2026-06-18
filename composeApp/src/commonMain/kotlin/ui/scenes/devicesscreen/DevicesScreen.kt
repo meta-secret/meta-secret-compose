@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,7 +28,8 @@ import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.devicesList
-import kotlinproject.composeapp.generated.resources.biometric_error
+import kotlinproject.composeapp.generated.resources.removeDeviceConfirmMessage
+import kotlinproject.composeapp.generated.resources.removeDeviceConfirmTitle
 import models.appInternalModels.DeviceStatus
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
@@ -43,9 +46,12 @@ class DevicesScreen : Screen {
         val viewModel: DevicesScreenViewModel = koinViewModel()
         val devices by viewModel.devicesList.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
+        val isRemoving by viewModel.isRemoving.collectAsState()
 
         var isDialogVisible by remember { mutableStateOf(false) }
         var isMainDialogVisible by remember { mutableStateOf(false) }
+        var removeCandidateId by remember { mutableStateOf<String?>(null) }
+        var removeCandidateName by remember { mutableStateOf("") }
         
         LaunchedEffect(Unit) {
             viewModel.handle(DeviceViewEvents.OnAppear)
@@ -60,9 +66,17 @@ class DevicesScreen : Screen {
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     items(devices) { device ->
+                        val memberCount = devices.count { it.status == DeviceStatus.Member || it.status == DeviceStatus.Current }
+                        val canRemove = device.status == DeviceStatus.Member && memberCount > 1
                         DeviceContent(
-                            device,
-                            viewModel.currentDeviceId,
+                            model = device,
+                            currentDeviceId = viewModel.currentDeviceId,
+                            isRemoving = isRemoving,
+                            canRemove = canRemove,
+                            onRemoveClick = {
+                                removeCandidateId = device.id
+                                removeCandidateName = device.deviceName
+                            },
                             onClick = {
                                 if (device.status == DeviceStatus.Pending || device.status == DeviceStatus.Declined) {
                                     viewModel.handle(DeviceViewEvents.SelectDevice(device.id))
@@ -124,6 +138,26 @@ class DevicesScreen : Screen {
                 mainDialogVisibility = { isDialogVisible = it },
                 dialogVisibility = { isDialogVisible = it }
             )
+        }
+
+        if (removeCandidateId != null) {
+            Dialog(
+                onDismissRequest = { if (!isRemoving) removeCandidateId = null },
+                properties = DialogProperties(usePlatformDefaultWidth = false)
+            ) {
+                ui.dialogs.YesNoDialog(
+                    title = "${stringResource(Res.string.removeDeviceConfirmTitle)}\n${stringResource(Res.string.removeDeviceConfirmMessage, removeCandidateName)}",
+                    isVisible = true,
+                    onDismiss = { accepted ->
+                        if (accepted == true && !isRemoving) {
+                            viewModel.handle(DeviceViewEvents.RemoveDevice(removeCandidateId!!))
+                        }
+                        if (!isRemoving) {
+                            removeCandidateId = null
+                        }
+                    }
+                )
+            }
         }
 
     }
