@@ -11,6 +11,8 @@ import core.BackupCoordinatorInterface
 import core.BackupCoordinatorInterfaceIos
 import core.StringProviderInterface
 import core.StringProviderIos
+import core.GoogleEmailRequesterInterface
+import core.GoogleEmailRequesterIos
 import core.ClientDeviceInfoProviderInterface
 import core.ClientDeviceInfoProviderIos
 import core.DeviceInfoProviderInterface
@@ -33,6 +35,7 @@ val iosPlatformModule = module {
     single<DeviceInfoProviderInterface> { DeviceInfoProviderIos() }
     single<ScreenMetricsProviderInterface> { ScreenMetricsProviderIos() }
     single<BiometricAuthenticatorInterface> { BiometricAuthenticatorIos(get()) }
+    single<GoogleEmailRequesterInterface> { GoogleEmailRequesterIos() }
     single<KeyChainInterface> { KeyChainManagerIos(get()) }
     single<BackupCoordinatorInterface> { BackupCoordinatorInterfaceIos(get(), get(), get(), get()) }
     single<DatabasePathProviderInterface> { DatabasePathProviderIos(get()) }

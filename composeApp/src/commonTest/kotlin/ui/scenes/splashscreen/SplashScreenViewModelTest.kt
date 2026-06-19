@@ -33,6 +33,7 @@ import testutils.FakeDebugLogger
 import testutils.FakeKeyChain
 import testutils.FakeKeyValueStorage
 import testutils.FakeScreenMetricsProvider
+import testutils.FakeStringProvider
 import testutils.FakeVaultStatsProvider
 
 class SplashScreenViewModelTest {

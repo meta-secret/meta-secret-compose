@@ -66,12 +66,24 @@ class SignInScreen : Screen {
         val navigationEvent by viewModel.navigationEvent.collectAsState()
         val showJoinDecision by viewModel.showJoinDecision.collectAsState()
         val showJoinPending by viewModel.showJoinPending.collectAsState()
+        val emailError by viewModel.emailError.collectAsState()
+
         var showResetAllDataSheet by remember { androidx.compose.runtime.mutableStateOf(false) }
         val providerOrder = viewModel.providerOrder
 
         LaunchedEffect(navigationEvent) {
-            if (navigationEvent) {
-                navigator?.push(MainScreen())
+            when (navigationEvent) {
+                SignInNavigationEvent.MainScreen -> {
+                    navigator?.push(MainScreen())
+                    viewModel.consumeNavigationEvent()
+                }
+
+                SignInNavigationEvent.ManualSignInScreen -> {
+                    navigator?.push(ManualSignInScreen(emailError))
+                    viewModel.consumeNavigationEvent()
+                }
+
+                else -> {}
             }
         }
 
@@ -129,6 +141,8 @@ class SignInScreen : Screen {
                         onProviderSelected = { provider ->
                             if (provider == EmailProvider.MANUAL) {
                                 navigator?.push(ManualSignInScreen())
+                            } else {
+                                viewModel.handle(SignInViewEvents.SelectEmailProvider(provider))
                             }
                         },
                         onResetAllDataClick = {

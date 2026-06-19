@@ -35,6 +35,7 @@ import kotlinproject.composeapp.generated.resources.close_blue
 import org.jetbrains.compose.resources.painterResource
 import core.AppColors
 import core.ScreenMetricsProviderInterface
+import ui.theme.AppTextStyles
 
 @Composable
 fun InAppNotification(
@@ -78,20 +79,19 @@ fun InAppNotification(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = (screenMetricsProvider.heightFactor() * 48).dp, max = 200.dp)
                         .background(color, RoundedCornerShape(10.dp))
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier
-                            .padding(start = 20.dp)
+                            .padding(start = 20.dp, top = 12.dp, bottom = 12.dp)
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
-
                     ) {
                         Column {
                             Text(
                                 text = message,
+                                style = AppTextStyles.Caption(),
                                 color = Color.White,
                                 modifier = Modifier
                             )

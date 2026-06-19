@@ -76,7 +76,7 @@ class MetaSecretAppManagerTest {
 
         val error = assertIs<InitResult.Error>(result)
         assertEquals("boom", error.message)
-        assertEquals(listOf("validation error"), notificationCoordinator.errorMessages)
+        assertEquals(listOf("errorValidation"), notificationCoordinator.errorMessages)
     }
 
     @Test

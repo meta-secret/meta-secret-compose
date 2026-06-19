@@ -2,7 +2,6 @@ package ui.dialogs.showsecret
 
 import androidx.lifecycle.viewModelScope
 import core.LogTag
-import core.NotificationCoordinatorInterface
 import core.StringProviderInterface
 import core.VaultStatsProviderInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
@@ -24,7 +23,6 @@ class ShowSecretViewModel(
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
-    private val notificationCoordinator: NotificationCoordinatorInterface,
     private val stringProvider: StringProviderInterface,
 ) : CommonViewModel() {
 
@@ -109,7 +107,7 @@ class ShowSecretViewModel(
                 )
                 when (existingClaim?.status) {
                     ClaimStatus.PENDING -> {
-                        notificationCoordinator.showSuccess(stringProvider.recoverRequestSent())
+                        showNotification(stringProvider.recoverRequestSent(), isError = false)
                         socketHandler.resumePolling()
                     }
 
@@ -137,7 +135,7 @@ class ShowSecretViewModel(
         withContext(Dispatchers.IO) {
             metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))
         }
-        notificationCoordinator.showSuccess(stringProvider.recoverRequestSent())
+        showNotification(stringProvider.recoverRequestSent(), isError = false)
         socketHandler.resumePolling()
     }
 

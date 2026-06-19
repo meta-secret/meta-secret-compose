@@ -22,7 +22,10 @@ val rustlsPlatformVerifierAar: File? = fileTree("${System.getProperty("user.home
     .files
     .maxByOrNull { it.lastModified() }
 
-val googleClientId = providers.gradleProperty("GOOGLE_CLIENT_ID").orNull ?: ""
+val googleServerClientId = providers.gradleProperty("GOOGLE_SERVER_CLIENT_ID").orNull
+    ?.takeIf { it.isNotBlank() }
+    ?: providers.gradleProperty("GOOGLE_CLIENT_ID").orNull
+    ?: ""
 val appleClientId = providers.gradleProperty("APPLE_CLIENT_ID").orNull ?: ""
 val appleRedirectUri = providers.gradleProperty("APPLE_REDIRECT_URI").orNull ?: "metasecret://apple-auth"
 
@@ -189,7 +192,7 @@ android {
         versionName = "1.0.0"
 
         buildConfigField("String", "APP_VERSION", "\"${versionName}\"")
-        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"$googleClientId\"")
+        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"$googleServerClientId\"")
         buildConfigField("String", "APPLE_CLIENT_ID", "\"$appleClientId\"")
         buildConfigField("String", "APPLE_REDIRECT_URI", "\"$appleRedirectUri\"")
 

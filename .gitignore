@@ -2,6 +2,8 @@
 .kotlin
 .gradle
 .gradle-home
+.derivedData
+.tmp-home
 **/build/
 xcuserdata
 !src/**/build/

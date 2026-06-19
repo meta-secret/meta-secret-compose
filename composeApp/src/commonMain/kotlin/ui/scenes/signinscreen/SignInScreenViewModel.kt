@@ -2,10 +2,11 @@ package ui.scenes.signinscreen
 
 import androidx.lifecycle.viewModelScope
 import core.BiometricAuthenticatorInterface
+import core.GoogleEmailAuthResult
+import core.GoogleEmailRequesterInterface
 import core.KeyChainInterface
 import core.KeyValueStorageInterface
 import core.LogTag
-import core.NotificationCoordinatorInterface
 import core.ScreenMetricsProviderInterface
 import core.StringProviderInterface
 import core.metaSecretCore.InitResult
@@ -18,6 +19,7 @@ import core.metaSecretCore.OutsiderState
 import core.metaSecretCore.VaultAvailability
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -42,7 +44,7 @@ class SignInScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
-    private val notificationCoordinator: NotificationCoordinatorInterface,
+    private val googleEmailRequester: GoogleEmailRequesterInterface,
     private val stringProvider: StringProviderInterface,
 ) : CommonViewModel() {
 
@@ -55,14 +57,17 @@ class SignInScreenViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _navigationEvent = MutableStateFlow(false)
-    val navigationEvent: StateFlow<Boolean> = _navigationEvent
+    private val _navigationEvent = MutableStateFlow<SignInNavigationEvent?>(SignInNavigationEvent.Idle)
+    val navigationEvent: StateFlow<SignInNavigationEvent?> = _navigationEvent
 
     private val _showJoinDecision = MutableStateFlow(false)
     val showJoinDecision: StateFlow<Boolean> = _showJoinDecision
 
     private val _showJoinPending = MutableStateFlow(false)
     val showJoinPending: StateFlow<Boolean> = _showJoinPending
+
+    private val _emailError = MutableStateFlow<String?>(null)
+    val emailError: StateFlow<String?> = _emailError
 
     private var currentState: SignInFlowState? by Delegates.observable(null) { _, _, _ ->
         viewModelScope.launch {
@@ -81,6 +86,27 @@ class SignInScreenViewModel(
     override fun handle(event: CommonViewModelEventsInterface) {
         if (event is SignInViewEvents) {
             currentState = when (event) {
+                is SignInViewEvents.SelectEmailProvider -> {
+                    when (event.provider) {
+                        EmailProvider.GOOGLE -> {
+                            viewModelScope.launch {
+                                requestGoogleEmail()
+                            }
+                        }
+
+                        EmailProvider.APPLE -> {
+                            logger.log(
+                                LogTag.SignInVM.Message.EmailProviderNotSupported,
+                                "provider=${event.provider}",
+                                success = false
+                            )
+                        }
+
+                        EmailProvider.MANUAL -> Unit
+                    }
+                    SignInFlowState.NONE
+                }
+
                 SignInViewEvents.JoinExistingVault -> {
                     SignInFlowState.VAULT_AVAILABLE
                 }
@@ -161,7 +187,7 @@ class SignInScreenViewModel(
                 )
             }
             SignInFlowState.JOINING -> enterJoinPendingState()
-            SignInFlowState.JOINED -> _navigationEvent.value = true
+            SignInFlowState.JOINED -> _navigationEvent.value = SignInNavigationEvent.Idle
             SignInFlowState.DECLINED -> handleDeclinedOrCanceledJoin()
             SignInFlowState.FAILED -> {
                 _isLoading.value = false
@@ -237,14 +263,6 @@ class SignInScreenViewModel(
         _showJoinDecision.value = false
         _showJoinPending.value = false
         currentState = SignInFlowState.IDLE
-    }
-
-    fun showNotification(message: String, isError: Boolean) {
-        if (isError) {
-            notificationCoordinator.showError(message)
-        } else {
-            notificationCoordinator.showSuccess(message)
-        }
     }
 
     private suspend fun generateMasterKey(): Boolean {
@@ -351,9 +369,37 @@ class SignInScreenViewModel(
     private suspend fun initAppManagerResult(): Boolean {
         return metaSecretAppManager.initWithSavedKey() is InitResult.Success
     }
+
+    private suspend fun requestGoogleEmail() {
+        logger.log(LogTag.SignInVM.Message.GoogleAuthStarted, success = true)
+        when (val result = googleEmailRequester.requestGoogleEmail()) {
+            is GoogleEmailAuthResult.Success -> {
+                logger.log(
+                    LogTag.SignInVM.Message.GoogleAuthSuccess,
+                    result.email,
+                    success = true
+                )
+            }
+
+            GoogleEmailAuthResult.Cancelled -> {
+                logger.log(LogTag.SignInVM.Message.GoogleAuthCancelled, success = false)
+            }
+
+            is GoogleEmailAuthResult.Error -> {
+                logger.log(LogTag.SignInVM.Message.GoogleAuthFailed, success = false)
+                _emailError.value = result.message
+                _navigationEvent.value = SignInNavigationEvent.ManualSignInScreen
+            }
+        }
+    }
+
+    fun consumeNavigationEvent() {
+        _navigationEvent.value = SignInNavigationEvent.Idle
+    }
 }
 
 sealed class SignInViewEvents : CommonViewModelEventsInterface {
+    data class SelectEmailProvider(val provider: EmailProvider) : SignInViewEvents()
     data object JoinExistingVault : SignInViewEvents()
     data object CancelJoin : SignInViewEvents()
     data object ClearAllData : SignInViewEvents()
@@ -369,4 +415,10 @@ private enum class SignInFlowState {
     DECLINED,
     FAILED,
     NONE,
+}
+
+enum class SignInNavigationEvent {
+    Idle,
+    MainScreen,
+    ManualSignInScreen
 }

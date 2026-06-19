@@ -84,7 +84,7 @@ fun AuthProviderButton(
                     EmailProvider.GOOGLE -> appString(AppString.emailSelectionGoogle)
                     EmailProvider.MANUAL -> appString(AppString.emailSelectionManual)
                 },
-                style = AppTextStyles.ButtonLabel(),
+                style = AppTextStyles.BodyStrong(),
                 color = AppColors.White
             )
         }

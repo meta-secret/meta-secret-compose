@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import core.LogTag
 import core.KeyValueStorageInterface
-import core.NotificationCoordinatorInterface
 import core.StringProviderInterface
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
@@ -23,7 +22,6 @@ class AddSecretViewModel(
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val keyValueStorage: KeyValueStorageInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
-    private val notificationCoordinator: NotificationCoordinatorInterface,
     private val stringProvider: StringProviderInterface,
 ) : CommonViewModel() {
 
@@ -52,12 +50,12 @@ class AddSecretViewModel(
                         onError = { error ->
                             logger.log(LogTag.AddSecretVM.Message.BiometricAuthFailed, error, success = false)
                             val message = error.ifEmpty { stringProvider.errorBiometricAuthFailed() }
-                            notificationCoordinator.showError(message)
+                            showNotification(message, isError = true)
                             _isLoading.value = false
                         },
                         onFallback = {
                             logger.log(LogTag.AddSecretVM.Message.BiometricAuthFallback, success = false)
-                            notificationCoordinator.showError(stringProvider.errorBiometricAuthFailed())
+                            showNotification(stringProvider.errorBiometricAuthFailed(), isError = true)
                             _isLoading.value = false
                         }
                     )

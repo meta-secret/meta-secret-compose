@@ -31,6 +31,7 @@ import core.DebugLoggerInterface
 import core.AppStateCacheProvider
 import core.AppStateCacheProviderInterface
 import core.errors.ErrorMapper
+import ui.scenes.signinscreen.EmailConfirmationScreenViewModel
 import ui.scenes.signinscreen.ManualSignInScreenViewModel
 
 val appModule = module {
@@ -50,11 +51,12 @@ val appModule = module {
     factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { ManualSignInScreenViewModel(get()) }
+    factory { EmailConfirmationScreenViewModel() }
     factory { ProfileScreenViewModel(get(), get(), get()) }
-    factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { SecretsScreenViewModel(get(), get(), get(), get(), get()) }
-    factory { AddSecretViewModel(get(), get(), get(), get(), get()) }
+    factory { AddSecretViewModel(get(), get(), get(), get()) }
     factory { RemoveSecretViewModel(get()) }
     factory { AddDeviceViewModel() }
-    factory { ShowSecretViewModel(get(), get(), get(), get(), get()) }
+    factory { ShowSecretViewModel(get(), get(), get(), get()) }
 }

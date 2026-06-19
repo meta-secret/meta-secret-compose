@@ -1,5 +1,8 @@
 package core.email
 
+import models.appInternalModels.isApplePrivateRelayEmail
+import models.appInternalModels.isValidEmail
+import models.appInternalModels.normalizeEmailInput
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
