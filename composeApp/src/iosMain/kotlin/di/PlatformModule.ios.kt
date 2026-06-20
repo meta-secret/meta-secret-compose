@@ -3,6 +3,8 @@ package di
 import org.koin.dsl.module
 import core.BiometricAuthenticatorInterface
 import core.BiometricAuthenticatorIos
+import core.AppleEmailRequesterInterface
+import core.AppleEmailRequesterIos
 import core.KeyChainInterface
 import core.KeyChainManagerIos
 import core.MetaSecretCoreServiceIos
@@ -35,6 +37,7 @@ val iosPlatformModule = module {
     single<DeviceInfoProviderInterface> { DeviceInfoProviderIos() }
     single<ScreenMetricsProviderInterface> { ScreenMetricsProviderIos() }
     single<BiometricAuthenticatorInterface> { BiometricAuthenticatorIos(get()) }
+    single<AppleEmailRequesterInterface> { AppleEmailRequesterIos() }
     single<GoogleEmailRequesterInterface> { GoogleEmailRequesterIos() }
     single<KeyChainInterface> { KeyChainManagerIos(get()) }
     single<BackupCoordinatorInterface> { BackupCoordinatorInterfaceIos(get(), get(), get(), get()) }

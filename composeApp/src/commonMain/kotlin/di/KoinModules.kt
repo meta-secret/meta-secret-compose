@@ -49,7 +49,7 @@ val appModule = module {
     single { MainScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
-    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { ManualSignInScreenViewModel(get()) }
     factory { EmailConfirmationScreenViewModel() }
     factory { ProfileScreenViewModel(get(), get(), get()) }

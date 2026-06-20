@@ -19,6 +19,8 @@ import org.koin.core.context.unloadKoinModules
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import platform.App
+import core.AppleEmailRequesterAndroid
+import core.AppleEmailRequesterInterface
 import core.GoogleEmailRequesterAndroid
 import core.GoogleEmailRequesterInterface
 import core.BiometricAuthenticatorAndroid
@@ -56,6 +58,9 @@ class MainActivity : FragmentActivity() {
             }
             single<GoogleEmailRequesterInterface> {
                 GoogleEmailRequesterAndroid(this@MainActivity)
+            }
+            single<AppleEmailRequesterInterface> {
+                AppleEmailRequesterAndroid()
             }
         }
 

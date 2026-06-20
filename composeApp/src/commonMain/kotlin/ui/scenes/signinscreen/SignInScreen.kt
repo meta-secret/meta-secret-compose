@@ -72,7 +72,8 @@ class SignInScreen : Screen {
         val providerOrder = viewModel.providerOrder
 
         LaunchedEffect(navigationEvent) {
-            when (navigationEvent) {
+            val event = navigationEvent
+            when (event) {
                 SignInNavigationEvent.MainScreen -> {
                     navigator?.push(MainScreen())
                     viewModel.consumeNavigationEvent()
@@ -80,6 +81,11 @@ class SignInScreen : Screen {
 
                 SignInNavigationEvent.ManualSignInScreen -> {
                     navigator?.push(ManualSignInScreen(emailError))
+                    viewModel.consumeNavigationEvent()
+                }
+
+                is SignInNavigationEvent.EmailConfirmation -> {
+                    navigator?.push(EmailConfirmationScreen(event.email, event.provider))
                     viewModel.consumeNavigationEvent()
                 }
 

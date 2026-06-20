@@ -1,6 +1,8 @@
 package ui.scenes.signinscreen
 
 import androidx.lifecycle.viewModelScope
+import core.AppleEmailAuthResult
+import core.AppleEmailRequesterInterface
 import core.BiometricAuthenticatorInterface
 import core.GoogleEmailAuthResult
 import core.GoogleEmailRequesterInterface
@@ -44,6 +46,7 @@ class SignInScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
+    private val appleEmailRequester: AppleEmailRequesterInterface,
     private val googleEmailRequester: GoogleEmailRequesterInterface,
     private val stringProvider: StringProviderInterface,
 ) : CommonViewModel() {
@@ -95,11 +98,9 @@ class SignInScreenViewModel(
                         }
 
                         EmailProvider.APPLE -> {
-                            logger.log(
-                                LogTag.SignInVM.Message.EmailProviderNotSupported,
-                                "provider=${event.provider}",
-                                success = false
-                            )
+                            viewModelScope.launch {
+                                requestAppleEmail()
+                            }
                         }
 
                         EmailProvider.MANUAL -> Unit
@@ -393,6 +394,32 @@ class SignInScreenViewModel(
         }
     }
 
+    private suspend fun requestAppleEmail() {
+        logger.log(LogTag.SignInVM.Message.AppleAuthStarted, success = true)
+        when (val result = appleEmailRequester.requestAppleEmail()) {
+            is AppleEmailAuthResult.Success -> {
+                _emailError.value = null
+                logger.log(
+                    LogTag.SignInVM.Message.AppleAuthSuccess,
+                    result.email,
+                    success = true
+                )
+                _navigationEvent.value = SignInNavigationEvent.EmailConfirmation(result.email, EmailProvider.APPLE)
+            }
+
+            AppleEmailAuthResult.Cancelled -> {
+                logger.log(LogTag.SignInVM.Message.AppleAuthCancelled, success = false)
+                _navigationEvent.value = SignInNavigationEvent.ManualSignInScreen
+            }
+
+            is AppleEmailAuthResult.Error -> {
+                logger.log(LogTag.SignInVM.Message.AppleAuthFailed, success = false)
+                _emailError.value = result.message
+                _navigationEvent.value = SignInNavigationEvent.ManualSignInScreen
+            }
+        }
+    }
+
     fun consumeNavigationEvent() {
         _navigationEvent.value = SignInNavigationEvent.Idle
     }
@@ -417,8 +444,9 @@ private enum class SignInFlowState {
     NONE,
 }
 
-enum class SignInNavigationEvent {
-    Idle,
-    MainScreen,
-    ManualSignInScreen
+sealed class SignInNavigationEvent {
+    data object Idle : SignInNavigationEvent()
+    data object MainScreen : SignInNavigationEvent()
+    data object ManualSignInScreen : SignInNavigationEvent()
+    data class EmailConfirmation(val email: String, val provider: EmailProvider) : SignInNavigationEvent()
 }

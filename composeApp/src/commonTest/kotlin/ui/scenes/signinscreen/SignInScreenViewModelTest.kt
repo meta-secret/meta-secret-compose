@@ -3,6 +3,8 @@ package ui.scenes.signinscreen
 import core.AppStateCacheProviderInterface
 import core.BackupCoordinatorInterface
 import core.BiometricAuthenticatorInterface
+import core.AppleEmailAuthResult
+import core.AppleEmailRequesterInterface
 import core.DebugLoggerInterface
 import core.GoogleEmailAuthResult
 import core.GoogleEmailRequesterInterface
@@ -79,7 +81,10 @@ class SignInScreenViewModelTest {
         val requester = FakeGoogleEmailRequester(
             result = GoogleEmailAuthResult.Success("alice@example.com")
         )
-        val viewModel = createViewModel(requester)
+        val viewModel = createViewModel(
+            appleEmailRequester = FakeAppleEmailRequester(),
+            googleEmailRequester = requester
+        )
 
         viewModel.handle(SignInViewEvents.SelectEmailProvider(EmailProvider.GOOGLE))
         advanceUntilIdle()
@@ -94,7 +99,54 @@ class SignInScreenViewModelTest {
         )
     }
 
+    @Test
+    fun `apple selection requests email and logs selected account`() = runTest(dispatcher) {
+        val requester = FakeAppleEmailRequester(
+            result = AppleEmailAuthResult.Success("alice@icloud.com")
+        )
+        val viewModel = createViewModel(
+            appleEmailRequester = requester,
+            googleEmailRequester = FakeGoogleEmailRequester()
+        )
+
+        viewModel.handle(SignInViewEvents.SelectEmailProvider(EmailProvider.APPLE))
+        advanceUntilIdle()
+
+        assertEquals(1, requester.calls)
+        assertTrue(
+            testLogger.entries.any { entry ->
+                entry.message == LogTag.SignInVM.Message.AppleAuthSuccess &&
+                    entry.extra == "alice@icloud.com" &&
+                    entry.success == true
+            }
+        )
+    }
+
+    @Test
+    fun `apple selection falls back to manual sign in on error`() = runTest(dispatcher) {
+        val requester = FakeAppleEmailRequester(
+            result = AppleEmailAuthResult.Error("Apple did not return an email address")
+        )
+        val viewModel = createViewModel(
+            appleEmailRequester = requester,
+            googleEmailRequester = FakeGoogleEmailRequester()
+        )
+
+        viewModel.handle(SignInViewEvents.SelectEmailProvider(EmailProvider.APPLE))
+        advanceUntilIdle()
+
+        assertEquals(1, requester.calls)
+        assertEquals(SignInNavigationEvent.ManualSignInScreen, viewModel.navigationEvent.value)
+        assertTrue(
+            testLogger.entries.any { entry ->
+                entry.message == LogTag.SignInVM.Message.AppleAuthFailed &&
+                    entry.success == false
+            }
+        )
+    }
+
     private fun createViewModel(
+        appleEmailRequester: AppleEmailRequesterInterface,
         googleEmailRequester: GoogleEmailRequesterInterface,
     ): SignInScreenViewModel {
         return SignInScreenViewModel(
@@ -106,6 +158,7 @@ class SignInScreenViewModelTest {
             keyValueStorage = FakeKeyValueStorage(),
             socketHandler = FakeSocketHandler(),
             biometricAuthenticator = FakeBiometricAuthenticator(),
+            appleEmailRequester = appleEmailRequester,
             googleEmailRequester = googleEmailRequester,
             stringProvider = FakeStringProvider(),
         )
@@ -113,11 +166,22 @@ class SignInScreenViewModelTest {
 }
 
 private class FakeGoogleEmailRequester(
-    private val result: GoogleEmailAuthResult,
+    private val result: GoogleEmailAuthResult = GoogleEmailAuthResult.Cancelled,
 ) : GoogleEmailRequesterInterface {
     var calls = 0
 
     override suspend fun requestGoogleEmail(): GoogleEmailAuthResult {
+        calls += 1
+        return result
+    }
+}
+
+private class FakeAppleEmailRequester(
+    private val result: AppleEmailAuthResult = AppleEmailAuthResult.Cancelled,
+) : AppleEmailRequesterInterface {
+    var calls = 0
+
+    override suspend fun requestAppleEmail(): AppleEmailAuthResult {
         calls += 1
         return result
     }
