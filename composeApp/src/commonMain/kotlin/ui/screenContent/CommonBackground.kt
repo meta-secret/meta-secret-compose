@@ -1,5 +1,7 @@
 package ui.screenContent
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,12 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.background_main
-import org.jetbrains.compose.resources.painterResource
 import core.AppColors
 import core.AppString
 import core.appString
+import org.koin.compose.koinInject
 import ui.theme.AppTextStyles
 
 @Composable
@@ -31,12 +31,13 @@ fun CommonBackground(
     headerTrailingContent: @Composable (() -> Unit)? = null,
     screenContent: @Composable () -> Unit
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
     Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
         Image(
-            painter = painterResource(Res.drawable.background_main),
+            painter = imageProvider.getPainter(AppImage.BackgroundMain),
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize(),

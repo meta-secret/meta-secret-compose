@@ -3,6 +3,8 @@ package ui
 import core.AppString
 
 import core.appString
+import core.AppImage
+import core.ImageProviderInterface
 import models.appInternalModels.EmailProvider
 
 import androidx.compose.foundation.Image
@@ -26,10 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import core.AppColors
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.apple
-import kotlinproject.composeapp.generated.resources.google
-import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import ui.theme.AppTextStyles
 
 @Composable
@@ -37,8 +36,9 @@ fun AuthProviderButton(
     provider: EmailProvider,
     onClick: () -> Unit,
 ) {
-    val appleLogo = painterResource(Res.drawable.apple)
-    val googleLogo = painterResource(Res.drawable.google)
+    val imageProvider: ImageProviderInterface = koinInject()
+    val appleLogo = imageProvider.getPainter(AppImage.Apple)
+    val googleLogo = imageProvider.getPainter(AppImage.Google)
     val shape = RoundedCornerShape(14.dp)
 
     Button(

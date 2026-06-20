@@ -1,5 +1,7 @@
 package ui.scenes.signinscreen
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,17 +38,7 @@ import core.AppColors
 import core.AppString
 import core.NotificationCoordinatorInterface
 import core.appString
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.apple
-import kotlinproject.composeapp.generated.resources.background_logo
-import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.email_received_check
-import kotlinproject.composeapp.generated.resources.google
-import kotlinproject.composeapp.generated.resources.icon_email
-import kotlinproject.composeapp.generated.resources.icon_lock
-import kotlinproject.composeapp.generated.resources.logo
 import models.appInternalModels.EmailProvider
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -66,14 +58,9 @@ class EmailConfirmationScreen(
             parameters = { parametersOf(email) }
         )
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
+        val imageProvider: ImageProviderInterface = koinInject()
         val navigator = LocalNavigator.current
         val focusManager = LocalFocusManager.current
-
-        val backgroundMain = painterResource(Res.drawable.background_main)
-        val backgroundLogo = painterResource(Res.drawable.background_logo)
-        val logo = painterResource(Res.drawable.logo)
-        val lockIcon = painterResource(Res.drawable.icon_lock)
-        val checkIcon = painterResource(Res.drawable.email_received_check)
 
         val isLoading by viewModel.isLoading.collectAsState()
         val navigationEvent by viewModel.navigationEvent.collectAsState()
@@ -81,9 +68,9 @@ class EmailConfirmationScreen(
         val showJoinPending by viewModel.showJoinPending.collectAsState()
 
         val providerIcon = when (provider) {
-            EmailProvider.APPLE -> painterResource(Res.drawable.apple)
-            EmailProvider.GOOGLE -> painterResource(Res.drawable.google)
-            EmailProvider.MANUAL -> painterResource(Res.drawable.icon_email)
+            EmailProvider.APPLE -> imageProvider.getPainter(AppImage.Apple)
+            EmailProvider.GOOGLE -> imageProvider.getPainter(AppImage.Google)
+            EmailProvider.MANUAL -> imageProvider.getPainter(AppImage.IconEmail)
         }
         val providerLabel = when (provider) {
             EmailProvider.APPLE -> "APPLE ID"
@@ -113,7 +100,7 @@ class EmailConfirmationScreen(
                 .clickable { focusManager.clearFocus() }
         ) {
             Image(
-                painter = backgroundMain,
+                painter = imageProvider.getPainter(AppImage.BackgroundMain),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds
@@ -132,7 +119,7 @@ class EmailConfirmationScreen(
                         .aspectRatio(1f)
                 ) {
                     Image(
-                        painter = backgroundLogo,
+                        painter = imageProvider.getPainter(AppImage.BackgroundLogo),
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -141,7 +128,7 @@ class EmailConfirmationScreen(
                         contentScale = ContentScale.Fit
                     )
                     Image(
-                        painter = logo,
+                        painter = imageProvider.getPainter(AppImage.Logo),
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -220,7 +207,7 @@ class EmailConfirmationScreen(
                             }
 
                             Image(
-                                painter = checkIcon,
+                                painter = imageProvider.getPainter(AppImage.EmailReceivedCheck),
                                 contentDescription = null,
                                 modifier = Modifier.size(36.dp)
                             )
@@ -237,7 +224,7 @@ class EmailConfirmationScreen(
                             .padding(start = 6.dp, end = 6.dp)
                     ) {
                         Image(
-                            painter = lockIcon,
+                            painter = imageProvider.getPainter(AppImage.IconLock),
                             contentDescription = null,
                             colorFilter = ColorFilter.tint(AppColors.White50),
                             modifier = Modifier.padding(top = 3.dp)

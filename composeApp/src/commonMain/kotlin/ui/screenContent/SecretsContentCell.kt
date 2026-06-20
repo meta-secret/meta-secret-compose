@@ -1,6 +1,8 @@
 package ui.screenContent
 
 import core.AppString
+import core.AppImage
+import core.ImageProviderInterface
 
 import core.appString
 
@@ -28,25 +30,20 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.device
 import kotlinproject.composeapp.generated.resources.devices_4
 import kotlinproject.composeapp.generated.resources.devices_5
-import kotlinproject.composeapp.generated.resources.devices_logo
 import kotlinproject.composeapp.generated.resources.level_1
 import kotlinproject.composeapp.generated.resources.level_2
 import kotlinproject.composeapp.generated.resources.level_3
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
-import kotlinproject.composeapp.generated.resources.shield_l1
-import kotlinproject.composeapp.generated.resources.shield_l2
-import kotlinproject.composeapp.generated.resources.shield_l3
 import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
 import models.appInternalModels.DevicesQuantity
 import core.Secret
+import org.koin.compose.koinInject
 
 @Composable
 fun SecretsContent(
@@ -54,28 +51,29 @@ fun SecretsContent(
     devicesCount: Int,
     onClick: () -> Unit
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
     val deviceText = when {
         devicesCount == 0 || devicesCount > 4 -> appString(AppString.devices_5)
         devicesCount in 2..4 -> appString(AppString.devices_4)
         else -> appString(AppString.device)
     }
 
-    var protectionLevelShield = painterResource(Res.drawable.shield_l1)
+    var protectionLevelShield = imageProvider.getPainter(AppImage.ShieldL1)
     var protectionLevelText = appString(AppString.level_1)
 
     when (devicesCount) {
         DevicesQuantity.OneDevice.amount -> {
-            protectionLevelShield = painterResource(Res.drawable.shield_l1)
+            protectionLevelShield = imageProvider.getPainter(AppImage.ShieldL1)
             protectionLevelText = appString(AppString.level_1)
         }
 
         DevicesQuantity.TwoDevices.amount -> {
-            protectionLevelShield = painterResource(Res.drawable.shield_l2)
+            protectionLevelShield = imageProvider.getPainter(AppImage.ShieldL2)
             protectionLevelText = appString(AppString.level_2)
         }
 
         DevicesQuantity.ThreeDevices.amount -> {
-            protectionLevelShield = painterResource(Res.drawable.shield_l3)
+            protectionLevelShield = imageProvider.getPainter(AppImage.ShieldL3)
             protectionLevelText = appString(AppString.level_3)
         }
     }
@@ -118,7 +116,7 @@ fun SecretsContent(
                             modifier = Modifier.height(24.dp)
                         ) {
                             Icon(
-                                painter = painterResource(Res.drawable.devices_logo),
+                                painter = imageProvider.getPainter(AppImage.DevicesLogo),
                                 contentDescription = null,
                                 tint = AppColors.White75
                             )

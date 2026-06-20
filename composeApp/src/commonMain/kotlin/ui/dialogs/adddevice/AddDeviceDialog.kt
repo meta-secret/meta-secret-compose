@@ -4,6 +4,9 @@ import core.AppString
 
 import core.appString
 
+import core.AppImage
+import core.ImageProviderInterface
+
 import ui.theme.AppTextStyles
 
 import androidx.compose.foundation.Image
@@ -26,21 +29,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addDevice
 import kotlinproject.composeapp.generated.resources.addDeviceAdvice
-import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.lackOfDevices
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
-import kotlinproject.composeapp.generated.resources.metasecretpicture
 import kotlinproject.composeapp.generated.resources.useMetaSecret
 import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
 import core.ScreenMetricsProviderInterface
+import org.koin.compose.koinInject
 import ui.ClassicButton
 
 
@@ -50,6 +50,7 @@ fun PopUpDevice(
     dialogVisibility: (Boolean) -> Unit,
     mainDialogVisibility: (Boolean) -> Unit
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
 
     Dialog(
         onDismissRequest = {},
@@ -76,7 +77,7 @@ fun PopUpDevice(
                         .padding(top = 16.dp)
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.close),
+                        painter = imageProvider.getPainter(AppImage.Close),
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
@@ -107,7 +108,7 @@ fun PopUpDevice(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Image(
-                            painter = painterResource(Res.drawable.metasecretpicture),
+                            painter = imageProvider.getPainter(AppImage.MetaSecretPicture),
                             contentDescription = null
                         )
                         Text(

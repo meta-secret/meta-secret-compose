@@ -1,6 +1,8 @@
 package ui.screenContent
 
 import core.AppString
+import core.AppImage
+import core.ImageProviderInterface
 
 import core.appString
 
@@ -30,9 +32,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.android
-import kotlinproject.composeapp.generated.resources.cli
 import kotlinproject.composeapp.generated.resources.device_ui_category_android
 import kotlinproject.composeapp.generated.resources.device_ui_category_cli
 import kotlinproject.composeapp.generated.resources.device_ui_category_desktop
@@ -41,24 +40,17 @@ import kotlinproject.composeapp.generated.resources.device_ui_category_other
 import kotlinproject.composeapp.generated.resources.device_ui_category_tablet
 import kotlinproject.composeapp.generated.resources.device_ui_category_unknown
 import kotlinproject.composeapp.generated.resources.device_ui_category_web
-import kotlinproject.composeapp.generated.resources.devices
-import kotlinproject.composeapp.generated.resources.laptop
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
-import kotlinproject.composeapp.generated.resources.other
-import kotlinproject.composeapp.generated.resources.secret
 import kotlinproject.composeapp.generated.resources.secrets_4
 import kotlinproject.composeapp.generated.resources.secrets_5
-import kotlinproject.composeapp.generated.resources.tablet
-import kotlinproject.composeapp.generated.resources.web
 import models.apiModels.DeviceUiCategory
 import models.appInternalModels.DeviceCellModel
 import models.appInternalModels.DeviceStatus
 import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
-import org.jetbrains.compose.resources.DrawableResource
+import org.koin.compose.koinInject
 
 @Composable
 fun DeviceContent(
@@ -66,6 +58,7 @@ fun DeviceContent(
     currentDeviceId: String?,
     onClick: ()-> Unit
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
     val effectiveStatus = if (model.id == currentDeviceId) DeviceStatus.Current else model.status
     val secretText = when {
         model.secretsCount == 0 || model.secretsCount > 4 -> appString(AppString.secrets_5)
@@ -103,7 +96,7 @@ fun DeviceContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(resolveDeviceIcon(model.deviceUiCategory)),
+                            painter = imageProvider.getPainter(resolveDeviceIcon(model.deviceUiCategory)),
                             contentDescription = null,
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.size(36.dp)
@@ -133,15 +126,15 @@ fun DeviceContent(
 //    )
 }
 
-private fun resolveDeviceIcon(category: DeviceUiCategory?): DrawableResource {
+private fun resolveDeviceIcon(category: DeviceUiCategory?): AppImage {
     return when (category) {
-        DeviceUiCategory.Iphone -> Res.drawable.devices
-        DeviceUiCategory.Android -> Res.drawable.android
-        DeviceUiCategory.Tablet -> Res.drawable.tablet
-        DeviceUiCategory.Desktop -> Res.drawable.laptop
-        DeviceUiCategory.Web -> Res.drawable.web
-        DeviceUiCategory.Cli -> Res.drawable.cli
-        DeviceUiCategory.Other, null -> Res.drawable.other
+        DeviceUiCategory.Iphone -> AppImage.Devices
+        DeviceUiCategory.Android -> AppImage.Android
+        DeviceUiCategory.Tablet -> AppImage.Tablet
+        DeviceUiCategory.Desktop -> AppImage.Laptop
+        DeviceUiCategory.Web -> AppImage.Web
+        DeviceUiCategory.Cli -> AppImage.Cli
+        DeviceUiCategory.Other, null -> AppImage.Other
     }
 }
 

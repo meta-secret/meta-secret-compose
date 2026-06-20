@@ -4,6 +4,8 @@ import core.AppString
 
 import core.appString
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -84,6 +86,7 @@ import kotlinproject.composeapp.generated.resources.wordPlaceholder
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import ui.ClassicButton
@@ -107,6 +110,7 @@ fun AddSecret(
     val seedWords = remember { mutableStateListOf(*Array(24) { "" }) }
 
     val viewModel: AddSecretViewModel = koinViewModel()
+    val imageProvider: ImageProviderInterface = koinInject()
     val isLoading by viewModel.isLoading.collectAsState()
     val addState by viewModel.state.collectAsState()
     val focusManager = LocalFocusManager.current
@@ -241,7 +245,7 @@ fun AddSecret(
                         ) {
                             Box(modifier = Modifier.fillMaxWidth()) {
                                 androidx.compose.foundation.Image(
-                                    painter = painterResource(Res.drawable.close),
+                                    painter = imageProvider.getPainter(AppImage.Close),
                                     contentDescription = null,
                                     modifier = Modifier
                                         .align(Alignment.CenterEnd)
@@ -288,6 +292,7 @@ fun AddSecret(
                                         SeedPhraseEditor(
                                             seedWordCount = seedWordCount,
                                             seedWords = seedWords,
+                                            imageProvider = imageProvider,
                                             onWordCountChange = { seedWordCount = it },
                                             onWordChange = { index, value ->
                                                 val normalized = value.trim()
@@ -422,6 +427,7 @@ private fun SecretModeChip(
 private fun SeedPhraseEditor(
     seedWordCount: Int,
     seedWords: List<String>,
+    imageProvider: ImageProviderInterface,
     onWordCountChange: (Int) -> Unit,
     onWordChange: (index: Int, value: String) -> Unit,
     onPaste: () -> Unit,
@@ -469,7 +475,7 @@ private fun SeedPhraseEditor(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 androidx.compose.foundation.Image(
-                    painter = painterResource(Res.drawable.icon_paste),
+                    painter = imageProvider.getPainter(AppImage.IconPaste),
                     contentDescription = null,
                     modifier = Modifier
                         .width(20.dp)

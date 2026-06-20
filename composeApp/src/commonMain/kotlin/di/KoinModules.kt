@@ -9,6 +9,8 @@ import core.metaSecretCore.MetaSecretStateResolver
 import core.metaSecretCore.MetaSecretStateResolverInterface
 import core.KeyValueStorageImpl
 import core.KeyValueStorageInterface
+import core.ImageProvider
+import core.ImageProviderInterface
 import ui.dialogs.adddevice.AddDeviceViewModel
 import ui.dialogs.addsecret.AddSecretViewModel
 import ui.dialogs.removesecret.RemoveSecretViewModel
@@ -36,6 +38,7 @@ import ui.scenes.signinscreen.ManualSignInScreenViewModel
 
 val appModule = module {
     single<KeyValueStorageInterface> { KeyValueStorageImpl(get()) }
+    single<ImageProviderInterface> { ImageProvider() }
     single<ErrorMapper> { ErrorMapper(get()) }
     single<NotificationCoordinatorInterface> { NotificationCoordinator() }
     single<DebugLoggerInterface> { DebugLogger(get()) }

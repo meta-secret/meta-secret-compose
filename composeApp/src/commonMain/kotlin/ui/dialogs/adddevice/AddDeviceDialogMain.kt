@@ -4,6 +4,9 @@ import core.AppString
 
 import core.appString
 
+import core.AppImage
+import core.ImageProviderInterface
+
 import ui.theme.AppTextStyles
 
 import androidx.compose.foundation.Image
@@ -28,19 +31,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addDevice
-import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.downloadMetasecret
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.orUseQR
 import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import qrgenerator.qrkitpainter.rememberQrKitPainter
 import core.AppColors
 import core.ScreenMetricsProviderInterface
+import org.koin.compose.koinInject
 
 @Composable
 fun AddingDevice(
@@ -48,6 +49,7 @@ fun AddingDevice(
     mainDialogVisibility: (Boolean) -> Unit, userName: String
 ) {
     val painter = rememberQrKitPainter(userName)
+    val imageProvider: ImageProviderInterface = koinInject()
     Dialog(
         onDismissRequest = {},
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -73,7 +75,7 @@ fun AddingDevice(
                         .padding(top = 16.dp)
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.close),
+                        painter = imageProvider.getPainter(AppImage.Close),
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)

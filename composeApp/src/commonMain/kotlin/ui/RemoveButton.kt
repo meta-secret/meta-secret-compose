@@ -1,5 +1,7 @@
 package ui
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,13 +20,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.manrope_regular
-import kotlinproject.composeapp.generated.resources.trashbox
-import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import core.AppColors
 import core.ScreenMetricsProviderInterface
+import org.koin.compose.koinInject
 import ui.theme.AppTextStyles
 
 @Composable
@@ -33,6 +31,7 @@ fun RemoveButton(
     action: (Boolean) -> Unit,
     description: String
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
     Box(
         modifier = Modifier
             .width((screenMetricsProvider.widthFactor() * 80).dp)
@@ -46,7 +45,7 @@ fun RemoveButton(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(Res.drawable.trashbox),
+                painter = imageProvider.getPainter(AppImage.Trashbox),
                 contentDescription = null,
             )
             Text(

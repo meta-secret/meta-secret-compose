@@ -4,6 +4,8 @@ import core.AppString
 
 import core.appString
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -73,6 +75,7 @@ import kotlinproject.composeapp.generated.resources.show
 import kotlinproject.composeapp.generated.resources.showSecret
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -89,6 +92,7 @@ fun ShowSecret(
 ) {
     val viewModel: ShowSecretViewModel = koinViewModel()
     val screenMetricsProvider: ScreenMetricsProviderInterface = koinInject()
+    val imageProvider: ImageProviderInterface = koinInject()
     val clipboardManager = LocalClipboardManager.current
 
     val devicesCount by viewModel.devicesCount.collectAsState()
@@ -138,7 +142,7 @@ fun ShowSecret(
                         .padding(top = 16.dp)
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.close),
+                        painter = imageProvider.getPainter(AppImage.Close),
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
@@ -178,13 +182,13 @@ fun ShowSecret(
                         label = "show_secret_transition"
                     ) { content ->
                         when (content) {
-                            null -> LockedSecretStub()
-                            is RevealedSecretContent.Password -> PasswordSecretField(content.value)
+                            null -> LockedSecretStub(imageProvider)
+                            is RevealedSecretContent.Password -> PasswordSecretField(content.value, imageProvider)
                             is RevealedSecretContent.SeedPhrase -> SeedPhraseGrid(content.words)
                         }
                     }
 
-                    DevicesRow(devicesCount = devicesCount, deviceText = deviceText)
+                    DevicesRow(devicesCount = devicesCount, deviceText = deviceText, imageProvider = imageProvider)
 
                     if (revealedSecret == null) {
                         ClassicButton(
@@ -209,6 +213,7 @@ fun ShowSecret(
 
                         CopyButton(
                             text = buttonText,
+                            imageProvider = imageProvider,
                             onClick = {
                                 if (copyText.isNotBlank()) {
                                     clipboardManager.setText(AnnotatedString(copyText))
@@ -275,7 +280,7 @@ private fun SecretNameField(secretName: String, seedCount: Int?) {
 }
 
 @Composable
-private fun LockedSecretStub() {
+private fun LockedSecretStub(imageProvider: ImageProviderInterface) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -295,7 +300,7 @@ private fun LockedSecretStub() {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(Res.drawable.icon_lock),
+                    painter = imageProvider.getPainter(AppImage.IconLock),
                     contentDescription = null,
                     tint = Color(0xFF3A7BFF),
                     modifier = Modifier.size(20.dp)
@@ -336,7 +341,7 @@ private fun LockedSecretStub() {
 }
 
 @Composable
-private fun PasswordSecretField(value: String) {
+private fun PasswordSecretField(value: String, imageProvider: ImageProviderInterface) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -359,7 +364,7 @@ private fun PasswordSecretField(value: String) {
             )
 
             Icon(
-                painter = painterResource(Res.drawable.icon_eye_off),
+                painter = imageProvider.getPainter(AppImage.IconEyeOff),
                 contentDescription = null,
                 tint = Color(0xFF3A7BFF),
                 modifier = Modifier.size(20.dp)
@@ -417,13 +422,17 @@ private fun SeedPhraseGrid(words: List<String>) {
 }
 
 @Composable
-private fun DevicesRow(devicesCount: Int, deviceText: String) {
+private fun DevicesRow(
+    devicesCount: Int,
+    deviceText: String,
+    imageProvider: ImageProviderInterface,
+) {
     Row(
         modifier = Modifier.height(24.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            painter = painterResource(Res.drawable.devices_logo),
+            painter = imageProvider.getPainter(AppImage.DevicesLogo),
             contentDescription = null,
             tint = AppColors.White75
         )
@@ -436,7 +445,11 @@ private fun DevicesRow(devicesCount: Int, deviceText: String) {
 }
 
 @Composable
-private fun CopyButton(text: String, onClick: () -> Unit) {
+private fun CopyButton(
+    text: String,
+    imageProvider: ImageProviderInterface,
+    onClick: () -> Unit,
+) {
     val shape = RoundedCornerShape(8.dp)
     Button(
         onClick = onClick,
@@ -458,7 +471,7 @@ private fun CopyButton(text: String, onClick: () -> Unit) {
         ),
     ) {
         Icon(
-            painter = painterResource(Res.drawable.icon_copy),
+            painter = imageProvider.getPainter(AppImage.IconCopy),
             contentDescription = null,
             modifier = Modifier.size(20.dp)
         )

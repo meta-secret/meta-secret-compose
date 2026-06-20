@@ -1,5 +1,7 @@
 package ui.scenes.signinscreen
 
+import core.AppImage
+import core.ImageProviderInterface
 import core.AppColors
 import core.AppString
 import core.appString
@@ -42,22 +44,13 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import core.NotificationCoordinatorInterface
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.background_logo
-import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.icon_lock
-import kotlinproject.composeapp.generated.resources.logo
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.parameter.parametersOf
-import models.appInternalModels.EmailProvider
 import ui.ClassicButton
 import ui.NakedButton
 import ui.notifications.NotificationProvider
-import ui.scenes.profilescreen.ProfileScreenViewModel
-import ui.scenes.splashscreen.SplashViewEvents
 import ui.theme.AppTextStyles
+import models.appInternalModels.EmailProvider
 
 class ManualSignInScreen(
     private val messageError: String? = null,
@@ -66,12 +59,9 @@ class ManualSignInScreen(
     override fun Content() {
         val viewModel: ManualSignInScreenViewModel = koinViewModel()
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
+        val imageProvider: ImageProviderInterface = koinInject()
         val navigator = LocalNavigator.current
         val focusManager = LocalFocusManager.current
-        val backgroundMain = painterResource(Res.drawable.background_main)
-        val backgroundLogo = painterResource(Res.drawable.background_logo)
-        val logo = painterResource(Res.drawable.logo)
-        val lockIcon = painterResource(Res.drawable.icon_lock)
         var email by remember { mutableStateOf("") }
         var isFocused by remember { mutableStateOf(false) }
         val normalizedEmail = email.trim()
@@ -87,7 +77,7 @@ class ManualSignInScreen(
                 .clickable { focusManager.clearFocus() }
         ) {
             Image(
-                painter = backgroundMain,
+                painter = imageProvider.getPainter(AppImage.BackgroundMain),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds
@@ -106,7 +96,7 @@ class ManualSignInScreen(
                         .aspectRatio(1f)
                 ) {
                     Image(
-                        painter = backgroundLogo,
+                        painter = imageProvider.getPainter(AppImage.BackgroundLogo),
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -115,7 +105,7 @@ class ManualSignInScreen(
                         contentScale = ContentScale.Fit
                     )
                     Image(
-                        painter = logo,
+                        painter = imageProvider.getPainter(AppImage.Logo),
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -210,7 +200,7 @@ class ManualSignInScreen(
                             .padding(start = 6.dp, end = 6.dp)
                     ) {
                         Image(
-                            painter = lockIcon,
+                            painter = imageProvider.getPainter(AppImage.IconLock),
                             contentDescription = null,
                             colorFilter = ColorFilter.tint(AppColors.White75),
                             modifier = Modifier.padding(top = 3.dp)

@@ -4,6 +4,9 @@ import core.AppString
 
 import core.appString
 
+import core.AppImage
+import core.ImageProviderInterface
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -36,8 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.executioner
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.noSecrets
@@ -46,7 +47,6 @@ import kotlinproject.composeapp.generated.resources.secretAdded
 import kotlinproject.composeapp.generated.resources.secretRemoved
 import kotlinproject.composeapp.generated.resources.secretsHeader
 import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -69,6 +69,7 @@ class SecretsScreen : Screen {
     override fun Content() {
         val viewModel: SecretsScreenViewModel = koinViewModel()
         val mainScreenViewModel: MainScreenViewModel = koinInject()
+        val imageProvider: ImageProviderInterface = koinInject()
         val secretsList by viewModel.secrets.collectAsState()
         val previousCount = remember { mutableStateOf(secretsList.size) }
         val isInitialized = remember { mutableStateOf(false) }
@@ -201,7 +202,7 @@ class SecretsScreen : Screen {
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(Res.drawable.executioner),
+                            painter = imageProvider.getPainter(AppImage.Executioner),
                             contentDescription = null,
                             modifier = Modifier
                                 .size((viewModel.screenMetricsProvider.heightFactor() * 220).dp)

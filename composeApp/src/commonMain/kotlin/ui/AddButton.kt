@@ -1,5 +1,8 @@
 package ui
 
+import core.AppImage
+import core.ImageProviderInterface
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -10,12 +13,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.addbutton
-import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 
 @Composable
 fun AddButton(action: (Boolean) -> Unit) {
+    val imageProvider: ImageProviderInterface = koinInject()
     val imgSize = 80
     Box(
         modifier = Modifier
@@ -24,7 +26,7 @@ fun AddButton(action: (Boolean) -> Unit) {
         Alignment.BottomEnd
     ) {
         Image(
-            painter = painterResource(Res.drawable.addbutton),
+            painter = imageProvider.getPainter(AppImage.AddButton),
             contentDescription = null,
             modifier = Modifier
                 .size(imgSize.dp)
@@ -32,6 +34,5 @@ fun AddButton(action: (Boolean) -> Unit) {
         )
     }
 }
-
 
 

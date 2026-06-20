@@ -4,6 +4,8 @@ import core.AppString
 
 import core.appString
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,6 +38,7 @@ import kotlinproject.composeapp.generated.resources.remove
 import kotlinproject.composeapp.generated.resources.removeSecret
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
@@ -53,6 +56,7 @@ fun RemoveSecret(
     dialogVisibility: (Boolean) -> Unit,
 ) {
     val viewModel: RemoveSecretViewModel = koinViewModel()
+    val imageProvider: ImageProviderInterface = koinInject()
 
     Dialog(
         onDismissRequest = {},
@@ -79,7 +83,7 @@ fun RemoveSecret(
                         .padding(top = 10.dp)
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.close),
+                        painter = imageProvider.getPainter(AppImage.Close),
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)

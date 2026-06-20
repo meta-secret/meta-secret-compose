@@ -1,5 +1,7 @@
 package ui.notifications
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -30,11 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.close_blue
-import org.jetbrains.compose.resources.painterResource
 import core.AppColors
 import core.ScreenMetricsProviderInterface
+import org.koin.compose.koinInject
 import ui.theme.AppTextStyles
 
 @Composable
@@ -45,6 +45,7 @@ fun InAppNotification(
     onDismiss: () -> Unit,
     visible: Boolean = true
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
     val color = when (isSuccessful) {
         true -> AppColors.ActionMain
         false -> AppColors.RedError
@@ -102,7 +103,7 @@ fun InAppNotification(
 
                         ) {
                             Image(
-                                painter = painterResource(Res.drawable.close_blue),
+                                painter = imageProvider.getPainter(AppImage.CloseBlue),
                                 contentDescription = "Dismiss"
                             )
                         }

@@ -4,6 +4,8 @@ import core.AppString
 
 import core.appString
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -40,13 +42,9 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.next
-import kotlinproject.composeapp.generated.resources.skip
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 import ui.scenes.mainscreen.MainScreen
 import ui.scenes.signinscreen.SignInScreen
 import core.AppColors
@@ -61,7 +59,7 @@ class OnboardingScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val pages = viewModel.pages
         val pagerState = rememberPagerState(pageCount = { pages.size })
-        val backgroundMain = painterResource(Res.drawable.background_main)
+        val imageProvider: ImageProviderInterface = koinInject()
         val currentPage by viewModel.currentPage.collectAsState()
         val density = LocalDensity.current
         val topInset = with(density) { WindowInsets.systemBars.getTop(this).toDp() }
@@ -79,7 +77,7 @@ class OnboardingScreen : Screen {
                 .fillMaxSize()
         ) {
             Image(
-                painter = backgroundMain,
+                painter = imageProvider.getPainter(AppImage.BackgroundMain),
                 contentDescription = null,
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier
@@ -200,6 +198,7 @@ fun OnboardingFooter(pagerState: PagerState, viewModel: OnboardingViewModel, pag
 
 @Composable
 fun PagerScreen(onBoardingPage: OnBoardingPage) {
+    val imageProvider: ImageProviderInterface = koinInject()
     val horizontalPadding = 24.dp
     val verticalGap = 16.dp
 
@@ -215,7 +214,7 @@ fun PagerScreen(onBoardingPage: OnBoardingPage) {
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = painterResource(onBoardingPage.image),
+                painter = imageProvider.getPainter(onBoardingPage.image),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()

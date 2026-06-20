@@ -1,5 +1,7 @@
 package ui.notifications
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -31,11 +33,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.close
-import kotlinproject.composeapp.generated.resources.warning
-import org.jetbrains.compose.resources.painterResource
 import core.AppColors
+import org.koin.compose.koinInject
 import ui.theme.AppTextStyles
 
 @Composable
@@ -45,6 +44,7 @@ fun WarningBubble(
     closeAction: () -> Unit,
     isVisible: Boolean = true
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
     AnimatedVisibility(
         visible = isVisible,
         enter = slideInVertically(
@@ -70,7 +70,7 @@ fun WarningBubble(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Image(
-                    painter = painterResource(Res.drawable.warning),
+                    painter = imageProvider.getPainter(AppImage.Warning),
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds
                 )
@@ -106,7 +106,7 @@ fun WarningBubble(
                     .padding(end = 12.dp)
             ) {
                 Image(
-                    painter = painterResource(Res.drawable.close),
+                    painter = imageProvider.getPainter(AppImage.Close),
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)

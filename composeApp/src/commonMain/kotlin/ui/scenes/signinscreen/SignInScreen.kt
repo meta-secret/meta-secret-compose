@@ -1,5 +1,7 @@
 package ui.scenes.signinscreen
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,12 +35,7 @@ import core.AppColors
 import core.AppString
 import core.NotificationCoordinatorInterface
 import core.appString
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.background_logo
-import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.logo
 import models.appInternalModels.EmailProvider
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import ui.AuthProviderButton
@@ -53,13 +50,10 @@ class SignInScreen : Screen {
     override fun Content() {
         val viewModel: SignInScreenViewModel = koinViewModel()
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
+        val imageProvider: ImageProviderInterface = koinInject()
 
         val navigator = LocalNavigator.current
         val focusManager = LocalFocusManager.current
-
-        val backgroundMain = painterResource(Res.drawable.background_main)
-        val backgroundLogo = painterResource(Res.drawable.background_logo)
-        val logo = painterResource(Res.drawable.logo)
 
         val navigationEvent by viewModel.navigationEvent.collectAsState()
 
@@ -93,7 +87,7 @@ class SignInScreen : Screen {
                 .clickable { focusManager.clearFocus() }
         ) {
             Image(
-                painter = backgroundMain,
+                painter = imageProvider.getPainter(AppImage.BackgroundMain),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds
@@ -112,7 +106,7 @@ class SignInScreen : Screen {
                         .aspectRatio(1f)
                 ) {
                     Image(
-                        painter = backgroundLogo,
+                        painter = imageProvider.getPainter(AppImage.BackgroundLogo),
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -121,7 +115,7 @@ class SignInScreen : Screen {
                         contentScale = ContentScale.Fit
                     )
                     Image(
-                        painter = logo,
+                        painter = imageProvider.getPainter(AppImage.Logo),
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()

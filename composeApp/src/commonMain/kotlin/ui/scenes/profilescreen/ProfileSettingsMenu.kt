@@ -1,5 +1,7 @@
 package ui.scenes.profilescreen
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -14,9 +16,7 @@ import androidx.compose.ui.unit.dp
 import core.AppColors
 import core.AppString
 import core.appString
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.settings_icon
-import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import ui.theme.AppTextStyles
 
 @Composable
@@ -29,11 +29,12 @@ fun ProfileSettingsMenu(
         modifier = Modifier,
         contentAlignment = Alignment.TopEnd
     ) {
+        val imageProvider: ImageProviderInterface = koinInject()
         IconButton(
             onClick = { onExpandedChange(!expanded) }
         ) {
             Image(
-                painter = painterResource(Res.drawable.settings_icon),
+                painter = imageProvider.getPainter(AppImage.SettingsIcon),
                 contentDescription = appString(AppString.settings),
                 modifier = Modifier.size(24.dp)
             )
