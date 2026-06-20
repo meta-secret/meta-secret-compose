@@ -6,16 +6,23 @@ description: Display available commands with descriptions
 
 ## 🚀 Full Workflow
 
-**`run <payload>`**  
+**`implement issue <payload>`**  
 Execute complete 10-stage automated workflow.
 
-**`run <payload> --from stage-<n>`**  
+**`implement issue <payload> --from stage-<n>`**  
 Resume workflow from specific stage (for retries/debugging).
 
 Where `<payload>`:
 - Issue number (e.g., `#42`)
 - Issue URL
 - Free-text task description
+
+Example:
+```bash
+implement issue #42
+implement issue "complete email confirmation screen"
+implement issue #42 --from stage-4
+```
 
 ---
 

@@ -1,11 +1,11 @@
 # Automated Workflow Orchestration
 
-Single source of truth for `run issue <id>` / `run issue "<text>"` across Claude Code, Cursor, and Codex CLI.
+Single source of truth for `implement issue <id>` / `implement issue "<text>"` across Claude Code, Cursor, and Codex CLI.
 
 ## Command Contract
 
-- Trigger: `run issue <id-or-text>`
-- Optional resume: `run issue <id-or-text> --from stage-<n>`
+- Trigger: `implement issue <id-or-text>`
+- Optional resume: `implement issue <id-or-text> --from stage-<n>`
 - Artifacts directory: `.ai/artifacts/run/`
 - Artifact naming: `MS-<run-id>-<stage-number>-<stage-name>[ -retry-N ].md`
 - Retry budget: `2` full fix loops
@@ -324,7 +324,7 @@ All templates are in `.ai/artifacts/`:
 
 ### Complete Workflow Artifacts Example
 
-After running `run issue #42`:
+After running `implement issue #42`:
 
 ```
 .ai/artifacts/run/

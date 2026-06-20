@@ -75,7 +75,7 @@ fun AuthProviderButton(
                         .aspectRatio(1f),
                     contentScale = ContentScale.Fit
                 )
-                EmailProvider.MANUAL -> Spacer(modifier = Modifier.size(22.dp))
+                EmailProvider.MANUAL -> Spacer(modifier = Modifier.size(0.dp))
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(

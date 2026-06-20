@@ -51,6 +51,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import models.appInternalModels.EmailProvider
 import ui.ClassicButton
 import ui.NakedButton
 import ui.notifications.NotificationProvider
@@ -232,7 +233,10 @@ class ManualSignInScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         ClassicButton(
-                            action = { },
+                            action = {
+                                focusManager.clearFocus()
+                                navigator?.push(EmailConfirmationScreen(normalizedEmail, EmailProvider.MANUAL))
+                            },
                             text = appString(AppString.emailSelectionContinue),
                             isEnabled = isContinueEnabled,
                             modifier = Modifier.fillMaxWidth()

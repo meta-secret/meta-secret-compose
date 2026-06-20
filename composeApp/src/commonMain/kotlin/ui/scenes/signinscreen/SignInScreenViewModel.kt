@@ -380,6 +380,7 @@ class SignInScreenViewModel(
                     result.email,
                     success = true
                 )
+                _navigationEvent.value = SignInNavigationEvent.EmailConfirmation(result.email, EmailProvider.GOOGLE)
             }
 
             GoogleEmailAuthResult.Cancelled -> {

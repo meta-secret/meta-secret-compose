@@ -44,7 +44,7 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
 ### Commands & Flows
 
 #### 10-Stage Pipeline Commands
-- `.ai/commands/run.md` — Execute full 10-stage workflow
+- `.ai/commands/implement-issue.md` — Execute full 10-stage workflow
 - `.ai/commands/only-issue-coordinator.md` — Run stage 1 only
 - `.ai/commands/only-grill-me.md` — Run stage 2 only
 - `.ai/commands/only-planner.md` — Run stage 3 only

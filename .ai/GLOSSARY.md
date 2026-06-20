@@ -272,7 +272,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 
 | Term | Definition | Context | Example |
 |------|-----------|---------|---------|
-| **Payload** | Task description or issue context passed to a workflow command | AI meta | `run <payload>` |
+| **Payload** | Task description or issue context passed to a workflow command | AI meta | `implement issue <payload>` |
 | **Artifact** | Generated output file from a workflow stage | AI meta | `.ai/artifacts/run/MS-*.md` |
 | **Stage** | One step in the 10-stage development workflow | AI meta | Stage 2 = "Grill Me" clarification |
 | **Clarification Report** | Document produced by the requirements-clarifier agent in Stage 2 | AI meta | Output of Stage 2 |

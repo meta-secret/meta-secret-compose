@@ -8,10 +8,10 @@ Command routing and execution for meta-secret-compose.
 
 ### Full Workflow
 
-#### `run <payload>`
+#### `implement issue <payload>`
 
 Execute:
-1. Read `.ai/commands/run.md`
+1. Read `.ai/commands/implement-issue.md`
 
 ---
 

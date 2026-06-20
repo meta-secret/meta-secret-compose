@@ -39,6 +39,7 @@ import kotlinproject.composeapp.generated.resources.background_logo
 import kotlinproject.composeapp.generated.resources.background_main
 import kotlinproject.composeapp.generated.resources.email_received_check
 import kotlinproject.composeapp.generated.resources.google
+import kotlinproject.composeapp.generated.resources.icon_email
 import kotlinproject.composeapp.generated.resources.icon_lock
 import kotlinproject.composeapp.generated.resources.logo
 import models.appInternalModels.EmailProvider
@@ -66,12 +67,12 @@ class EmailConfirmationScreen(
         val providerIcon = when (provider) {
             EmailProvider.APPLE -> painterResource(Res.drawable.apple)
             EmailProvider.GOOGLE -> painterResource(Res.drawable.google)
-            else -> null
+            EmailProvider.MANUAL -> painterResource(Res.drawable.icon_email)
         }
         val providerLabel = when (provider) {
             EmailProvider.APPLE -> "APPLE ID"
             EmailProvider.GOOGLE -> "GOOGLE"
-            else -> ""
+            EmailProvider.MANUAL -> "EMAIL"
         }
 
         Box(
@@ -159,19 +160,17 @@ class EmailConfirmationScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            if (providerIcon != null) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(52.dp)
-                                        .background(Color(0xFF0D0D0D), RoundedCornerShape(10.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Image(
-                                        painter = providerIcon,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                }
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .background(Color(0xFF0D0D0D), RoundedCornerShape(10.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    painter = providerIcon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp)
+                                )
                             }
 
                             Column(modifier = Modifier.weight(1f)) {
