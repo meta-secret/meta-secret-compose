@@ -57,6 +57,7 @@
     <string name = "devices_4">устройства</string>
     <string name = "devices_5">устройств</string>
     <string name = "profile">Профиль</string>
+    <string name = "settings">Настройки</string>
     <string name = "noSecrets">У вас пока нет добавленных секретов. \nДобавьте первый секрет</string>
     <string name = "noSecretsHeader">Нет секретов</string>
     <string name = "poweredBy">Создано ООО Славяне</string>

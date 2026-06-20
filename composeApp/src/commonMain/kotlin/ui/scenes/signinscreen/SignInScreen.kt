@@ -1,27 +1,25 @@
 package ui.scenes.signinscreen
 
-import core.AppString
-import core.appString
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -32,7 +30,9 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import core.AppColors
+import core.AppString
 import core.NotificationCoordinatorInterface
+import core.appString
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.background_logo
 import kotlinproject.composeapp.generated.resources.background_main
@@ -42,7 +42,6 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import ui.AuthProviderButton
-import ui.ClassicButton
 import ui.NakedButton
 import ui.dialogs.CommonYesNoSheet
 import ui.notifications.NotificationProvider
@@ -62,25 +61,20 @@ class SignInScreen : Screen {
         val backgroundLogo = painterResource(Res.drawable.background_logo)
         val logo = painterResource(Res.drawable.logo)
 
-        val isLoading by viewModel.isLoading.collectAsState()
         val navigationEvent by viewModel.navigationEvent.collectAsState()
-        val showJoinDecision by viewModel.showJoinDecision.collectAsState()
-        val showJoinPending by viewModel.showJoinPending.collectAsState()
-        val emailError by viewModel.emailError.collectAsState()
 
-        var showResetAllDataSheet by remember { androidx.compose.runtime.mutableStateOf(false) }
+        var showResetAllDataSheet by remember { mutableStateOf(false) }
         val providerOrder = viewModel.providerOrder
 
         LaunchedEffect(navigationEvent) {
-            val event = navigationEvent
-            when (event) {
+            when (val event = navigationEvent) {
                 SignInNavigationEvent.MainScreen -> {
                     navigator?.push(MainScreen())
                     viewModel.consumeNavigationEvent()
                 }
 
                 SignInNavigationEvent.ManualSignInScreen -> {
-                    navigator?.push(ManualSignInScreen(emailError))
+                    navigator?.push(ManualSignInScreen(viewModel.emailError.value))
                     viewModel.consumeNavigationEvent()
                 }
 
@@ -89,7 +83,7 @@ class SignInScreen : Screen {
                     viewModel.consumeNavigationEvent()
                 }
 
-                else -> {}
+                else -> Unit
             }
         }
 
@@ -138,87 +132,38 @@ class SignInScreen : Screen {
                     )
                 }
 
-                if (!showJoinDecision && !showJoinPending) {
-                    EmailSelectionBody(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
-                        providerOrder = providerOrder,
-                        onProviderSelected = { provider ->
-                            if (provider == EmailProvider.MANUAL) {
-                                navigator?.push(ManualSignInScreen())
-                            } else {
-                                viewModel.handle(SignInViewEvents.SelectEmailProvider(provider))
-                            }
-                        },
-                        onResetAllDataClick = {
-                            focusManager.clearFocus()
-                            showResetAllDataSheet = true
-                        }
-                    )
-                }
-
-                if (showJoinDecision || showJoinPending) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 26.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        ClassicButton(
-                            action = {
-                                focusManager.clearFocus()
-                                viewModel.handle(SignInViewEvents.CancelJoin)
-                            },
-                            text = appString(AppString.cancel),
-                            isEnabled = !isLoading,
-                            color = AppColors.Warning,
-                            modifier = Modifier.weight(1f)
-                        )
-                        ClassicButton(
-                            action = {
-                                if (!showJoinPending) {
-                                    focusManager.clearFocus()
-                                    viewModel.handle(SignInViewEvents.JoinExistingVault)
-                                }
-                            },
-                            text = if (showJoinPending) {
-                                appString(AppString.joining)
-                            } else {
-                                appString(AppString.join)
-                            },
-                            isEnabled = !isLoading && !showJoinPending,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
-
-            if (isLoading) {
-                Box(
+                EmailSelectionBody(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(AppColors.Black60)
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = AppColors.ActionMain)
-                }
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    providerOrder = providerOrder,
+                    onProviderSelected = { provider ->
+                        if (provider == EmailProvider.MANUAL) {
+                            navigator?.push(ManualSignInScreen())
+                        } else {
+                            viewModel.handle(SignInViewEvents.SelectEmailProvider(provider))
+                        }
+                    },
+                    onResetAllDataClick = {
+                        focusManager.clearFocus()
+                        showResetAllDataSheet = true
+                    }
+                )
             }
-        }
 
             if (showResetAllDataSheet) {
-            CommonYesNoSheet(
-                title = appString(AppString.resetAllData),
-                subtitle = appString(AppString.resetAllDataWarning),
-                isVisible = showResetAllDataSheet,
-                isNoMain = true,
-                onNo = { showResetAllDataSheet = false },
-                onYes = {
-                    showResetAllDataSheet = false
-                    viewModel.handle(SignInViewEvents.ClearAllData)
-                }
-            )
+                CommonYesNoSheet(
+                    title = appString(AppString.resetAllData),
+                    subtitle = appString(AppString.resetAllDataWarning),
+                    isVisible = showResetAllDataSheet,
+                    isNoMain = true,
+                    onNo = { showResetAllDataSheet = false },
+                    onYes = {
+                        showResetAllDataSheet = false
+                        viewModel.handle(SignInViewEvents.ClearAllData)
+                    }
+                )
+            }
         }
 
         NotificationProvider(
@@ -242,8 +187,7 @@ private fun EmailSelectionBody(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             text = appString(AppString.emailSelectionTitle),
             color = AppColors.White,
             style = AppTextStyles.ScreenTitle(),

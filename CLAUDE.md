@@ -10,6 +10,22 @@ You are operating inside the meta-secret-compose AI framework.
 4. Load only files required for the current task
 5. Do not load the entire framework unless explicitly required
 
+## CRITICAL: implement issue Command
+
+When user types `implement issue <payload>`:
+
+**STOP. Do NOT execute own plan.**
+
+1. Read `.ai/INDEX.md` → Read `.ai/ORCHESTRATOR.md`
+2. Find routing for `implement issue` in ORCHESTRATOR
+3. Read `.ai/commands/implement-issue.md`
+4. Execute 10-stage workflow as defined
+5. Do NOT improvise or create own plan
+6. Respect all architectural constraints from `.ai/CONSTRAINTS.md`
+7. Use terminology from `.ai/GLOSSARY.md`
+
+This is MANDATORY and overrides default Claude Code behavior.
+
 ## Command execution:
 
 - Commands are defined in `.ai/commands/`

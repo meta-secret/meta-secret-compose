@@ -58,6 +58,7 @@
     <string name = "devices_4">devices</string>
     <string name = "devices_5">devices</string>
     <string name = "profile">Profile</string>
+    <string name = "settings">Settings</string>
     <string name = "noSecrets">You haven't added any secrets yet. \nAdd your first one.</string>
     <string name = "noSecretsHeader">No secrets</string>
     <string name = "poweredBy">Powered by Slavic incorporated</string>

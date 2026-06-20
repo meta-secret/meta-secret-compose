@@ -51,8 +51,21 @@ val appModule = module {
     factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { ManualSignInScreenViewModel(get()) }
-    factory { EmailConfirmationScreenViewModel() }
-    factory { ProfileScreenViewModel(get(), get(), get()) }
+    factory { (vaultName: String) ->
+        EmailConfirmationScreenViewModel(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            vaultName
+        )
+    }
+    factory { ProfileScreenViewModel(get(), get(), get(), get()) }
     factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { SecretsScreenViewModel(get(), get(), get(), get(), get()) }
     factory { AddSecretViewModel(get(), get(), get(), get()) }

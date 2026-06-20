@@ -2,8 +2,10 @@ package ui.scenes.profilescreen
 
 import androidx.lifecycle.viewModelScope
 import core.DeviceInfoProviderInterface
+import core.KeyChainInterface
 import core.VaultStatsProviderInterface
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import core.LogTag
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -15,12 +17,15 @@ import models.appInternalModels.SocketRequestModel
 class ProfileScreenViewModel(
     val deviceInfoProvider: DeviceInfoProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
-    private val vaultStatsProvider: VaultStatsProviderInterface
+    private val vaultStatsProvider: VaultStatsProviderInterface,
+    private val keyChainManager: KeyChainInterface,
 ) : CommonViewModel() {
 
     val vaultName: StateFlow<String?> = vaultStatsProvider.vaultName
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
     val secretsCount: StateFlow<Int> = vaultStatsProvider.secretsCount
+    private val _navigationEvent = MutableStateFlow<ProfileNavigationEvent>(ProfileNavigationEvent.Idle)
+    val navigationEvent: StateFlow<ProfileNavigationEvent> = _navigationEvent
 
     init {
         logger.log(LogTag.ProfileVM.Message.FollowGetState, success = true)
@@ -45,8 +50,18 @@ class ProfileScreenViewModel(
                 ProfileEvents.LoadProfileData -> {
                     loadProfileData()
                 }
+
+                ProfileEvents.ResetAllData -> {
+                    viewModelScope.launch {
+                        resetAllData()
+                    }
+                }
             }
         }
+    }
+
+    fun consumeNavigationEvent() {
+        _navigationEvent.value = ProfileNavigationEvent.Idle
     }
 
     private fun loadProfileData() {
@@ -59,8 +74,26 @@ class ProfileScreenViewModel(
             }
         }
     }
+
+    private suspend fun resetAllData() {
+        logger.log(LogTag.ProfileVM.Message.ResetAllData, success = true)
+        try {
+            val isCleared = keyChainManager.clearAll(isCleanDB = true)
+            if (isCleared) {
+                _navigationEvent.value = ProfileNavigationEvent.NavigateToSignIn
+            }
+        } catch (t: Throwable) {
+            logger.log(LogTag.ProfileVM.Message.ResetAllDataFailed, "${t.message}", success = false)
+        }
+    }
 }
 
 sealed class ProfileEvents : CommonViewModelEventsInterface {
     data object LoadProfileData : ProfileEvents()
+    data object ResetAllData : ProfileEvents()
+}
+
+sealed class ProfileNavigationEvent {
+    data object Idle : ProfileNavigationEvent()
+    data object NavigateToSignIn : ProfileNavigationEvent()
 }

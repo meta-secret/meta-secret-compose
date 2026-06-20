@@ -12,26 +12,29 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import core.AppColors
 import core.AppString
+import core.NotificationCoordinatorInterface
 import core.appString
 import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.apple
@@ -44,17 +47,25 @@ import kotlinproject.composeapp.generated.resources.icon_lock
 import kotlinproject.composeapp.generated.resources.logo
 import models.appInternalModels.EmailProvider
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import ui.ClassicButton
 import ui.NakedButton
+import ui.notifications.NotificationProvider
+import ui.scenes.mainscreen.MainScreen
 import ui.theme.AppTextStyles
 
 class EmailConfirmationScreen(
     private val email: String,
     private val provider: EmailProvider
 ) : Screen {
-
     @Composable
     override fun Content() {
+        val viewModel: EmailConfirmationScreenViewModel = koinViewModel(
+            parameters = { parametersOf(email) }
+        )
+        val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
         val navigator = LocalNavigator.current
         val focusManager = LocalFocusManager.current
 
@@ -63,6 +74,11 @@ class EmailConfirmationScreen(
         val logo = painterResource(Res.drawable.logo)
         val lockIcon = painterResource(Res.drawable.icon_lock)
         val checkIcon = painterResource(Res.drawable.email_received_check)
+
+        val isLoading by viewModel.isLoading.collectAsState()
+        val navigationEvent by viewModel.navigationEvent.collectAsState()
+        val showJoinDecision by viewModel.showJoinDecision.collectAsState()
+        val showJoinPending by viewModel.showJoinPending.collectAsState()
 
         val providerIcon = when (provider) {
             EmailProvider.APPLE -> painterResource(Res.drawable.apple)
@@ -73,6 +89,22 @@ class EmailConfirmationScreen(
             EmailProvider.APPLE -> "APPLE ID"
             EmailProvider.GOOGLE -> "GOOGLE"
             EmailProvider.MANUAL -> "EMAIL"
+        }
+
+        LaunchedEffect(navigationEvent) {
+            when (val event = navigationEvent) {
+                EmailConfirmationNavigationEvent.MainScreen -> {
+                    navigator?.push(MainScreen())
+                    viewModel.consumeNavigationEvent()
+                }
+
+                EmailConfirmationNavigationEvent.BackToSignIn -> {
+                    navigator?.popUntilRoot()
+                    viewModel.consumeNavigationEvent()
+                }
+
+                else -> Unit
+            }
         }
 
         Box(
@@ -163,7 +195,7 @@ class EmailConfirmationScreen(
                             Box(
                                 modifier = Modifier
                                     .size(52.dp)
-                                    .background(Color(0xFF0D0D0D), RoundedCornerShape(10.dp)),
+                                    .background(AppColors.DarkBlue, RoundedCornerShape(10.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Image(
@@ -177,15 +209,13 @@ class EmailConfirmationScreen(
                                 Text(
                                     text = providerLabel,
                                     style = AppTextStyles.Tiny(),
-                                    color = AppColors.White75,
-                                    letterSpacing = 1.sp
+                                    color = AppColors.White75
                                 )
                                 Text(
                                     text = email,
                                     style = AppTextStyles.BodyStrong(),
                                     color = AppColors.White,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    maxLines = 1
                                 )
                             }
 
@@ -197,7 +227,7 @@ class EmailConfirmationScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -209,7 +239,7 @@ class EmailConfirmationScreen(
                         Image(
                             painter = lockIcon,
                             contentDescription = null,
-                            colorFilter = ColorFilter.tint(AppColors.White30),
+                            colorFilter = ColorFilter.tint(AppColors.White50),
                             modifier = Modifier.padding(top = 3.dp)
                         )
                         Text(
@@ -217,6 +247,18 @@ class EmailConfirmationScreen(
                             style = AppTextStyles.Caption(),
                             color = AppColors.White30,
                             modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    if (showJoinDecision) {
+                        Spacer(modifier = Modifier.height(18.dp))
+                        Text(
+                            text = appString(AppString.name_occupied_join_prompt),
+                            style = AppTextStyles.CaptionStrong(),
+                            color = AppColors.White,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 6.dp)
                         )
                     }
 
@@ -228,22 +270,78 @@ class EmailConfirmationScreen(
                             .padding(bottom = 32.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        ClassicButton(
-                            action = { },
-                            text = appString(AppString.emailSelectionContinue),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        NakedButton(
-                            title = appString(AppString.emailSelectionChange),
-                            onClick = {
-                                focusManager.clearFocus()
-                                navigator?.pop()
-                            }
-                        )
+                        if (showJoinPending) {
+                            ClassicButton(
+                                action = {
+                                    focusManager.clearFocus()
+                                    viewModel.handle(EmailConfirmationViewEvents.CancelJoin)
+                                },
+                                text = appString(AppString.cancel),
+                                color = AppColors.Warning,
+                                isEnabled = !isLoading,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            ClassicButton(
+                                action = {},
+                                text = appString(AppString.joining),
+                                isEnabled = false,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else if (showJoinDecision) {
+                            ClassicButton(
+                                action = {
+                                    focusManager.clearFocus()
+                                    viewModel.handle(EmailConfirmationViewEvents.JoinExistingVault)
+                                },
+                                text = appString(AppString.join),
+                                isEnabled = !isLoading,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            NakedButton(
+                                title = appString(AppString.emailSelectionChange),
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    viewModel.handle(EmailConfirmationViewEvents.StartOver)
+                                }
+                            )
+                        } else {
+                            ClassicButton(
+                                action = {
+                                    focusManager.clearFocus()
+                                    viewModel.handle(EmailConfirmationViewEvents.ContinueClicked)
+                                },
+                                text = appString(AppString.emailSelectionContinue),
+                                isEnabled = !isLoading,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            NakedButton(
+                                title = appString(AppString.emailSelectionChange),
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    viewModel.handle(EmailConfirmationViewEvents.StartOver)
+                                }
+                            )
+                        }
                     }
                 }
             }
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(AppColors.Black60)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = AppColors.ActionMain)
+                }
+            }
         }
+
+        NotificationProvider(
+            notificationCoordinator = notificationCoordinator,
+            screenMetricsProvider = viewModel.screenMetricsProvider
+        )
     }
 }

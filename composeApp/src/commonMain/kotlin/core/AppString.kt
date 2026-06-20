@@ -106,6 +106,7 @@ enum class AppString {
     pasteSeedPhrase,
     poweredBy,
     profile,
+    settings,
     recoverPendingExists,
     recoverRequestSent,
     remove,
@@ -243,6 +244,7 @@ fun AppString.resource(): StringResource = when (this) {
     AppString.pasteSeedPhrase -> Res.string.pasteSeedPhrase
     AppString.poweredBy -> Res.string.poweredBy
     AppString.profile -> Res.string.profile
+    AppString.settings -> Res.string.settings
     AppString.recoverPendingExists -> Res.string.recoverPendingExists
     AppString.recoverRequestSent -> Res.string.recoverRequestSent
     AppString.reject_join -> Res.string.reject_join

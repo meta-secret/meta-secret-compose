@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -27,6 +28,7 @@ import ui.theme.AppTextStyles
 @Composable
 fun CommonBackground(
     text: AppString,
+    headerTrailingContent: @Composable (() -> Unit)? = null,
     screenContent: @Composable () -> Unit
 ) {
     Box(
@@ -44,18 +46,31 @@ fun CommonBackground(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
         ) {
-            Text(
+            Box(
                 modifier = Modifier
-                    .align(Alignment.Start)
+                    .fillMaxWidth()
                     .padding(
                         top = 30.dp,
-                        bottom = 14.dp, 
-                        start = 16.dp
-                    ),
-                text = appString(text),
-                color = AppColors.White,
-                style = AppTextStyles.MainHeader(),
-            )
+                        bottom = 14.dp,
+                        start = 16.dp,
+                        end = 16.dp
+                    )
+            ) {
+                Text(
+                    modifier = Modifier.align(Alignment.CenterStart),
+                    text = appString(text),
+                    color = AppColors.White,
+                    style = AppTextStyles.MainHeader(),
+                )
+
+                headerTrailingContent?.let {
+                    Box(
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        it()
+                    }
+                }
+            }
             screenContent()
         }
     }

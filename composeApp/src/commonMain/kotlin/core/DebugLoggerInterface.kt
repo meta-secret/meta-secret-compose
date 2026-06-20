@@ -295,6 +295,8 @@ sealed class LogTag(val displayName: String) {
             object NewStateReceived : Message("New state received, refreshing profile data")
             object LoadProfileData : Message("loadProfileData")
             object LoadProfileDataFailed : Message("loadProfileData failed")
+            object ResetAllData : Message("resetAllData")
+            object ResetAllDataFailed : Message("resetAllData failed")
         }
     }
 

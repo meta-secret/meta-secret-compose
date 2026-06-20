@@ -22,26 +22,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.devicesList
-import kotlinproject.composeapp.generated.resources.manrope_bold
-import kotlinproject.composeapp.generated.resources.manrope_regular
-import kotlinproject.composeapp.generated.resources.nickname
-import kotlinproject.composeapp.generated.resources.poweredBy
-import kotlinproject.composeapp.generated.resources.profile
-import kotlinproject.composeapp.generated.resources.secretsHeader
-import kotlinproject.composeapp.generated.resources.version
-import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.stringResource
+import ui.scenes.signinscreen.SignInScreen
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
 import ui.screenContent.CommonBackground
@@ -49,15 +41,42 @@ import ui.screenContent.CommonBackground
 class ProfileScreen : Screen {
     @Composable
     override fun Content() {
-        CommonBackground(AppString.profile) {
-            ProfileBody()
+        val viewModel: ProfileScreenViewModel = koinViewModel()
+        val navigator = LocalNavigator.currentOrThrow
+        val navigationEvent by viewModel.navigationEvent.collectAsState()
+        var isSettingsMenuExpanded by remember { mutableStateOf(false) }
+
+        LaunchedEffect(navigationEvent) {
+            when (navigationEvent) {
+                ProfileNavigationEvent.NavigateToSignIn -> {
+                    navigator.rootNavigator().replaceAll(SignInScreen())
+                    viewModel.consumeNavigationEvent()
+                }
+
+                ProfileNavigationEvent.Idle -> Unit
+            }
+        }
+
+        CommonBackground(
+            text = AppString.profile,
+            headerTrailingContent = {
+                ProfileSettingsMenu(
+                    expanded = isSettingsMenuExpanded,
+                    onExpandedChange = { isSettingsMenuExpanded = it },
+                    onResetAllDataClick = {
+                        isSettingsMenuExpanded = false
+                        viewModel.handle(ProfileEvents.ResetAllData)
+                    }
+                )
+            }
+        ) {
+            ProfileBody(viewModel = viewModel)
         }
     }
 }
 
 @Composable
-fun ProfileBody() {
-    val viewModel: ProfileScreenViewModel = koinViewModel()
+fun ProfileBody(viewModel: ProfileScreenViewModel) {
     val secretsCount by viewModel.secretsCount.collectAsState()
     val devicesCount by viewModel.devicesCount.collectAsState()
     val secrets = appString(AppString.secretsHeader)
@@ -106,13 +125,6 @@ fun ProfileBody() {
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 60.dp),
         ) {
-//            ClassicButton({
-//                    viewModel.completeSignIn(false)
-//                    navigator.popUntilRoot()
-//                },
-//                appString(AppString.signOut),
-//                color = AppColors.RedError
-//            )
             Column(
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -126,6 +138,10 @@ fun ProfileBody() {
             }
         }
     }
+}
+
+private fun Navigator.rootNavigator(): Navigator {
+    return generateSequence(this) { it.parent }.last()
 }
 
 @Composable
