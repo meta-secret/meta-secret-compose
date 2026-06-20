@@ -43,6 +43,7 @@ import models.apiModels.VaultEvents
 import models.apiModels.VaultFullInfo
 import models.apiModels.VaultSummary
 import models.appInternalModels.ClaimModel
+import models.appInternalModels.EmailProvider
 import models.appInternalModels.SecretModel
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
@@ -113,8 +114,7 @@ class EmailConfirmationScreenViewModelTest {
         assertEquals(1, stateResolver.prepareCalls)
         assertEquals(1, stateResolver.continueCalls)
         assertEquals(EmailConfirmationNavigationEvent.MainScreen, viewModel.navigationEvent.value)
-        assertFalse(viewModel.showJoinDecision.value)
-        assertFalse(viewModel.showJoinPending.value)
+        assertEquals(EmailConfirmationScreenState.Default, viewModel.screenState.value)
         assertFalse(viewModel.isLoading.value)
     }
 
@@ -136,8 +136,7 @@ class EmailConfirmationScreenViewModelTest {
         viewModel.handle(EmailConfirmationViewEvents.ContinueClicked)
         advanceUntilIdle()
 
-        assertTrue(viewModel.showJoinDecision.value)
-        assertFalse(viewModel.showJoinPending.value)
+        assertEquals(EmailConfirmationScreenState.VaultExists, viewModel.screenState.value)
         assertFalse(viewModel.isLoading.value)
         assertTrue(notificationCoordinator.successMessages.isNotEmpty())
     }
@@ -161,12 +160,38 @@ class EmailConfirmationScreenViewModelTest {
 
         viewModel.handle(EmailConfirmationViewEvents.ContinueClicked)
         advanceUntilIdle()
-        assertTrue(viewModel.showJoinPending.value)
+        assertEquals(EmailConfirmationScreenState.JoiningPending, viewModel.screenState.value)
 
         socketHandler.emit(SocketActionModel.JOIN_REQUEST_ACCEPTED)
         advanceUntilIdle()
 
         assertEquals(EmailConfirmationNavigationEvent.MainScreen, viewModel.navigationEvent.value)
+    }
+
+    @Test
+    fun `entering pending state saves email and provider to keychain`() = runTest(dispatcher) {
+        val keyChain = FakeKeyChain()
+        val viewModel = createViewModel(
+            keyChain = keyChain,
+            keyValueStorage = FakeKeyValueStorage(),
+            socketHandler = TestSocketHandler(),
+            appManager = TestAppManager(initResult = InitResult.Success("ok")),
+            stateResolver = TestStateResolver(
+                prepareResult = PrepareSignUpResult(VaultAvailability.AVAILABLE, null),
+                continueResult = AppStateResult(OutsiderState(), null)
+            ),
+            core = TestMetaSecretCore(),
+            vaultName = "alice@example.com",
+            provider = EmailProvider.GOOGLE,
+        )
+        advanceUntilIdle()
+
+        viewModel.handle(EmailConfirmationViewEvents.ContinueClicked)
+        advanceUntilIdle()
+
+        assertEquals(EmailConfirmationScreenState.JoiningPending, viewModel.screenState.value)
+        assertEquals("alice@example.com", keyChain.getString("pending_vault_email"))
+        assertEquals("GOOGLE", keyChain.getString("pending_email_provider"))
     }
 
     @Test
@@ -212,6 +237,7 @@ class EmailConfirmationScreenViewModelTest {
         stateResolver: MetaSecretStateResolverInterface,
         core: MetaSecretCoreInterface,
         vaultName: String,
+        provider: EmailProvider = EmailProvider.MANUAL,
     ): EmailConfirmationScreenViewModel {
         return EmailConfirmationScreenViewModel(
             screenMetricsProvider = FakeScreenMetricsProvider(),
@@ -224,6 +250,7 @@ class EmailConfirmationScreenViewModelTest {
             biometricAuthenticator = FakeBiometricAuthenticator(),
             stringProvider = FakeStringProvider(),
             vaultName = vaultName,
+            provider = provider,
         )
     }
 }

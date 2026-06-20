@@ -9,6 +9,7 @@ import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 import core.BiometricAuthenticatorInterface
 import core.BiometricState
+import core.KeyChainInterface
 import core.metaSecretCore.AuthState
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.BackupCoordinatorInterface
@@ -16,6 +17,9 @@ import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
 import core.StringProviderInterface
+import models.apiModels.UserDataOutsiderStatus
+import models.apiModels.VaultFullInfo
+import models.appInternalModels.EmailProvider
 
 class SplashScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
@@ -24,9 +28,10 @@ class SplashScreenViewModel(
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
-    private val stringProvider: StringProviderInterface
+    private val stringProvider: StringProviderInterface,
+    private val keyChainManager: KeyChainInterface,
 ) : CommonViewModel() {
-    private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
+    private val _navigationEvent = MutableStateFlow<SplashNavigationEvent>(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
 
     private val _biometricState = MutableStateFlow<BiometricState>(BiometricState.Idle)
@@ -86,8 +91,24 @@ class SplashScreenViewModel(
                         _navigationEvent.value = SplashNavigationEvent.NavigateToMain
                     }
                     AuthState.NOT_YET_COMPLETED -> {
-                        logger.log(LogTag.SplashVM.Message.MoveToSignUp, success = true)
-                        _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                        val stateModel = metaSecretAppManager.getStateModel()
+                        val vaultState = stateModel?.getVaultFullInfo()
+                        val outsiderStatus = stateModel?.getOutsiderStatus()
+                        if (vaultState is VaultFullInfo.Outsider && outsiderStatus == UserDataOutsiderStatus.PENDING) {
+                            val email = keyChainManager.getString("pending_vault_email")
+                            if (email != null) {
+                                val providerName = keyChainManager.getString("pending_email_provider")
+                                val provider = EmailProvider.entries.find { it.name == providerName } ?: EmailProvider.MANUAL
+                                logger.log(LogTag.SplashVM.Message.MoveToSignUp, "Resuming pending join for $email", success = true)
+                                _navigationEvent.value = SplashNavigationEvent.NavigateToEmailConfirmationPending(email, provider)
+                            } else {
+                                logger.log(LogTag.SplashVM.Message.MoveToSignUp, success = true)
+                                _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                            }
+                        } else {
+                            logger.log(LogTag.SplashVM.Message.MoveToSignUp, success = true)
+                            _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                        }
                     }
                 }
             }
@@ -109,11 +130,15 @@ class SplashScreenViewModel(
     }
 }
 
-enum class SplashNavigationEvent {
-    Idle,
-    NavigateToMain,
-    NavigateToSignUp,
-    NavigateToOnboarding
+sealed class SplashNavigationEvent {
+    data object Idle : SplashNavigationEvent()
+    data object NavigateToMain : SplashNavigationEvent()
+    data object NavigateToSignUp : SplashNavigationEvent()
+    data object NavigateToOnboarding : SplashNavigationEvent()
+    data class NavigateToEmailConfirmationPending(
+        val email: String,
+        val provider: EmailProvider,
+    ) : SplashNavigationEvent()
 }
 
 enum class SplashViewEvents: CommonViewModelEventsInterface {

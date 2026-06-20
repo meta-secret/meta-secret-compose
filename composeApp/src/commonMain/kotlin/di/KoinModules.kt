@@ -33,6 +33,7 @@ import core.DebugLoggerInterface
 import core.AppStateCacheProvider
 import core.AppStateCacheProviderInterface
 import core.errors.ErrorMapper
+import models.appInternalModels.EmailProvider
 import ui.scenes.signinscreen.EmailConfirmationScreenViewModel
 import ui.scenes.signinscreen.ManualSignInScreenViewModel
 
@@ -50,11 +51,11 @@ val appModule = module {
     single<AlertCoordinatorInterface> { AlertCoordinator(get(), get()) }
 
     single { MainScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
-    factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { ManualSignInScreenViewModel(get()) }
-    factory { (vaultName: String) ->
+    factory { (vaultName: String, provider: EmailProvider) ->
         EmailConfirmationScreenViewModel(
             get(),
             get(),
@@ -65,7 +66,8 @@ val appModule = module {
             get(),
             get(),
             get(),
-            vaultName
+            vaultName,
+            provider,
         )
     }
     factory { ProfileScreenViewModel(get(), get(), get(), get()) }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import models.apiModels.MasterKeyModel
 import models.apiModels.UserDataOutsiderStatus
 import models.apiModels.VaultFullInfo
+import models.appInternalModels.EmailProvider
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 import ui.scenes.common.CommonViewModel
@@ -37,6 +38,7 @@ class EmailConfirmationScreenViewModel(
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     private val stringProvider: StringProviderInterface,
     private val vaultName: String,
+    private val provider: EmailProvider,
 ) : CommonViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
@@ -45,13 +47,8 @@ class EmailConfirmationScreenViewModel(
     private val _navigationEvent = MutableStateFlow<EmailConfirmationNavigationEvent?>(EmailConfirmationNavigationEvent.Idle)
     val navigationEvent: StateFlow<EmailConfirmationNavigationEvent?> = _navigationEvent
 
-    private val _showJoinDecision = MutableStateFlow(false)
-    val showJoinDecision: StateFlow<Boolean> = _showJoinDecision
-
-    private val _showJoinPending = MutableStateFlow(false)
-    val showJoinPending: StateFlow<Boolean> = _showJoinPending
-
-    private var currentState: EmailConfirmationFlowState = EmailConfirmationFlowState.IDLE
+    private val _screenState = MutableStateFlow<EmailConfirmationScreenState>(EmailConfirmationScreenState.Default)
+    val screenState: StateFlow<EmailConfirmationScreenState> = _screenState
 
     init {
         viewModelScope.launch {
@@ -126,13 +123,13 @@ class EmailConfirmationScreenViewModel(
             }
         } else {
             logger.setVaultState(null)
-            resetJoinUi()
+            resetScreenState()
         }
     }
 
     private suspend fun startSignUpFlow() {
         _isLoading.value = true
-        resetJoinUi()
+        resetScreenState()
 
         if (!generateMasterKey()) {
             failWithInternalError()
@@ -161,7 +158,7 @@ class EmailConfirmationScreenViewModel(
 
     private suspend fun continueSignUpFlow() {
         _isLoading.value = true
-        resetJoinUi()
+        resetScreenState()
 
         val signUpResult = metaSecretStateResolver.continueSignUp()
         if (signUpResult.error != null) {
@@ -171,13 +168,11 @@ class EmailConfirmationScreenViewModel(
 
         when (signUpResult.appState) {
             is MemberState -> {
-                currentState = EmailConfirmationFlowState.JOINED
                 _isLoading.value = false
                 _navigationEvent.value = EmailConfirmationNavigationEvent.MainScreen
             }
 
             is OutsiderState -> {
-                currentState = EmailConfirmationFlowState.JOINING
                 showJoinPendingState()
             }
 
@@ -186,10 +181,8 @@ class EmailConfirmationScreenViewModel(
     }
 
     private fun showJoinDecisionState() {
-        currentState = EmailConfirmationFlowState.VAULT_EXISTS
         _isLoading.value = false
-        _showJoinDecision.value = true
-        _showJoinPending.value = false
+        _screenState.value = EmailConfirmationScreenState.VaultExists
         showNotification(stringProvider.nameOccupiedJoinPrompt(), isError = false)
         socketHandler.actionsToFollow(
             add = null,
@@ -197,11 +190,11 @@ class EmailConfirmationScreenViewModel(
         )
     }
 
-    private fun showJoinPendingState() {
-        currentState = EmailConfirmationFlowState.JOINING
+    private suspend fun showJoinPendingState() {
         _isLoading.value = false
-        _showJoinDecision.value = false
-        _showJoinPending.value = true
+        _screenState.value = EmailConfirmationScreenState.JoiningPending
+        keyChainManager.saveString("pending_vault_email", vaultName)
+        keyChainManager.saveString("pending_email_provider", provider.name)
         showNotification(stringProvider.acceptRequestOnOtherDevice(), isError = false)
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE),
@@ -219,15 +212,13 @@ class EmailConfirmationScreenViewModel(
             add = null,
             exclude = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)
         )
-        currentState = EmailConfirmationFlowState.IDLE
-        resetJoinUi()
+        resetScreenState()
         _navigationEvent.value = EmailConfirmationNavigationEvent.BackToSignIn
     }
 
     private suspend fun failWithInternalError() {
         _isLoading.value = false
-        currentState = EmailConfirmationFlowState.FAILED
-        resetJoinUi()
+        resetScreenState()
         showNotification(stringProvider.errorInternal(), isError = true)
     }
 
@@ -252,12 +243,12 @@ class EmailConfirmationScreenViewModel(
                 logger.log(LogTag.SignInVM.Message.SubscribeJoinResponse, success = true)
                 when (actionType) {
                     SocketActionModel.JOIN_REQUEST_ACCEPTED -> {
-                        if (currentState == EmailConfirmationFlowState.JOINING) {
+                        if (_screenState.value is EmailConfirmationScreenState.JoiningPending) {
                             handleJoinRequestAccepted()
                         } else {
                             logger.log(
                                 LogTag.SignInVM.Message.JoiningNotFollowing,
-                                "currentState=$currentState, ignoring JOIN_REQUEST_ACCEPTED",
+                                "screenState=${_screenState.value}, ignoring JOIN_REQUEST_ACCEPTED",
                                 success = true
                             )
                         }
@@ -272,7 +263,7 @@ class EmailConfirmationScreenViewModel(
 
                     SocketActionModel.JOIN_REQUEST_PENDING -> {
                         logger.log(LogTag.SignInVM.Message.JoiningInProgress, success = true)
-                        if (currentState != EmailConfirmationFlowState.JOINING) {
+                        if (_screenState.value !is EmailConfirmationScreenState.JoiningPending) {
                             showJoinPendingState()
                         }
                     }
@@ -291,7 +282,6 @@ class EmailConfirmationScreenViewModel(
                 logger.log(LogTag.SignInVM.Message.BiometricAuthSuccess, success = true)
                 logger.log(LogTag.SignInVM.Message.GotAcceptedSignal, success = true)
                 viewModelScope.launch {
-                    currentState = EmailConfirmationFlowState.JOINED
                     _navigationEvent.value = EmailConfirmationNavigationEvent.MainScreen
                 }
             },
@@ -299,16 +289,14 @@ class EmailConfirmationScreenViewModel(
                 logger.log(LogTag.SignInVM.Message.BiometricAuthFailed, error, success = false)
                 showNotification(error.ifEmpty { stringProvider.errorBiometricAuthFailed() }, isError = true)
                 viewModelScope.launch {
-                    currentState = EmailConfirmationFlowState.IDLE
-                    resetJoinUi()
+                    resetScreenState()
                 }
             },
             onFallback = {
                 logger.log(LogTag.SignInVM.Message.BiometricAuthFallback, success = false)
                 showNotification(stringProvider.errorBiometricAuthFailed(), isError = true)
                 viewModelScope.launch {
-                    currentState = EmailConfirmationFlowState.IDLE
-                    resetJoinUi()
+                    resetScreenState()
                 }
             }
         )
@@ -318,9 +306,8 @@ class EmailConfirmationScreenViewModel(
         return metaSecretAppManager.initWithSavedKey() is InitResult.Success
     }
 
-    private fun resetJoinUi() {
-        _showJoinDecision.value = false
-        _showJoinPending.value = false
+    private fun resetScreenState() {
+        _screenState.value = EmailConfirmationScreenState.Default
     }
 }
 
@@ -331,12 +318,10 @@ sealed class EmailConfirmationViewEvents : CommonViewModelEventsInterface {
     data object StartOver : EmailConfirmationViewEvents()
 }
 
-private enum class EmailConfirmationFlowState {
-    IDLE,
-    VAULT_EXISTS,
-    JOINING,
-    JOINED,
-    FAILED,
+sealed class EmailConfirmationScreenState {
+    data object Default : EmailConfirmationScreenState()
+    data object VaultExists : EmailConfirmationScreenState()
+    data object JoiningPending : EmailConfirmationScreenState()
 }
 
 sealed class EmailConfirmationNavigationEvent {

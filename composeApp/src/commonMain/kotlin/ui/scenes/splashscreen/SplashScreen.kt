@@ -30,6 +30,7 @@ import kotlinproject.composeapp.generated.resources.enable_biometric_required
 import org.koin.compose.viewmodel.koinViewModel
 import ui.scenes.mainscreen.MainScreen
 import ui.scenes.onboarding.OnboardingScreen
+import ui.scenes.signinscreen.EmailConfirmationScreen
 import ui.scenes.signinscreen.SignInScreen
 import core.BiometricState
 import core.NotificationCoordinatorInterface
@@ -65,7 +66,7 @@ class SplashScreen : Screen {
         }
 
         LaunchedEffect(navigationEvent) {
-            if (navigationEvent != SplashNavigationEvent.Idle) {
+            if (navigationEvent !is SplashNavigationEvent.Idle) {
                 navigate(navigationEvent, navigator)
             }
         }
@@ -135,18 +136,11 @@ class SplashScreen : Screen {
 
 fun navigate(navigationEvent: SplashNavigationEvent, navigator: Navigator?) {
     when (navigationEvent) {
-        SplashNavigationEvent.NavigateToMain -> {
-            navigator?.push(MainScreen())
-        }
-
-        SplashNavigationEvent.NavigateToSignUp -> {
-            navigator?.push(SignInScreen())
-        }
-
-        SplashNavigationEvent.NavigateToOnboarding -> {
-            navigator?.push(OnboardingScreen())
-        }
-
-        else -> Unit
+        is SplashNavigationEvent.NavigateToMain -> navigator?.push(MainScreen())
+        is SplashNavigationEvent.NavigateToSignUp -> navigator?.push(SignInScreen())
+        is SplashNavigationEvent.NavigateToOnboarding -> navigator?.push(OnboardingScreen())
+        is SplashNavigationEvent.NavigateToEmailConfirmationPending ->
+            navigator?.push(EmailConfirmationScreen(navigationEvent.email, navigationEvent.provider))
+        is SplashNavigationEvent.Idle -> Unit
     }
 }

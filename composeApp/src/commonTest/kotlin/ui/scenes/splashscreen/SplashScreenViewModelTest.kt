@@ -112,6 +112,7 @@ class SplashScreenViewModelTest {
         appManager: MetaSecretAppManagerInterface,
         backupCoordinator: FakeBackupCoordinator,
         vaultStatsProvider: FakeVaultStatsProvider = FakeVaultStatsProvider(),
+        keyChain: FakeKeyChain = FakeKeyChain(),
     ): SplashScreenViewModel {
         return SplashScreenViewModel(
             keyValueStorage = keyValueStorage,
@@ -121,6 +122,7 @@ class SplashScreenViewModelTest {
             screenMetricsProvider = FakeScreenMetricsProvider(),
             vaultStatsProvider = vaultStatsProvider,
             stringProvider = FakeStringProvider(),
+            keyChainManager = keyChain,
         )
     }
 }

@@ -55,7 +55,7 @@ class EmailConfirmationScreen(
     @Composable
     override fun Content() {
         val viewModel: EmailConfirmationScreenViewModel = koinViewModel(
-            parameters = { parametersOf(email) }
+            parameters = { parametersOf(email, provider) }
         )
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
         val imageProvider: ImageProviderInterface = koinInject()
@@ -64,8 +64,7 @@ class EmailConfirmationScreen(
 
         val isLoading by viewModel.isLoading.collectAsState()
         val navigationEvent by viewModel.navigationEvent.collectAsState()
-        val showJoinDecision by viewModel.showJoinDecision.collectAsState()
-        val showJoinPending by viewModel.showJoinPending.collectAsState()
+        val screenState by viewModel.screenState.collectAsState()
 
         val providerIcon = when (provider) {
             EmailProvider.APPLE -> imageProvider.getPainter(AppImage.Apple)
@@ -237,7 +236,7 @@ class EmailConfirmationScreen(
                         )
                     }
 
-                    if (showJoinDecision) {
+                    if (screenState is EmailConfirmationScreenState.VaultExists) {
                         Spacer(modifier = Modifier.height(18.dp))
                         Text(
                             text = appString(AppString.name_occupied_join_prompt),
@@ -257,57 +256,61 @@ class EmailConfirmationScreen(
                             .padding(bottom = 32.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        if (showJoinPending) {
-                            ClassicButton(
-                                action = {
-                                    focusManager.clearFocus()
-                                    viewModel.handle(EmailConfirmationViewEvents.CancelJoin)
-                                },
-                                text = appString(AppString.cancel),
-                                color = AppColors.Warning,
-                                isEnabled = !isLoading,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            ClassicButton(
-                                action = {},
-                                text = appString(AppString.joining),
-                                isEnabled = false,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        } else if (showJoinDecision) {
-                            ClassicButton(
-                                action = {
-                                    focusManager.clearFocus()
-                                    viewModel.handle(EmailConfirmationViewEvents.JoinExistingVault)
-                                },
-                                text = appString(AppString.join),
-                                isEnabled = !isLoading,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            NakedButton(
-                                title = appString(AppString.emailSelectionChange),
-                                onClick = {
-                                    focusManager.clearFocus()
-                                    viewModel.handle(EmailConfirmationViewEvents.StartOver)
-                                }
-                            )
-                        } else {
-                            ClassicButton(
-                                action = {
-                                    focusManager.clearFocus()
-                                    viewModel.handle(EmailConfirmationViewEvents.ContinueClicked)
-                                },
-                                text = appString(AppString.emailSelectionContinue),
-                                isEnabled = !isLoading,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            NakedButton(
-                                title = appString(AppString.emailSelectionChange),
-                                onClick = {
-                                    focusManager.clearFocus()
-                                    viewModel.handle(EmailConfirmationViewEvents.StartOver)
-                                }
-                            )
+                        when (screenState) {
+                            is EmailConfirmationScreenState.JoiningPending -> {
+                                ClassicButton(
+                                    action = {
+                                        focusManager.clearFocus()
+                                        viewModel.handle(EmailConfirmationViewEvents.CancelJoin)
+                                    },
+                                    text = appString(AppString.cancel),
+                                    color = AppColors.Warning,
+                                    isEnabled = !isLoading,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                ClassicButton(
+                                    action = {},
+                                    text = appString(AppString.joining),
+                                    isEnabled = false,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                            is EmailConfirmationScreenState.VaultExists -> {
+                                ClassicButton(
+                                    action = {
+                                        focusManager.clearFocus()
+                                        viewModel.handle(EmailConfirmationViewEvents.JoinExistingVault)
+                                    },
+                                    text = appString(AppString.join),
+                                    isEnabled = !isLoading,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                NakedButton(
+                                    title = appString(AppString.emailSelectionChange),
+                                    onClick = {
+                                        focusManager.clearFocus()
+                                        viewModel.handle(EmailConfirmationViewEvents.StartOver)
+                                    }
+                                )
+                            }
+                            is EmailConfirmationScreenState.Default -> {
+                                ClassicButton(
+                                    action = {
+                                        focusManager.clearFocus()
+                                        viewModel.handle(EmailConfirmationViewEvents.ContinueClicked)
+                                    },
+                                    text = appString(AppString.emailSelectionContinue),
+                                    isEnabled = !isLoading,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                NakedButton(
+                                    title = appString(AppString.emailSelectionChange),
+                                    onClick = {
+                                        focusManager.clearFocus()
+                                        viewModel.handle(EmailConfirmationViewEvents.StartOver)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
