@@ -14,14 +14,14 @@
 
     <application
         android:name="com.metasecret.compose.MainApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="true"
-        tools:replace="android:name"
+        tools:replace="android:name,android:allowBackup"
         tools:targetApi="tiramisu">
         <activity
             android:launchMode="singleTask"

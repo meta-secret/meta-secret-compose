@@ -17,9 +17,7 @@ private func getCurrentTimestamp() -> String {
 
 enum SwiftLogTag: String, Sendable {
     case swiftBridge = "🦅SwiftBridge"
-    case backupUI = "🦅BackupUI"
-    case backupWorker = "🦅👷BackupWorker"
-    
+
     var displayName: String {
         return self.rawValue
     }

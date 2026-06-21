@@ -12,7 +12,6 @@ import core.BiometricState
 import core.KeyChainInterface
 import core.metaSecretCore.AuthState
 import core.metaSecretCore.MetaSecretAppManagerInterface
-import core.BackupCoordinatorInterface
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
@@ -25,7 +24,6 @@ class SplashScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
-    private val backupCoordinatorInterface: BackupCoordinatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
     private val stringProvider: StringProviderInterface,
@@ -76,10 +74,6 @@ class SplashScreenViewModel(
     }
 
     private suspend fun proceedWithNavigation() {
-        backupCoordinatorInterface.restoreIfNeeded()
-        val hasBackupDb = backupCoordinatorInterface.hasDatabaseFile()
-        logger.setBackupDbExists(hasBackupDb)
-
         when (isOnboardingComplete()) {
             OnboardingState.COMPLETED -> {
                 when (checkAuth()) {

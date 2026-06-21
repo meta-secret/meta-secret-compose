@@ -27,7 +27,6 @@ import models.appInternalModels.SecretModel
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
-import testutils.FakeBackupCoordinator
 import testutils.FakeBiometricAuthenticator
 import testutils.FakeDebugLogger
 import testutils.FakeKeyChain
@@ -59,19 +58,15 @@ class SplashScreenViewModelTest {
     @Test
     fun `navigates to onboarding when onboarding is incomplete`() = runTest(dispatcher) {
         val keyStorage = FakeKeyValueStorage().apply { isOnboardingCompleted = false }
-        val backup = FakeBackupCoordinator(hasDb = true)
         val viewModel = createViewModel(
             keyValueStorage = keyStorage,
             appManager = FakeAppManager(authState = AuthState.COMPLETED),
-            backupCoordinator = backup,
         )
 
         viewModel.handle(SplashViewEvents.BIOMETRIC_SUCCEEDED)
         advanceUntilIdle()
 
         assertEquals(SplashNavigationEvent.NavigateToOnboarding, viewModel.navigationEvent.value)
-        assertEquals(1, backup.restoreCalls)
-        assertEquals(true, testLogger.backupDbExists)
     }
 
     @Test
@@ -81,7 +76,6 @@ class SplashScreenViewModelTest {
         val viewModel = createViewModel(
             keyValueStorage = keyStorage,
             appManager = FakeAppManager(authState = AuthState.COMPLETED),
-            backupCoordinator = FakeBackupCoordinator(hasDb = false),
             vaultStatsProvider = vaultStats,
         )
 
@@ -98,7 +92,6 @@ class SplashScreenViewModelTest {
         val viewModel = createViewModel(
             keyValueStorage = keyStorage,
             appManager = FakeAppManager(authState = AuthState.NOT_YET_COMPLETED),
-            backupCoordinator = FakeBackupCoordinator(hasDb = false),
         )
 
         viewModel.handle(SplashViewEvents.BIOMETRIC_SUCCEEDED)
@@ -110,7 +103,6 @@ class SplashScreenViewModelTest {
     private fun createViewModel(
         keyValueStorage: FakeKeyValueStorage,
         appManager: MetaSecretAppManagerInterface,
-        backupCoordinator: FakeBackupCoordinator,
         vaultStatsProvider: FakeVaultStatsProvider = FakeVaultStatsProvider(),
         keyChain: FakeKeyChain = FakeKeyChain(),
     ): SplashScreenViewModel {
@@ -118,7 +110,6 @@ class SplashScreenViewModelTest {
             keyValueStorage = keyValueStorage,
             biometricAuthenticator = FakeBiometricAuthenticator(),
             metaSecretAppManager = appManager,
-            backupCoordinatorInterface = backupCoordinator,
             screenMetricsProvider = FakeScreenMetricsProvider(),
             vaultStatsProvider = vaultStatsProvider,
             stringProvider = FakeStringProvider(),

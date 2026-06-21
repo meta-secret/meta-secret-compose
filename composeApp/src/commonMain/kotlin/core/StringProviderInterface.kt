@@ -14,8 +14,6 @@ interface StringProviderInterface {
     fun biometricPromptReason(): String = getString(AppString.biometric_prompt)
     fun biometricPermissionSettings(): String = getString(AppString.biometric_permission_settings)
 
-    fun backupChoosePathMessage(): String = getString(AppString.backup_choose_path_message)
-    fun backupChoosePathWarning(): String = getString(AppString.backup_choose_path_warning)
     fun ok(): String = getString(AppString.ok)
 
     fun errorNetwork(): String = getString(AppString.errorNetwork)

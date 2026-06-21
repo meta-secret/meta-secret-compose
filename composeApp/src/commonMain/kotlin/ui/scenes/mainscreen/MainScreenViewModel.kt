@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 import core.metaSecretCore.MetaSecretAppManagerInterface
-import core.BackupCoordinatorInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.LogTag
 import core.ScreenMetricsProviderInterface
@@ -29,7 +28,6 @@ import ui.scenes.common.CommonViewModelEventsInterface
 class MainScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
-    private val backupCoordinatorInterface: BackupCoordinatorInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
@@ -200,13 +198,8 @@ class MainScreenViewModel(
             when (event) {
                 is MainViewEvents.SetTabIndex -> setTabIndex(event.index)
                 is MainViewEvents.ShowWarning -> changeWarningVisibilityTo(event.isToShow)
-                MainViewEvents.OnEnterForeground -> checkBackup()
             }
         }
-    }
-
-    private fun checkBackup() {
-        backupCoordinatorInterface.ensureBackupDestinationSelected()
     }
 
     fun clearSecretIdToShow() {
@@ -241,5 +234,4 @@ class MainScreenViewModel(
 sealed class MainViewEvents : CommonViewModelEventsInterface {
     data class SetTabIndex(val index: Int) : MainViewEvents()
     data class ShowWarning(val isToShow: Boolean) : MainViewEvents()
-    data object OnEnterForeground : MainViewEvents()
 }

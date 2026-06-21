@@ -324,31 +324,6 @@ sealed class LogTag(val displayName: String) {
         }
     }
 
-    object BackupCoordinator : LogTag("💾BackupCoordinator") {
-        sealed class Message(text: String) : LogTag.Message<BackupCoordinator>(text) {
-            override val tag: BackupCoordinator = BackupCoordinator
-
-            object EnsureBackupDestinationSelected : Message("ensureBackupDestinationSelected")
-            object RestoreIfNeeded : Message("restoreIfNeeded")
-            object LocalDbExists : Message("local DB exists, skipping restore")
-            object NoBackupUriSet : Message("no backup URI set")
-            object BackupUriNotGoogleDrive : Message("backup URI is not Google Drive")
-            object RestoreCompleted : Message("restore completed")
-            object RestoreFailed : Message("restore failed")
-            object RestoreException : Message("restore exception")
-            object BackupIfChanged : Message("backupIfChanged - Local DB updated, starting backup")
-            object LocalDbNotExist : Message("local DB does not exist")
-            object LocalDbLastModified : Message("Local DB last modified")
-            object BackupCompleted : Message("backup completed successfully")
-            object BackupFailed : Message("backup failed")
-            object BackupException : Message("backup exception")
-            object TakePersistableUriPermissionFailed : Message("takePersistableUriPermission failed")
-            object BackupUriSaved : Message("backup URI saved")
-            object PathIs : Message("path is")
-            object BackExists : Message("back exists")
-        }
-    }
-
     object KeyChainManager : LogTag("🗝️KeyChainManager") {
         sealed class Message(text: String) : LogTag.Message<KeyChainManager>(text) {
             override val tag: KeyChainManager = KeyChainManager
@@ -422,7 +397,6 @@ sealed class LogTag(val displayName: String) {
 }
 
 data class CriticalComponentsState(
-    val backupDbExists: Boolean = false,
     val appManagerCreated: Boolean = false,
     val masterKeyGenerated: Boolean = false,
     val vaultState: String? = null,
@@ -438,7 +412,6 @@ interface DebugLoggerInterface {
 
     fun setLoggerVisibility()
     fun testInfo()
-    fun setBackupDbExists(exists: Boolean)
     fun setAppManagerCreated(created: Boolean)
     fun setMasterKeyGenerated(generated: Boolean)
     fun setVaultState(state: String?)
@@ -464,11 +437,6 @@ open class DebugLogger(
 
         val logMessage = "$preMessage ${message.tag.displayName}: $fullMessage"
         println(logFormatter.formatLogMessage(logMessage))
-    }
-
-    override fun setBackupDbExists(exists: Boolean) {
-        criticalState = criticalState.copy(backupDbExists = exists)
-        testInfo()
     }
 
     override fun setAppManagerCreated(created: Boolean) {
@@ -504,7 +472,6 @@ open class DebugLogger(
     override fun testInfo() {
         if (!isCriticalInfoLogsActive) { return }
         
-        val backupStatus = if (criticalState.backupDbExists) "Enable" else "False"
         val appManagerStatus = if (criticalState.appManagerCreated) "True" else "False"
         val masterKeyStatus = if (criticalState.masterKeyGenerated) "True" else "False"
         val vaultStateStatus = criticalState.vaultState ?: "null"
@@ -512,7 +479,6 @@ open class DebugLogger(
 
         println(logFormatter.formatLogMessage("☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F☢\uFE0F"))
         println(logFormatter.formatLogMessage("  Critical Components State:"))
-        println(logFormatter.formatLogMessage("  BackUpDB => $backupStatus"))
         println(logFormatter.formatLogMessage("  MetaSecretAppManager => $appManagerStatus"))
         println(logFormatter.formatLogMessage("  MasterKey => $masterKeyStatus"))
         println(logFormatter.formatLogMessage("  VaultState => $vaultStateStatus"))

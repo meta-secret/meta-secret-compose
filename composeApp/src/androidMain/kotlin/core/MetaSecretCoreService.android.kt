@@ -12,9 +12,6 @@ import models.apiModels.UserData
 import org.koin.java.KoinJavaComponent.inject
 import core.metaSecretCore.MetaSecretCoreInterface
 import core.LogFormatterInterface
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
 
 class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
@@ -24,8 +21,7 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     }
 
     private val context: Context by inject(Context::class.java)
-    private val databasePathProvider: DatabasePathProviderInterface by inject(DatabasePathProviderInterface::class.java)
-    private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.java)
+private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.java)
     private val logFormatter: LogFormatterInterface by inject(LogFormatterInterface::class.java)
     private val clientDeviceInfoProvider: ClientDeviceInfoProviderInterface by inject(ClientDeviceInfoProviderInterface::class.java)
     
@@ -316,31 +312,5 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
         }
     }
 
-    private fun cleanDB() {
-        CoroutineScope(Dispatchers.IO).launch {
-            logger.log(LogTag.MetaSecretCoreService.Message.CleanDb, success = true)
-            try {
-                val dbFileName = databasePathProvider.getDatabaseFileName() ?: return@launch
-                val dbFile = File(context.getDatabasePath(dbFileName).path)
-                if (dbFile.exists()) {
-                    val deleted = dbFile.delete()
-                    MetaSecretNative.clean_up_database()
-                    logger.log(
-                        LogTag.MetaSecretCoreService.Message.DbFileDeleted,
-                        "$deleted",
-                        success = deleted
-                    )
-                } else {
-                    logger.log(LogTag.MetaSecretCoreService.Message.DbFileNotExist, success = true)
-                }
-            } catch (e: Exception) {
-                logger.log(
-                    LogTag.MetaSecretCoreService.Message.ErrorCleaningDb,
-                    "${e.message}",
-                    success = false
-                )
-                e.printStackTrace()
-            }
-        }
-    }
+
 }

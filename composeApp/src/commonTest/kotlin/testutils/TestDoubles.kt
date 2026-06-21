@@ -1,7 +1,6 @@
 package testutils
 
 import core.AppStateCacheProviderInterface
-import core.BackupCoordinatorInterface
 import core.BiometricAuthenticatorInterface
 import core.DebugLoggerInterface
 import core.Device
@@ -24,7 +23,6 @@ import models.apiModels.SecretApiModel
 import models.apiModels.UserData
 
 class FakeDebugLogger : DebugLoggerInterface {
-    var backupDbExists: Boolean? = null
     var appManagerCreated: Boolean? = null
     var masterKeyGenerated: Boolean? = null
     var lastVaultState: String? = null
@@ -32,9 +30,6 @@ class FakeDebugLogger : DebugLoggerInterface {
     override fun <T : LogTag> log(message: LogTag.Message<T>, extra: String?, success: Boolean?) = Unit
     override fun setLoggerVisibility() = Unit
     override fun testInfo() = Unit
-    override fun setBackupDbExists(exists: Boolean) {
-        backupDbExists = exists
-    }
     override fun setAppManagerCreated(created: Boolean) {
         appManagerCreated = created
     }
@@ -170,22 +165,6 @@ class FakeVaultStatsProvider : VaultStatsProviderInterface {
     override suspend fun refresh() {
         refreshCalls += 1
     }
-}
-
-class FakeBackupCoordinator(
-    private val hasDb: Boolean,
-) : BackupCoordinatorInterface {
-    var restoreCalls = 0
-
-    override fun ensureBackupDestinationSelected() = Unit
-
-    override suspend fun restoreIfNeeded() {
-        restoreCalls += 1
-    }
-
-    override suspend fun backupIfChanged() = Unit
-    override fun clearAllBackups() = Unit
-    override suspend fun hasDatabaseFile(): Boolean = hasDb
 }
 
 class FakeMetaSecretCore : MetaSecretCoreInterface {
