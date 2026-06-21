@@ -93,7 +93,7 @@ open class LocalState(
                     when ((vaultInfo as? VaultFullInfo.Outsider)?.outsider?.status) {
                         UserDataOutsiderStatus.NON_MEMBER -> {
                             logger.log(core.LogTag.StateResolver.Message.CurrentStateIsNonMember, success = true)
-                            PrepareSignUpResult(VaultAvailability.AVAILABLE, null)
+                            PrepareSignUpResult(VaultAvailability.EXISTS, null)
                         }
                         UserDataOutsiderStatus.PENDING -> {
                             logger.log(core.LogTag.StateResolver.Message.CurrentStateIsPending, success = true)

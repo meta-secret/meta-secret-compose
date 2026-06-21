@@ -198,6 +198,7 @@ class KeyChainManagerAndroid(
             }
 
             if (isCleanDB) {
+                clearBackupPrefs(masterKey)
                 deleteAllPersistentEntries()
 
                 val aliases = keyStore.aliases()
@@ -219,6 +220,15 @@ class KeyChainManagerAndroid(
             e.printStackTrace()
             false
         }
+    }
+
+    private fun clearBackupPrefs(masterKey: String?) {
+        val prefs = context.getSharedPreferences("metasecret_backup_prefs", Context.MODE_PRIVATE)
+        prefs.edit()
+            .remove("bdBackUp")
+            .also { if (!masterKey.isNullOrEmpty()) it.remove("bdBackUp$masterKey") }
+            .apply()
+        logger.log(LogTag.KeyChainManager.Message.ClearAllCompleted, "backup prefs cleared masterKey=${masterKey != null}", success = true)
     }
     
     private fun getKeyAlias(key: String): String {

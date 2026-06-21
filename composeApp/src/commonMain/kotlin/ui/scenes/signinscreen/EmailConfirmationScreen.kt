@@ -91,8 +91,7 @@ class EmailConfirmationScreen(
                 }
 
                 EmailConfirmationNavigationEvent.BackToSignIn -> {
-                    navigator?.popUntilRoot()
-                    navigator?.push(SignInScreen())
+                    navigator?.replaceAll(SignInScreen())
                     viewModel.consumeNavigationEvent()
                 }
 
