@@ -1,5 +1,11 @@
 package ui.dialogs.showsecret
 
+import core.AppString
+
+import core.appString
+
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -69,11 +75,13 @@ import kotlinproject.composeapp.generated.resources.show
 import kotlinproject.composeapp.generated.resources.showSecret
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.platform.LocalClipboardManager
 import ui.ClassicButton
+import ui.theme.AppTextStyles
 
 @Composable
 fun ShowSecret(
@@ -84,6 +92,7 @@ fun ShowSecret(
 ) {
     val viewModel: ShowSecretViewModel = koinViewModel()
     val screenMetricsProvider: ScreenMetricsProviderInterface = koinInject()
+    val imageProvider: ImageProviderInterface = koinInject()
     val clipboardManager = LocalClipboardManager.current
 
     val devicesCount by viewModel.devicesCount.collectAsState()
@@ -98,9 +107,9 @@ fun ShowSecret(
     }
 
     val deviceText = when {
-        devicesCount == 0 || devicesCount > 4 -> stringResource(Res.string.devices_5)
-        devicesCount in 2..4 -> stringResource(Res.string.devices_4)
-        else -> stringResource(Res.string.device)
+        devicesCount == 0 || devicesCount > 4 -> appString(AppString.devices_5)
+        devicesCount in 2..4 -> appString(AppString.devices_4)
+        else -> appString(AppString.device)
     }
 
     Dialog(
@@ -133,7 +142,7 @@ fun ShowSecret(
                         .padding(top = 16.dp)
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.close),
+                        painter = imageProvider.getPainter(AppImage.Close),
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
@@ -152,9 +161,8 @@ fun ShowSecret(
                         .verticalScroll(rememberScrollState())
                 ) {
                     Text(
-                        text = stringResource(Res.string.showSecret),
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        text = appString(AppString.showSecret),
+                        style = AppTextStyles.SectionTitle(),
                         color = AppColors.White,
                         textAlign = TextAlign.Center
                     )
@@ -174,13 +182,13 @@ fun ShowSecret(
                         label = "show_secret_transition"
                     ) { content ->
                         when (content) {
-                            null -> LockedSecretStub()
-                            is RevealedSecretContent.Password -> PasswordSecretField(content.value)
+                            null -> LockedSecretStub(imageProvider)
+                            is RevealedSecretContent.Password -> PasswordSecretField(content.value, imageProvider)
                             is RevealedSecretContent.SeedPhrase -> SeedPhraseGrid(content.words)
                         }
                     }
 
-                    DevicesRow(devicesCount = devicesCount, deviceText = deviceText)
+                    DevicesRow(devicesCount = devicesCount, deviceText = deviceText, imageProvider = imageProvider)
 
                     if (revealedSecret == null) {
                         ClassicButton(
@@ -189,7 +197,7 @@ fun ShowSecret(
                                     viewModel.handle(ShowSecretEvents.ShowSecret(secret.secretName))
                                 }
                             },
-                            text = stringResource(Res.string.show)
+                            text = appString(AppString.show)
                         )
                     } else {
                         val copyText = when (val content = revealedSecret) {
@@ -198,13 +206,14 @@ fun ShowSecret(
                             null -> ""
                         }
                         val buttonText = when (revealedSecret) {
-                            is RevealedSecretContent.Password -> stringResource(Res.string.copySecret)
-                            is RevealedSecretContent.SeedPhrase -> stringResource(Res.string.copyPhrase)
-                            null -> stringResource(Res.string.copySecret)
+                            is RevealedSecretContent.Password -> appString(AppString.copySecret)
+                            is RevealedSecretContent.SeedPhrase -> appString(AppString.copyPhrase)
+                            null -> appString(AppString.copySecret)
                         }
 
                         CopyButton(
                             text = buttonText,
+                            imageProvider = imageProvider,
                             onClick = {
                                 if (copyText.isNotBlank()) {
                                     clipboardManager.setText(AnnotatedString(copyText))
@@ -248,16 +257,14 @@ private fun SecretNameField(secretName: String, seedCount: Int?) {
         ) {
             Text(
                 text = secretName,
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                style = AppTextStyles.Body(),
                 color = AppColors.White,
             )
 
             if (seedCount == 12 || seedCount == 24) {
                 Text(
                     text = "SEED · $seedCount",
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                    style = AppTextStyles.MicroStrong(),
                     color = Color(0xFF3A7BFF),
                     modifier = Modifier
                         .background(
@@ -273,7 +280,7 @@ private fun SecretNameField(secretName: String, seedCount: Int?) {
 }
 
 @Composable
-private fun LockedSecretStub() {
+private fun LockedSecretStub(imageProvider: ImageProviderInterface) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -293,7 +300,7 @@ private fun LockedSecretStub() {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(Res.drawable.icon_lock),
+                    painter = imageProvider.getPainter(AppImage.IconLock),
                     contentDescription = null,
                     tint = Color(0xFF3A7BFF),
                     modifier = Modifier.size(20.dp)
@@ -301,17 +308,15 @@ private fun LockedSecretStub() {
             }
 
             Text(
-                text = stringResource(Res.string.secretEncryptedTitle),
-                fontSize = 14.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                text = appString(AppString.secretEncryptedTitle),
+                style = AppTextStyles.CaptionStrong(),
                 color = AppColors.White,
                 textAlign = TextAlign.Center
             )
 
             Text(
-                text = stringResource(Res.string.secretEncryptedSubtitle),
-                fontSize = 13.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                text = appString(AppString.secretEncryptedSubtitle),
+                style = AppTextStyles.Small(),
                 color = Color(0x8CFFFFFF),
                 textAlign = TextAlign.Center
             )
@@ -336,7 +341,7 @@ private fun LockedSecretStub() {
 }
 
 @Composable
-private fun PasswordSecretField(value: String) {
+private fun PasswordSecretField(value: String, imageProvider: ImageProviderInterface) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -351,8 +356,7 @@ private fun PasswordSecretField(value: String) {
         ) {
             Text(
                 text = value,
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                style = AppTextStyles.Body(),
                 color = AppColors.White,
                 modifier = Modifier
                     .weight(1f)
@@ -360,7 +364,7 @@ private fun PasswordSecretField(value: String) {
             )
 
             Icon(
-                painter = painterResource(Res.drawable.icon_eye_off),
+                painter = imageProvider.getPainter(AppImage.IconEyeOff),
                 contentDescription = null,
                 tint = Color(0xFF3A7BFF),
                 modifier = Modifier.size(20.dp)
@@ -398,16 +402,14 @@ private fun SeedPhraseGrid(words: List<String>) {
                         ) {
                             Text(
                                 text = "$index",
-                                fontSize = 11.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                                style = AppTextStyles.MicroStrong(),
                                 color = Color(0x4DFFFFFF),
                                 textAlign = TextAlign.End,
                                 modifier = Modifier.widthIn(min = 18.dp)
                             )
                             Text(
                                 text = word,
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                                style = AppTextStyles.Caption(),
                                 color = AppColors.White,
                                 modifier = Modifier.padding(start = 8.dp)
                             )
@@ -420,30 +422,34 @@ private fun SeedPhraseGrid(words: List<String>) {
 }
 
 @Composable
-private fun DevicesRow(devicesCount: Int, deviceText: String) {
+private fun DevicesRow(
+    devicesCount: Int,
+    deviceText: String,
+    imageProvider: ImageProviderInterface,
+) {
     Row(
         modifier = Modifier.height(24.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            painter = painterResource(Res.drawable.devices_logo),
+            painter = imageProvider.getPainter(AppImage.DevicesLogo),
             contentDescription = null,
             tint = AppColors.White75
         )
         Text(
             text = "$devicesCount $deviceText",
-            style = TextStyle(
-                fontSize = 15.sp,
-                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                color = AppColors.White75
-            ),
+            style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
             modifier = Modifier.height(20.dp)
         )
     }
 }
 
 @Composable
-private fun CopyButton(text: String, onClick: () -> Unit) {
+private fun CopyButton(
+    text: String,
+    imageProvider: ImageProviderInterface,
+    onClick: () -> Unit,
+) {
     val shape = RoundedCornerShape(8.dp)
     Button(
         onClick = onClick,
@@ -465,13 +471,13 @@ private fun CopyButton(text: String, onClick: () -> Unit) {
         ),
     ) {
         Icon(
-            painter = painterResource(Res.drawable.icon_copy),
+            painter = imageProvider.getPainter(AppImage.IconCopy),
             contentDescription = null,
             modifier = Modifier.size(20.dp)
         )
         Text(
             text = text,
-            fontSize = 16.sp,
+            style = AppTextStyles.BodyStrong(),
             modifier = Modifier.padding(start = 8.dp)
         )
     }

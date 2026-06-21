@@ -1,5 +1,11 @@
 package ui.dialogs.removesecret
 
+import core.AppString
+
+import core.appString
+
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,12 +38,14 @@ import kotlinproject.composeapp.generated.resources.remove
 import kotlinproject.composeapp.generated.resources.removeSecret
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
 import core.ScreenMetricsProviderInterface
 import core.Secret
 import ui.ClassicButton
+import ui.theme.AppTextStyles
 
 @Composable
 fun RemoveSecret(
@@ -48,6 +56,7 @@ fun RemoveSecret(
     dialogVisibility: (Boolean) -> Unit,
 ) {
     val viewModel: RemoveSecretViewModel = koinViewModel()
+    val imageProvider: ImageProviderInterface = koinInject()
 
     Dialog(
         onDismissRequest = {},
@@ -74,7 +83,7 @@ fun RemoveSecret(
                         .padding(top = 10.dp)
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.close),
+                        painter = imageProvider.getPainter(AppImage.Close),
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
@@ -90,17 +99,15 @@ fun RemoveSecret(
                     modifier = Modifier.padding(top = 20.dp, bottom = 30.dp)
                 ) {
                     Text(
-                        text = stringResource(Res.string.removeSecret) + "?",
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        text = appString(AppString.removeSecret) + "?",
+                        style = AppTextStyles.SectionTitle(),
                         color = AppColors.White,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
                     Text(
                         text = text,
-                        fontSize = 15.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        style = AppTextStyles.Paragraph(),
                         color = AppColors.White75,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = 10.dp)
@@ -111,7 +118,7 @@ fun RemoveSecret(
                             buttonVisibility(false)
                             dialogVisibility(false)
                         },
-                        stringResource(Res.string.remove),
+                        appString(AppString.remove),
                         color = AppColors.RedError
                     )
                     ClassicButton(
@@ -119,7 +126,7 @@ fun RemoveSecret(
                             buttonVisibility(false)
                             dialogVisibility(false)
                         },
-                        stringResource(Res.string.cancel),
+                        appString(AppString.cancel),
                         color = Color.Transparent,
                         borderColor = AppColors.White50
                     )

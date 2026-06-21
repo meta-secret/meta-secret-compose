@@ -18,7 +18,8 @@ Write failing tests that drive implementation. Analyze implementation plan and c
 
 - .ai/GLOSSARY.md (use consistent terminology)
 - .ai/rules/tdd-principles.md (test naming, structure, coverage)
-- .ai/rules/kmp-principles.md
+- .ai/rules/kmp-principles.md (file size, reusability, method params, visibility)
+- .ai/rules/kmp-code-style.md (strings, typography, naming, comments)
 
 ## Required Skills
 

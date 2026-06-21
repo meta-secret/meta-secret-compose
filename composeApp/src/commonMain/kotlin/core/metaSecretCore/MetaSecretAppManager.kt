@@ -107,10 +107,11 @@ class MetaSecretAppManager(
             val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
             val appState = currentState.getCurrentAppState()
             logger.setVaultState(appState?.description())
-            
+
+            appStateCacheProvider.updateCache(currentState)
             cacheDeviceAndVaultInfoIfNeeded(currentState)
             updateClaimsStats(currentState)
-            
+
             currentState
         } catch (e: Exception) {
             logger.log(LogTag.AppManager.Message.FailedToParseStateJson, "${e.message}", success = false)

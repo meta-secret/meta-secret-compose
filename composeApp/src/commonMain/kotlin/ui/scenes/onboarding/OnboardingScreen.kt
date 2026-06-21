@@ -1,5 +1,11 @@
 package ui.scenes.onboarding
 
+import core.AppString
+
+import core.appString
+
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -30,25 +36,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.next
-import kotlinproject.composeapp.generated.resources.skip
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 import ui.scenes.mainscreen.MainScreen
 import ui.scenes.signinscreen.SignInScreen
 import core.AppColors
+import ui.theme.AppTextStyles
 import ui.ClassicButton
 
 class OnboardingScreen : Screen {
@@ -59,7 +59,7 @@ class OnboardingScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val pages = viewModel.pages
         val pagerState = rememberPagerState(pageCount = { pages.size })
-        val backgroundMain = painterResource(Res.drawable.background_main)
+        val imageProvider: ImageProviderInterface = koinInject()
         val currentPage by viewModel.currentPage.collectAsState()
         val density = LocalDensity.current
         val topInset = with(density) { WindowInsets.systemBars.getTop(this).toDp() }
@@ -77,7 +77,7 @@ class OnboardingScreen : Screen {
                 .fillMaxSize()
         ) {
             Image(
-                painter = backgroundMain,
+                painter = imageProvider.getPainter(AppImage.BackgroundMain),
                 contentDescription = null,
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier
@@ -147,8 +147,7 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                fontSize = 15.sp,
-                color = AppColors.White75,
+                style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
                 text = "${pagerState.currentPage + 1} / $pagesCount"
             )
             Text(
@@ -158,9 +157,9 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
                             viewModel.handle(OnboardingViewEvents.COMPLETE_ONBOARDING)
                         }
                     },
-                text = stringResource(Res.string.skip),
-                fontSize = 15.sp,
+                text = appString(AppString.skip),
                 color = AppColors.ActionLink,
+                style = AppTextStyles.CaptionStrong(),
                 textAlign = TextAlign.End,
             )
         }
@@ -192,13 +191,14 @@ fun OnboardingFooter(pagerState: PagerState, viewModel: OnboardingViewModel, pag
                     }
                 }
             },
-            stringResource(Res.string.next)
+            appString(AppString.next)
         )
     }
 }
 
 @Composable
 fun PagerScreen(onBoardingPage: OnBoardingPage) {
+    val imageProvider: ImageProviderInterface = koinInject()
     val horizontalPadding = 24.dp
     val verticalGap = 16.dp
 
@@ -214,7 +214,7 @@ fun PagerScreen(onBoardingPage: OnBoardingPage) {
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = painterResource(onBoardingPage.image),
+                painter = imageProvider.getPainter(onBoardingPage.image),
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()
@@ -229,26 +229,18 @@ fun PagerScreen(onBoardingPage: OnBoardingPage) {
             verticalArrangement = Arrangement.spacedBy(verticalGap)
         ) {
             Text(
-                text = stringResource(onBoardingPage.title),
-                style = TextStyle(
-                    color = AppColors.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp,
-                    lineHeight = 31.sp,
-                ),
+                text = appString(onBoardingPage.title),
+                style = AppTextStyles.ScreenTitle().copy(color = AppColors.White, lineHeight = 31.sp),
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                text = stringResource(onBoardingPage.subTitle),
-                color = AppColors.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                text = appString(onBoardingPage.subTitle),
+                style = AppTextStyles.CardTitle().copy(color = AppColors.White),
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                text = stringResource(onBoardingPage.description),
-                fontSize = 16.sp,
-                color = AppColors.White75,
+                text = appString(onBoardingPage.description),
+                style = AppTextStyles.Body().copy(color = AppColors.White75),
                 modifier = Modifier.fillMaxWidth()
             )
         }

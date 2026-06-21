@@ -1,5 +1,14 @@
 package ui.dialogs.adddevice
 
+import core.AppString
+
+import core.appString
+
+import core.AppImage
+import core.ImageProviderInterface
+
+import ui.theme.AppTextStyles
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,19 +31,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addDevice
-import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.downloadMetasecret
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.orUseQR
 import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import qrgenerator.qrkitpainter.rememberQrKitPainter
 import core.AppColors
 import core.ScreenMetricsProviderInterface
+import org.koin.compose.koinInject
 
 @Composable
 fun AddingDevice(
@@ -42,6 +49,7 @@ fun AddingDevice(
     mainDialogVisibility: (Boolean) -> Unit, userName: String
 ) {
     val painter = rememberQrKitPainter(userName)
+    val imageProvider: ImageProviderInterface = koinInject()
     Dialog(
         onDismissRequest = {},
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -67,7 +75,7 @@ fun AddingDevice(
                         .padding(top = 16.dp)
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.close),
+                        painter = imageProvider.getPainter(AppImage.Close),
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
@@ -76,9 +84,8 @@ fun AddingDevice(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = stringResource(Res.string.addDevice),
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        text = appString(AppString.addDevice),
+                        style = AppTextStyles.SectionTitle(),
                         color = AppColors.White,
                         modifier = Modifier
                             .align(Alignment.Start)
@@ -95,10 +102,8 @@ fun AddingDevice(
                                 .background(AppColors.White5, RoundedCornerShape(12.dp))
                         )
                         Text(
-                            text = stringResource(Res.string.downloadMetasecret),
-                            fontSize = 15.sp,
-                            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                            color = AppColors.White75,
+                            text = appString(AppString.downloadMetasecret),
+                            style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
                                 .padding(vertical = 24.dp)
@@ -114,10 +119,8 @@ fun AddingDevice(
                        verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
                         Text(
-                            text = stringResource(Res.string.orUseQR),
-                            fontSize = 15.sp,
-                            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                            color = AppColors.White75,
+                            text = appString(AppString.orUseQR),
+                            style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
                                 .padding(top = 10.dp)

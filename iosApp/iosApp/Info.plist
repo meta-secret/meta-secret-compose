@@ -20,6 +20,23 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+	</array>
+	<key>GOOGLE_REVERSED_CLIENT_ID</key>
+	<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+	<key>GIDClientID</key>
+	<string>$(GOOGLE_CLIENT_ID)</string>
+	<key>APPLE_CLIENT_ID</key>
+	<string>$(APPLE_CLIENT_ID)</string>
+	<key>APPLE_REDIRECT_URI</key>
+	<string>$(APPLE_REDIRECT_URI)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>

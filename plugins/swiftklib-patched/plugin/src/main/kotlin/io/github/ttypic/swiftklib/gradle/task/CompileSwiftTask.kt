@@ -114,6 +114,10 @@ abstract class CompileSwiftTask @Inject constructor(
             it.executable = "xcrun"
             it.workingDir = swiftBuildDir
             it.args = args
+            // Xcode build phases inherit SDKROOT=iphoneos, but SwiftPM evaluates the manifest as a host
+            // macOS process. Overriding SDKROOT keeps manifest compilation on the host SDK while the
+            // actual package build still uses the explicit iOS -sdk passed above.
+            it.environment("SDKROOT", readHostSdkPath())
             it.standardOutput = StringReplacingOutputStream(
                 delegate = System.out,
                 replacements = sourceFilePathReplacements
@@ -170,6 +174,22 @@ abstract class CompileSwiftTask @Inject constructor(
             it.args = listOf(
                 "--sdk",
                 compileTarget.os(),
+                "--show-sdk-path",
+            )
+            it.standardOutput = stdout
+        }
+
+        return stdout.toString().trim()
+    }
+
+    private fun readHostSdkPath(): String {
+        val stdout = ByteArrayOutputStream()
+
+        execOperations.exec {
+            it.executable = "xcrun"
+            it.args = listOf(
+                "--sdk",
+                "macosx",
                 "--show-sdk-path",
             )
             it.standardOutput = stdout

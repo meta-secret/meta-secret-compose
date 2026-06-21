@@ -5,7 +5,6 @@ import core.AlertCoordinatorInterface
 import core.BiometricAuthenticatorInterface
 import core.KeyValueStorageInterface
 import core.LogTag
-import core.NotificationCoordinatorInterface
 import core.ScreenMetricsProviderInterface
 import core.StringProviderInterface
 import core.VaultStatsProviderInterface
@@ -33,7 +32,6 @@ class DevicesScreenViewModel(
     private val vaultStatsProvider: VaultStatsProviderInterface,
     private val alertCoordinator: AlertCoordinatorInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
-    private val notificationCoordinator: NotificationCoordinatorInterface,
     private val stringProvider: StringProviderInterface,
 ) : CommonViewModel() {
 
@@ -105,12 +103,12 @@ class DevicesScreenViewModel(
             onSuccess = { updateMembership(isJoin) },
             onError = { error ->
                 logger.log(LogTag.DevicesVM.Message.BiometricError, error, success = false)
-                notificationCoordinator.showError(error.ifEmpty { stringProvider.errorBiometricAuthFailed() })
+                showNotification(error.ifEmpty { stringProvider.errorBiometricAuthFailed() }, isError = true)
                 resetJoinRequestState()
             },
             onFallback = {
                 logger.log(LogTag.DevicesVM.Message.BiometricError, success = false)
-                notificationCoordinator.showError(stringProvider.errorBiometricAuthFailed())
+                showNotification(stringProvider.errorBiometricAuthFailed(), isError = true)
                 resetJoinRequestState()
             }
         )

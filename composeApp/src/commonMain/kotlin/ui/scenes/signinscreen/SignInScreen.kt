@@ -1,24 +1,22 @@
 package ui.scenes.signinscreen
 
-import androidx.compose.foundation.background
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,96 +26,77 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.advice
-import kotlinproject.composeapp.generated.resources.background_logo
-import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.forward
-import kotlinproject.composeapp.generated.resources.logo
-import kotlinproject.composeapp.generated.resources.nicknameError
-import kotlinproject.composeapp.generated.resources.placeholder
-import kotlinproject.composeapp.generated.resources.scan
-import kotlinproject.composeapp.generated.resources.start
-import kotlinproject.composeapp.generated.resources.cancel
-import kotlinproject.composeapp.generated.resources.join
-import kotlinproject.composeapp.generated.resources.joining
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
-import ui.scenes.mainscreen.MainScreen
 import core.AppColors
-import ui.ClassicButton
-import ui.dialogs.qrscanning.scanQRCode
+import core.AppString
 import core.NotificationCoordinatorInterface
+import core.appString
+import models.appInternalModels.EmailProvider
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import ui.AuthProviderButton
+import ui.NakedButton
+import ui.dialogs.CommonYesNoSheet
 import ui.notifications.NotificationProvider
+import ui.scenes.mainscreen.MainScreen
+import ui.theme.AppTextStyles
 
 class SignInScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: SignInScreenViewModel = koinViewModel()
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
+        val imageProvider: ImageProviderInterface = koinInject()
 
         val navigator = LocalNavigator.current
-        val focusRequester = FocusRequester()
         val focusManager = LocalFocusManager.current
 
-        var isFocused by remember { mutableStateOf(false) }
-        var isScanning by remember { mutableStateOf(false) }
-        var scannedText by remember { mutableStateOf("") }
-
-        val backgroundMain = painterResource(Res.drawable.background_main)
-        val backgroundLogo = painterResource(Res.drawable.background_logo)
-        val logo = painterResource(Res.drawable.logo)
-        val nameErrorMessage = stringResource(Res.string.nicknameError)
-
-        val nameText by viewModel.nameText.collectAsState()
-        val isNameError by viewModel.isNameError.collectAsState()
-        val isLoading by viewModel.isLoading.collectAsState()
         val navigationEvent by viewModel.navigationEvent.collectAsState()
-        val showJoinDecision by viewModel.showJoinDecision.collectAsState()
-        val showJoinPending by viewModel.showJoinPending.collectAsState()
-        val isNameInputLocked by viewModel.isNameInputLocked.collectAsState()
+
+        var showResetAllDataSheet by remember { mutableStateOf(false) }
+        val providerOrder = viewModel.providerOrder
 
         LaunchedEffect(navigationEvent) {
-            if (navigationEvent) {
-                navigator?.push(MainScreen())
+            when (val event = navigationEvent) {
+                SignInNavigationEvent.MainScreen -> {
+                    navigator?.push(MainScreen())
+                    viewModel.consumeNavigationEvent()
+                }
+
+                SignInNavigationEvent.ManualSignInScreen -> {
+                    navigator?.push(ManualSignInScreen(viewModel.emailError.value))
+                    viewModel.consumeNavigationEvent()
+                }
+
+                is SignInNavigationEvent.EmailConfirmation -> {
+                    navigator?.push(EmailConfirmationScreen(event.email, event.provider))
+                    viewModel.consumeNavigationEvent()
+                }
+
+                else -> Unit
             }
         }
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable {
-                    focusManager.clearFocus()
-                }
+                .clickable { focusManager.clearFocus() }
         ) {
             Image(
-                painter = backgroundMain,
+                painter = imageProvider.getPainter(AppImage.BackgroundMain),
                 contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillBounds
             )
+
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .fillMaxWidth(),
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
@@ -127,7 +106,7 @@ class SignInScreen : Screen {
                         .aspectRatio(1f)
                 ) {
                     Image(
-                        painter = backgroundLogo,
+                        painter = imageProvider.getPainter(AppImage.BackgroundLogo),
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -136,7 +115,7 @@ class SignInScreen : Screen {
                         contentScale = ContentScale.Fit
                     )
                     Image(
-                        painter = logo,
+                        painter = imageProvider.getPainter(AppImage.Logo),
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -147,175 +126,129 @@ class SignInScreen : Screen {
                     )
                 }
 
-                Text(
+                EmailSelectionBody(
                     modifier = Modifier
-                        .align(Alignment.Start)
-                        .padding(top = 32.dp),
-                    text = stringResource(Res.string.start),
-                    color = AppColors.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                )
-
-                Text(
-                    text = stringResource(Res.string.advice),
-                    color = AppColors.White75,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .padding(top = 14.dp)
-                )
-
-                Column(
-                    modifier = Modifier
-                        .padding(top = 26.dp, bottom = 36.dp)
+                        .weight(1f)
                         .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    ClassicButton(
-                        { isScanning = true },
-                        stringResource(Res.string.scan),
-                        color = Color.Transparent,
-                        borderColor = AppColors.White50,
-                        isEnabled = !isLoading
-                    )
-                    if (isScanning) {
-                        scanQRCode(
-                            isVisible = { isScanning = it },
-                            scannedText = { scannedText = it })
-                    }
-                    LaunchedEffect(nameText) {
-                        if (scannedText != nameText) {
-                            scannedText = nameText
+                    providerOrder = providerOrder,
+                    onProviderSelected = { provider ->
+                        if (provider == EmailProvider.MANUAL) {
+                            navigator?.push(ManualSignInScreen())
+                        } else {
+                            viewModel.handle(SignInViewEvents.SelectEmailProvider(provider))
                         }
+                    },
+                    onResetAllDataClick = {
+                        focusManager.clearFocus()
+                        showResetAllDataSheet = true
                     }
-                    
-                    TextField(
-                        value = scannedText,
-                        onValueChange = { newText -> 
-                            scannedText = newText
-                            viewModel.handle(SignInViewEvents.UpdateName(newText))
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                        placeholder = {
-                            Text(
-                                fontSize = 16.sp,
-                                color = AppColors.White50,
-                                text = stringResource(Res.string.placeholder)
-                            )
-                        },
-                        enabled = !isLoading && !isNameInputLocked,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                            .border(
-                                width = 2.dp,
-                                color =
-                                    if (isNameError) {
-                                        AppColors.RedError
-                                    } else {
-                                        if (isFocused) {
-                                            AppColors.ActionPremium
-                                        } else {
-                                            Color.Transparent
-                                        }
-                                    },
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .focusRequester(focusRequester)
-                            .onFocusChanged { focusState ->
-                                isFocused = focusState.isFocused
-                            },
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Done
-                        ),
-                        textStyle = TextStyle(fontSize = 16.sp, color = Color.White),
-
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = AppColors.White5,
-                            unfocusedContainerColor = AppColors.White5,
-                            disabledContainerColor = AppColors.White5,
-                            cursorColor = AppColors.White,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
-                        )
-                    )
-                    if (isNameError) {
-                        Text(
-                            text = nameErrorMessage,
-                            color = AppColors.RedError,
-                            fontSize = 13.sp,
-                            modifier = Modifier
-                                .align(Alignment.Start)
-                        )
-                    }
-                }
-
-                if (showJoinDecision || showJoinPending) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        ClassicButton(
-                            action = {
-                                focusManager.clearFocus()
-                                viewModel.handle(SignInViewEvents.CancelJoin)
-                            },
-                            text = stringResource(Res.string.cancel),
-                            isEnabled = !isLoading,
-                            color = AppColors.Warning,
-                            modifier = Modifier.weight(1f)
-                        )
-                        ClassicButton(
-                            action = {
-                                if (!showJoinPending) {
-                                    focusManager.clearFocus()
-                                    viewModel.handle(SignInViewEvents.JoinExistingVault)
-                                }
-                            },
-                            text = if (showJoinPending) {
-                                stringResource(Res.string.joining)
-                            } else {
-                                stringResource(Res.string.join)
-                            },
-                            isEnabled = !isLoading && !showJoinPending,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                } else {
-                    ClassicButton(
-                        {
-                            focusManager.clearFocus()
-                            viewModel.handle(SignInViewEvents.StartSignInProcess(scannedText))
-                        },
-                        stringResource(Res.string.forward),
-                        isEnabled = !isLoading
-                    )
-                }
-            }
-            
-            if (isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(AppColors.Black60)
-                        .zIndex(10f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = AppColors.ActionMain,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
+                )
             }
 
+            if (showResetAllDataSheet) {
+                CommonYesNoSheet(
+                    title = appString(AppString.resetAllData),
+                    subtitle = appString(AppString.resetAllDataWarning),
+                    isVisible = showResetAllDataSheet,
+                    isNoMain = true,
+                    onNo = { showResetAllDataSheet = false },
+                    onYes = {
+                        showResetAllDataSheet = false
+                        viewModel.handle(SignInViewEvents.ClearAllData)
+                    }
+                )
+            }
         }
-        
+
         NotificationProvider(
             notificationCoordinator = notificationCoordinator,
             screenMetricsProvider = viewModel.screenMetricsProvider
+        )
+    }
+}
+
+@Composable
+private fun EmailSelectionBody(
+    modifier: Modifier = Modifier,
+    providerOrder: List<EmailProvider>,
+    onProviderSelected: (EmailProvider) -> Unit,
+    onResetAllDataClick: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .padding(top = 0.dp, bottom = 32.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = appString(AppString.emailSelectionTitle),
+            color = AppColors.White,
+            style = AppTextStyles.ScreenTitle(),
+        )
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp)
+                .widthIn(max = 340.dp),
+            text = appString(AppString.emailSelectionDescription),
+            color = AppColors.White75,
+            style = AppTextStyles.Caption(),
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            providerOrder.filter { it != EmailProvider.MANUAL }.forEach { provider ->
+                AuthProviderButton(
+                    provider = provider,
+                    onClick = { onProviderSelected(provider) }
+                )
+            }
+
+            OrDivider()
+
+            AuthProviderButton(
+                provider = EmailProvider.MANUAL,
+                onClick = { onProviderSelected(EmailProvider.MANUAL) },
+            )
+
+            NakedButton(
+                title = appString(AppString.resetAllData),
+                onClick = onResetAllDataClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun OrDivider() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(AppColors.White50)
+        )
+        Text(
+            text = appString(AppString.orText),
+            color = AppColors.White50,
+            style = AppTextStyles.CaptionStrong(),
+            modifier = Modifier.padding(horizontal = 14.dp)
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(AppColors.White50)
         )
     }
 }

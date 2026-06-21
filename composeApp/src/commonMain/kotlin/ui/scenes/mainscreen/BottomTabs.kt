@@ -1,5 +1,11 @@
 package ui.scenes.mainscreen
 
+import core.AppString
+
+import core.appString
+
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -17,16 +23,7 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import cafe.adriel.voyager.transitions.SlideTransition
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.devicesList
-import kotlinproject.composeapp.generated.resources.devices_logo
-import kotlinproject.composeapp.generated.resources.profile
-import kotlinproject.composeapp.generated.resources.profile_logo
-import kotlinproject.composeapp.generated.resources.secretsHeader
-import kotlinproject.composeapp.generated.resources.secrets_logo
-import kotlinproject.composeapp.generated.resources.warning
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import ui.scenes.devicesscreen.DevicesScreen
 import ui.scenes.profilescreen.ProfileScreen
 import ui.scenes.secretsscreen.SecretsScreen
@@ -42,8 +39,9 @@ object SecretsTab : Tab {
     override val options: TabOptions
         @Composable
         get() {
-            val icon = painterResource(Res.drawable.secrets_logo)
-            val title = stringResource(Res.string.secretsHeader)
+            val imageProvider: ImageProviderInterface = koinInject()
+            val icon = imageProvider.getPainter(AppImage.SecretsLogo)
+            val title = appString(AppString.secretsHeader)
             val index: UShort = 0U
 
             return TabOptions(
@@ -63,8 +61,9 @@ object DevicesTab : Tab{
     override val options: TabOptions
         @Composable
         get() {
-            val icon = painterResource(Res.drawable.devices_logo)
-            val title = stringResource(Res.string.devicesList)
+            val imageProvider: ImageProviderInterface = koinInject()
+            val icon = imageProvider.getPainter(AppImage.DevicesLogo)
+            val title = appString(AppString.devicesList)
             val index: UShort = 1U
 
             return TabOptions(
@@ -74,11 +73,12 @@ object DevicesTab : Tab{
         
     @Composable
     fun TabWithBadge(hasJoinRequests: Boolean) {
+        val imageProvider: ImageProviderInterface = koinInject()
         Box {
-            val icon = painterResource(Res.drawable.devices_logo)
+            val icon = imageProvider.getPainter(AppImage.DevicesLogo)
             Icon(
                 painter = icon,
-                contentDescription = stringResource(Res.string.devicesList),
+                contentDescription = appString(AppString.devicesList),
                 tint = Color.White.copy(alpha = 0.75f)
             )
             
@@ -92,7 +92,7 @@ object DevicesTab : Tab{
                         .align(Alignment.TopEnd)
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.warning),
+                        painter = imageProvider.getPainter(AppImage.Warning),
                         contentDescription = null,
                         modifier = Modifier.size(8.dp).align(Alignment.Center)
                     )
@@ -113,8 +113,9 @@ object ProfileTab : Tab{
     override val options: TabOptions
         @Composable
         get() {
-            val icon = painterResource(Res.drawable.profile_logo)
-            val title = stringResource(Res.string.profile)
+            val imageProvider: ImageProviderInterface = koinInject()
+            val icon = imageProvider.getPainter(AppImage.ProfileLogo)
+            val title = appString(AppString.profile)
             val index: UShort = 2U
 
             return TabOptions(
@@ -122,4 +123,3 @@ object ProfileTab : Tab{
             )
         }
 }
-

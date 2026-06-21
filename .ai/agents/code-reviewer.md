@@ -24,7 +24,8 @@ Review implementation for architecture compliance, style consistency, and best p
 
 - .ai/GLOSSARY.md (use consistent terminology)
 - .ai/rules/tdd-principles.md (test coverage requirements: 80% minimum)
-- rules/kmp-principles.md
+- .ai/rules/kmp-principles.md (file size, reusability, method params, visibility)
+- .ai/rules/kmp-code-style.md (strings, typography, naming, comments)
 
 ## Required Skills
 

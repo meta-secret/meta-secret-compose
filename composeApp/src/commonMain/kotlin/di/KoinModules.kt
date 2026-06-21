@@ -9,6 +9,8 @@ import core.metaSecretCore.MetaSecretStateResolver
 import core.metaSecretCore.MetaSecretStateResolverInterface
 import core.KeyValueStorageImpl
 import core.KeyValueStorageInterface
+import core.ImageProvider
+import core.ImageProviderInterface
 import ui.dialogs.adddevice.AddDeviceViewModel
 import ui.dialogs.addsecret.AddSecretViewModel
 import ui.dialogs.removesecret.RemoveSecretViewModel
@@ -31,9 +33,13 @@ import core.DebugLoggerInterface
 import core.AppStateCacheProvider
 import core.AppStateCacheProviderInterface
 import core.errors.ErrorMapper
+import models.appInternalModels.EmailProvider
+import ui.scenes.signinscreen.EmailConfirmationScreenViewModel
+import ui.scenes.signinscreen.ManualSignInScreenViewModel
 
 val appModule = module {
     single<KeyValueStorageInterface> { KeyValueStorageImpl(get()) }
+    single<ImageProviderInterface> { ImageProvider() }
     single<ErrorMapper> { ErrorMapper(get()) }
     single<NotificationCoordinatorInterface> { NotificationCoordinator() }
     single<DebugLoggerInterface> { DebugLogger(get()) }
@@ -45,14 +51,30 @@ val appModule = module {
     single<AlertCoordinatorInterface> { AlertCoordinator(get(), get()) }
 
     single { MainScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
-    factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
-    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    factory { ProfileScreenViewModel(get(), get(), get()) }
-    factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { ManualSignInScreenViewModel(get()) }
+    factory { (vaultName: String, provider: EmailProvider) ->
+        EmailConfirmationScreenViewModel(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            vaultName,
+            provider,
+        )
+    }
+    factory { ProfileScreenViewModel(get(), get(), get(), get(), get()) }
+    factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { SecretsScreenViewModel(get(), get(), get(), get(), get()) }
-    factory { AddSecretViewModel(get(), get(), get(), get(), get()) }
+    factory { AddSecretViewModel(get(), get(), get(), get()) }
     factory { RemoveSecretViewModel(get()) }
     factory { AddDeviceViewModel() }
-    factory { ShowSecretViewModel(get(), get(), get(), get(), get()) }
+    factory { ShowSecretViewModel(get(), get(), get(), get()) }
 }

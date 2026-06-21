@@ -145,34 +145,6 @@ class FakeAppStateCacheProvider : AppStateCacheProviderInterface {
     }
 }
 
-class FakeStringProvider : StringProviderInterface {
-    override fun biometricTitle() = "title"
-    override fun biometricSubtitle() = "subtitle"
-    override fun biometricDescription() = "description"
-    override fun biometricFallback() = "fallback"
-    override fun biometricNotAvailable() = "not available"
-    override fun biometricErrorNoHardware() = "no hardware"
-    override fun biometricErrorNoEnrolled() = "no enrolled"
-    override fun biometricPermissionRequired() = "permission required"
-    override fun biometricPromptReason() = "prompt reason"
-    override fun biometricPermissionSettings() = "permission settings"
-    override fun backupChoosePathMessage() = "backup message"
-    override fun backupChoosePathWarning() = "backup warning"
-    override fun ok() = "ok"
-    override fun errorNetwork() = "network error"
-    override fun errorInternal() = "internal error"
-    override fun errorParse() = "parse error"
-    override fun errorValidation() = "validation error"
-    override fun errorUnknownPrefix() = "unknown: "
-    override fun errorBiometricAuthFailed() = "biometric failed"
-    override fun errorSecretAddFailed() = "secret add failed"
-    override fun errorRecoverDeclined() = "recover declined"
-    override fun acceptRequestOnOtherDevice() = "approve on other device"
-    override fun nameOccupiedJoinPrompt() = "join existing vault"
-    override fun recoverPendingExists() = "recover pending exists"
-    override fun recoverRequestSent() = "recover request sent"
-}
-
 class FakeBiometricAuthenticator : BiometricAuthenticatorInterface {
     override fun isBiometricAvailable(): Boolean = true
     override fun authenticate(onSuccess: () -> Unit, onError: (String) -> Unit, onFallback: () -> Unit) = onSuccess()

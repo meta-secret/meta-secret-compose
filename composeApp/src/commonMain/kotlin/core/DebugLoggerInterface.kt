@@ -87,6 +87,17 @@ sealed class LogTag(val displayName: String) {
             object WaitingForSignUp : Message("Waiting for SignUp")
             object StartListeningJoinAccept : Message("Start listening for Join accept signal")
             object StartSignUp : Message("Start Sign Up")
+            object AppleAuthStarted : Message("Apple email selection started")
+            object AppleAuthSuccess : Message("Apple email selection success")
+            object AppleAuthCancelled : Message("Apple email selection cancelled")
+            object AppleAuthFailed : Message("Apple email selection failed")
+            object GoogleAuthStarted : Message("Google email selection started")
+            object GoogleAuthSuccess : Message("Google email selection success")
+            object GoogleAuthCancelled : Message("Google email selection cancelled")
+            object GoogleAuthFailed : Message("Google email selection failed")
+            object EmailProviderNotSupported : Message("Email provider is not supported yet")
+            object EmailConfirmationContinueClicked : Message("Email confirmation continue clicked")
+            object EmailConfirmationChangeClicked : Message("Email confirmation change clicked")
             object SignUpSuccess : Message("Sign up is successfull")
             object SignUpUnknownState : Message("Unknown state for sign up")
             object GeneratedMasterKey : Message("Generated master key")
@@ -284,6 +295,8 @@ sealed class LogTag(val displayName: String) {
             object NewStateReceived : Message("New state received, refreshing profile data")
             object LoadProfileData : Message("loadProfileData")
             object LoadProfileDataFailed : Message("loadProfileData failed")
+            object ResetAllData : Message("resetAllData")
+            object ResetAllDataFailed : Message("resetAllData failed")
         }
     }
 

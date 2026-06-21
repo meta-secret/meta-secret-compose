@@ -19,6 +19,10 @@ import org.koin.core.context.unloadKoinModules
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import platform.App
+import core.AppleEmailRequesterAndroid
+import core.AppleEmailRequesterInterface
+import core.GoogleEmailRequesterAndroid
+import core.GoogleEmailRequesterInterface
 import core.BiometricAuthenticatorAndroid
 import core.BiometricAuthenticatorInterface
 import core.KeyChainInterface
@@ -51,6 +55,12 @@ class MainActivity : FragmentActivity() {
             }
             single<BackupCoordinatorInterface> {
                 BackupCoordinatorInterfaceAndroid(this@MainActivity, get(), get(), get())
+            }
+            single<GoogleEmailRequesterInterface> {
+                GoogleEmailRequesterAndroid(this@MainActivity)
+            }
+            single<AppleEmailRequesterInterface> {
+                AppleEmailRequesterAndroid()
             }
         }
 
@@ -91,5 +101,9 @@ class MainActivity : FragmentActivity() {
         setContent {
             App()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 }

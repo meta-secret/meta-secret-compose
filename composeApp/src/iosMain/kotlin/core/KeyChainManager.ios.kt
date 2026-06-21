@@ -57,6 +57,9 @@ class KeyChainManagerIos(
                 removeKey("bdBackUp${masterKeyValue}")
                 removeKey(masterKeyValue)
             }
+            removeKey("master_key")
+            removeKey("pending_vault_email")
+            removeKey("pending_email_provider")
             if (isCleanDB && masterKeyValue != null) {
                 SwiftBridge().clearAllWithDbFileName("meta-secret-${masterKeyValue}.db")
             }

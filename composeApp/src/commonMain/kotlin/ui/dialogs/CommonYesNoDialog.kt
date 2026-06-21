@@ -1,5 +1,9 @@
 package ui.dialogs
 
+import core.AppString
+
+import core.appString
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -30,6 +34,7 @@ import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
 import ui.ClassicButton
+import ui.theme.AppTextStyles
 
 @Composable
 fun YesNoDialog(
@@ -64,8 +69,7 @@ fun YesNoDialog(
             ) {
                 Text(
                     text = title,
-                    fontSize = 24.sp,
-                    fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                    style = AppTextStyles.SectionTitle(),
                     color = AppColors.White,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -78,13 +82,13 @@ fun YesNoDialog(
                 ) {
                     ClassicButton(
                         { onDismiss(true) },
-                        stringResource(Res.string.accept),
+                        appString(AppString.accept),
                         modifier = Modifier.weight(1f)
                     )
 
                     ClassicButton(
                         { onDismiss(false) },
-                        stringResource(Res.string.decline),
+                        appString(AppString.decline),
                         color = Color.Transparent,
                         modifier = Modifier.weight(1f)
                     )

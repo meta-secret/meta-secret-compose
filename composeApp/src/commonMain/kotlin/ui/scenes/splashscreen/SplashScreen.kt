@@ -1,5 +1,11 @@
 package ui.scenes.splashscreen
 
+import core.AppString
+
+import core.appString
+
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,17 +26,11 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.background_logo
-import kotlinproject.composeapp.generated.resources.background_main
 import kotlinproject.composeapp.generated.resources.enable_biometric_required
-import kotlinproject.composeapp.generated.resources.logo
-import kotlinproject.composeapp.generated.resources.text
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import ui.scenes.mainscreen.MainScreen
 import ui.scenes.onboarding.OnboardingScreen
+import ui.scenes.signinscreen.EmailConfirmationScreen
 import ui.scenes.signinscreen.SignInScreen
 import core.BiometricState
 import core.NotificationCoordinatorInterface
@@ -42,12 +42,9 @@ class SplashScreen : Screen {
     override fun Content() {
         val viewModel: SplashScreenViewModel = koinViewModel()
         val navigator: Navigator? = LocalNavigator.current
+        val imageProvider: ImageProviderInterface = koinInject()
 
-        val biometricError = stringResource(Res.string.enable_biometric_required)
-        val backgroundMain = painterResource(Res.drawable.background_main)
-        val backgroundLogo = painterResource(Res.drawable.background_logo)
-        val logo = painterResource(Res.drawable.logo)
-        val text = painterResource(Res.drawable.text)
+        val biometricError = appString(AppString.enable_biometric_required)
 
         val navigationEvent by viewModel.navigationEvent.collectAsState()
         val biometricState by viewModel.biometricState.collectAsState()
@@ -69,7 +66,7 @@ class SplashScreen : Screen {
         }
 
         LaunchedEffect(navigationEvent) {
-            if (navigationEvent != SplashNavigationEvent.Idle) {
+            if (navigationEvent !is SplashNavigationEvent.Idle) {
                 navigate(navigationEvent, navigator)
             }
         }
@@ -80,7 +77,7 @@ class SplashScreen : Screen {
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = backgroundMain,
+                painter = imageProvider.getPainter(AppImage.BackgroundMain),
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize(),
@@ -94,7 +91,7 @@ class SplashScreen : Screen {
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = backgroundLogo,
+                    painter = imageProvider.getPainter(AppImage.BackgroundLogo),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -111,7 +108,7 @@ class SplashScreen : Screen {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
-                            painter = logo,
+                            painter = imageProvider.getPainter(AppImage.Logo),
                             contentDescription = null,
                             modifier = Modifier
                                 .padding(horizontal = 35.dp)
@@ -121,7 +118,7 @@ class SplashScreen : Screen {
                         )
 
                         Image(
-                            painter = text,
+                            painter = imageProvider.getPainter(AppImage.Text),
                             contentDescription = null,
                             modifier = Modifier
                                 .offset(y = 40.dp)
@@ -139,18 +136,11 @@ class SplashScreen : Screen {
 
 fun navigate(navigationEvent: SplashNavigationEvent, navigator: Navigator?) {
     when (navigationEvent) {
-        SplashNavigationEvent.NavigateToMain -> {
-            navigator?.push(MainScreen())
-        }
-
-        SplashNavigationEvent.NavigateToSignUp -> {
-            navigator?.push(SignInScreen())
-        }
-
-        SplashNavigationEvent.NavigateToOnboarding -> {
-            navigator?.push(OnboardingScreen())
-        }
-
-        else -> Unit
+        is SplashNavigationEvent.NavigateToMain -> navigator?.push(MainScreen())
+        is SplashNavigationEvent.NavigateToSignUp -> navigator?.push(SignInScreen())
+        is SplashNavigationEvent.NavigateToOnboarding -> navigator?.push(OnboardingScreen())
+        is SplashNavigationEvent.NavigateToEmailConfirmationPending ->
+            navigator?.push(EmailConfirmationScreen(navigationEvent.email, navigationEvent.provider))
+        is SplashNavigationEvent.Idle -> Unit
     }
 }

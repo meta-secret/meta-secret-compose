@@ -24,7 +24,6 @@ import core.LogFormatterAndroid
 
 val androidPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceAndroid() }
-
     factory<KeyChainInterface> { (context: Context) ->
         KeyChainManagerAndroid(context, get())
     }

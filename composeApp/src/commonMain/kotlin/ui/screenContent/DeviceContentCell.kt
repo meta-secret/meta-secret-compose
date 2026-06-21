@@ -1,5 +1,13 @@
 package ui.screenContent
 
+import core.AppString
+import core.AppImage
+import core.ImageProviderInterface
+
+import core.appString
+
+import ui.theme.AppTextStyles
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,9 +32,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.android
-import kotlinproject.composeapp.generated.resources.cli
 import kotlinproject.composeapp.generated.resources.device_ui_category_android
 import kotlinproject.composeapp.generated.resources.device_ui_category_cli
 import kotlinproject.composeapp.generated.resources.device_ui_category_desktop
@@ -35,24 +40,17 @@ import kotlinproject.composeapp.generated.resources.device_ui_category_other
 import kotlinproject.composeapp.generated.resources.device_ui_category_tablet
 import kotlinproject.composeapp.generated.resources.device_ui_category_unknown
 import kotlinproject.composeapp.generated.resources.device_ui_category_web
-import kotlinproject.composeapp.generated.resources.devices
-import kotlinproject.composeapp.generated.resources.laptop
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
-import kotlinproject.composeapp.generated.resources.other
-import kotlinproject.composeapp.generated.resources.secret
 import kotlinproject.composeapp.generated.resources.secrets_4
 import kotlinproject.composeapp.generated.resources.secrets_5
-import kotlinproject.composeapp.generated.resources.tablet
-import kotlinproject.composeapp.generated.resources.web
 import models.apiModels.DeviceUiCategory
 import models.appInternalModels.DeviceCellModel
 import models.appInternalModels.DeviceStatus
 import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
-import org.jetbrains.compose.resources.DrawableResource
+import org.koin.compose.koinInject
 
 @Composable
 fun DeviceContent(
@@ -60,16 +58,17 @@ fun DeviceContent(
     currentDeviceId: String?,
     onClick: ()-> Unit
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
     val effectiveStatus = if (model.id == currentDeviceId) DeviceStatus.Current else model.status
     val secretText = when {
-        model.secretsCount == 0 || model.secretsCount > 4 -> stringResource(Res.string.secrets_5)
-        model.secretsCount in 2..4 -> stringResource(Res.string.secrets_4)
-        else -> stringResource(Res.string.secret)
+        model.secretsCount == 0 || model.secretsCount > 4 -> appString(AppString.secrets_5)
+        model.secretsCount in 2..4 -> appString(AppString.secrets_4)
+        else -> appString(AppString.secret)
     }
     // TODO: We don't have device deletion functionality. I'm gonna uncomment it later.
 //    SwipeableItem(
 //        itemsCount = model.devicesCount,
-//        buttonText = stringResource(Res.string.removeDevice),
+//        buttonText = appString(AppString.removeDevice),
 //        isRevealed = false,
 //        screenMetricsProvider,
 //        action = {},
@@ -97,7 +96,7 @@ fun DeviceContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(resolveDeviceIcon(model.deviceUiCategory)),
+                            painter = imageProvider.getPainter(resolveDeviceIcon(model.deviceUiCategory)),
                             contentDescription = null,
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.size(36.dp)
@@ -109,27 +108,15 @@ fun DeviceContent(
                     ) {
                         Text(
                             text = model.vaultName,
-                            style = TextStyle(
-                                fontSize = 15.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-                                color = AppColors.White
-                            )
+                            style = AppTextStyles.ParagraphStrong().copy(color = AppColors.White)
                         )
                         Text(
-                            text = model.deviceName.ifBlank { stringResource(resolveDeviceCategoryLabel(model.deviceUiCategory)) },
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                                color = Color(0xFF7A9ABF)
-                            )
+                            text = model.deviceName.ifBlank { appString(resolveDeviceCategoryLabel(model.deviceUiCategory)) },
+                            style = AppTextStyles.Tiny().copy(color = Color(0xFF7A9ABF))
                         )
                         Text(
                             text = "${model.secretsCount} $secretText",
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                                color = Color(0xFF4E6A88)
-                            )
+                            style = AppTextStyles.Tiny().copy(color = Color(0xFF4E6A88))
                         )
                     }
                     StatusBadge(status = effectiveStatus)
@@ -139,27 +126,27 @@ fun DeviceContent(
 //    )
 }
 
-private fun resolveDeviceIcon(category: DeviceUiCategory?): DrawableResource {
+private fun resolveDeviceIcon(category: DeviceUiCategory?): AppImage {
     return when (category) {
-        DeviceUiCategory.Iphone -> Res.drawable.devices
-        DeviceUiCategory.Android -> Res.drawable.android
-        DeviceUiCategory.Tablet -> Res.drawable.tablet
-        DeviceUiCategory.Desktop -> Res.drawable.laptop
-        DeviceUiCategory.Web -> Res.drawable.web
-        DeviceUiCategory.Cli -> Res.drawable.cli
-        DeviceUiCategory.Other, null -> Res.drawable.other
+        DeviceUiCategory.Iphone -> AppImage.Devices
+        DeviceUiCategory.Android -> AppImage.Android
+        DeviceUiCategory.Tablet -> AppImage.Tablet
+        DeviceUiCategory.Desktop -> AppImage.Laptop
+        DeviceUiCategory.Web -> AppImage.Web
+        DeviceUiCategory.Cli -> AppImage.Cli
+        DeviceUiCategory.Other, null -> AppImage.Other
     }
 }
 
 private fun resolveDeviceCategoryLabel(category: DeviceUiCategory?) = when (category) {
-    DeviceUiCategory.Android -> Res.string.device_ui_category_android
-    DeviceUiCategory.Iphone -> Res.string.device_ui_category_iphone
-    DeviceUiCategory.Tablet -> Res.string.device_ui_category_tablet
-    DeviceUiCategory.Desktop -> Res.string.device_ui_category_desktop
-    DeviceUiCategory.Cli -> Res.string.device_ui_category_cli
-    DeviceUiCategory.Web -> Res.string.device_ui_category_web
-    DeviceUiCategory.Other -> Res.string.device_ui_category_other
-    null -> Res.string.device_ui_category_unknown
+    DeviceUiCategory.Android -> AppString.device_ui_category_android
+    DeviceUiCategory.Iphone -> AppString.device_ui_category_iphone
+    DeviceUiCategory.Tablet -> AppString.device_ui_category_tablet
+    DeviceUiCategory.Desktop -> AppString.device_ui_category_desktop
+    DeviceUiCategory.Cli -> AppString.device_ui_category_cli
+    DeviceUiCategory.Web -> AppString.device_ui_category_web
+    DeviceUiCategory.Other -> AppString.device_ui_category_other
+    null -> AppString.device_ui_category_unknown
 }
 
 @Composable
@@ -189,11 +176,7 @@ private fun StatusBadge(status: DeviceStatus) {
 
     Text(
         text = status.value,
-        style = TextStyle(
-            fontSize = 10.sp,
-            fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-            color = textColor
-        ),
+        style = AppTextStyles.Nano().copy(color = textColor),
         modifier = Modifier
             .background(backgroundColor, RoundedCornerShape(20.dp))
             .border(1.dp, borderColor, RoundedCornerShape(20.dp))

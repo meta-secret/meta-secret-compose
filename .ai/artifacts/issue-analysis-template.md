@@ -1,50 +1,60 @@
-# Issue Analysis
+# Stage 1: Issue Analysis & Understanding
 
-Save as: `.ai/artifacts/run/MS-<run-id>-001-understanding.md`
+**Status:** Success | Failed | Skipped
+
+---
 
 ## Summary
 
-- Problem:
-- Goal:
-- Expected behavior:
-- Figma Present: YES / NO
+Brief summary of issue/task.
 
-## Figma Links
+---
 
-- 
+## What User Wants
 
-## Requirements
+Clear statement of user's intent and goals.
 
-1. 
+---
 
-## Missing Information
+## Key Requirements
 
-- 
+List of must-haves:
+- Requirement 1
+- Requirement 2
+- Requirement 3
 
-## Assumptions
+---
 
-- 
+## Design Context
 
-## Affected Areas
+If Figma provided:
+- **Figma Present:** YES / NO
+- **Figma URL:** [link]
+- **Components Involved:** [list]
+- **Design Constraints:** [list]
 
-- UI:
-- ViewModel:
-- Domain:
-- Data:
+If no Figma:
+- **Design Notes:** [any design guidance from issue]
 
-## Complexity
+---
 
-- Low / Medium / High
+## Acceptance Criteria
 
-## Risks
+How to verify the task is done:
+- [ ] Criterion 1
+- [ ] Criterion 2
+- [ ] Criterion 3
 
-- 
+---
 
-## Questions
+## Risks & Dependencies
 
-- 
+Potential blockers or dependencies:
+- Risk: [description]
+- Impact: [what breaks if ignored]
 
-## Status
+---
 
-Status: PASSED / FAILED
-Return to Planning: YES / NO
+## Ready for Stage 2
+
+Proceed to clarifications: YES / NO

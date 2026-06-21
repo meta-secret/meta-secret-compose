@@ -1,11 +1,23 @@
 # Automated Workflow Orchestration
 
-Single source of truth for `run issue <id>` / `run issue "<text>"` across Claude Code, Cursor, and Codex CLI.
+Single source of truth for `implement issue <id>` / `implement issue "<text>"` across Claude Code, Cursor, and Codex CLI.
+
+## ⚠️ CRITICAL: Non-Optional Stages
+
+**These stages MUST ALWAYS be executed and are NOT optional:**
+
+1. **Stage 6: Code Review** — Mandatory validation of constraints + 80% coverage minimum
+2. **Stage 8: Test Coverage Verification** — Mandatory execution of `./gradlew koverReport` and verification of >= 80% coverage
+3. **Stage 10: User Approval** — Mandatory user approval before creating PR
+
+Stage 7 (Design Review) may be skipped only if Figma link is missing; in that case, mark status as "Skipped".
+
+**If any of these stages are missing from execution, the workflow is INCOMPLETE and INVALID.**
 
 ## Command Contract
 
-- Trigger: `run issue <id-or-text>`
-- Optional resume: `run issue <id-or-text> --from stage-<n>`
+- Trigger: `implement issue <id-or-text>`
+- Optional resume: `implement issue <id-or-text> --from stage-<n>`
 - Artifacts directory: `.ai/artifacts/run/`
 - Artifact naming: `MS-<run-id>-<stage-number>-<stage-name>[ -retry-N ].md`
 - Retry budget: `2` full fix loops
@@ -240,10 +252,18 @@ Required behavior:
 Agent: `release-manager`
 Output: `.ai/artifacts/run/MS-<run-id>-010-pr.md`
 
+**⚠️ CRITICAL:** This stage requires **EXPLICIT USER APPROVAL** before executing.
+
 Required behavior:
+- **STOP and ASK USER:** "Should we proceed to Stage 10 (Branch + Commit + PR)?" 
+- Wait for user YES/NO response
+- If YES: Continue with PR creation
+- If NO: Stop and wait for further instructions
 - Create feature branch
 - Stage and commit changes
 - Create pull request with description
+
+Pass condition: `Status: Success`
 
 ## Retry Rules
 
@@ -264,3 +284,88 @@ Retry path:
 - `Return to Planning: YES`
 - `**FAIL**`
 - `FAIL`
+
+---
+
+## Artifact System
+
+### Every Stage Creates an Artifact
+
+Each stage writes output to `.ai/artifacts/run/` following naming convention:
+
+```
+MS-<run-id>-<stage-number>-<stage-name>[ -retry-N ].md
+```
+
+**Example:** `MS-42-005-build.md` or `MS-42-005-build -retry-1.md`
+
+### Status Field (REQUIRED)
+
+Every artifact must have **Status** at the top:
+
+```markdown
+**Status:** Success | Failed | Skipped
+```
+
+Validation stages use:
+```markdown
+**Status:** Pass | Fail | Skipped
+```
+
+### Artifact Templates
+
+All templates are in `.ai/artifacts/`:
+- `issue-analysis-template.md` (Stage 1)
+- `clarification-template.md` (Stage 2)
+- `implementation-plan-template.md` (Stage 3)
+- `constraint-validation-template.md` (Stage 3.5)
+- `test-authoring-template.md` (Stage 4a)
+- `implementation-template.md` (Stage 4b)
+- `refactoring-template.md` (Stage 4c)
+- `build-report-template.md` (Stage 5)
+- `review-report-template.md` (Stage 6)
+- `design-review-report-template.md` (Stage 7)
+- `coverage-report-template.md` (Stage 8)
+- `test-report-template.md` (Stage 9)
+- `pr-template.md` (Stage 10)
+
+### How Agents Use Artifacts
+
+1. **Read template** from `.ai/artifacts/`
+2. **Fill content** following template structure
+3. **Set Status field** at the top (Success/Failed/Skipped)
+4. **Write output** to `.ai/artifacts/run/MS-<id>-<stage>-<name>.md`
+5. **Print logs** to console:
+   ```
+   Start stage <n>: <name>
+   [... work ...]
+   Stage <n>: <name> completed
+   ```
+
+### Complete Workflow Artifacts Example
+
+After running `implement issue #42`:
+
+```
+.ai/artifacts/run/
+├── MS-42-001-understanding.md        ✅ Issue Analysis
+├── MS-42-002-clarification.md        ✅ Clarifications
+├── MS-42-003-planning.md             ✅ Implementation Plan
+├── MS-42-0035-constraints.md         ✅ Constraint Check (Pass or Fail?)
+├── MS-42-004a-tests.md               ✅ Test Cases (all failing)
+├── MS-42-004b-implementation.md      ✅ Red-Green Implementation
+├── MS-42-004c-refactored.md          ✅ Major Refactor
+├── MS-42-005-build.md                ✅ Build Report
+├── MS-42-006-review.md               ✅ Code Review
+├── MS-42-007-design-review.md        ✅ Design Review (if Figma)
+├── MS-42-008-coverage.md             ✅ Coverage Check (Pass or Fail?)
+├── MS-42-009-test-run.md             ✅ Final Tests
+└── MS-42-010-pr.md                   ✅ Pull Request Created
+```
+
+Each file contains full documentation of what happened, findings, and Status.
+
+### For Detailed Information
+
+- **How to write artifacts:** See `.ai/rules/artifact-writing-guide.md`
+- **How agents integrate artifacts:** See `.ai/rules/agent-artifact-integration.md`

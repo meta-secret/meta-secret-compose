@@ -21,7 +21,8 @@ Perform major refactoring after 3-5 Red-Green-Refactor cycles. Clean up code, ex
 
 - .ai/GLOSSARY.md (use consistent terminology)
 - .ai/rules/tdd-principles.md (refactoring rules, safety)
-- .ai/rules/kmp-principles.md
+- .ai/rules/kmp-principles.md (file size, reusability, method params, visibility)
+- .ai/rules/kmp-code-style.md (strings, typography, naming, comments)
 
 ## Required Skills
 

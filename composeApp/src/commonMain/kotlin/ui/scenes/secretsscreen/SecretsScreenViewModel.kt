@@ -1,5 +1,9 @@
 package ui.scenes.secretsscreen
 
+import core.AppString
+
+import core.appString
+
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -99,7 +103,7 @@ class SecretsScreenViewModel(
 //    @Composable
 //    fun deleteSecretText(secretName: String): AnnotatedString {
 //        return buildAnnotatedString {
-//            append(stringResource(Res.string.removeSecretConfirmation))
+//            append(appString(AppString.removeSecretConfirmation))
 //            withStyle(
 //                style = SpanStyle(
 //                    fontFamily = FontFamily(Font(Res.font.manrope_bold)),
@@ -109,7 +113,7 @@ class SecretsScreenViewModel(
 //            ) {
 //                append(secretName)
 //            }
-//            append(stringResource(Res.string.fromAllDevices))
+//            append(appString(AppString.fromAllDevices))
 //        }
 //    }
 }

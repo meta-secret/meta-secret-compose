@@ -1,5 +1,7 @@
 package ui.notifications
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -29,18 +31,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.close
-import kotlinproject.composeapp.generated.resources.manrope_regular
-import kotlinproject.composeapp.generated.resources.warning
-import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import core.AppColors
+import org.koin.compose.koinInject
+import ui.theme.AppTextStyles
 
 @Composable
 fun WarningBubble(
@@ -49,6 +44,7 @@ fun WarningBubble(
     closeAction: () -> Unit,
     isVisible: Boolean = true
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
     AnimatedVisibility(
         visible = isVisible,
         enter = slideInVertically(
@@ -74,18 +70,14 @@ fun WarningBubble(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Image(
-                    painter = painterResource(Res.drawable.warning),
+                    painter = imageProvider.getPainter(AppImage.Warning),
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds
                 )
                 var textLayoutResult: TextLayoutResult? by remember { mutableStateOf(null) }
                 Text(
                     text = text,
-                    style = TextStyle(
-                        fontSize = 15.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                        color = AppColors.White75
-                    ),
+                    style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
                     modifier = Modifier
                         .padding(end = 30.dp)
                         .pointerInput(Unit) {
@@ -114,7 +106,7 @@ fun WarningBubble(
                     .padding(end = 12.dp)
             ) {
                 Image(
-                    painter = painterResource(Res.drawable.close),
+                    painter = imageProvider.getPainter(AppImage.Close),
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)

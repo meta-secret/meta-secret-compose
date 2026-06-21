@@ -1,5 +1,12 @@
 package ui.scenes.secretsscreen
 
+import core.AppString
+
+import core.appString
+
+import core.AppImage
+import core.ImageProviderInterface
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -32,8 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.executioner
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
 import kotlinproject.composeapp.generated.resources.noSecrets
@@ -42,7 +47,6 @@ import kotlinproject.composeapp.generated.resources.secretAdded
 import kotlinproject.composeapp.generated.resources.secretRemoved
 import kotlinproject.composeapp.generated.resources.secretsHeader
 import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -58,12 +62,14 @@ import kotlinproject.composeapp.generated.resources.secretAddFailed
 import org.koin.compose.koinInject
 import ui.screenContent.CommonBackground
 import ui.screenContent.SecretsContent
+import ui.theme.AppTextStyles
 
 class SecretsScreen : Screen {
     @Composable
     override fun Content() {
         val viewModel: SecretsScreenViewModel = koinViewModel()
         val mainScreenViewModel: MainScreenViewModel = koinInject()
+        val imageProvider: ImageProviderInterface = koinInject()
         val secretsList by viewModel.secrets.collectAsState()
         val previousCount = remember { mutableStateOf(secretsList.size) }
         val isInitialized = remember { mutableStateOf(false) }
@@ -75,9 +81,9 @@ class SecretsScreen : Screen {
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
         val secretIdToShow by mainScreenViewModel.secretIdToShow.collectAsState()
         
-        val secretAddSuccessText = stringResource(Res.string.secretAdded)
-        val secretAddFailedText = stringResource(Res.string.secretAddFailed)
-        val secretRemovedText = stringResource(Res.string.secretRemoved)
+        val secretAddSuccessText = appString(AppString.secretAdded)
+        val secretAddFailedText = appString(AppString.secretAddFailed)
+        val secretRemovedText = appString(AppString.secretRemoved)
 
         LaunchedEffect(Unit) {
             delay(3000)
@@ -104,7 +110,7 @@ class SecretsScreen : Screen {
             viewModel.handle(SecretsEvents.SetTabIndex(index = 1))
         }
 
-        CommonBackground(Res.string.secretsHeader) {
+        CommonBackground(AppString.secretsHeader) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize(),
@@ -196,7 +202,7 @@ class SecretsScreen : Screen {
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
-                            painter = painterResource(Res.drawable.executioner),
+                            painter = imageProvider.getPainter(AppImage.Executioner),
                             contentDescription = null,
                             modifier = Modifier
                                 .size((viewModel.screenMetricsProvider.heightFactor() * 220).dp)
@@ -205,19 +211,17 @@ class SecretsScreen : Screen {
                         )
                     }
                     Text(
-                        text = stringResource(Res.string.noSecretsHeader),
+                        text = appString(AppString.noSecretsHeader),
                         color = AppColors.White,
-                        fontSize = 22.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        style = AppTextStyles.SubsectionTitle(),
                         modifier = Modifier
                             .padding(top = 14.dp)
                     )
                     Text(
-                        text = stringResource(Res.string.noSecrets),
+                        text = appString(AppString.noSecrets),
                         color = AppColors.White75,
                         textAlign = TextAlign.Center,
-                        fontSize = 15.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        style = AppTextStyles.Paragraph(),
                         modifier = Modifier
                             .padding(vertical = 7.dp)
                     )

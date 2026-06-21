@@ -1,9 +1,12 @@
 package ui.screenContent
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -15,29 +18,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.background_main
-import kotlinproject.composeapp.generated.resources.manrope_bold
-import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
 import core.AppColors
+import core.AppString
+import core.appString
+import org.koin.compose.koinInject
+import ui.theme.AppTextStyles
 
 @Composable
 fun CommonBackground(
-    text: StringResource, 
+    text: AppString,
+    headerTrailingContent: @Composable (() -> Unit)? = null,
     screenContent: @Composable () -> Unit
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
     Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
         Image(
-            painter = painterResource(Res.drawable.background_main),
+            painter = imageProvider.getPainter(AppImage.BackgroundMain),
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize(),
@@ -47,21 +47,32 @@ fun CommonBackground(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
         ) {
-            Text(
+            Box(
                 modifier = Modifier
-                    .align(Alignment.Start)
+                    .fillMaxWidth()
                     .padding(
                         top = 30.dp,
-                        bottom = 14.dp, 
-                        start = 16.dp
-                    ),
-                text = stringResource(text),
-                color = AppColors.White,
-                fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-                fontSize = 32.sp,
-            )
+                        bottom = 14.dp,
+                        start = 16.dp,
+                        end = 16.dp
+                    )
+            ) {
+                Text(
+                    modifier = Modifier.align(Alignment.CenterStart),
+                    text = appString(text),
+                    color = AppColors.White,
+                    style = AppTextStyles.MainHeader(),
+                )
+
+                headerTrailingContent?.let {
+                    Box(
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        it()
+                    }
+                }
+            }
             screenContent()
         }
     }
 }
-

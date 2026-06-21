@@ -6,16 +6,23 @@ description: Display available commands with descriptions
 
 ## 🚀 Full Workflow
 
-**`run <payload>`**  
+**`implement issue <payload>`**  
 Execute complete 10-stage automated workflow.
 
-**`run <payload> --from stage-<n>`**  
+**`implement issue <payload> --from stage-<n>`**  
 Resume workflow from specific stage (for retries/debugging).
 
 Where `<payload>`:
 - Issue number (e.g., `#42`)
 - Issue URL
 - Free-text task description
+
+Example:
+```bash
+implement issue #42
+implement issue "complete email confirmation screen"
+implement issue #42 --from stage-4
+```
 
 ---
 
@@ -50,10 +57,42 @@ Stage 10: Create branch, commit, and pull request.
 
 ---
 
+## 🧪 Maestro E2E Testing
+
+**`write test-flow "<description>"`**  
+Write a new Maestro test flow from text description. Creates `.maestro/<test-name>.yaml`.
+
+Examples:
+- `write test-flow "User opens app and sees onboarding"`
+- `write test-flow "iOS: User enables biometry" --ios`
+- `write test-flow "Android: User taps back button" --android`
+
+**`check test-flow <test-name>`**  
+Run Maestro test on simulator/emulator. Builds, installs, runs test, reports results.
+
+Examples:
+- `check test-flow onboarding`
+- `check test-flow android-join-device`
+
+**`check-simulators [ios|android]`**  
+Check availability of iOS simulators and Android emulators. Shows which devices are ready to use.
+
+---
+
+## 🚀 Quick App Launch
+
+**`launch ios`**  
+Build Debug .app, install on iOS simulator, and launch app. For manual testing.
+
+**`launch android`**  
+Build Debug APK, install on Android emulator, and launch app. For manual testing.
+
+---
+
 ## 🛠️ Utilities
 
 **`only-glossary-update "<feature>"`**  
-Build or update project glossary. Run monthly or when codebase grows. Ensures consistent terminology across AI, code, docs, and communication.
+Build or update project glossary. Ensures consistent terminology across AI, code, docs.
 
 **`only-from-prompt "<description>"`**  
 Start workflow from manual feature/bug description (no GitHub issue needed).
@@ -71,5 +110,8 @@ Capture and document workflow patterns for future reuse.
 
 ## 📖 Documentation
 
-See `.ai/WORKFLOW.md` for complete 10-stage workflow specification.  
-See `.ai/ORCHESTRATOR.md` for command routing details.
+See `.ai/WORKFLOW.md` for 10-stage workflow specification.  
+See `.ai/ORCHESTRATOR.md` for command routing.  
+See `.ai/INDEX.md` for complete file structure.  
+See `.ai/rules/maestro-test-writing.md` for Maestro YAML syntax.  
+See `.ai/rules/maestro-setup-guide.md` for iOS/Android device commands.

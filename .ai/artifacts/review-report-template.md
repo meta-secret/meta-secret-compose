@@ -1,33 +1,73 @@
-# Code Review Report
+# Stage 6: Code Review Report
 
-Save as: `.ai/artifacts/run/MS-<run-id>-005-review.md`
+**Status:** Success | Failed | Skipped
 
-## Summary
+---
 
-| Area | Status | Notes |
-|------|--------|-------|
-| Architecture | PASSED / FAILED | |
-| Security | PASSED / FAILED | |
-| Code Style | PASSED / FAILED | |
-| Correctness | PASSED / FAILED | |
+## Review Summary
 
-## Issues
+Overall assessment of code quality.
 
-| Severity | File | Description | How to Fix |
-|---------|------|------------|-----------|
-| HIGH | | | |
-| MEDIUM | | | |
-| LOW | | | |
+---
 
-## Blocking Issues
+## Architecture Compliance
 
-- 
+- ✅/❌ MVVM pattern followed
+- ✅/❌ Coordinator logic correct
+- ✅/❌ Data flow aligned
+- ✅/❌ State management correct
 
-## Warnings (non-blocking)
+---
 
-- 
+## Code Quality
 
-## Status
+- **Lines of code:** [number]
+- **Duplication:** [none / details]
+- **Naming:** [clarity assessment]
+- **Documentation:** [completeness]
 
-Status: PASSED / FAILED
-Return to Planning: YES / NO
+---
+
+## Test Coverage
+
+- **Coverage:** [%]
+- **Minimum:** 80% ✅/❌
+- **Business logic:** [%] (target 90%+)
+- **Uncovered lines:** [if any]
+
+---
+
+## Security Review
+
+- ✅/❌ No hardcoded secrets
+- ✅/❌ Proper error handling
+- ✅/❌ Input validation present
+- ✅/❌ FFI/Core communication secure
+
+---
+
+## Constraint Re-validation
+
+- ✅ Constraints still valid
+- ❌ Constraint violation found (details below)
+
+If violation:
+- **Constraint #:** [number]
+- **Violation:** [description]
+- **Fix required:** [what to do]
+
+---
+
+## Issues Found
+
+### Issue 1: [Severity: Critical/Major/Minor]
+- **Description:** [problem]
+- **Location:** [file:line]
+- **Fix:** [solution]
+
+---
+
+## Pass/Fail
+
+- **Status:** PASSED ✅ / FAILED ❌
+- **Ready for Stage 8:** YES / NO

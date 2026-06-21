@@ -1,3 +1,7 @@
 TEAM_ID=7RKQD29YMQ
-BUNDLE_ID=metasecret.project.com
+BUNDLE_ID=org.metasecret.vault
 APP_NAME=MetaSecret
+GOOGLE_CLIENT_ID=79304995906-0ps9so47ach4b5saea059pl23370hhn4.apps.googleusercontent.com
+GOOGLE_REVERSED_CLIENT_ID=com.googleusercontent.apps.79304995906-0ps9so47ach4b5saea059pl23370hhn4
+APPLE_CLIENT_ID=
+APPLE_REDIRECT_URI=metasecret://apple-auth

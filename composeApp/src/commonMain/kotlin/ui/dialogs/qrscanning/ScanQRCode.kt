@@ -1,5 +1,7 @@
 package ui.dialogs.qrscanning
 
+import core.AppImage
+import core.ImageProviderInterface
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -12,13 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.close
-import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import ui.QRScannerScreen
 
 @Composable
 fun scanQRCode(isVisible: (Boolean) -> Unit, scannedText: (String) -> Unit) {
+    val imageProvider: ImageProviderInterface = koinInject()
     Dialog(
         onDismissRequest = {},
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -28,7 +29,7 @@ fun scanQRCode(isVisible: (Boolean) -> Unit, scannedText: (String) -> Unit) {
                 .fillMaxSize()
         ) {
             Image(
-                painter = painterResource(Res.drawable.close),
+                painter = imageProvider.getPainter(AppImage.Close),
                 contentDescription = null,
                 modifier = Modifier
                     .padding(16.dp)

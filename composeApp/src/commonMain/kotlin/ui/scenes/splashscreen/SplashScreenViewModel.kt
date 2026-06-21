@@ -16,19 +16,22 @@ import core.BackupCoordinatorInterface
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.biometric_description
+import core.StringProviderInterface
+import models.apiModels.UserDataOutsiderStatus
+import models.apiModels.VaultFullInfo
+import models.appInternalModels.EmailProvider
 
 class SplashScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
-    private val keyChain: KeyChainInterface,
     private val backupCoordinatorInterface: BackupCoordinatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
-    private val vaultStatsProvider: VaultStatsProviderInterface
+    private val vaultStatsProvider: VaultStatsProviderInterface,
+    private val stringProvider: StringProviderInterface,
+    private val keyChainManager: KeyChainInterface,
 ) : CommonViewModel() {
-    private val _navigationEvent = MutableStateFlow(SplashNavigationEvent.Idle)
+    private val _navigationEvent = MutableStateFlow<SplashNavigationEvent>(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
 
     private val _biometricState = MutableStateFlow<BiometricState>(BiometricState.Idle)
@@ -42,20 +45,11 @@ class SplashScreenViewModel(
         if (event is SplashViewEvents) {
             when (event) {
                 SplashViewEvents.ON_APPEAR -> {
-                    viewModelScope.launch {
-//                        clearAll()
-                    }
                     authenticateWithBiometrics()
                 }
                 SplashViewEvents.BIOMETRIC_SUCCEEDED -> biometricSucceeded()
             }
         }
-    }
-
-    private suspend fun clearAll() {
-        logger.log(LogTag.SplashVM.Message.DataCleanupStart)
-        val clearResult = keyChain.clearAll(isCleanDB = true)
-        logger.log(LogTag.SplashVM.Message.DataCleanupCompleted, " $clearResult")
     }
 
     private fun authenticateWithBiometrics() {
@@ -70,7 +64,7 @@ class SplashScreenViewModel(
             },
             onFallback = {
                 logger.log(LogTag.SplashVM.Message.BiometricProhibited, success = false)
-                _biometricState.value = BiometricState.Error(Res.string.biometric_description.toString())
+                _biometricState.value = BiometricState.Error(stringProvider.biometricDescription())
             }
         )
     }
@@ -97,8 +91,24 @@ class SplashScreenViewModel(
                         _navigationEvent.value = SplashNavigationEvent.NavigateToMain
                     }
                     AuthState.NOT_YET_COMPLETED -> {
-                        logger.log(LogTag.SplashVM.Message.MoveToSignUp, success = true)
-                        _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                        val stateModel = metaSecretAppManager.getStateModel()
+                        val vaultState = stateModel?.getVaultFullInfo()
+                        val outsiderStatus = stateModel?.getOutsiderStatus()
+                        if (vaultState is VaultFullInfo.Outsider && outsiderStatus == UserDataOutsiderStatus.PENDING) {
+                            val email = keyChainManager.getString("pending_vault_email")
+                            if (email != null) {
+                                val providerName = keyChainManager.getString("pending_email_provider")
+                                val provider = EmailProvider.entries.find { it.name == providerName } ?: EmailProvider.MANUAL
+                                logger.log(LogTag.SplashVM.Message.MoveToSignUp, "Resuming pending join for $email", success = true)
+                                _navigationEvent.value = SplashNavigationEvent.NavigateToEmailConfirmationPending(email, provider)
+                            } else {
+                                logger.log(LogTag.SplashVM.Message.MoveToSignUp, success = true)
+                                _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                            }
+                        } else {
+                            logger.log(LogTag.SplashVM.Message.MoveToSignUp, success = true)
+                            _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                        }
                     }
                 }
             }
@@ -120,11 +130,15 @@ class SplashScreenViewModel(
     }
 }
 
-enum class SplashNavigationEvent {
-    Idle,
-    NavigateToMain,
-    NavigateToSignUp,
-    NavigateToOnboarding
+sealed class SplashNavigationEvent {
+    data object Idle : SplashNavigationEvent()
+    data object NavigateToMain : SplashNavigationEvent()
+    data object NavigateToSignUp : SplashNavigationEvent()
+    data object NavigateToOnboarding : SplashNavigationEvent()
+    data class NavigateToEmailConfirmationPending(
+        val email: String,
+        val provider: EmailProvider,
+    ) : SplashNavigationEvent()
 }
 
 enum class SplashViewEvents: CommonViewModelEventsInterface {
@@ -136,4 +150,3 @@ private enum class OnboardingState {
     COMPLETED,
     NOT_YET_COMPLETED
 }
-

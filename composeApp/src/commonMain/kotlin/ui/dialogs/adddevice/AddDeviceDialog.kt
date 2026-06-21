@@ -1,5 +1,14 @@
 package ui.dialogs.adddevice
 
+import core.AppString
+
+import core.appString
+
+import core.AppImage
+import core.ImageProviderInterface
+
+import ui.theme.AppTextStyles
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,21 +29,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import kotlinproject.composeapp.generated.resources.Res
 import kotlinproject.composeapp.generated.resources.addDevice
 import kotlinproject.composeapp.generated.resources.addDeviceAdvice
-import kotlinproject.composeapp.generated.resources.close
 import kotlinproject.composeapp.generated.resources.lackOfDevices
 import kotlinproject.composeapp.generated.resources.manrope_bold
 import kotlinproject.composeapp.generated.resources.manrope_regular
 import kotlinproject.composeapp.generated.resources.manrope_semi_bold
-import kotlinproject.composeapp.generated.resources.metasecretpicture
 import kotlinproject.composeapp.generated.resources.useMetaSecret
 import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
 import core.ScreenMetricsProviderInterface
+import org.koin.compose.koinInject
 import ui.ClassicButton
 
 
@@ -44,6 +50,7 @@ fun PopUpDevice(
     dialogVisibility: (Boolean) -> Unit,
     mainDialogVisibility: (Boolean) -> Unit
 ) {
+    val imageProvider: ImageProviderInterface = koinInject()
 
     Dialog(
         onDismissRequest = {},
@@ -70,7 +77,7 @@ fun PopUpDevice(
                         .padding(top = 16.dp)
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.close),
+                        painter = imageProvider.getPainter(AppImage.Close),
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
@@ -83,16 +90,14 @@ fun PopUpDevice(
                     modifier = Modifier.padding(top = 30.dp, bottom = 40.dp)
                 ) {
                     Text(
-                        text = stringResource(Res.string.addDevice),
-                        fontSize = 24.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_semi_bold)),
+                        text = appString(AppString.addDevice),
+                        style = AppTextStyles.SectionTitle(),
                         color = AppColors.White,
                         modifier = Modifier.align(Alignment.Start)
                     )
                     Text(
-                        text = stringResource(Res.string.addDeviceAdvice),
-                        fontSize = 15.sp,
-                        fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                        text = appString(AppString.addDeviceAdvice),
+                        style = AppTextStyles.Paragraph(),
                         color = AppColors.White75,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
@@ -103,28 +108,24 @@ fun PopUpDevice(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Image(
-                            painter = painterResource(Res.drawable.metasecretpicture),
+                            painter = imageProvider.getPainter(AppImage.MetaSecretPicture),
                             contentDescription = null
                         )
                         Text(
-                            text = stringResource(Res.string.lackOfDevices),
-                            fontSize = 18.sp,
-                            fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-                            color = AppColors.White,
+                            text = appString(AppString.lackOfDevices),
+                            style = AppTextStyles.Strong18().copy(color = AppColors.White),
                             modifier = Modifier.align(Alignment.Start)
                         )
                         Text(
-                            text = stringResource(Res.string.useMetaSecret),
-                            fontSize = 15.sp,
-                            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
-                            color = AppColors.White75,
+                            text = appString(AppString.useMetaSecret),
+                            style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
                             modifier = Modifier.align(Alignment.Start)
                         )
                     }
                     ClassicButton({
                             dialogVisibility(false)
                             mainDialogVisibility(true) },
-                        stringResource(Res.string.addDevice)
+                        appString(AppString.addDevice)
                     )
                 }
             }

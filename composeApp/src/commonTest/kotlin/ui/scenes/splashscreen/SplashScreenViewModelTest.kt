@@ -33,6 +33,7 @@ import testutils.FakeDebugLogger
 import testutils.FakeKeyChain
 import testutils.FakeKeyValueStorage
 import testutils.FakeScreenMetricsProvider
+import testutils.FakeStringProvider
 import testutils.FakeVaultStatsProvider
 
 class SplashScreenViewModelTest {
@@ -111,15 +112,17 @@ class SplashScreenViewModelTest {
         appManager: MetaSecretAppManagerInterface,
         backupCoordinator: FakeBackupCoordinator,
         vaultStatsProvider: FakeVaultStatsProvider = FakeVaultStatsProvider(),
+        keyChain: FakeKeyChain = FakeKeyChain(),
     ): SplashScreenViewModel {
         return SplashScreenViewModel(
             keyValueStorage = keyValueStorage,
             biometricAuthenticator = FakeBiometricAuthenticator(),
             metaSecretAppManager = appManager,
-            keyChain = FakeKeyChain(),
             backupCoordinatorInterface = backupCoordinator,
             screenMetricsProvider = FakeScreenMetricsProvider(),
             vaultStatsProvider = vaultStatsProvider,
+            stringProvider = FakeStringProvider(),
+            keyChainManager = keyChain,
         )
     }
 }

@@ -58,7 +58,6 @@ class MainScreenViewModel(
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     init {
-        checkBackup()
         logger.log(LogTag.MainVM.Message.FollowResponsibleToAcceptJoin, success = true)
         socketHandler.actionsToFollow(
             add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN, SocketRequestModel.WAIT_FOR_RECOVER_REQUEST),
@@ -201,7 +200,7 @@ class MainScreenViewModel(
             when (event) {
                 is MainViewEvents.SetTabIndex -> setTabIndex(event.index)
                 is MainViewEvents.ShowWarning -> changeWarningVisibilityTo(event.isToShow)
-                MainViewEvents.OnEnterForeground -> {/* TODO: Launch socket timer again */ }
+                MainViewEvents.OnEnterForeground -> checkBackup()
             }
         }
     }

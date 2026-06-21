@@ -1,5 +1,9 @@
 package ui.scenes.mainscreen
 
+import core.AppString
+
+import core.appString
+
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -53,6 +57,7 @@ import ui.TabStateHolder
 import ui.dialogs.AlertProvider
 import ui.notifications.NotificationProvider
 import ui.notifications.WarningBubble
+import ui.theme.AppTextStyles
 
 class MainScreen : Screen {
     @Composable
@@ -124,7 +129,7 @@ class MainScreen : Screen {
                                         Text(
                                             text = tab.options.title,
                                             color = AppColors.White75,
-                                            fontFamily = FontFamily(Font(Res.font.manrope_regular)),
+                                            style = AppTextStyles.Paragraph(),
                                         )
                                     }
                                 )
@@ -189,17 +194,17 @@ class MainScreen : Screen {
     fun getWarningText(joinRequestsCount: Int? = null, devicesCount: Int? = null): AnnotatedString? {
         if (joinRequestsCount != null && joinRequestsCount > 0) {
             return buildAnnotatedString {
-                append(stringResource(Res.string.goto_devices_tab))
+                append(appString(AppString.goto_devices_tab))
             }
         } else {
             return if (devicesCount != null && devicesCount < 3) { // TODO: 3 is hardcoded number. we gonna set it up in settings
                 buildAnnotatedString {
-                    append(stringResource(Res.string.lackOfDevices_start))
+                    append(appString(AppString.lackOfDevices_start))
                     append((3 - devicesCount).toString())
-                    append(stringResource(Res.string.lackOfDevices_end))
+                    append(appString(AppString.lackOfDevices_end))
                     pushStringAnnotation(tag = "addText", annotation = "")
                     withStyle(style = SpanStyle(color = AppColors.ActionLink)) {
-                        append(stringResource(Res.string.addText))
+                        append(appString(AppString.addText))
                     }
                     pop()
                 }

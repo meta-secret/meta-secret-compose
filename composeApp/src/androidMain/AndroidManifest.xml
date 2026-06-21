@@ -24,6 +24,7 @@
         tools:replace="android:name"
         tools:targetApi="tiramisu">
         <activity
+            android:launchMode="singleTask"
             android:enableOnBackInvokedCallback="true"
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
@@ -32,6 +33,16 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="apple-auth"
+                    android:scheme="metasecret" />
             </intent-filter>
         </activity>
     </application>
