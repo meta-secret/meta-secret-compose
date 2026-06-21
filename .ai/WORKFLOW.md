@@ -28,16 +28,17 @@ Stage 7 (Design Review) may be skipped only if Figma link is missing; in that ca
 
 ## Required Stage Logs
 
-Every stage must print these exact lines:
-
+**Every stage MUST print:**
 - Start: `Start stage <n>: <name>`
 - End: `Stage <n>: <name> completed`
 
-Example:
-- `Start stage 4: Build`
-- `Stage 4: Build completed`
+**Example with emoji prefix:**
+- `📋 Start stage 1: Issue Coordinator`
+- `✅ Stage 1: Issue Coordinator completed`
 
-## 10-Stage Pipeline (with TDD)
+---
+
+## 11-Stage Pipeline (with TDD + Enhanced Validation)
 
 1. Stage 1: Issue Intake + Optional Figma Context
 2. Stage 2: Grill Me (Clarification & Deep Dive)

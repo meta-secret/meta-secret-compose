@@ -56,7 +56,7 @@ Read this file first. If you need details on any section, follow the links below
 
 ---
 
-## ✅ 35 Confirmed Rules
+## ✅ 37 Confirmed Rules
 
 | # | Constraint | Category |
 |---|---|---|
@@ -80,7 +80,7 @@ Read this file first. If you need details on any section, follow the links below
 | 18 | Local database on device only | Device Storage |
 | 19 | No backup, no cloud sync — all data stored device-local only | Device Storage |
 | 20 | Factory reset = data lost | Device Storage |
-| 21 | Join only after approval | Operations |
+| 21 | Join only after approval (biometric) | Operations |
 | 22 | One approval = sufficient for join | Operations |
 | 23 | Device can't remove itself | Operations |
 | 24 | Can't remove last device | Operations |
@@ -95,6 +95,8 @@ Read this file first. If you need details on any section, follow the links below
 | 33 | Biometry change ≠ invalidate DMK | Biometry & Auth |
 | 34 | OS handles biometry verification | Biometry & Auth |
 | 35 | JSON over UniFFI | Core & FFI |
+| 36 | Restore Secret requires approval (biometric) from other device | Operations |
+| 37 | All state-changing operations (JOIN, RESTORE SECRET, DELETE) require biometric approval | Operations |
 
 ---
 

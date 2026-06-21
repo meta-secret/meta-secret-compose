@@ -6,6 +6,65 @@ See CONSTRAINTS.md for quick reference. This file has full details.
 
 ---
 
+## ⚠️ CRITICAL: Approval Required for All State-Changing Operations
+
+**Rule:** All vault state-changing operations require biometric approval from OTHER device(s).
+
+### Operations Requiring Approval:
+
+1. **JOIN NEW DEVICE**
+   - Initiator: New device requesting to join
+   - Approval source: Any existing device in vault
+   - Approval method: Biometric (Face ID, Touch ID) or PIN fallback
+   - Quorum: 1 approval sufficient (from any existing member)
+   - Flow: New device sends request → Existing device shows biometric prompt → User approves → Resharing proceeds
+
+2. **RESTORE SECRET (Recover Encrypted Secret)**
+   - Initiator: Any device in vault wanting to reveal a secret
+   - Approval source: Other device(s) in vault
+   - Approval method: Biometric (Face ID, Touch ID) or PIN fallback
+   - Quorum: For 3+ devices: 1 approval from any other device
+            For 2 devices: 1 approval from the other device
+            For 1 device: None (trivial case)
+   - Flow: User taps "Reveal Secret" → App shows "Approval needed from another device" → Other device shows biometric prompt → User approves → Secret decrypted and shown
+   - Why: Ensures secret recovery is witnessed by another device (prevents unauthorized access)
+
+3. **DELETE DEVICE**
+   - Initiator: Device owner requesting removal of another device
+   - Approval source: Other remaining device(s) in vault
+   - Approval method: Biometric (Face ID, Touch ID) or PIN fallback
+   - Quorum: For 3+ devices: 1 approval from any other device
+            For 2 devices: BLOCKED by UI (cannot remove, would leave only 1 device)
+            For 1 device: Cannot delete (last device)
+   - Flow: User taps "Remove Device" → App shows "Approval needed from another device" → Other device shows biometric prompt → User approves → Resharing proceeds → Device removed
+   - Why: Ensures all changes are consensual and witnessed
+
+### Common Pattern:
+```
+All three operations follow same flow:
+  Action initiated on Device A
+    ↓
+  Device B receives approval request
+    ↓
+  User on B performs biometric (fingerprint/face)
+    ↓
+  B sends cryptographic approval signature
+    ↓
+  A verifies signature and proceeds with operation
+    ↓
+  Resharing/recovery protocol executes
+    ↓
+  All devices confirm completion
+```
+
+### No Approval Needed:
+- **1 device vault:** No other device to approve (trivial case)
+- **Creating new secret:** Local operation only, no approval needed
+- **Viewing secret metadata:** Only revealing requires approval, metadata is readable
+- **Changing device name:** Local setting, no vault state change
+
+---
+
 ## 1. Join New Device (Process)
 
 **Requirement:** New device cannot join without approval
