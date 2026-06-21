@@ -1,6 +1,7 @@
 package ui.scenes.profilescreen
 
 import androidx.lifecycle.viewModelScope
+import core.AppStateCacheProviderInterface
 import core.DeviceInfoProviderInterface
 import core.KeyChainInterface
 import core.VaultStatsProviderInterface
@@ -19,6 +20,7 @@ class ProfileScreenViewModel(
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
     private val keyChainManager: KeyChainInterface,
+    private val appStateCacheProvider: AppStateCacheProviderInterface,
 ) : CommonViewModel() {
 
     val vaultName: StateFlow<String?> = vaultStatsProvider.vaultName
@@ -78,6 +80,7 @@ class ProfileScreenViewModel(
     private suspend fun resetAllData() {
         logger.log(LogTag.ProfileVM.Message.ResetAllData, success = true)
         try {
+            appStateCacheProvider.clearCache()
             val isCleared = keyChainManager.clearAll(isCleanDB = true)
             if (isCleared) {
                 _navigationEvent.value = ProfileNavigationEvent.NavigateToSignIn

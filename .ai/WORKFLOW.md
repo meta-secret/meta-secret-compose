@@ -2,6 +2,18 @@
 
 Single source of truth for `implement issue <id>` / `implement issue "<text>"` across Claude Code, Cursor, and Codex CLI.
 
+## ⚠️ CRITICAL: Non-Optional Stages
+
+**These stages MUST ALWAYS be executed and are NOT optional:**
+
+1. **Stage 6: Code Review** — Mandatory validation of constraints + 80% coverage minimum
+2. **Stage 8: Test Coverage Verification** — Mandatory execution of `./gradlew koverReport` and verification of >= 80% coverage
+3. **Stage 10: User Approval** — Mandatory user approval before creating PR
+
+Stage 7 (Design Review) may be skipped only if Figma link is missing; in that case, mark status as "Skipped".
+
+**If any of these stages are missing from execution, the workflow is INCOMPLETE and INVALID.**
+
 ## Command Contract
 
 - Trigger: `implement issue <id-or-text>`
@@ -240,10 +252,18 @@ Required behavior:
 Agent: `release-manager`
 Output: `.ai/artifacts/run/MS-<run-id>-010-pr.md`
 
+**⚠️ CRITICAL:** This stage requires **EXPLICIT USER APPROVAL** before executing.
+
 Required behavior:
+- **STOP and ASK USER:** "Should we proceed to Stage 10 (Branch + Commit + PR)?" 
+- Wait for user YES/NO response
+- If YES: Continue with PR creation
+- If NO: Stop and wait for further instructions
 - Create feature branch
 - Stage and commit changes
 - Create pull request with description
+
+Pass condition: `Status: Success`
 
 ## Retry Rules
 

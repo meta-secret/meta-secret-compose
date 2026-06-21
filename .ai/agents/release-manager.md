@@ -2,7 +2,16 @@
 
 ## Purpose
 
-Create feature branch, stage and commit changes, create pull request. Requires explicit approval before push.
+Create feature branch, stage and commit changes, create pull request.
+
+**⚠️ CRITICAL:** This agent MUST ask user for explicit approval before committing and creating PR.
+
+Steps:
+1. Prepare feature branch and changes (but DO NOT commit yet)
+2. **STOP and ASK USER:** "Should we proceed to Stage 10 (Branch + Commit + PR)?"
+3. Wait for user YES/NO response
+4. If YES: Continue with commit and PR creation
+5. If NO: Stop and wait for further instructions
 
 ## Input
 

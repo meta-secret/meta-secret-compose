@@ -33,6 +33,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import core.AppColors
 import core.AppString
@@ -44,6 +45,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ui.ClassicButton
 import ui.NakedButton
+import ui.TabStateHolder
 import ui.notifications.NotificationProvider
 import ui.scenes.mainscreen.MainScreen
 import ui.theme.AppTextStyles
@@ -52,9 +54,12 @@ class EmailConfirmationScreen(
     private val email: String,
     private val provider: EmailProvider
 ) : Screen {
+    override val key: ScreenKey get() = "${super.key}/$email/${provider.name}"
+
     @Composable
     override fun Content() {
         val viewModel: EmailConfirmationScreenViewModel = koinViewModel(
+            key = "$email/${provider.name}",
             parameters = { parametersOf(email, provider) }
         )
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
@@ -80,12 +85,14 @@ class EmailConfirmationScreen(
         LaunchedEffect(navigationEvent) {
             when (val event = navigationEvent) {
                 EmailConfirmationNavigationEvent.MainScreen -> {
-                    navigator?.push(MainScreen())
+                    TabStateHolder.setTabIndex(0)
+                    navigator?.replaceAll(MainScreen())
                     viewModel.consumeNavigationEvent()
                 }
 
                 EmailConfirmationNavigationEvent.BackToSignIn -> {
                     navigator?.popUntilRoot()
+                    navigator?.push(SignInScreen())
                     viewModel.consumeNavigationEvent()
                 }
 

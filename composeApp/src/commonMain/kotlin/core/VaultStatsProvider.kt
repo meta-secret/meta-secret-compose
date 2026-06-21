@@ -8,7 +8,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import models.appInternalModels.SocketRequestModel
@@ -43,12 +42,23 @@ class VaultStatsProvider(
 
         scope.launch {
             appStateCacheProvider.appState
-                .filterNotNull()
                 .collect { appState ->
-                    logger.log(LogTag.VaultStatsProvider.Message.AppStateUpdated, success = true)
-                    updateStatsFromState(appState)
+                    if (appState != null) {
+                        logger.log(LogTag.VaultStatsProvider.Message.AppStateUpdated, success = true)
+                        updateStatsFromState(appState)
+                    } else {
+                        resetStats()
+                    }
                 }
         }
+    }
+
+    private fun resetStats() {
+        _secretsCount.value = 0
+        _devicesCount.value = 0
+        _vaultName.value = null
+        _joinRequestsCount.value = null
+        logger.log(LogTag.VaultStatsProvider.Message.AppStateNull, success = false)
     }
 
     private fun updateStatsFromState(appState: models.apiModels.AppStateModel) {

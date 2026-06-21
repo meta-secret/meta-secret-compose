@@ -14,7 +14,13 @@ Where `<payload>`:
 
 ## Purpose
 
-Execute complete 10-stage automated workflow for meta-secret-compose.
+Execute complete 11-stage automated workflow for meta-secret-compose.
+
+**⚠️ CRITICAL:** All 11 stages are MANDATORY. Do NOT skip any stages:
+- **Stage 6 (Code Review)** is CRITICAL - must check constraints + 80% coverage minimum
+- **Stage 7 (Design Review)** can be skipped only if Figma missing (mark "Skipped")
+- **Stage 8 (Coverage Verification)** is CRITICAL - must run `./gradlew koverReport` and verify >= 80%
+- **Stage 10 (PR Creation)** must ASK USER for approval before committing and creating PR
 
 ## Flow
 
@@ -29,11 +35,11 @@ Execute complete 10-stage automated workflow for meta-secret-compose.
 5. **Build** — Compile code (no tests)
 6. **code-reviewer** — Review implementation + 80% coverage check + constraints re-check
 7. **design-reviewer** — Review design (if Figma link exists)
-8. **Coverage Verification** — Verify 80%+ test coverage
+8. **Coverage Verification** — Verify 80%+ test coverage (CRITICAL - must be executed)
 9. **test-verifier** — Execute full test suite
-10. **release-manager** — Create branch, commit, pull request
+10. **release-manager** — **STOP and ASK USER:** "Should we proceed to Stage 10 (Branch + Commit + PR)?" - Wait for user approval before executing
 
-See `.ai/WORKFLOW.md` for complete 10-stage specification.
+See `.ai/WORKFLOW.md` for complete 11-stage specification.
 
 ## Expected Input
 

@@ -168,6 +168,7 @@ class EmailConfirmationScreenViewModel(
 
         when (signUpResult.appState) {
             is MemberState -> {
+                metaSecretAppManager.getStateModel()
                 _isLoading.value = false
                 _navigationEvent.value = EmailConfirmationNavigationEvent.MainScreen
             }

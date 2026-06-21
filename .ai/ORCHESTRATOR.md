@@ -11,7 +11,13 @@ Command routing and execution for meta-secret-compose.
 #### `implement issue <payload>`
 
 Execute:
-1. Read `.ai/commands/implement-issue.md`
+1. **FIRST:** Read `.ai/rules/implement-issue-execution-checklist.md` (MANDATORY)
+2. **SECOND:** Read `.ai/rules/no-stage-skipping-even-for-simple-tasks.md` (ENFORCEMENT)
+3. Read `.ai/commands/implement-issue.md`
+4. Execute stages in strict order: 1 → 2 → 3 → 3.5 → 4a → 4b → 4c → 5 → 6 → 7 → 8 → 9 → 10
+5. Do NOT skip stages 6, 7, 8 — they are CRITICAL
+6. Do NOT optimize away stages because task looks "simple"
+7. For Stage 10: Ask user for approval before committing and creating PR
 
 ---
 
