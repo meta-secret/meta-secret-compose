@@ -9,8 +9,6 @@ import core.KeyChainInterface
 import core.KeyChainManagerIos
 import core.MetaSecretCoreServiceIos
 import core.metaSecretCore.MetaSecretCoreInterface
-import core.BackupCoordinatorInterface
-import core.BackupCoordinatorInterfaceIos
 import core.StringProviderInterface
 import core.StringProviderIos
 import core.GoogleEmailRequesterInterface
@@ -40,7 +38,6 @@ val iosPlatformModule = module {
     single<AppleEmailRequesterInterface> { AppleEmailRequesterIos() }
     single<GoogleEmailRequesterInterface> { GoogleEmailRequesterIos() }
     single<KeyChainInterface> { KeyChainManagerIos(get()) }
-    single<BackupCoordinatorInterface> { BackupCoordinatorInterfaceIos(get(), get(), get(), get()) }
     single<DatabasePathProviderInterface> { DatabasePathProviderIos(get()) }
     single<DebugLoggerInterface> { DebugLoggerIos(get()) }
     single<LogFormatterInterface> { LogFormatterIos() }

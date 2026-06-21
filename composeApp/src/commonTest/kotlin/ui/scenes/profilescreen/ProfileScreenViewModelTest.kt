@@ -25,6 +25,7 @@ import models.appInternalModels.SocketRequestModel
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
+import testutils.FakeAppStateCacheProvider
 import testutils.FakeDebugLogger
 import testutils.FakeKeyChain
 import testutils.FakeNotificationCoordinator
@@ -75,6 +76,7 @@ class ProfileScreenViewModelTest {
             socketHandler = FakeSocketHandler(),
             vaultStatsProvider = FakeVaultStatsProvider(),
             keyChainManager = keyChain,
+            appStateCacheProvider = FakeAppStateCacheProvider(),
         )
     }
 }

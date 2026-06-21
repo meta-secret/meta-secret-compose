@@ -138,8 +138,6 @@
     <string name = "biometric_error">Biometric authentification error. Please, try again later</string>
     <string name = "goto_devices_tab">Go to the Devices tab and add the necessary ones to your network</string>
     <string name = "wanna_join">Do you want to join this device to your cluster?</string>
-    <string name = "backup_choose_path_message">Choose a path to back up your database</string>
-    <string name = "backup_choose_path_warning">If you do not choose a path, your data may be lost when the app is uninstalled</string>
     <string name = "ok">Ok</string>
     <string name = "currentDevice">Current device</string>
     <string name = "wanna_recover">Wanna show the secret?</string>

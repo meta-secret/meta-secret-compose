@@ -12,8 +12,6 @@ enum class AppString {
     addDeviceAdvice,
     addSecret,
     addText,
-    backup_choose_path_message,
-    backup_choose_path_warning,
     biometric_description,
     biometric_error_no_enrolled,
     biometric_error_no_hardware,
@@ -150,8 +148,6 @@ fun AppString.resource(): StringResource = when (this) {
     AppString.addDeviceAdvice -> Res.string.addDeviceAdvice
     AppString.addSecret -> Res.string.addSecret
     AppString.addText -> Res.string.addText
-    AppString.backup_choose_path_message -> Res.string.backup_choose_path_message
-    AppString.backup_choose_path_warning -> Res.string.backup_choose_path_warning
     AppString.biometric_description -> Res.string.biometric_description
     AppString.biometric_error_no_enrolled -> Res.string.biometric_error_no_enrolled
     AppString.biometric_error_no_hardware -> Res.string.biometric_error_no_hardware

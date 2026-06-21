@@ -20,7 +20,9 @@ import Security
     }
 
     @objc public func initWithMasterKey(_ masterKey: String) -> String {
-        uniffiMobileInitIos(masterKey: masterKey)
+        let result = uniffiMobileInitIos(masterKey: masterKey)
+        excludeDBFromSystemBackup(masterKey: masterKey)
+        return result
     }
 
     @objc public func initWithMasterKeyAndDevice(
@@ -28,11 +30,13 @@ import Security
         deviceName: String,
         deviceType: String
     ) -> String {
-        uniffiMobileInitIosWithDevice(
+        let result = uniffiMobileInitIosWithDevice(
             masterKey: masterKey,
             deviceName: deviceName,
             deviceType: deviceType
         )
+        excludeDBFromSystemBackup(masterKey: masterKey)
+        return result
     }
 
     @objc public func getState() -> String {
@@ -113,13 +117,14 @@ import Security
             let query: [String: Any] = [
                 kSecClass as String: kSecClassGenericPassword,
                 kSecAttrService as String: serviceName,
-                kSecAttrAccount as String: key
+                kSecAttrAccount as String: key,
+                kSecAttrSynchronizable as String: false
             ]
-            
+
             let attributes: [String: Any] = [
                 kSecValueData as String: data
             ]
-            
+
             let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
             return status == errSecSuccess
         } else {
@@ -127,9 +132,10 @@ import Security
                 kSecClass as String: kSecClassGenericPassword,
                 kSecAttrService as String: serviceName,
                 kSecAttrAccount as String: key,
-                kSecValueData as String: data
+                kSecValueData as String: data,
+                kSecAttrSynchronizable as String: false
             ]
-            
+
             let status = SecItemAdd(query as CFDictionary, nil)
             return status == errSecSuccess
         }
@@ -142,7 +148,8 @@ import Security
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: key,
             kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecReturnData as String: true
+            kSecReturnData as String: true,
+            kSecAttrSynchronizable as String: false
         ]
         
         var result: AnyObject?
@@ -160,7 +167,8 @@ import Security
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
-            kSecAttrAccount as String: key
+            kSecAttrAccount as String: key,
+            kSecAttrSynchronizable as String: false
         ]
         
         let status = SecItemDelete(query as CFDictionary)
@@ -174,7 +182,8 @@ import Security
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: key,
             kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecReturnData as String: false
+            kSecReturnData as String: false,
+            kSecAttrSynchronizable as String: false
         ]
         
         let status = SecItemCopyMatching(query as CFDictionary, nil)
@@ -186,10 +195,8 @@ import Security
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "clearAll keys - Starting cleanup process")
 
         _ = uniffiMobileCleanUpDatabase()
-        
+
         cleanDB(dbFileName: dbFileName)
-        
-        removeBackup(dbFileName: dbFileName)
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -199,92 +206,15 @@ import Security
         let status = SecItemDelete(query as CFDictionary)
         let keychainCleared = status == errSecSuccess || status == errSecItemNotFound
 
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Step 5 - Verifying cleanup")
-        let verificationResult = verifyCleanup(dbFileName: dbFileName)
-        
-        if verificationResult.allCleared {
-            SwiftLogger.shared.logSuccess(tag: .swiftBridge, message: "clearAll completed successfully - All data cleared")
+        if keychainCleared {
+            SwiftLogger.shared.logSuccess(tag: .swiftBridge, message: "clearAll completed successfully")
         } else {
-            SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "⚠️ clearAll completed with warnings - Some data may remain")
-            if !verificationResult.keychainCleared {
-                SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "⚠️ KeyChain items may still exist")
-            }
-            if !verificationResult.dbCleared {
-                SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "⚠️ Local DB file may still exist")
-            }
-            if !verificationResult.backupCleared {
-                SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "⚠️ Backup files may still exist")
-            }
+            SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "⚠️ KeyChain items may still exist")
         }
-        
+
         return keychainCleared
     }
 
-    // MARK: - Backuping
-    @MainActor
-    @objc(presentBackupPickerWithInitialMessage:okTitle:warningMessage:warningOkTitle:warningCancelTitle:backupKey:dbFileName:completion:)
-    public func presentBackupPickerWithInitialMessage(
-        initialMessage: String,
-        okTitle: String,
-        warningMessage: String,
-        warningOkTitle: String,
-        warningCancelTitle: String,
-        backupKey: String,
-        dbFileName: String,
-        completion: @escaping (Bool) -> Void
-    ) {
-        presentBackupPickerWithMessages(
-            initialMessage: initialMessage,
-            okTitle: okTitle,
-            warningMessage: warningMessage,
-            warningOkTitle: warningOkTitle,
-            warningCancelTitle: warningCancelTitle,
-            backupKey: backupKey,
-            dbFileName: dbFileName,
-            completion: completion
-        )
-    }
-
-    @MainActor
-    @objc private func presentBackupPickerWithMessages(
-        initialMessage: String,
-        okTitle: String,
-        warningMessage: String,
-        warningOkTitle: String,
-        warningCancelTitle: String,
-        backupKey: String,
-        dbFileName: String,
-        completion: @escaping (Bool) -> Void = { _ in }
-    ) {
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Present BackUp Alert")
-        BackupUI.shared.presentBackupPicker(
-            initialMessage: initialMessage,
-            okTitle: okTitle,
-            warningMessage: warningMessage,
-            warningOkTitle: warningOkTitle,
-            warningCancelTitle: warningCancelTitle,
-            backupKey: backupKey,
-            dbFileName: dbFileName,
-            completion: completion
-        )
-    }
-
-    @objc public func restoreBackupIfNeeded(dbFileName: String) {
-        BackupWorker.restoreIfNeeded(dbFileName: dbFileName)
-    }
-
-    @objc public func backupIfChanged(dbFileName: String) {
-        BackupWorker.backupIfChanged(dbFileName: dbFileName)
-    }
-
-    @objc public func removeBackup(dbFileName: String) {
-        BackupWorker.removeBackup(dbFileName: dbFileName)
-    }
-
-    @objc public func hasDatabaseFile(_ dbFileName: String) -> Bool {
-        return SwiftBridge.hasLocalDatabaseFile(dbFileName: dbFileName)
-    }
-    
     static func hasLocalDatabaseFile(dbFileName: String) -> Bool {
         let fileManager = FileManager.default
         guard let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
@@ -293,7 +223,7 @@ import Security
         let dbPath = documentsPath.appendingPathComponent(dbFileName)
         return fileManager.fileExists(atPath: dbPath.path)
     }
-    
+
     // MARK: - Other
     @objc public func setiOSLogsVisibility(_ isVisible: Bool) {
         SwiftLogger.shared.updateActive(isVisible)
@@ -310,6 +240,16 @@ import Security
 }
 
 private extension SwiftBridge {
+    func excludeDBFromSystemBackup(masterKey: String) {
+        let fileManager = FileManager.default
+        guard let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+        var dbURL = documentsPath.appendingPathComponent("meta-secret-\(masterKey).db")
+        guard fileManager.fileExists(atPath: dbURL.path) else { return }
+        var resourceValues = URLResourceValues()
+        resourceValues.isExcludedFromBackup = true
+        try? dbURL.setResourceValues(resourceValues)
+    }
+
     func cleanDB(dbFileName: String) {
         SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "CleanDB")
         let isExists = SwiftBridge.hasLocalDatabaseFile(dbFileName: dbFileName)
@@ -325,31 +265,6 @@ private extension SwiftBridge {
         }
     }
     
-    func verifyCleanup(dbFileName: String) -> CleanupVerificationResult {
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Verifying cleanup results")
-        
-        // Check KeyChain
-        let keychainCleared = !containsKey(key: "master_key")
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "KeyChain cleared: \(keychainCleared)")
-        
-        // Check local DB
-        let dbCleared = !SwiftBridge.hasLocalDatabaseFile(dbFileName: dbFileName)
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Local DB cleared: \(dbCleared)")
-        
-        // Check backups
-        let backupCleared = !BackupWorker.hasICloudBackup(dbFileName: dbFileName)
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "Backups cleared: \(backupCleared)")
-        
-        let allCleared = keychainCleared && dbCleared && backupCleared
-        
-        return CleanupVerificationResult(
-            keychainCleared: keychainCleared,
-            dbCleared: dbCleared,
-            backupCleared: backupCleared,
-            allCleared: allCleared
-        )
-    }
-
 }
 
 extension SwiftBridge {
@@ -765,9 +680,3 @@ private extension String {
     }
 }
 
-struct CleanupVerificationResult {
-    let keychainCleared: Bool
-    let dbCleared: Bool
-    let backupCleared: Bool
-    let allCleared: Bool
-}

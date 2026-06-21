@@ -1,7 +1,6 @@
 package ui.scenes.signinscreen
 
 import core.AppStateCacheProviderInterface
-import core.BackupCoordinatorInterface
 import core.BiometricAuthenticatorInterface
 import core.AppleEmailAuthResult
 import core.AppleEmailRequesterInterface
@@ -202,7 +201,6 @@ private class CapturingDebugLogger : DebugLoggerInterface {
 
     override fun setLoggerVisibility() = Unit
     override fun testInfo() = Unit
-    override fun setBackupDbExists(exists: Boolean) = Unit
     override fun setAppManagerCreated(created: Boolean) = Unit
     override fun setMasterKeyGenerated(generated: Boolean) = Unit
     override fun setVaultState(state: String?) = Unit

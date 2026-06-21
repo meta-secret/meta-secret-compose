@@ -2,7 +2,7 @@
 
 Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, user) uses these terms.
 
-**Last updated:** 2026-06-05  
+**Last updated:** 2026-06-22  
 **Maintenance:** Monthly or when codebase grows significantly
 
 ---
@@ -151,7 +151,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **NotificationCoordinator** | Manages in-app notification banners (success/error) | UI coordination | `NotificationCoordinator.kt` |
 | **NotificationState** | Sealed class: `Hidden` or `Visible(message, isError)` | Notification display | `NotificationCoordinatorInterface.kt` |
 | **KeyValueStorage** | Local key-value persistence for device, user, and secret data | Local storage | `KeyValueStorageImpl.kt` |
-| **KeyChainManager** | Secure keychain/keystore storage for sensitive credentials | Security | `KeyChainInterface.kt` |
+| **KeyChainManager** | Secure storage for sensitive credentials. iOS: Keychain (`kSecAttrSynchronizable: false`, no iCloud sync, survives reinstall). Android: AES-256-GCM encrypted files in `noBackupFilesDir`, key in Android Keystore (cleared on reinstall). `clearAll(isCleanDB=true)` also deletes all `meta-secret-*.db` files. | Security | `KeyChainInterface.kt` |
 | **BiometricAuthenticator** | Platform-specific biometric (Face ID / fingerprint) handler | Security | `BiometricAuthenticatorInterface.kt` |
 | **VaultStatsProvider** | Computes vault statistics (member count, secret count, device counts) | UI data | `VaultStatsProvider.kt` |
 | **AppStateCacheProvider** | Caches the most recent `AppStateModel` to avoid redundant polling | Performance | `AppStateCacheProvider.kt` |
@@ -247,10 +247,9 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **MetaSecretCoreService** | Platform-specific class (Android/iOS) that bridges Kotlin to Rust FFI via `MetaSecretCoreInterface` | FFI | `androidMain` / `iosMain` |
 | **SwiftBridge** | Swift class on iOS that wraps the compiled Rust `.xcframework` for use by `MetaSecretCoreService` | iOS FFI | `SwiftBridge.swift` |
 | **ClientDeviceInfoProvider** | Platform interface providing current device hardware info | Registration | per-platform |
-| **DatabasePathProvider** | Platform interface returning the filesystem path for the local database | Storage | per-platform |
+| **DatabasePathProvider** | Platform interface returning the filename for the local database (`meta-secret-{masterKey}.db`). iOS: `SwiftBridge` sets `isExcludedFromBackup = true` on the file after init. Android: DB lives in `noBackupFilesDir` (set by `chdir` in `MetaSecretCoreServiceAndroid`) — excluded from Auto Backup by OS. | Storage | per-platform |
 | **ScreenMetricsProvider** | Platform interface for screen dimensions and density | UI layout | per-platform |
 | **StringProvider** | Interface for localized string resolution across platforms | i18n | `StringProviderInterface.kt` |
-| **BackupCoordinator** | Platform interface for triggering device backup operations | Settings | per-platform |
 
 ---
 
@@ -262,7 +261,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **Block Contact** | Prevent a specific user from joining the vault | Feature | Settings → Blocked Users |
 | **Device Trust** | Verification that a device's public key matches the user's identity | Security | First-time setup |
 | **Fingerprint** | Short hash of a public key used for out-of-band identity verification | Security | "Verify fingerprint over video call" |
-| **Backup** | Encrypted copy of vault stored locally or in cloud (future feature) | Feature (future) | Settings → Backup Management |
+| **Backup** | **Removed.** No backup functionality exists. Data is stored device-local only and never exported or synced to cloud. Loss of device = loss of data (unless other vault members exist). | — | — |
 | **Split** | Operation that encrypts and distributes a secret across vault members | Secret sharing | `DistributionType.SPLIT` |
 | **Recover** | Operation that reassembles a secret from member shares | Secret sharing | `DistributionType.RECOVER` |
 

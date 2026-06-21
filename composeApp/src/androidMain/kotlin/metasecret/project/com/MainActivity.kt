@@ -27,8 +27,6 @@ import core.BiometricAuthenticatorAndroid
 import core.BiometricAuthenticatorInterface
 import core.KeyChainInterface
 import core.KeyChainManagerAndroid
-import core.BackupCoordinatorInterface
-import core.BackupCoordinatorInterfaceAndroid
 import core.KeyValueStorageInterface
 
 
@@ -53,9 +51,6 @@ class MainActivity : FragmentActivity() {
             single<KeyChainInterface> {
                 KeyChainManagerAndroid(this@MainActivity.applicationContext, get())
             }
-            single<BackupCoordinatorInterface> {
-                BackupCoordinatorInterfaceAndroid(this@MainActivity, get(), get(), get())
-            }
             single<GoogleEmailRequesterInterface> {
                 GoogleEmailRequesterAndroid(this@MainActivity)
             }
@@ -78,8 +73,6 @@ class MainActivity : FragmentActivity() {
 
         val keyValueStorage: KeyValueStorageInterface = org.koin.java.KoinJavaComponent.getKoin().get()
         keyValueStorage.resetKeyValueStorage()
-
-        org.koin.java.KoinJavaComponent.getKoin().get<BackupCoordinatorInterface>()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
