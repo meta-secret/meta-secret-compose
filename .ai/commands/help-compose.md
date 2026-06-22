@@ -1,8 +1,10 @@
 ---
-description: Display available commands with descriptions
+description: Display available commands with descriptions (renamed from /help to /help-compose to avoid conflict with built-in /help)
 ---
 
-# Help
+# Help — meta-secret-compose
+
+**Command:** `/help-compose` (renamed from `/help` to avoid conflict with built-in `/help`)
 
 ## 🚀 Full Workflow
 
