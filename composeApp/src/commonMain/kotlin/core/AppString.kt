@@ -111,6 +111,7 @@ enum class AppString {
     removeDevice,
     removeSecret,
     removeSecretConfirmation,
+    recoverSecret,
     secret,
     secretAdded,
     secretAddFailed,
@@ -250,6 +251,7 @@ fun AppString.resource(): StringResource = when (this) {
     AppString.removeDevice -> Res.string.removeDevice
     AppString.removeSecret -> Res.string.removeSecret
     AppString.removeSecretConfirmation -> Res.string.removeSecretConfirmation
+    AppString.recoverSecret -> Res.string.recoverSecret
     AppString.secret -> Res.string.secret
     AppString.secretAdded -> Res.string.secretAdded
     AppString.secretAddFailed -> Res.string.secretAddFailed

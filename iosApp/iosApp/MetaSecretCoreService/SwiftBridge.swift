@@ -236,7 +236,6 @@ import Security
     @objc public func requestAppleEmail() -> String {
         return requestAppleEmailImpl()
     }
-    
 }
 
 private extension SwiftBridge {
@@ -679,4 +678,3 @@ private extension String {
         return addingPercentEncoding(withAllowedCharacters: allowed) ?? self
     }
 }
-

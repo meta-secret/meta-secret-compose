@@ -87,7 +87,8 @@ class ShowSecretViewModel(
         _isLoading.value = true
         logger.log(LogTag.ShowSecretVM.Message.StartRecovering, success = true)
 
-        if (devicesCount.value < 2) {
+        // Two-device vaults are fully replicated in core, so the secret should already be local.
+        if (devicesCount.value <= 2) {
             logger.log(LogTag.ShowSecretVM.Message.SingleDeviceMode, success = true)
             showRecoveredSecret(secretName)
             socketHandler.resumePolling()

@@ -281,7 +281,7 @@ private func makeRustCall<T, E: Swift.Error>(
     _ callback: (UnsafeMutablePointer<RustCallStatus>) -> T,
     errorHandler: ((RustBuffer) throws -> E)?
 ) throws -> T {
-    uniffiEnsureInitialized()
+    uniffiEnsureMetasecretMobileInitialized()
     var callStatus = RustCallStatus.init()
     let returnedVal = callback(&callStatus)
     try uniffiCheckCallStatus(callStatus: callStatus, errorHandler: errorHandler)
@@ -352,18 +352,29 @@ private func uniffiTraitInterfaceCallWithError<T, E>(
         callStatus.pointee.errorBuf = FfiConverterString.lower(String(describing: error))
     }
 }
-fileprivate class UniffiHandleMap<T> {
-    private var map: [UInt64: T] = [:]
+// Initial value and increment amount for handles. 
+// These ensure that SWIFT handles always have the lowest bit set
+fileprivate let UNIFFI_HANDLEMAP_INITIAL: UInt64 = 1
+fileprivate let UNIFFI_HANDLEMAP_DELTA: UInt64 = 2
+
+fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
+    // All mutation happens with this lock held, which is why we implement @unchecked Sendable.
     private let lock = NSLock()
-    private var currentHandle: UInt64 = 1
+    private var map: [UInt64: T] = [:]
+    private var currentHandle: UInt64 = UNIFFI_HANDLEMAP_INITIAL
 
     func insert(obj: T) -> UInt64 {
         lock.withLock {
-            let handle = currentHandle
-            currentHandle += 1
-            map[handle] = obj
-            return handle
+            return doInsert(obj)
         }
+    }
+
+    // Low-level insert function, this assumes `lock` is held.
+    private func doInsert(_ obj: T) -> UInt64 {
+        let handle = currentHandle
+        currentHandle += UNIFFI_HANDLEMAP_DELTA
+        map[handle] = obj
+        return handle
     }
 
      func get(handle: UInt64) throws -> T {
@@ -372,6 +383,15 @@ fileprivate class UniffiHandleMap<T> {
                 throw UniffiInternalError.unexpectedStaleHandle
             }
             return obj
+        }
+    }
+
+     func clone(handle: UInt64) throws -> UInt64 {
+        try lock.withLock {
+            guard let obj = map[handle] else {
+                throw UniffiInternalError.unexpectedStaleHandle
+            }
+            return doInsert(obj)
         }
     }
 
@@ -399,6 +419,22 @@ fileprivate class UniffiHandleMap<T> {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterInt32: FfiConverterPrimitive {
+    typealias FfiType = Int32
+    typealias SwiftType = Int32
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Int32 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Int32, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterString: FfiConverter {
     typealias SwiftType = String
     typealias FfiType = RustBuffer
@@ -411,7 +447,11 @@ fileprivate struct FfiConverterString: FfiConverter {
             return String()
         }
         let bytes = UnsafeBufferPointer<UInt8>(start: value.data!, count: Int(value.len))
-        return String(bytes: bytes, encoding: String.Encoding.utf8)!
+        // Use Swift's native UTF-8 decoder; `String(bytes:encoding:.utf8)` goes
+        // through Foundation's NSString and silently strips a leading U+FEFF BOM.
+        // Invalid UTF-8 substitutes U+FFFD instead of trapping (unreachable
+        // given Rust's `String` invariant).
+        return String(decoding: bytes, as: UTF8.self)
     }
 
     public static func lower(_ value: String) -> RustBuffer {
@@ -427,7 +467,8 @@ fileprivate struct FfiConverterString: FfiConverter {
 
     public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> String {
         let len: Int32 = try readInt(&buf)
-        return String(bytes: try readBytes(&buf, count: Int(len)), encoding: String.Encoding.utf8)!
+        // See `lift` above for why we avoid Foundation's NSString-backed decoder here.
+        return String(decoding: try readBytes(&buf, count: Int(len)), as: UTF8.self)
     }
 
     public static func write(_ value: String, into buf: inout [UInt8]) {
@@ -436,67 +477,74 @@ fileprivate struct FfiConverterString: FfiConverter {
         writeBytes(&buf, value.utf8)
     }
 }
-public func acceptRecover(claimId: String) -> String {
+public func acceptRecover(claimId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_accept_recover(
         FfiConverterString.lower(claimId),$0
     )
 })
 }
-public func cleanUpDatabase() -> String {
+public func cleanUpDatabase() -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_clean_up_database($0
     )
 })
 }
-public func declineRecover(claimId: String) -> String {
+public func declineRecover(claimId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_decline_recover(
         FfiConverterString.lower(claimId),$0
     )
 })
 }
-public func findClaimBy(secretId: String) -> String {
+public func deviceUiCategoryDiscriminant(deviceType: String) -> Int32  {
+    return try!  FfiConverterInt32.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_device_ui_category_discriminant(
+        FfiConverterString.lower(deviceType),$0
+    )
+})
+}
+public func findClaimBy(secretId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_find_claim_by(
         FfiConverterString.lower(secretId),$0
     )
 })
 }
-public func findClaimIdBy(secretId: String) -> String {
+public func findClaimIdBy(secretId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_find_claim_id_by(
         FfiConverterString.lower(secretId),$0
     )
 })
 }
-public func generateMasterKey() -> String {
+public func generateMasterKey() -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_generate_master_key($0
     )
 })
 }
-public func generateUserCreds(vaultName: String) -> String {
+public func generateUserCreds(vaultName: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_generate_user_creds(
         FfiConverterString.lower(vaultName),$0
     )
 })
 }
-public func getState() -> String {
+public func getState() -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_get_state($0
     )
 })
 }
-public func initAndroid(masterKey: String) -> String {
+public func initAndroid(masterKey: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_init_android(
         FfiConverterString.lower(masterKey),$0
     )
 })
 }
-public func initAndroidWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String {
+public func initAndroidWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_init_android_with_device(
         FfiConverterString.lower(masterKey),
@@ -505,14 +553,14 @@ public func initAndroidWithDevice(masterKey: String, deviceName: String, deviceT
     )
 })
 }
-public func initIos(masterKey: String) -> String {
+public func initIos(masterKey: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_init_ios(
         FfiConverterString.lower(masterKey),$0
     )
 })
 }
-public func initIosWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String {
+public func initIosWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_init_ios_with_device(
         FfiConverterString.lower(masterKey),
@@ -521,34 +569,34 @@ public func initIosWithDevice(masterKey: String, deviceName: String, deviceType:
     )
 })
 }
-public func recover(secretId: String) -> String {
+public func recover(secretId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_recover(
         FfiConverterString.lower(secretId),$0
     )
 })
 }
-public func sendDeclineCompletion(claimId: String) -> String {
+public func sendDeclineCompletion(claimId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_send_decline_completion(
         FfiConverterString.lower(claimId),$0
     )
 })
 }
-public func showRecovered(secretId: String) -> String {
+public func showRecovered(secretId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_show_recovered(
         FfiConverterString.lower(secretId),$0
     )
 })
 }
-public func signUp() -> String {
+public func signUp() -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_sign_up($0
     )
 })
 }
-public func splitSecret(secretId: String, secret: String) -> String {
+public func splitSecret(secretId: String, secret: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_split_secret(
         FfiConverterString.lower(secretId),
@@ -556,7 +604,7 @@ public func splitSecret(secretId: String, secret: String) -> String {
     )
 })
 }
-public func updateMembership(candidate: String, actionUpdate: String) -> String {
+public func updateMembership(candidate: String, actionUpdate: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_update_membership(
         FfiConverterString.lower(candidate),
@@ -574,7 +622,7 @@ private enum InitializationResult {
 // the code inside is only computed once.
 private let initializationResult: InitializationResult = {
     // Get the bindings contract version from our ComponentInterface
-    let bindings_contract_version = 26
+    let bindings_contract_version = 30
     // Get the scaffolding contract version by calling the into the dylib
     let scaffolding_contract_version = ffi_metasecret_mobile_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version {
@@ -587,6 +635,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_decline_recover() != 6398) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_metasecret_mobile_checksum_func_device_ui_category_discriminant() != 50183) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_find_claim_by() != 51395) {
@@ -638,7 +689,9 @@ private let initializationResult: InitializationResult = {
     return InitializationResult.ok
 }()
 
-private func uniffiEnsureInitialized() {
+// Make the ensure init function public so that other modules which have external type references to
+// our types can call it.
+public func uniffiEnsureMetasecretMobileInitialized() {
     switch initializationResult {
     case .ok:
         break
@@ -650,31 +703,3 @@ private func uniffiEnsureInitialized() {
 }
 
 // swiftlint:enable all
-
-// Backward-compatible aliases used by existing SwiftBridge code.
-public func uniffiMobileGenerateMasterKey() -> String { generateMasterKey() }
-public func uniffiMobileInitIos(masterKey: String) -> String { initIos(masterKey: masterKey) }
-public func uniffiMobileInitIosWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String {
-    initIosWithDevice(masterKey: masterKey, deviceName: deviceName, deviceType: deviceType)
-}
-public func uniffiMobileInitAndroid(masterKey: String) -> String { initAndroid(masterKey: masterKey) }
-public func uniffiMobileInitAndroidWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String {
-    initAndroidWithDevice(masterKey: masterKey, deviceName: deviceName, deviceType: deviceType)
-}
-public func uniffiMobileGetState() -> String { getState() }
-public func uniffiMobileGenerateUserCreds(vaultName: String) -> String { generateUserCreds(vaultName: vaultName) }
-public func uniffiMobileSignUp() -> String { signUp() }
-public func uniffiMobileUpdateMembership(candidate: String, actionUpdate: String) -> String {
-    updateMembership(candidate: candidate, actionUpdate: actionUpdate)
-}
-public func uniffiMobileSplitSecret(secretId: String, secret: String) -> String {
-    splitSecret(secretId: secretId, secret: secret)
-}
-public func uniffiMobileFindClaimBy(secretId: String) -> String { findClaimBy(secretId: secretId) }
-public func uniffiMobileFindClaimIdBy(secretId: String) -> String { findClaimIdBy(secretId: secretId) }
-public func uniffiMobileRecover(secretId: String) -> String { recover(secretId: secretId) }
-public func uniffiMobileAcceptRecover(claimId: String) -> String { acceptRecover(claimId: claimId) }
-public func uniffiMobileDeclineRecover(claimId: String) -> String { declineRecover(claimId: claimId) }
-public func uniffiMobileSendDeclineCompletion(claimId: String) -> String { sendDeclineCompletion(claimId: claimId) }
-public func uniffiMobileShowRecovered(secretId: String) -> String { showRecovered(secretId: secretId) }
-public func uniffiMobileCleanUpDatabase() -> String { cleanUpDatabase() }

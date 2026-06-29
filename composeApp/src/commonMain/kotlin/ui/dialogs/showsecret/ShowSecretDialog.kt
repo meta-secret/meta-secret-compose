@@ -111,6 +111,7 @@ fun ShowSecret(
         devicesCount in 2..4 -> appString(AppString.devices_4)
         else -> appString(AppString.device)
     }
+    val showActionLabel = if (devicesCount <= 2) appString(AppString.show) else appString(AppString.recoverSecret)
 
     Dialog(
         onDismissRequest = {},
@@ -197,7 +198,7 @@ fun ShowSecret(
                                     viewModel.handle(ShowSecretEvents.ShowSecret(secret.secretName))
                                 }
                             },
-                            text = appString(AppString.show)
+                            text = showActionLabel
                         )
                     } else {
                         val copyText = when (val content = revealedSecret) {

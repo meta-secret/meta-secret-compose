@@ -72,6 +72,7 @@
     <string name = "addSecret">Добавить секрет</string>
     <string name = "removeSecret">Удалить секрет</string>
     <string name = "showSecret">Показать секрет</string>
+    <string name = "recoverSecret">Восстановить секрет</string>
     <string name = "removeSecretConfirmation">Вы действительно хотите удалить секрет </string>
     <string name = "remove">Удалить</string>
     <string name = "cancel">Отмена</string>
