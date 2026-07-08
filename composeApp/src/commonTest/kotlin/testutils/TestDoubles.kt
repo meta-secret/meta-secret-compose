@@ -1,9 +1,11 @@
 package testutils
 
+import core.AlertCoordinatorInterface
 import core.AppStateCacheProviderInterface
 import core.BiometricAuthenticatorInterface
 import core.DebugLoggerInterface
 import core.Device
+import core.JoinRequestAlertState
 import core.KeyChainInterface
 import core.KeyValueStorageInterface
 import core.LogFormatterInterface
@@ -11,6 +13,7 @@ import core.LogTag
 import core.LoginInfo
 import core.NotificationCoordinatorInterface
 import core.NotificationState
+import core.RecoveryRequestAlertState
 import core.ScreenMetricsProviderInterface
 import core.Secret
 import core.StringProviderInterface
@@ -21,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import models.apiModels.AppStateModel
 import models.apiModels.SecretApiModel
 import models.apiModels.UserData
+import models.appInternalModels.RestoreData
 
 class FakeDebugLogger : DebugLoggerInterface {
     var appManagerCreated: Boolean? = null
@@ -171,6 +175,8 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
     var initAppManagerResult: Result<String> = Result.success("ok")
     var initAppManagerCalls: Int = 0
     var lastInitMasterKey: String? = null
+    var appStateJson: String = "{}"
+    var findClaimJson: String = "{}"
 
     override fun generateMasterKey(): String = "master-key"
     override fun initAppManager(masterKey: String): String {
@@ -178,15 +184,70 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
         lastInitMasterKey = masterKey
         return initAppManagerResult.getOrThrow()
     }
-    override fun getAppState(): String = "{}"
+    override fun getAppState(): String = appStateJson
     override fun generateUserCreds(vaultName: String): String = vaultName
     override fun signUp(): String = "{}"
     override fun updateMembership(candidate: UserData, actionUpdate: String): String = "{}"
     override fun splitSecret(secretName: String, secret: String): String = "{}"
-    override fun findClaim(secretId: String): String = "{}"
+    override fun findClaim(secretId: String): String = findClaimJson
     override fun recover(secretId: String): String = "{}"
     override fun acceptRecover(claimId: String): String = "{}"
     override fun declineRecover(claimId: String): String = "{}"
     override fun sendDeclineCompletion(claimId: String): String = "{}"
     override fun showRecovered(secretId: String): String = "{}"
+}
+
+class FakeAlertCoordinator : AlertCoordinatorInterface {
+    private val _joinRequestAlert = MutableStateFlow<JoinRequestAlertState>(JoinRequestAlertState.Hidden)
+    override val joinRequestAlert: StateFlow<JoinRequestAlertState> = _joinRequestAlert
+
+    private val _recoveryRequestAlert = MutableStateFlow<RecoveryRequestAlertState>(RecoveryRequestAlertState.Hidden)
+    override val recoveryRequestAlert: StateFlow<RecoveryRequestAlertState> = _recoveryRequestAlert
+
+    val showRecoveryRequestCalls = mutableListOf<RestoreData>()
+    val dismissRecoveryRequestForClaimCalls = mutableListOf<String>()
+    var showRecoverDeclinedNotificationCalls = 0
+    private var recoveryRequestHandler: ((Boolean) -> Unit)? = null
+
+    override fun showJoinRequest(deviceId: String) {
+        _joinRequestAlert.value = JoinRequestAlertState.Visible(deviceId)
+    }
+
+    override fun dismissJoinRequest() {
+        _joinRequestAlert.value = JoinRequestAlertState.Hidden
+    }
+
+    override fun onJoinRequestDecision(isAccepted: Boolean) = Unit
+
+    override fun setJoinRequestHandler(handler: (Boolean) -> Unit) = Unit
+
+    override fun showRecoveryRequest(restoreData: RestoreData) {
+        showRecoveryRequestCalls += restoreData
+        _recoveryRequestAlert.value = RecoveryRequestAlertState.Visible(restoreData)
+    }
+
+    override fun dismissRecoveryRequest() {
+        _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
+    }
+
+    override fun dismissRecoveryRequestForClaim(claimId: String) {
+        dismissRecoveryRequestForClaimCalls += claimId
+        _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
+    }
+
+    override fun onRecoveryRequestDecision(isAccepted: Boolean) {
+        recoveryRequestHandler?.invoke(isAccepted)
+    }
+
+    override fun setRecoveryRequestHandler(handler: (Boolean) -> Unit) {
+        recoveryRequestHandler = handler
+    }
+
+    override fun onRecoveryRequestProcessingComplete() {
+        _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
+    }
+
+    override fun showRecoverDeclinedNotification() {
+        showRecoverDeclinedNotificationCalls += 1
+    }
 }

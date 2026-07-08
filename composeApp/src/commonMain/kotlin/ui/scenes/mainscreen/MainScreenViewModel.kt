@@ -157,7 +157,7 @@ class MainScreenViewModel(
                             alertCoordinator.showRecoveryRequest(restoreData)
                         }
                     }
-                    is SocketActionModel.RECOVER_SENT -> {
+                    is SocketActionModel.RECOVER_ACCEPTED -> {
                         _secretIdToShow.value = actionType.secretId
                         logger.log(LogTag.MainVM.Message.ReadyToShowSecret,
                             "claimId=${actionType.claimId}, secretId=${actionType.secretId}", success = true)

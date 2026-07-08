@@ -16,7 +16,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import models.apiModels.AppStateModel
-import models.apiModels.ClaimStatus
+import models.apiModels.ClientStatus
 import models.apiModels.DistributionType
 import models.apiModels.UserDataOutsiderStatus
 import models.apiModels.VaultFullInfo
@@ -198,32 +198,41 @@ class MetaSecretSocketHandler(
     }
 
     private fun checkRecoverRequest(claims: Map<String, ClaimObject>, currentDeviceId: String) {
-        val declinedClaimIds = claims.values
+        val recoverClaimsForDevice = claims.values.filter {
+            it.distributionType == DistributionType.RECOVER && it.receivers.contains(currentDeviceId)
+        }
+        if (recoverClaimsForDevice.isNotEmpty()) {
+            logger.log(
+                core.LogTag.SocketHandler.Message.ReceiverClaimStatuses,
+                recoverClaimsForDevice.joinToString { "${it.distClaimId.id}=${it.clientStatus}" },
+                success = true
+            )
+        }
+        val doneClaimIds = claims.values
             .filter { claim ->
                 claim.distributionType == DistributionType.RECOVER &&
                     claim.receivers.contains(currentDeviceId) &&
-                    claim.status.statuses[currentDeviceId] == ClaimStatus.DECLINED
+                    claim.clientStatus == ClientStatus.DONE
             }
             .map { it.distClaimId.id }
-        declinedClaimIds.forEach { claimId ->
+        doneClaimIds.forEach { claimId ->
             if (claimId == lastEmittedReadyToRecoverClaimId) {
                 lastEmittedReadyToRecoverClaimId = null
             }
             logger.log(core.LogTag.SocketHandler.Message.DismissRecoveryRequest, "claimId=$claimId", success = true)
             _socketActions.tryEmit(SocketActionModel.DISMISS_RECOVERY_REQUEST(claimId))
         }
-        val firstPendingClaim = claims.values.firstOrNull { claim ->
+        val firstNeedApproveClaim = claims.values.firstOrNull { claim ->
             val isRecoverType = claim.distributionType == DistributionType.RECOVER
             val isReceiverForThisDevice = claim.receivers.contains(currentDeviceId)
-            val receiverStatus = claim.status.statuses[currentDeviceId]
-            val isPending = receiverStatus == ClaimStatus.PENDING
-            isRecoverType && isReceiverForThisDevice && isPending
+            val needsApproval = claim.clientStatus == ClientStatus.NEED_APPROVE
+            isRecoverType && isReceiverForThisDevice && needsApproval
         }
-        if (firstPendingClaim != null) {
-            val claimId = firstPendingClaim.distClaimId.id
+        if (firstNeedApproveClaim != null) {
+            val claimId = firstNeedApproveClaim.distClaimId.id
             if (claimId != lastEmittedReadyToRecoverClaimId) {
                 lastEmittedReadyToRecoverClaimId = claimId
-                val restoreData = RestoreData(claimId, firstPendingClaim.distClaimId.passId.name)
+                val restoreData = RestoreData(claimId, firstNeedApproveClaim.distClaimId.passId.name)
                 logger.log(core.LogTag.SocketHandler.Message.ReadyToRecover, "$restoreData", success = true)
                 _socketActionType.value = SocketActionModel.READY_TO_RECOVER(restoreData = restoreData)
             }
@@ -241,22 +250,32 @@ class MetaSecretSocketHandler(
             }
             val existingClaim = SearchClaimModel.fromJson(searchResult)
             val claim = existingClaim.claim
-            val statusStr = claim?.status?.name ?: "null"
+            val clientStatusStr = claim?.clientStatus?.name ?: "null"
             val statusesStr = existingClaim.message?.claim?.status?.statuses?.entries
                 ?.joinToString { "${it.key}=${it.value.name}" } ?: "{}"
             logger.log(
                 core.LogTag.SocketHandler.Message.RecoverSentStatusClaimStatus,
-                "status=$statusStr statuses=$statusesStr",
+                "clientStatus=$clientStatusStr statuses=$statusesStr",
                 success = true
             )
-            when (claim?.status) {
-                ClaimStatus.SENT -> {
+            when (claim?.clientStatus) {
+                ClientStatus.ACCEPTED -> {
                     val claimId = claim.claimId ?: return
+                    logger.log(
+                        core.LogTag.SocketHandler.Message.RecoverSentForSecretId,
+                        "secretId=$secretName claimId=$claimId",
+                        success = true
+                    )
                     _socketActionType.value = SocketActionModel.NONE
-                    _socketActionType.value = SocketActionModel.RECOVER_SENT(claimId, secretName)
+                    _socketActionType.value = SocketActionModel.RECOVER_ACCEPTED(claimId, secretName)
                     processingSecretName = null
                 }
-                ClaimStatus.DECLINED -> {
+                ClientStatus.DECLINED -> {
+                    logger.log(
+                        core.LogTag.SocketHandler.Message.RecoverDeclinedForSecretId,
+                        "secretId=$secretName",
+                        success = true
+                    )
                     _socketActionType.value = SocketActionModel.NONE
                     _socketActionType.value = SocketActionModel.RECOVER_DECLINED(secretName)
                     processingSecretName = null

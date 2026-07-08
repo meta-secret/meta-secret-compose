@@ -173,6 +173,20 @@ enum class ClaimStatus {
 }
 
 @Serializable
+enum class ClientStatus {
+    @SerialName("pending")
+    PENDING,
+    @SerialName("needApprove")
+    NEED_APPROVE,
+    @SerialName("accepted")
+    ACCEPTED,
+    @SerialName("declined")
+    DECLINED,
+    @SerialName("done")
+    DONE
+}
+
+@Serializable
 data class PassId(
     val id: String,
     val name: String
@@ -197,7 +211,8 @@ data class ClaimObject(
     val receivers: List<String> = emptyList(),
     val sender: String,
     val status: ClaimStatusInfo,
-    val vaultName: String
+    val vaultName: String,
+    val clientStatus: ClientStatus? = null
 )
 
 @Serializable

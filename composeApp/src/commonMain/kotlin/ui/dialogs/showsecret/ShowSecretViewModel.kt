@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import models.apiModels.ClaimStatus
+import models.apiModels.ClientStatus
 import models.appInternalModels.SecretModel
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
@@ -106,22 +106,34 @@ class ShowSecretViewModel(
                     add = listOf(SocketRequestModel.SHOW_SECRET),
                     exclude = null
                 )
-                when (existingClaim?.status) {
-                    ClaimStatus.PENDING -> {
+                socketHandler.setProcessingSecretName(secretName)
+
+                when (existingClaim?.clientStatus) {
+                    null -> {
+                        logger.log(LogTag.ShowSecretVM.Message.NoExistingClaim, success = true)
+                        recoverSecret(secretName)
+                    }
+
+                    ClientStatus.PENDING -> {
+                        logger.log(
+                            LogTag.ShowSecretVM.Message.PendingClaimExists,
+                            "claimId=${existingClaim.claimId}",
+                            success = true
+                        )
                         showNotification(stringProvider.recoverRequestSent(), isError = false)
                         socketHandler.resumePolling()
                     }
 
-                    ClaimStatus.SENT -> {
-                        if (existingClaim.senderStatus == ClaimStatus.DELIVERED) {
-                            recoverSecret(secretName)
-                        } else {
-                            showRecoveredSecret(secretName)
-                        }
+                    // ACCEPTED / DECLINED: owned by checkRecoverSentStatus() polling on processingSecretName,
+                    // avoids double-dispatching showRecoveredSecret()/the declined path from here too.
+                    else -> {
+                        logger.log(
+                            LogTag.ShowSecretVM.Message.AwaitingPollerResolution,
+                            "clientStatus=${existingClaim?.clientStatus}",
+                            success = true
+                        )
                         socketHandler.resumePolling()
                     }
-
-                    else -> recoverSecret(secretName)
                 }
             } catch (t: Throwable) {
                 logger.log(LogTag.ShowSecretVM.Message.RecoverFailed, "${t.message}", success = false)
@@ -132,7 +144,6 @@ class ShowSecretViewModel(
     }
 
     private suspend fun recoverSecret(secretName: String) {
-        socketHandler.setProcessingSecretName(secretName)
         withContext(Dispatchers.IO) {
             metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))
         }

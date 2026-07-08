@@ -204,6 +204,7 @@ sealed class LogTag(val displayName: String) {
             object ErrorCheckingRecoverDeclinedStatus : Message("Error checking recover declined status")
             object RecoverSentStatusClaimStatus : Message("Claim status from findClaim")
             object DismissRecoveryRequest : Message("Dismiss recovery request for claimId")
+            object ReceiverClaimStatuses : Message("Recover claims clientStatus for this device")
         }
     }
 
@@ -283,6 +284,7 @@ sealed class LogTag(val displayName: String) {
             object RecoveredSecretLoaded : Message("Recovered secret loaded successfully")
             object FailedToRecoverSecret : Message("Failed to recover secret")
             object ShowRecoveredFailed : Message("showRecovered failed")
+            object AwaitingPollerResolution : Message("Claim already accepted/declined, waiting for socket poller to dispatch")
         }
     }
 
