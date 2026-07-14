@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -268,7 +269,9 @@ fun AddSecret(
                             TextInput(
                                 placeholderText = appString(AppString.secretName),
                                 value = secretName,
-                                onTextChange = { secretName = it }
+                                onTextChange = { secretName = it },
+                                testTag = "secret-name-input",
+                                autoFocus = true
                             )
 
                             AnimatedContent(
@@ -284,7 +287,8 @@ fun AddSecret(
                                         TextInput(
                                             placeholderText = appString(AppString.secretCapital),
                                             value = passwordSecret,
-                                            onTextChange = { passwordSecret = it }
+                                            onTextChange = { passwordSecret = it },
+                                            testTag = "secret-value-input"
                                         )
                                     }
 
@@ -332,6 +336,7 @@ fun AddSecret(
                                 },
                                 text = appString(AppString.addSecret),
                                 isEnabled = isAddEnabled,
+                                modifier = Modifier.testTag("add-secret-submit")
                             )
                         }
                     }
@@ -632,10 +637,18 @@ private fun SeedWordInput(
 private fun TextInput(
     placeholderText: String,
     value: String,
-    onTextChange: (String) -> Unit
+    onTextChange: (String) -> Unit,
+    testTag: String? = null,
+    autoFocus: Boolean = false
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val focusRequester = FocusRequester()
+
+    LaunchedEffect(Unit) {
+        if (autoFocus) {
+            focusRequester.requestFocus()
+        }
+    }
 
     TextField(
         value = value,
@@ -656,12 +669,13 @@ private fun TextInput(
                 shape = RoundedCornerShape(8.dp)
             )
             .focusRequester(focusRequester)
-            .onFocusChanged { focusState -> isFocused = focusState.isFocused },
+            .onFocusChanged { focusState -> isFocused = focusState.isFocused }
+            .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
         maxLines = Int.MAX_VALUE,
         singleLine = false,
         keyboardOptions = KeyboardOptions.Default.copy(
             keyboardType = KeyboardType.Text,
-            imeAction = ImeAction.Done
+            imeAction = ImeAction.Next
         ),
         textStyle = AppTextStyles.Body().copy(color = Color.White),
         colors = TextFieldDefaults.colors(

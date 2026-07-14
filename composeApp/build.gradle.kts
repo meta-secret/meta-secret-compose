@@ -165,6 +165,15 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.coroutines.test)
+            implementation(compose.ui)
+            implementation(compose.foundation)
+            implementation("io.kotest:kotest-framework-engine:5.8.0")
+        }
+
+        iosTest.dependencies {
+            implementation(compose.ui)
+            implementation(compose.foundation)
+            implementation("io.kotest:kotest-framework-engine:5.8.0")
         }
     }
 }
@@ -231,6 +240,11 @@ dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.runtime.android)
     runtimeOnly(libs.androidx.runtime)
+
+    // Compose Testing
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.compose.ui:ui-test-manifest")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
 }
 
 swiftklib {

@@ -29,7 +29,7 @@ class ClientStatusSerializationTest {
     }
 
     @Test
-    fun `clientStatus is null when absent, e g for Split claims`() {
+    fun `clientStatus is null when absent e g for Split claims`() {
         val claim = JsonConfig.json.decodeFromString<ClaimObject>(claimObjectJson(null))
         assertNull(claim.clientStatus)
         assertEquals(DistributionType.RECOVER, claim.distributionType)

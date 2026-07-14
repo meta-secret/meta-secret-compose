@@ -3,7 +3,10 @@
     "allow": [
       "Bash(./gradlew :composeApp:assemble --stacktrace 2>&1 | grep -E \"^e:|error:|BUILD|FAILED|SUCCESS\" | head -40)",
       "Bash(grep -E '\\\\.\\(kt|kts|xml|json|yaml|yml|gradle\\)$')",
-      "Bash(grep \"\\\\.kt$\")"
+      "Bash(grep \"\\\\.kt$\")",
+      "Read(//Users/dmitrykuklin/Documents/Projects/MetaSecret/meta-secret-core/meta-secret/**)",
+      "Bash(cargo check *)",
+      "Bash(./gradlew :composeApp:testDebugUnitTest --tests \"ui.dialogs.showsecret.ShowSecretViewModelTest\" --info)"
     ]
   }
 }

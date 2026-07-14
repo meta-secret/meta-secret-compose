@@ -34,10 +34,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -62,6 +65,7 @@ class ManualSignInScreen(
         val imageProvider: ImageProviderInterface = koinInject()
         val navigator = LocalNavigator.current
         val focusManager = LocalFocusManager.current
+        val emailFocusRequester = remember { FocusRequester() }
         var email by remember { mutableStateOf("") }
         var isFocused by remember { mutableStateOf(false) }
         val normalizedEmail = email.trim()
@@ -69,6 +73,7 @@ class ManualSignInScreen(
 
         LaunchedEffect(Unit) {
             viewModel.handle(ManualSignInViewEvents.ShowError(messageError))
+            emailFocusRequester.requestFocus()
         }
 
         Box(
@@ -154,6 +159,8 @@ class ManualSignInScreen(
                             onValueChange = { email = it },
                             modifier = Modifier
                                 .fillMaxSize()
+                                .testTag("email-input")
+                                .focusRequester(emailFocusRequester)
                                 .border(
                                     width = 1.dp,
                                     color = if (isFocused) AppColors.ActionMain else AppColors.White50,
@@ -229,7 +236,9 @@ class ManualSignInScreen(
                             },
                             text = appString(AppString.emailSelectionContinue),
                             isEnabled = isContinueEnabled,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("manual-signin-continue")
                         )
 
                         NakedButton(

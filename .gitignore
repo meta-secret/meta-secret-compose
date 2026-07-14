@@ -42,3 +42,6 @@ libmetasecret_mobile.so
 
 # Design
 design/
+
+# Maestro test artifacts
+.maestro/.run-counter
