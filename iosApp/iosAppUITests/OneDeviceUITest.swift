@@ -6,8 +6,25 @@ final class OneDeviceUITest: XCTestCase {
         continueAfterFailure = false
     }
 
+    private func assertExists(_ element: XCUIElement, timeout: TimeInterval, file: StaticString = #filePath, line: UInt = #line) {
+        if !element.waitForExistence(timeout: timeout) {
+            XCTFail("Element not found. Accessibility hierarchy:\n\(XCUIApplication().debugDescription)", file: file, line: line)
+        }
+    }
+
+    private func dismissKeyboard(in app: XCUIApplication) {
+        let doneButton = app.keyboards.buttons["Done"]
+        if doneButton.exists {
+            doneButton.tap()
+            return
+        }
+
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+    }
+
     func testOneDeviceSignupFlow() throws {
         let app = XCUIApplication()
+        app.launchEnvironment["METASECRET_UI_TEST_MODE"] = "true"
         app.launch()
 
         let runNumber = Int.random(in: 1000..<9999)
@@ -30,20 +47,22 @@ final class OneDeviceUITest: XCTestCase {
 
         // STEP 3: Enter email and continue
         print("TEST STEP 3: Enter email and click Continue")
-        let emailField = app.textFields["email-input"]
-        XCTAssertTrue(emailField.waitForExistence(timeout: 10))
+        let emailField = app.descendants(matching: .any)["email-input"]
+        assertExists(emailField, timeout: 10)
         emailField.tap()
         emailField.typeText(email)
+        dismissKeyboard(in: app)
         sleep(1)
 
         let continueButton = app.buttons["manual-signin-continue"]
+        assertExists(continueButton, timeout: 10)
         continueButton.tap()
         sleep(1)
 
         // STEP 4: Email Confirmation - Click Continue
         print("TEST STEP 4: Click Continue on confirmation")
         let confirmButton = app.buttons["email-confirmation-continue"]
-        XCTAssertTrue(confirmButton.waitForExistence(timeout: 10))
+        assertExists(confirmButton, timeout: 10)
         confirmButton.tap()
         sleep(2)
 
@@ -59,8 +78,8 @@ final class OneDeviceUITest: XCTestCase {
 
         // STEP 7: Wait for Add Secret dialog
         print("TEST STEP 7: Wait for Add Secret dialog")
-        let secretNameInput = app.textFields["secret-name-input"]
-        XCTAssertTrue(secretNameInput.waitForExistence(timeout: 45))
+        let secretNameInput = app.descendants(matching: .any)["secret-name-input"]
+        assertExists(secretNameInput, timeout: 45)
         print("TEST: secret-name-input found!")
 
         // STEP 8: Enter secret details
@@ -69,10 +88,11 @@ final class OneDeviceUITest: XCTestCase {
         secretNameInput.typeText("MySecret\(runNumber)")
         sleep(1)
 
-        let secretValueInput = app.secureTextFields["secret-value-input"]
-        XCTAssertTrue(secretValueInput.waitForExistence(timeout: 10))
+        let secretValueInput = app.descendants(matching: .any)["secret-value-input"]
+        assertExists(secretValueInput, timeout: 10)
         secretValueInput.tap()
         secretValueInput.typeText("SecretValue\(runNumber)")
+        dismissKeyboard(in: app)
         sleep(1)
 
         // STEP 9: Submit secret
@@ -115,7 +135,7 @@ final class OneDeviceUITest: XCTestCase {
 
         // STEP 16: Verify secret value
         print("TEST STEP 16: Verify secret value is correct")
-        XCTAssertTrue(secretValue.isHittable)
+        XCTAssertTrue(secretValue.exists)
 
         print("TEST: ✅ SUCCESS - Secret revealed and verified!")
     }

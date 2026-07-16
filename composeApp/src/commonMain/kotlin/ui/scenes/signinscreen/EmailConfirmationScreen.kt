@@ -290,7 +290,9 @@ class EmailConfirmationScreen(
                                     },
                                     text = appString(AppString.join),
                                     isEnabled = !isLoading,
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("email-confirmation-join")
                                 )
                                 NakedButton(
                                     title = appString(AppString.emailSelectionChange),
