@@ -148,6 +148,7 @@ fun ShowSecret(
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
+                            .testTag("show-secret-close")
                             .clickable {
                                 viewModel.handle(ShowSecretEvents.HideSecret)
                                 onDismiss()
