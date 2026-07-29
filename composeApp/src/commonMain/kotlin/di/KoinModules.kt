@@ -46,7 +46,7 @@ val appModule = module {
     single<AppStateCacheProviderInterface> { AppStateCacheProvider(get()) }
     single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get(), get(), get(), get(), get(), get()) }
     single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get(), get()) }
-    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get(), get(), get(), get(), get()) }
+    single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get(), get(), get(), get(), get(), get()) }
     single<VaultStatsProviderInterface> { VaultStatsProvider(get(), get(), get()) } // appStateCacheProvider, socketHandler, logger
     single<AlertCoordinatorInterface> { AlertCoordinator(get(), get()) }
 

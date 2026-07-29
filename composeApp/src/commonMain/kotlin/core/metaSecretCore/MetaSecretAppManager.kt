@@ -200,8 +200,7 @@ class MetaSecretAppManager(
             return null
         }
         
-        // Using cached state from socket polling
-        // metaSecretCore.getAppState() TODO: Need to uncomment, once real socket is ready
+        // Uses AppState refreshed by launch, lifecycle, explicit action, or socket invalidation.
         val cachedState = appStateCacheProvider.appState.value ?: return null
         
         return try {

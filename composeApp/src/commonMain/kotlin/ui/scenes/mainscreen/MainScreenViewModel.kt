@@ -58,7 +58,7 @@ class MainScreenViewModel(
     init {
         logger.log(LogTag.MainVM.Message.FollowResponsibleToAcceptJoin, success = true)
         socketHandler.actionsToFollow(
-            add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN, SocketRequestModel.WAIT_FOR_RECOVER_REQUEST),
+            add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN),
             exclude = null
         )
 
@@ -74,9 +74,9 @@ class MainScreenViewModel(
             }
 
             if (!isAccepted) {
-                logger.log(LogTag.MainVM.Message.RecoverDeclined, "claimId = ${restoreData.claimId}", success = true)
+                logger.log(LogTag.MainVM.Message.RecoverDeclined, "clicked claimId=${restoreData.claimId}", success = true)
                 viewModelScope.launch(Dispatchers.IO) {
-                    socketHandler.pausePolling()
+                    socketHandler.pauseRefreshes()
                     try {
                         logger.log(LogTag.MainVM.Message.DeclineRecoverCalled, "claimId = ${restoreData.claimId}", success = true)
                         metaSecretAppManager.declineRecover(restoreData.claimId)
@@ -84,7 +84,8 @@ class MainScreenViewModel(
                         logger.log(LogTag.MainVM.Message.DeclineRecoverFailed, "claimId = ${restoreData.claimId}: $t", success = false)
                         socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
                     } finally {
-                        socketHandler.resumePolling()
+                        socketHandler.resumeRefreshes()
+                        socketHandler.refreshAppState()
                         withContext<Unit>(Dispatchers.Main) {
                             alertCoordinator.onRecoveryRequestProcessingComplete()
                         }
@@ -93,12 +94,12 @@ class MainScreenViewModel(
                 return@setRecoveryRequestHandler
             }
 
-            logger.log(LogTag.MainVM.Message.RecoverAccepted, success = true)
+            logger.log(LogTag.MainVM.Message.RecoverAccepted, "clicked claimId=${restoreData.claimId}", success = true)
             biometricAuthenticator.authenticate(
                 onSuccess = {
                     logger.log(LogTag.MainVM.Message.BiometricAuthSuccess, success = true)
                     viewModelScope.launch(Dispatchers.IO) {
-                        socketHandler.pausePolling()
+                        socketHandler.pauseRefreshes()
                         try {
                             logger.log(LogTag.MainVM.Message.AcceptRecoverCalled, "claimId = ${restoreData.claimId}", success = true)
                             metaSecretAppManager.acceptRecover(restoreData.claimId)
@@ -106,7 +107,8 @@ class MainScreenViewModel(
                             logger.log(LogTag.MainVM.Message.AcceptRecoverFailed, "claimId = ${restoreData.claimId}: $t", success = false)
                             socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
                         } finally {
-                            socketHandler.resumePolling()
+                            socketHandler.resumeRefreshes()
+                            socketHandler.refreshAppState()
                             withContext<Unit>(Dispatchers.Main) {
                                 alertCoordinator.onRecoveryRequestProcessingComplete()
                             }
@@ -126,11 +128,16 @@ class MainScreenViewModel(
             )
         }
 
+        alertCoordinator.setRecoveryRequestDismissHandler { restoreData ->
+            socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             socketHandler.socketActions.collect { action ->
                 if (action is SocketActionModel.DISMISS_RECOVERY_REQUEST) {
                     withContext(Dispatchers.Main) {
-                        alertCoordinator.dismissRecoveryRequestForClaim(action.claimId)
+                        logger.log(LogTag.MainVM.Message.RecoveryAlertDismissed, success = true)
+                        alertCoordinator.dismissRecoveryRequest()
                     }
                 }
             }
@@ -154,6 +161,7 @@ class MainScreenViewModel(
                         }
 
                         withContext(Dispatchers.Main) {
+                            logger.log(LogTag.MainVM.Message.RecoveryAlertShown, "claimId=${restoreData.claimId}", success = true)
                             alertCoordinator.showRecoveryRequest(restoreData)
                         }
                     }
@@ -185,8 +193,12 @@ class MainScreenViewModel(
             vaultStatsProvider.joinRequestsCount.collect { count ->
                 withContext(Dispatchers.Main) {
                     _joinRequestsCount.value = count
-                    if (count != null && count > 0) {
+                    if ((count ?: 0) > 0) {
                         _isWarningDismissedByUser.value = false
+                        _isJoinBadgeDismissed.value = false
+                        if (TabStateHolder.selectedTabIndex.value != 1) {
+                            _isWarningShown.value = true
+                        }
                     }
                 }
             }

@@ -177,6 +177,7 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
     var lastInitMasterKey: String? = null
     var appStateJson: String = "{}"
     var findClaimJson: String = "{}"
+    var getAppStateCalls: Int = 0
 
     override fun generateMasterKey(): String = "master-key"
     override fun initAppManager(masterKey: String): String {
@@ -184,7 +185,10 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
         lastInitMasterKey = masterKey
         return initAppManagerResult.getOrThrow()
     }
-    override fun getAppState(): String = appStateJson
+    override fun getAppState(): String {
+        getAppStateCalls += 1
+        return appStateJson
+    }
     override fun generateUserCreds(vaultName: String): String = vaultName
     override fun signUp(): String = "{}"
     override fun updateMembership(candidate: UserData, actionUpdate: String): String = "{}"
@@ -205,9 +209,9 @@ class FakeAlertCoordinator : AlertCoordinatorInterface {
     override val recoveryRequestAlert: StateFlow<RecoveryRequestAlertState> = _recoveryRequestAlert
 
     val showRecoveryRequestCalls = mutableListOf<RestoreData>()
-    val dismissRecoveryRequestForClaimCalls = mutableListOf<String>()
     var showRecoverDeclinedNotificationCalls = 0
     private var recoveryRequestHandler: ((Boolean) -> Unit)? = null
+    private var recoveryRequestDismissHandler: ((RestoreData) -> Unit)? = null
 
     override fun showJoinRequest(deviceId: String) {
         _joinRequestAlert.value = JoinRequestAlertState.Visible(deviceId)
@@ -227,11 +231,14 @@ class FakeAlertCoordinator : AlertCoordinatorInterface {
     }
 
     override fun dismissRecoveryRequest() {
-        _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
-    }
-
-    override fun dismissRecoveryRequestForClaim(claimId: String) {
-        dismissRecoveryRequestForClaimCalls += claimId
+        val restoreData = when (val current = _recoveryRequestAlert.value) {
+            is RecoveryRequestAlertState.Visible -> current.restoreData
+            is RecoveryRequestAlertState.Processing -> current.restoreData
+            else -> null
+        }
+        if (restoreData != null) {
+            recoveryRequestDismissHandler?.invoke(restoreData)
+        }
         _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
     }
 
@@ -241,6 +248,10 @@ class FakeAlertCoordinator : AlertCoordinatorInterface {
 
     override fun setRecoveryRequestHandler(handler: (Boolean) -> Unit) {
         recoveryRequestHandler = handler
+    }
+
+    override fun setRecoveryRequestDismissHandler(handler: (RestoreData) -> Unit) {
+        recoveryRequestDismissHandler = handler
     }
 
     override fun onRecoveryRequestProcessingComplete() {

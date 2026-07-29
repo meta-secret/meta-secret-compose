@@ -6,5 +6,12 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.kover) apply false
     id("io.github.ttypic.swiftklib") apply false
+}
+
+tasks.register("koverReport") {
+    group = "verification"
+    description = "Generates ComposeApp Kover XML, HTML, and log coverage reports."
+    dependsOn(":composeApp:koverXmlReport", ":composeApp:koverHtmlReport", ":composeApp:koverLog")
 }

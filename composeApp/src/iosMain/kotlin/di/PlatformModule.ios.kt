@@ -25,11 +25,16 @@ import core.DebugLoggerInterface
 import core.DebugLoggerIos
 import core.LogFormatterInterface
 import core.LogFormatterIos
+import core.metaSecretCore.IosMetaSecretSocketClient
+import core.metaSecretCore.MetaSecretSocketClient
 import kotlinx.cinterop.ExperimentalForeignApi
 
 @OptIn(ExperimentalForeignApi::class)
 val iosPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceIos(get(), get()) }
+    single<MetaSecretSocketClient> {
+        IosMetaSecretSocketClient(endpoint = "")
+    }
     single<StringProviderInterface> { StringProviderIos() }
     single<ClientDeviceInfoProviderInterface> { ClientDeviceInfoProviderIos() }
     single<DeviceInfoProviderInterface> { DeviceInfoProviderIos() }

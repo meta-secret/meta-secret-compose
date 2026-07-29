@@ -21,9 +21,13 @@ import core.DatabasePathProviderInterface
 import core.DatabasePathProviderAndroid
 import core.LogFormatterInterface
 import core.LogFormatterAndroid
+import core.metaSecretCore.AndroidMetaSecretSocketClient
+import core.metaSecretCore.MetaSecretSocketClient
+import metasecret.project.com.BuildConfig
 
 val androidPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceAndroid() }
+    single<MetaSecretSocketClient> { AndroidMetaSecretSocketClient(BuildConfig.META_SECRET_SOCKET_URL) }
     factory<KeyChainInterface> { (context: Context) ->
         KeyChainManagerAndroid(context, get())
     }

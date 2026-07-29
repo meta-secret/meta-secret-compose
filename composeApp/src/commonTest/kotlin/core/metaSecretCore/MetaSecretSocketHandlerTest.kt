@@ -3,6 +3,8 @@ package core.metaSecretCore
 import core.errors.ErrorMapper
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -112,7 +114,7 @@ class MetaSecretSocketHandlerTest {
         }
         val handler = newHandler(core)
 
-        handler.actionsToFollow(add = listOf(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST), exclude = null)
+        handler.refreshAppState()
 
         val action = withTimeout(8000) {
             handler.socketActionType.first { it is SocketActionModel.READY_TO_RECOVER }
@@ -138,12 +140,14 @@ class MetaSecretSocketHandlerTest {
         }
         val handler = newHandler(core)
 
-        handler.actionsToFollow(add = listOf(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST), exclude = null)
-
-        val action = withTimeout(8000) {
-            handler.socketActions.first { it is SocketActionModel.DISMISS_RECOVERY_REQUEST }
-        } as SocketActionModel.DISMISS_RECOVERY_REQUEST
-        assertEquals("claim1", action.claimId)
+        val actionDeferred = async(start = CoroutineStart.UNDISPATCHED) {
+            withTimeout(8000) {
+                handler.socketActions.first { it is SocketActionModel.DISMISS_RECOVERY_REQUEST }
+            } as SocketActionModel.DISMISS_RECOVERY_REQUEST
+        }
+        handler.refreshAppState()
+        val action = actionDeferred.await()
+        assertEquals(SocketActionModel.DISMISS_RECOVERY_REQUEST, action)
     }
 
     @Test
