@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.platform.testTag
 import core.AppColors
 import core.ScreenMetricsProviderInterface
 import core.Secret
@@ -147,6 +148,7 @@ fun ShowSecret(
                         contentDescription = null,
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
+                            .testTag("show-secret-close")
                             .clickable {
                                 viewModel.handle(ShowSecretEvents.HideSecret)
                                 onDismiss()
@@ -198,7 +200,8 @@ fun ShowSecret(
                                     viewModel.handle(ShowSecretEvents.ShowSecret(secret.secretName))
                                 }
                             },
-                            text = showActionLabel
+                            text = showActionLabel,
+                            modifier = Modifier.testTag("show-secret-button")
                         )
                     } else {
                         val copyText = when (val content = revealedSecret) {

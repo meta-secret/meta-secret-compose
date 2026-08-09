@@ -240,8 +240,24 @@ class EmailConfirmationScreenViewModel(
 
     private fun socketSubscribe() {
         viewModelScope.launch {
+            logger.log(LogTag.SignInVM.Message.SubscribeJoinResponse, success = true)
             socketHandler.socketActionType.collect { actionType ->
-                logger.log(LogTag.SignInVM.Message.SubscribeJoinResponse, success = true)
+                when (actionType) {
+                    SocketActionModel.JOIN_REQUEST_PENDING -> {
+                        logger.log(LogTag.SignInVM.Message.JoiningInProgress, success = true)
+                        if (_screenState.value !is EmailConfirmationScreenState.JoiningPending) {
+                            showJoinPendingState()
+                        }
+                    }
+
+                    else -> {
+                        logger.log(LogTag.SignInVM.Message.JoiningNotFollowing, "$actionType", success = true)
+                    }
+                }
+            }
+        }
+        viewModelScope.launch {
+            socketHandler.socketActions.collect { actionType ->
                 when (actionType) {
                     SocketActionModel.JOIN_REQUEST_ACCEPTED -> {
                         if (_screenState.value is EmailConfirmationScreenState.JoiningPending) {
@@ -262,29 +278,22 @@ class EmailConfirmationScreenViewModel(
                         }
                     }
 
-                    SocketActionModel.JOIN_REQUEST_PENDING -> {
-                        logger.log(LogTag.SignInVM.Message.JoiningInProgress, success = true)
-                        if (_screenState.value !is EmailConfirmationScreenState.JoiningPending) {
-                            showJoinPendingState()
-                        }
-                    }
-
-                    else -> {
-                        logger.log(LogTag.SignInVM.Message.JoiningNotFollowing, "$actionType", success = true)
-                    }
+                    else -> Unit
                 }
             }
         }
     }
 
     private fun handleJoinRequestAccepted() {
+        socketHandler.actionsToFollow(
+            add = null,
+            exclude = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)
+        )
         biometricAuthenticator.authenticate(
             onSuccess = {
                 logger.log(LogTag.SignInVM.Message.BiometricAuthSuccess, success = true)
                 logger.log(LogTag.SignInVM.Message.GotAcceptedSignal, success = true)
-                viewModelScope.launch {
-                    _navigationEvent.value = EmailConfirmationNavigationEvent.MainScreen
-                }
+                _navigationEvent.value = EmailConfirmationNavigationEvent.MainScreen
             },
             onError = { error ->
                 logger.log(LogTag.SignInVM.Message.BiometricAuthFailed, error, success = false)

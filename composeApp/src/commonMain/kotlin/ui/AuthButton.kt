@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import core.AppColors
 import org.koin.compose.koinInject
@@ -46,7 +47,12 @@ fun AuthProviderButton(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .border(1.dp, AppColors.BorderColor, shape),
+            .border(1.dp, AppColors.BorderColor, shape)
+            .testTag(when (provider) {
+                EmailProvider.MANUAL -> "signin-email-manual"
+                EmailProvider.APPLE -> "signin-apple"
+                EmailProvider.GOOGLE -> "signin-google"
+            }),
         shape = shape,
         colors = ButtonDefaults.buttonColors(
             containerColor = if (provider != EmailProvider.MANUAL) {AppColors.DarkBlue} else {Color.Transparent},

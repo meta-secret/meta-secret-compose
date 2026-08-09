@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.core.screen.ScreenKey
@@ -289,7 +290,9 @@ class EmailConfirmationScreen(
                                     },
                                     text = appString(AppString.join),
                                     isEnabled = !isLoading,
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("email-confirmation-join")
                                 )
                                 NakedButton(
                                     title = appString(AppString.emailSelectionChange),
@@ -307,7 +310,9 @@ class EmailConfirmationScreen(
                                     },
                                     text = appString(AppString.emailSelectionContinue),
                                     isEnabled = !isLoading,
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("email-confirmation-continue")
                                 )
                                 NakedButton(
                                     title = appString(AppString.emailSelectionChange),

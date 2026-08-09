@@ -17,7 +17,7 @@ import core.KeyValueStorageInterface
 import core.LogTag
 import core.DebugLoggerInterface
 import core.LogFormatterInterface
-import models.apiModels.ClaimStatus
+import models.apiModels.ClientStatus
 import models.apiModels.RecoveredSecretModel
 import models.apiModels.SearchClaimModel
 import models.appInternalModels.ClaimModel
@@ -135,13 +135,12 @@ class MetaSecretAppManager(
             var pendingCount = 0
             var sentCount = 0
             var deliveredCount = 0
-            
+
             for (claim in claims) {
-                val myStatus = claim.status.statuses[deviceId] ?: continue
-                when (myStatus) {
-                    ClaimStatus.PENDING -> pendingCount++
-                    ClaimStatus.SENT -> sentCount++
-                    ClaimStatus.DELIVERED -> deliveredCount++
+                when (claim.clientStatus) {
+                    ClientStatus.NEED_APPROVE -> pendingCount++
+                    ClientStatus.ACCEPTED -> sentCount++
+                    ClientStatus.DONE -> deliveredCount++
                     else -> { }
                 }
             }
@@ -201,8 +200,7 @@ class MetaSecretAppManager(
             return null
         }
         
-        // Using cached state from socket polling
-        // metaSecretCore.getAppState() TODO: Need to uncomment, once real socket is ready
+        // Uses AppState refreshed by launch, lifecycle, explicit action, or socket invalidation.
         val cachedState = appStateCacheProvider.appState.value ?: return null
         
         return try {

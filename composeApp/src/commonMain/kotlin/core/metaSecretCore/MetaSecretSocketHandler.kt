@@ -1,24 +1,21 @@
 package core.metaSecretCore
 
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import models.apiModels.AppStateModel
-import models.apiModels.ClaimStatus
+import models.apiModels.ClientStatus
 import models.apiModels.DistributionType
 import models.apiModels.UserDataOutsiderStatus
+import models.apiModels.UserStatus
 import models.apiModels.VaultFullInfo
 import models.appInternalModels.RestoreData
 import models.appInternalModels.SocketActionModel
@@ -38,27 +35,46 @@ class MetaSecretSocketHandler(
     private val notificationCoordinator: NotificationCoordinatorInterface,
     private val errorMapper: ErrorMapper,
     private val appStateCacheProvider: AppStateCacheProviderInterface,
-    private val stringProvider: StringProviderInterface
+    private val stringProvider: StringProviderInterface,
+    private val socketClient: MetaSecretSocketClient = NoopMetaSecretSocketClient()
 ): MetaSecretSocketHandlerInterface {
     private val _socketActionType = MutableStateFlow<SocketActionModel>(SocketActionModel.NONE)
     override val socketActionType: StateFlow<SocketActionModel> = _socketActionType
 
     private val _socketActions = MutableSharedFlow<SocketActionModel>(
         replay = 0,
-        extraBufferCapacity = 1
+        extraBufferCapacity = 16
     )
     override val socketActions: SharedFlow<SocketActionModel> = _socketActions
 
     private var actionsToFollow = mutableSetOf<SocketRequestModel>()
-    private var timerJob: Job? = null
-    private val timerScope = CoroutineScope(Dispatchers.IO)
+    private val socketScope = CoroutineScope(Dispatchers.IO)
+    private var refreshJob: Job? = null
+    private var pendingRefresh = false
     private var isPaused = false
+    private var isForeground = false
     private var processingSecretName: String? = null
     private var lastEmittedReadyToRecoverClaimId: String? = null
 
     init {
         logger.log(core.LogTag.SocketHandler.Message.Init, success = true)
-        startFollowing()
+        socketScope.launch {
+            socketClient.events.collect { event ->
+                when (event) {
+                    is MetaSecretSocketEvent.Connected -> refreshFromSocketReconnect()
+                    is MetaSecretSocketEvent.StateInvalidated -> refreshFromInvalidation(event.claimId)
+                    is MetaSecretSocketEvent.Disconnected -> Unit
+                    is MetaSecretSocketEvent.Error -> {
+                        logger.log(
+                            core.LogTag.SocketHandler.Message.SocketError,
+                            event.message,
+                            success = false
+                        )
+                        refreshFromSocketError()
+                    }
+                }
+            }
+        }
     }
 
     override fun actionsToFollow(
@@ -72,10 +88,11 @@ class MetaSecretSocketHandler(
         add?.let { toAdd ->
             actionsToFollow.addAll(toAdd)
             val needsImmediateSync = toAdd.any {
-                it == SocketRequestModel.SHOW_SECRET || it == SocketRequestModel.WAIT_FOR_RECOVER_REQUEST
+                it == SocketRequestModel.SHOW_SECRET ||
+                    it == SocketRequestModel.WAIT_FOR_JOIN_APPROVE
             }
             if (needsImmediateSync) {
-                timerScope.launch { searchRequest() }
+                refreshAppState()
             }
         }
         logger.log(core.LogTag.SocketHandler.Message.ActualActionsToFollow, "$actionsToFollow", success = true)
@@ -91,35 +108,86 @@ class MetaSecretSocketHandler(
         }
     }
 
-    private fun startFollowing() {
-        stopTimer()
-        timerJob = timerScope.launch {
-            while (isActive) {
+    override fun resetSocketActionType(expected: SocketActionModel?) {
+        if (expected == null || _socketActionType.value == expected) {
+            _socketActionType.value = SocketActionModel.NONE
+        }
+    }
+
+    override fun onAppLaunch() {
+        logger.log(core.LogTag.SocketHandler.Message.AppLaunchRefresh, success = true)
+        isForeground = true
+        refreshAppState()
+    }
+
+    override fun onAppForeground() {
+        logger.log(core.LogTag.SocketHandler.Message.ForegroundRefresh, success = true)
+        isForeground = true
+        refreshAppState()
+    }
+
+    override fun onAppBackground() {
+        logger.log(core.LogTag.SocketHandler.Message.BackgroundSocketSuspend, success = true)
+        isForeground = false
+        refreshJob?.cancel()
+        refreshJob = null
+        pendingRefresh = false
+        socketClient.disconnect()
+    }
+
+    override fun refreshAppState() {
+        scheduleRefresh()
+    }
+
+    private fun refreshFromSocketReconnect() {
+        logger.log(core.LogTag.SocketHandler.Message.SocketReconnectRefresh, success = true)
+        refreshAppState()
+    }
+
+    private fun refreshFromInvalidation(claimId: String?) {
+        logger.log(core.LogTag.SocketHandler.Message.StateInvalidated, "claimId=$claimId", success = true)
+        // Do not cancel an in-flight sync: cancellation can drop the refresh entirely.
+        // scheduleRefresh marks a follow-up refresh when one is already running.
+        scheduleRefresh()
+    }
+
+    private fun refreshFromSocketError() {
+        if (!isForeground) return
+        scheduleRefresh()
+    }
+
+    private fun scheduleRefresh() {
+        if (refreshJob?.isActive == true) {
+            pendingRefresh = true
+            return
+        }
+
+        refreshJob = socketScope.launch {
+            do {
+                pendingRefresh = false
                 searchRequest()
-                delay(5000)
-            }
+            } while (pendingRefresh)
+            refreshJob = null
         }
     }
 
     private suspend fun searchRequest() {
         if (isPaused) {
-            logger.log(core.LogTag.SocketHandler.Message.PollingSkippedWhilePaused, success = true)
+            logger.log(core.LogTag.SocketHandler.Message.RefreshSkippedWhilePaused, success = true)
             return
         }
 
         if (actionsToFollow.isEmpty()) {
             logger.log(core.LogTag.SocketHandler.Message.NoSubscriptions, success = true)
-            return
         }
 
-        logger.log(core.LogTag.SocketHandler.Message.FireTimer, success = true)
-        
         val currentState = try {
             val stateJson = withContext(Dispatchers.IO) {
-                metaSecretCore.getAppState() // MAIN POINT OF GETTING STATE, WHILE WE USE TIMER
+                metaSecretCore.getAppState()
             }
             val parsedState = AppStateModel.fromJson(stateJson, logger, null)
             appStateCacheProvider.updateCache(parsedState)
+            logger.log(core.LogTag.SocketHandler.Message.AppStateRefreshCompleted, success = true)
             parsedState
         } catch (e: CancellationException) {
             throw e
@@ -135,13 +203,35 @@ class MetaSecretSocketHandler(
             return
         }
 
+        configureSocketSubscriptionSafely(currentState)
+
         if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
-            val hasJoinRequests = currentState.getVaultEvents()?.hasJoinRequests() == true
+            val memberDeviceIds = currentState.getVaultSummary()
+                ?.users
+                ?.values
+                ?.filter { it.status == UserStatus.MEMBER }
+                ?.map { it.deviceId }
+                ?.toSet()
+                .orEmpty()
+            val hasJoinRequests = currentState.getVaultEvents()
+                ?.getJoinRequests()
+                ?.any { request -> request.candidate.device.deviceId !in memberDeviceIds } == true
+
+            logger.log(
+                core.LogTag.SocketHandler.Message.JoinRequestState,
+                "hasJoinRequests=$hasJoinRequests memberCount=${memberDeviceIds.size}",
+                success = true
+            )
 
             if (hasJoinRequests) {
                 logger.log(core.LogTag.SocketHandler.Message.NeedShowAskToJoin, success = true)
                 withContext(Dispatchers.Main) {
                     _socketActionType.value = SocketActionModel.ASK_TO_JOIN
+                }
+            } else if (_socketActionType.value == SocketActionModel.ASK_TO_JOIN) {
+                logger.log(core.LogTag.SocketHandler.Message.JoinRequestCleared, success = true)
+                withContext(Dispatchers.Main) {
+                    _socketActionType.value = SocketActionModel.NONE
                 }
             }
         }
@@ -151,14 +241,31 @@ class MetaSecretSocketHandler(
 
             withContext(Dispatchers.Main) {
                 when (currentState.getVaultFullInfo()) {
-                    is VaultFullInfo.Member -> _socketActionType.value = SocketActionModel.JOIN_REQUEST_ACCEPTED
-                    is VaultFullInfo.NotExists -> _socketActionType.value = SocketActionModel.NONE
+                    is VaultFullInfo.Member -> {
+                        actionsToFollow.remove(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)
+                        _socketActionType.value = SocketActionModel.NONE
+                        _socketActions.tryEmit(SocketActionModel.JOIN_REQUEST_ACCEPTED)
+                    }
+                    is VaultFullInfo.NotExists -> {
+                        actionsToFollow.remove(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)
+                        _socketActionType.value = SocketActionModel.NONE
+                    }
                     is VaultFullInfo.Outsider -> {
                         when (currentState.getOutsiderStatus()) {
-                            UserDataOutsiderStatus.NON_MEMBER -> { _socketActionType.value = SocketActionModel.NONE }
+                            UserDataOutsiderStatus.NON_MEMBER -> {
+                                actionsToFollow.remove(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)
+                                _socketActionType.value = SocketActionModel.NONE
+                            }
                             UserDataOutsiderStatus.PENDING -> { _socketActionType.value = SocketActionModel.JOIN_REQUEST_PENDING }
-                            UserDataOutsiderStatus.DECLINED -> { _socketActionType.value = SocketActionModel.JOIN_REQUEST_DECLINED }
-                            null -> _socketActionType.value = SocketActionModel.NONE
+                            UserDataOutsiderStatus.DECLINED -> {
+                                actionsToFollow.remove(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)
+                                _socketActionType.value = SocketActionModel.NONE
+                                _socketActions.tryEmit(SocketActionModel.JOIN_REQUEST_DECLINED)
+                            }
+                            null -> {
+                                actionsToFollow.remove(SocketRequestModel.WAIT_FOR_JOIN_APPROVE)
+                                _socketActionType.value = SocketActionModel.NONE
+                            }
                         }
                     }
                     null -> _socketActionType.value = SocketActionModel.JOIN_REQUEST_PENDING
@@ -176,6 +283,31 @@ class MetaSecretSocketHandler(
         handleClaims(currentState)
     }
 
+    private fun configureSocketSubscriptionSafely(currentState: AppStateModel) {
+        try {
+            configureSocketSubscription(currentState)
+        } catch (e: Exception) {
+            logger.log(
+                core.LogTag.SocketHandler.Message.SocketError,
+                "socket subscription failed: ${e.message}",
+                success = false
+            )
+        }
+    }
+
+    private fun configureSocketSubscription(currentState: AppStateModel) {
+        val deviceId = currentState.getCurrentDeviceId()
+        val vaultName = currentState.getCurrentVaultName()
+        if (deviceId == null || vaultName == null) {
+            socketClient.configure(null)
+            return
+        }
+        socketClient.configure(MetaSecretSocketSubscription(vaultName = vaultName, deviceId = deviceId))
+        if (isForeground) {
+            socketClient.connect()
+        }
+    }
+
     private suspend fun handleClaims(currentState: AppStateModel) {
         val currentDeviceId = currentState.getCurrentDeviceId() ?: return
         val vaultFullInfo = currentState.getVaultFullInfo()
@@ -188,9 +320,7 @@ class MetaSecretSocketHandler(
             }
 
             logger.log(core.LogTag.SocketHandler.Message.FoundClaims, "${claims.size}", success = true)
-            if (actionsToFollow.contains(SocketRequestModel.WAIT_FOR_RECOVER_REQUEST)) {
-                checkRecoverRequest(claims, currentDeviceId)
-            }
+            checkRecoverRequest(claims, currentDeviceId)
             if (actionsToFollow.contains(SocketRequestModel.SHOW_SECRET)) {
                 checkRecoverSentStatus()
             }
@@ -198,33 +328,38 @@ class MetaSecretSocketHandler(
     }
 
     private fun checkRecoverRequest(claims: Map<String, ClaimObject>, currentDeviceId: String) {
-        val declinedClaimIds = claims.values
-            .filter { claim ->
-                claim.distributionType == DistributionType.RECOVER &&
-                    claim.receivers.contains(currentDeviceId) &&
-                    claim.status.statuses[currentDeviceId] == ClaimStatus.DECLINED
-            }
-            .map { it.distClaimId.id }
-        declinedClaimIds.forEach { claimId ->
-            if (claimId == lastEmittedReadyToRecoverClaimId) {
-                lastEmittedReadyToRecoverClaimId = null
-            }
-            logger.log(core.LogTag.SocketHandler.Message.DismissRecoveryRequest, "claimId=$claimId", success = true)
-            _socketActions.tryEmit(SocketActionModel.DISMISS_RECOVERY_REQUEST(claimId))
+        val recoverClaimsForDevice = claims.values.filter {
+            it.distributionType == DistributionType.RECOVER && it.receivers.contains(currentDeviceId)
         }
-        val firstPendingClaim = claims.values.firstOrNull { claim ->
+        if (recoverClaimsForDevice.isNotEmpty()) {
+            logger.log(
+                core.LogTag.SocketHandler.Message.ReceiverClaimStatuses,
+                recoverClaimsForDevice.joinToString { "${it.distClaimId.id}=${it.clientStatus}" },
+                success = true
+            )
+        }
+        val hasDoneClaim = claims.values.any { claim ->
+            claim.distributionType == DistributionType.RECOVER &&
+                claim.receivers.contains(currentDeviceId) &&
+                claim.clientStatus == ClientStatus.DONE
+        }
+        if (hasDoneClaim) {
+            lastEmittedReadyToRecoverClaimId = null
+            logger.log(core.LogTag.SocketHandler.Message.DismissRecoveryRequest, success = true)
+            _socketActions.tryEmit(SocketActionModel.DISMISS_RECOVERY_REQUEST)
+        }
+        val firstNeedApproveClaim = claims.values.firstOrNull { claim ->
             val isRecoverType = claim.distributionType == DistributionType.RECOVER
             val isReceiverForThisDevice = claim.receivers.contains(currentDeviceId)
-            val receiverStatus = claim.status.statuses[currentDeviceId]
-            val isPending = receiverStatus == ClaimStatus.PENDING
-            isRecoverType && isReceiverForThisDevice && isPending
+            val needsApproval = claim.clientStatus == ClientStatus.NEED_APPROVE
+            isRecoverType && isReceiverForThisDevice && needsApproval
         }
-        if (firstPendingClaim != null) {
-            val claimId = firstPendingClaim.distClaimId.id
+        if (firstNeedApproveClaim != null) {
+            val claimId = firstNeedApproveClaim.distClaimId.id
             if (claimId != lastEmittedReadyToRecoverClaimId) {
                 lastEmittedReadyToRecoverClaimId = claimId
-                val restoreData = RestoreData(claimId, firstPendingClaim.distClaimId.passId.name)
-                logger.log(core.LogTag.SocketHandler.Message.ReadyToRecover, "$restoreData", success = true)
+                val restoreData = RestoreData(claimId, firstNeedApproveClaim.distClaimId.passId.name)
+                logger.log(core.LogTag.SocketHandler.Message.ReadyToRecover, "claimId=$claimId secretId=${restoreData.secretId}", success = true)
                 _socketActionType.value = SocketActionModel.READY_TO_RECOVER(restoreData = restoreData)
             }
         } else {
@@ -241,22 +376,32 @@ class MetaSecretSocketHandler(
             }
             val existingClaim = SearchClaimModel.fromJson(searchResult)
             val claim = existingClaim.claim
-            val statusStr = claim?.status?.name ?: "null"
+            val clientStatusStr = claim?.clientStatus?.name ?: "null"
             val statusesStr = existingClaim.message?.claim?.status?.statuses?.entries
                 ?.joinToString { "${it.key}=${it.value.name}" } ?: "{}"
             logger.log(
                 core.LogTag.SocketHandler.Message.RecoverSentStatusClaimStatus,
-                "status=$statusStr statuses=$statusesStr",
+                "clientStatus=$clientStatusStr statuses=$statusesStr",
                 success = true
             )
-            when (claim?.status) {
-                ClaimStatus.SENT -> {
+            when (claim?.clientStatus) {
+                ClientStatus.ACCEPTED -> {
                     val claimId = claim.claimId ?: return
+                    logger.log(
+                        core.LogTag.SocketHandler.Message.RecoverSentForSecretId,
+                        "secretId=$secretName claimId=$claimId",
+                        success = true
+                    )
                     _socketActionType.value = SocketActionModel.NONE
-                    _socketActionType.value = SocketActionModel.RECOVER_SENT(claimId, secretName)
+                    _socketActionType.value = SocketActionModel.RECOVER_ACCEPTED(claimId, secretName)
                     processingSecretName = null
                 }
-                ClaimStatus.DECLINED -> {
+                ClientStatus.DECLINED -> {
+                    logger.log(
+                        core.LogTag.SocketHandler.Message.RecoverDeclinedForSecretId,
+                        "secretId=$secretName",
+                        success = true
+                    )
                     _socketActionType.value = SocketActionModel.NONE
                     _socketActionType.value = SocketActionModel.RECOVER_DECLINED(secretName)
                     processingSecretName = null
@@ -268,19 +413,13 @@ class MetaSecretSocketHandler(
         }
     }
 
-    private fun stopTimer() {
-        logger.log(LogTag.SocketHandler.Message.TimerStopped, success = true)
-        timerJob?.cancel()
-        timerJob = null
-    }
-
-    override fun pausePolling() {
-        logger.log(LogTag.SocketHandler.Message.PollingPaused, success = true)
+    override fun pauseRefreshes() {
+        logger.log(LogTag.SocketHandler.Message.RefreshesPaused, success = true)
         isPaused = true
     }
 
-    override fun resumePolling() {
-        logger.log(LogTag.SocketHandler.Message.PollingResumed, success = true)
+    override fun resumeRefreshes() {
+        logger.log(LogTag.SocketHandler.Message.RefreshesResumed, success = true)
         isPaused = false
     }
 }

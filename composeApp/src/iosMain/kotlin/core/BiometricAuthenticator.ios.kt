@@ -1,6 +1,7 @@
 package core
 
 import kotlinx.cinterop.ExperimentalForeignApi
+import platform.Foundation.NSProcessInfo
 import platform.Foundation.NSURL
 import platform.LocalAuthentication.LAContext
 import platform.LocalAuthentication.LAPolicyDeviceOwnerAuthentication
@@ -28,6 +29,11 @@ class BiometricAuthenticatorIos(
         onError: (String) -> Unit,
         onFallback: () -> Unit
     ) {
+        if (isRunningInTest()) {
+            onSuccess()
+            return
+        }
+
         if (!isBiometricAvailable()) {
             onError(stringProvider.biometricNotAvailable())
             return
@@ -64,4 +70,7 @@ class BiometricAuthenticatorIos(
             UIApplication.sharedApplication.openURL(settingsUrl)
         }
     }
+
+    private fun isRunningInTest(): Boolean =
+        NSProcessInfo.processInfo.environment["METASECRET_UI_TEST_MODE"]?.toString() == "true"
 } 

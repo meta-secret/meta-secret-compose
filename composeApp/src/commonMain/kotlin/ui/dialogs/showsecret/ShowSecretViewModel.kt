@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import models.apiModels.ClaimStatus
+import models.apiModels.ClientStatus
 import models.appInternalModels.SecretModel
 import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
@@ -58,7 +58,7 @@ class ShowSecretViewModel(
                     logger.log(LogTag.ShowSecretVM.Message.RecoverSecretId, event.secretName, success = true)
                     currentSecretName = event.secretName
                     userRequestedRecovery = true
-                    socketHandler.pausePolling()
+                    socketHandler.pauseRefreshes()
                     findClaim(event.secretName)
                 }
 
@@ -91,7 +91,7 @@ class ShowSecretViewModel(
         if (devicesCount.value <= 2) {
             logger.log(LogTag.ShowSecretVM.Message.SingleDeviceMode, success = true)
             showRecoveredSecret(secretName)
-            socketHandler.resumePolling()
+            socketHandler.resumeRefreshes()
             return
         }
 
@@ -106,38 +106,49 @@ class ShowSecretViewModel(
                     add = listOf(SocketRequestModel.SHOW_SECRET),
                     exclude = null
                 )
-                when (existingClaim?.status) {
-                    ClaimStatus.PENDING -> {
+                socketHandler.setProcessingSecretName(secretName)
+
+                when (existingClaim?.clientStatus) {
+                    null -> {
+                        logger.log(LogTag.ShowSecretVM.Message.NoExistingClaim, success = true)
+                        recoverSecret(secretName)
+                    }
+
+                    ClientStatus.PENDING -> {
+                        logger.log(
+                            LogTag.ShowSecretVM.Message.PendingClaimExists,
+                            "claimId=${existingClaim.claimId}",
+                            success = true
+                        )
                         showNotification(stringProvider.recoverRequestSent(), isError = false)
-                        socketHandler.resumePolling()
+                        socketHandler.resumeRefreshes()
                     }
 
-                    ClaimStatus.SENT -> {
-                        if (existingClaim.senderStatus == ClaimStatus.DELIVERED) {
-                            recoverSecret(secretName)
-                        } else {
-                            showRecoveredSecret(secretName)
-                        }
-                        socketHandler.resumePolling()
+                    // ACCEPTED / DECLINED: owned by invalidation refresh on processingSecretName,
+                    // avoids double-dispatching showRecoveredSecret()/the declined path from here too.
+                    else -> {
+                        logger.log(
+                            LogTag.ShowSecretVM.Message.AwaitingPollerResolution,
+                            "clientStatus=${existingClaim?.clientStatus}",
+                            success = true
+                        )
+                        socketHandler.resumeRefreshes()
                     }
-
-                    else -> recoverSecret(secretName)
                 }
             } catch (t: Throwable) {
                 logger.log(LogTag.ShowSecretVM.Message.RecoverFailed, "${t.message}", success = false)
                 _isLoading.value = false
-                socketHandler.resumePolling()
+                socketHandler.resumeRefreshes()
             }
         }
     }
 
     private suspend fun recoverSecret(secretName: String) {
-        socketHandler.setProcessingSecretName(secretName)
         withContext(Dispatchers.IO) {
             metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))
         }
         showNotification(stringProvider.recoverRequestSent(), isError = false)
-        socketHandler.resumePolling()
+        socketHandler.resumeRefreshes()
     }
 
     private fun showRecoveredSecret(secretId: String) {

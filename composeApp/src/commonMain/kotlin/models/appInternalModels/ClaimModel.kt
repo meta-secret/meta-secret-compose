@@ -1,7 +1,7 @@
 package models.appInternalModels
 
 import kotlinx.serialization.Serializable
-import models.apiModels.ClaimStatus
+import models.apiModels.ClientStatus
 import models.apiModels.DistributionType
 
 @Serializable
@@ -10,6 +10,5 @@ data class ClaimModel(
     val sender: String?,
     val distributionType: DistributionType,
     val receivers: List<String>?,
-    val status: ClaimStatus,
-    val senderStatus: ClaimStatus? = null,
+    val clientStatus: ClientStatus? = null,
 )

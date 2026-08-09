@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.koin.compose.koinInject
 
@@ -27,9 +28,10 @@ fun AddButton(action: (Boolean) -> Unit) {
     ) {
         Image(
             painter = imageProvider.getPainter(AppImage.AddButton),
-            contentDescription = null,
+            contentDescription = "Add Secret",
             modifier = Modifier
                 .size(imgSize.dp)
+                .testTag("add-secret-fab")
                 .clickable { action(true) }
         )
     }

@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -156,7 +157,8 @@ fun OnboardingHeader(pagerState: PagerState, viewModel: OnboardingViewModel, pag
                         coroutineScope.launch {
                             viewModel.handle(OnboardingViewEvents.COMPLETE_ONBOARDING)
                         }
-                    },
+                    }
+                    .testTag("onboarding-skip"),
                 text = appString(AppString.skip),
                 color = AppColors.ActionLink,
                 style = AppTextStyles.CaptionStrong(),

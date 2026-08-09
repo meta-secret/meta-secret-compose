@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version "2.1.21-RC"
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
     id("io.github.ttypic.swiftklib")
 }
 
@@ -28,6 +29,8 @@ val googleServerClientId = providers.gradleProperty("GOOGLE_SERVER_CLIENT_ID").o
     ?: ""
 val appleClientId = providers.gradleProperty("APPLE_CLIENT_ID").orNull ?: ""
 val appleRedirectUri = providers.gradleProperty("APPLE_REDIRECT_URI").orNull ?: "metasecret://apple-auth"
+val metaSecretEnvironment = providers.gradleProperty("META_SECRET_ENV").orNull ?: "remote"
+val metaSecretSocketUrl = providers.gradleProperty("META_SECRET_SOCKET_URL").orNull ?: ""
 
 kotlin {
     // BACKLOG(AGP 9+): migrate KMP + Android app to recommended multi-module layout —
@@ -119,6 +122,7 @@ kotlin {
             implementation(libs.googleid)
             implementation(libs.koin.android)
             implementation(libs.koin.android.compat)
+            implementation(libs.ktor.client.okhttp)
             runtimeOnly(libs.androidx.ui)
 
             if (rustlsPlatformVerifierAar != null) {
@@ -132,7 +136,7 @@ kotlin {
         }
 
         iosMain.dependencies {
-            // iOS-specific dependencies
+            implementation(libs.ktor.client.darwin)
         }
 
         commonMain.dependencies {
@@ -157,6 +161,7 @@ kotlin {
             implementation(libs.serialization.json)
             implementation(libs.multiplatform.settings.serialization)
             implementation(libs.coroutines.core)
+            implementation(libs.ktor.client.core)
             implementation(libs.settings.coroutine)
             implementation(libs.qr.kit)
             implementation(libs.jetbrains.lifecycle.runtime.compose)
@@ -165,6 +170,15 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.coroutines.test)
+            implementation(compose.ui)
+            implementation(compose.foundation)
+            implementation("io.kotest:kotest-framework-engine:5.8.0")
+        }
+
+        iosTest.dependencies {
+            implementation(compose.ui)
+            implementation(compose.foundation)
+            implementation("io.kotest:kotest-framework-engine:5.8.0")
         }
     }
 }
@@ -195,6 +209,8 @@ android {
         buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"$googleServerClientId\"")
         buildConfigField("String", "APPLE_CLIENT_ID", "\"$appleClientId\"")
         buildConfigField("String", "APPLE_REDIRECT_URI", "\"$appleRedirectUri\"")
+        buildConfigField("String", "META_SECRET_ENV", "\"$metaSecretEnvironment\"")
+        buildConfigField("String", "META_SECRET_SOCKET_URL", "\"$metaSecretSocketUrl\"")
 
     }
     packaging {
@@ -231,6 +247,11 @@ dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.runtime.android)
     runtimeOnly(libs.androidx.runtime)
+
+    // Compose Testing
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.compose.ui:ui-test-manifest")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
 }
 
 swiftklib {
