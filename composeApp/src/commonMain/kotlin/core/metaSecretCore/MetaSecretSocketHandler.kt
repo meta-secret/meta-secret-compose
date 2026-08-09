@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -16,6 +15,7 @@ import models.apiModels.AppStateModel
 import models.apiModels.ClientStatus
 import models.apiModels.DistributionType
 import models.apiModels.UserDataOutsiderStatus
+import models.apiModels.UserStatus
 import models.apiModels.VaultFullInfo
 import models.appInternalModels.RestoreData
 import models.appInternalModels.SocketActionModel
@@ -55,7 +55,6 @@ class MetaSecretSocketHandler(
     private var isForeground = false
     private var processingSecretName: String? = null
     private var lastEmittedReadyToRecoverClaimId: String? = null
-    private val socketErrorRefreshDelayMs = 1_000L
 
     init {
         logger.log(core.LogTag.SocketHandler.Message.Init, success = true)
@@ -147,28 +146,25 @@ class MetaSecretSocketHandler(
 
     private fun refreshFromInvalidation(claimId: String?) {
         logger.log(core.LogTag.SocketHandler.Message.StateInvalidated, "claimId=$claimId", success = true)
-        scheduleRefresh(delayMs = 150)
+        // Do not cancel an in-flight sync: cancellation can drop the refresh entirely.
+        // scheduleRefresh marks a follow-up refresh when one is already running.
+        scheduleRefresh()
     }
 
     private fun refreshFromSocketError() {
         if (!isForeground) return
-        scheduleRefresh(delayMs = socketErrorRefreshDelayMs)
+        scheduleRefresh()
     }
 
-    private fun scheduleRefresh(delayMs: Long = 0) {
+    private fun scheduleRefresh() {
         if (refreshJob?.isActive == true) {
             pendingRefresh = true
             return
         }
 
         refreshJob = socketScope.launch {
-            var nextDelayMs = delayMs
             do {
                 pendingRefresh = false
-                if (nextDelayMs > 0) {
-                    delay(nextDelayMs)
-                    nextDelayMs = 0
-                }
                 searchRequest()
             } while (pendingRefresh)
             refreshJob = null
@@ -191,7 +187,6 @@ class MetaSecretSocketHandler(
             }
             val parsedState = AppStateModel.fromJson(stateJson, logger, null)
             appStateCacheProvider.updateCache(parsedState)
-            configureSocketSubscription(parsedState)
             logger.log(core.LogTag.SocketHandler.Message.AppStateRefreshCompleted, success = true)
             parsedState
         } catch (e: CancellationException) {
@@ -208,13 +203,35 @@ class MetaSecretSocketHandler(
             return
         }
 
+        configureSocketSubscriptionSafely(currentState)
+
         if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
-            val hasJoinRequests = currentState.getVaultEvents()?.hasJoinRequests() == true
+            val memberDeviceIds = currentState.getVaultSummary()
+                ?.users
+                ?.values
+                ?.filter { it.status == UserStatus.MEMBER }
+                ?.map { it.deviceId }
+                ?.toSet()
+                .orEmpty()
+            val hasJoinRequests = currentState.getVaultEvents()
+                ?.getJoinRequests()
+                ?.any { request -> request.candidate.device.deviceId !in memberDeviceIds } == true
+
+            logger.log(
+                core.LogTag.SocketHandler.Message.JoinRequestState,
+                "hasJoinRequests=$hasJoinRequests memberCount=${memberDeviceIds.size}",
+                success = true
+            )
 
             if (hasJoinRequests) {
                 logger.log(core.LogTag.SocketHandler.Message.NeedShowAskToJoin, success = true)
                 withContext(Dispatchers.Main) {
                     _socketActionType.value = SocketActionModel.ASK_TO_JOIN
+                }
+            } else if (_socketActionType.value == SocketActionModel.ASK_TO_JOIN) {
+                logger.log(core.LogTag.SocketHandler.Message.JoinRequestCleared, success = true)
+                withContext(Dispatchers.Main) {
+                    _socketActionType.value = SocketActionModel.NONE
                 }
             }
         }
@@ -264,6 +281,18 @@ class MetaSecretSocketHandler(
         }
 
         handleClaims(currentState)
+    }
+
+    private fun configureSocketSubscriptionSafely(currentState: AppStateModel) {
+        try {
+            configureSocketSubscription(currentState)
+        } catch (e: Exception) {
+            logger.log(
+                core.LogTag.SocketHandler.Message.SocketError,
+                "socket subscription failed: ${e.message}",
+                success = false
+            )
+        }
     }
 
     private fun configureSocketSubscription(currentState: AppStateModel) {
