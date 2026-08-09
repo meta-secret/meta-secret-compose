@@ -27,7 +27,12 @@ import metasecret.project.com.BuildConfig
 
 val androidPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceAndroid() }
-    single<MetaSecretSocketClient> { AndroidMetaSecretSocketClient(BuildConfig.META_SECRET_SOCKET_URL) }
+    single<MetaSecretSocketClient> {
+        AndroidMetaSecretSocketClient(
+            endpoint = BuildConfig.META_SECRET_SOCKET_URL,
+            environment = BuildConfig.META_SECRET_ENV,
+        )
+    }
     factory<KeyChainInterface> { (context: Context) ->
         KeyChainManagerAndroid(context, get())
     }

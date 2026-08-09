@@ -28,12 +28,16 @@ import core.LogFormatterIos
 import core.metaSecretCore.IosMetaSecretSocketClient
 import core.metaSecretCore.MetaSecretSocketClient
 import kotlinx.cinterop.ExperimentalForeignApi
+import platform.Foundation.NSBundle
 
 @OptIn(ExperimentalForeignApi::class)
 val iosPlatformModule = module {
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceIos(get(), get()) }
     single<MetaSecretSocketClient> {
-        IosMetaSecretSocketClient(endpoint = "")
+        IosMetaSecretSocketClient(
+            endpoint = NSBundle.mainBundle.objectForInfoDictionaryKey("META_SECRET_SOCKET_URL") as? String ?: "",
+            environment = NSBundle.mainBundle.objectForInfoDictionaryKey("META_SECRET_ENV") as? String ?: "remote",
+        )
     }
     single<StringProviderInterface> { StringProviderIos() }
     single<ClientDeviceInfoProviderInterface> { ClientDeviceInfoProviderIos() }

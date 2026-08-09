@@ -58,9 +58,11 @@ private const val MAX_RECONNECT_DELAY_MS = 30_000L
 
 class MetaSecretStateEventsClient(
     endpoint: String,
+    environment: String = "remote",
+    localEndpoint: String,
     private val httpClient: HttpClient,
 ) : MetaSecretSocketClient {
-    private val stateEventsUrl = normalizeStateEventsEndpoint(endpoint)
+    private val stateEventsUrl = normalizeStateEventsEndpoint(endpoint, environment, localEndpoint)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val json = Json { ignoreUnknownKeys = true }
     private val _events = MutableSharedFlow<MetaSecretSocketEvent>(extraBufferCapacity = 8)
@@ -173,10 +175,27 @@ class MetaSecretStateEventsClient(
     }
 }
 
-private fun normalizeStateEventsEndpoint(endpoint: String): String {
+enum class MetaSecretServerEnvironment {
+    Local,
+    Remote,
+}
+
+private fun parseMetaSecretServerEnvironment(environment: String): MetaSecretServerEnvironment {
+    return when (environment.trim().lowercase()) {
+        "local" -> MetaSecretServerEnvironment.Local
+        "remote", "prod", "production" -> MetaSecretServerEnvironment.Remote
+        else -> MetaSecretServerEnvironment.Remote
+    }
+}
+
+private fun normalizeStateEventsEndpoint(endpoint: String, environment: String, localEndpoint: String): String {
     val trimmed = endpoint.trim()
-    if (trimmed.isBlank() || trimmed.contains("\$(")) return DEFAULT_STATE_EVENTS_URL
-    if (trimmed.contains("localhost")) return DEFAULT_STATE_EVENTS_URL
+    if (trimmed.isBlank() || trimmed.contains("\$(")) {
+        return when (parseMetaSecretServerEnvironment(environment)) {
+            MetaSecretServerEnvironment.Local -> localEndpoint
+            MetaSecretServerEnvironment.Remote -> DEFAULT_STATE_EVENTS_URL
+        }
+    }
     return if (trimmed.endsWith("/state-events")) {
         trimmed
     } else {

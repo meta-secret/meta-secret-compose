@@ -6,8 +6,11 @@ import java.util.concurrent.TimeUnit
 
 class AndroidMetaSecretSocketClient(
     endpoint: String,
+    environment: String,
 ) : MetaSecretSocketClient by MetaSecretStateEventsClient(
     endpoint = endpoint,
+    environment = environment,
+    localEndpoint = "http://10.0.2.2:3000/state-events",
     httpClient = HttpClient(OkHttp) {
         engine {
             config {

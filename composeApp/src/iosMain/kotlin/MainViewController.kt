@@ -16,7 +16,7 @@ fun MainViewController() = run {
             )
         }
     }
-    
+
     ComposeUIViewController { App() }
 }
 

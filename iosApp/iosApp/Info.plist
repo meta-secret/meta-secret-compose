@@ -39,6 +39,8 @@
 	<string>$(APPLE_REDIRECT_URI)</string>
 	<key>META_SECRET_SOCKET_URL</key>
 	<string>$(META_SECRET_SOCKET_URL)</string>
+	<key>META_SECRET_ENV</key>
+	<string>$(META_SECRET_ENV)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>

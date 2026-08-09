@@ -6,3 +6,4 @@ GOOGLE_REVERSED_CLIENT_ID=com.googleusercontent.apps.79304995906-0ps9so47ach4b5s
 APPLE_CLIENT_ID=
 APPLE_REDIRECT_URI=metasecret://apple-auth
 META_SECRET_SOCKET_URL=https://api.meta-secret.org/state-events
+META_SECRET_ENV=local
