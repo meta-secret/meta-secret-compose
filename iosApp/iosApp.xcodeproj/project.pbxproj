@@ -10,8 +10,6 @@
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
-		61E7A0012F30A00000A00001 /* OneDeviceUITest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E7A0002F30A00000A00001 /* OneDeviceUITest.swift */; };
-		61E7A0112F30A00000A00001 /* ThreeDeviceUITest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E7A0102F30A00000A00001 /* ThreeDeviceUITest.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		E56CFB602DDFA36500D674CD /* SwiftBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56CFB5F2DDFA36500D674CD /* SwiftBridge.swift */; };
 		E5F5B5B82EFD8E0700F73916 /* SwiftLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F5B5B72EFD8E0700F73916 /* SwiftLogger.swift */; };
@@ -33,9 +31,7 @@
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
-		61E7A0002F30A00000A00001 /* OneDeviceUITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneDeviceUITest.swift; sourceTree = "<group>"; };
 		61E7A0062F30A00000A00001 /* iosAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iosAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		61E7A0102F30A00000A00001 /* ThreeDeviceUITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeDeviceUITest.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* MetaSecret.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MetaSecret.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -104,8 +100,6 @@
 		61E7A0072F30A00000A00001 /* iosAppUITests */ = {
 			isa = PBXGroup;
 			children = (
-				61E7A0002F30A00000A00001 /* OneDeviceUITest.swift */,
-				61E7A0102F30A00000A00001 /* ThreeDeviceUITest.swift */,
 			);
 			path = iosAppUITests;
 			sourceTree = "<group>";
@@ -302,8 +296,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				61E7A0012F30A00000A00001 /* OneDeviceUITest.swift in Sources */,
-				61E7A0112F30A00000A00001 /* ThreeDeviceUITest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

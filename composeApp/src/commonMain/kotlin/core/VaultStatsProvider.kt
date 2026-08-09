@@ -66,11 +66,28 @@ class VaultStatsProvider(
             val vaultInfo = appState.getVaultFullInfo()
             if (vaultInfo is VaultFullInfo.Member) {
                 val vaultSummary = appState.getVaultSummary()
+                val joinRequests = vaultInfo.member.vaultEvents?.getJoinRequests().orEmpty()
+                val memberDeviceIds = vaultSummary
+                    ?.users
+                    ?.values
+                    ?.filter { it.status == UserStatus.MEMBER }
+                    ?.map { it.deviceId }
+                    ?.toSet()
+                    .orEmpty()
+                val pendingJoinRequestsCount = joinRequests.count { request ->
+                    request.candidate.device.deviceId !in memberDeviceIds
+                }
+                _joinRequestsCount.value = pendingJoinRequestsCount
+                logger.log(
+                    LogTag.VaultStatsProvider.Message.JoinRequestsCount,
+                    "events=${joinRequests.size} members=${memberDeviceIds.size} pending=$pendingJoinRequestsCount",
+                    success = true
+                )
+
                 if (vaultSummary != null) {
                     _secretsCount.value = vaultSummary.secretsCount
                     _devicesCount.value = vaultSummary.users.values.count { it.status == UserStatus.MEMBER }
                     _vaultName.value = vaultSummary.vaultName
-                    _joinRequestsCount.value = vaultInfo.member.vaultEvents?.getJoinRequestsCount()
                 } else {
                     logger.log(LogTag.VaultStatsProvider.Message.VaultSummaryNull, success = false)
                 }

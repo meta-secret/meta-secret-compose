@@ -58,6 +58,7 @@ class MetaSecretSocketHandlerInvalidationTest {
         var connectCalls = 0
         var disconnectCalls = 0
         var latestSubscription: MetaSecretSocketSubscription? = null
+        var failConnect = false
 
         override fun configure(subscription: MetaSecretSocketSubscription?) {
             latestSubscription = subscription
@@ -65,6 +66,7 @@ class MetaSecretSocketHandlerInvalidationTest {
 
         override fun connect() {
             connectCalls += 1
+            if (failConnect) error("connect failed")
         }
 
         override fun disconnect() {
@@ -80,7 +82,8 @@ class MetaSecretSocketHandlerInvalidationTest {
         currentDeviceId: String = "receiverDevice",
         vaultName: String = "vault1",
         claims: Map<String, ClaimObject> = emptyMap(),
-        hasJoinRequest: Boolean = false
+        hasJoinRequest: Boolean = false,
+        candidateIsMember: Boolean = false,
     ): AppStateModel {
         fun device(id: String) = DeviceData(
             deviceId = id,
@@ -90,11 +93,16 @@ class MetaSecretSocketHandlerInvalidationTest {
         )
 
         val currentUserData = UserData(device = device(currentDeviceId), vaultName = vaultName)
+        val users = mutableMapOf(currentDeviceId to UserMembership(member = UserDataMember(currentUserData)))
+        if (candidateIsMember) {
+            val candidateData = UserData(device = device("candidateDevice"), vaultName = vaultName)
+            users[candidateData.device.deviceId] = UserMembership(member = UserDataMember(candidateData))
+        }
         val vaultMember = VaultMember(
             member = UserDataMember(currentUserData),
             vault = VaultData(
                 vaultName = vaultName,
-                users = mapOf(currentDeviceId to UserMembership(member = UserDataMember(currentUserData))),
+                users = users,
                 secrets = emptyList()
             )
         )
@@ -228,6 +236,30 @@ class MetaSecretSocketHandlerInvalidationTest {
     }
 
     @Test
+    fun testStateRefreshProcessesNeedApproveRecoverClaimWhenSocketConnectFails() = runBlocking {
+        val claim = recoverClaim("claim1", "secret1", ClientStatus.NEED_APPROVE)
+        val core = FakeMetaSecretCore().apply {
+            appStateJson = JsonConfig.json.encodeToString(
+                AppStateModel.serializer(),
+                buildAppState(claims = mapOf("claim1" to claim))
+            )
+        }
+        val (handler, socketClient) = newHandler(core)
+        socketClient.failConnect = true
+
+        handler.onAppForeground()
+
+        waitUntil {
+            handler.socketActionType.value is SocketActionModel.READY_TO_RECOVER
+        }
+        val action = handler.socketActionType.value as SocketActionModel.READY_TO_RECOVER
+        assertEquals("claim1", action.restoreData.claimId)
+        assertEquals("secret1", action.restoreData.secretId)
+        assertEquals(1, core.getAppStateCalls)
+        assertEquals(1, socketClient.connectCalls)
+    }
+
+    @Test
     fun testAppForegroundReconnectsSocketAndRefreshesAppStateOnce() = runBlocking {
         val core = FakeMetaSecretCore().apply {
             appStateJson = JsonConfig.json.encodeToString(AppStateModel.serializer(), buildAppState())
@@ -341,6 +373,39 @@ class MetaSecretSocketHandlerInvalidationTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
+    fun testApprovedJoinRequestClearsAskToJoinAfterInvalidation() = runBlocking {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        try {
+            val core = FakeMetaSecretCore().apply {
+                appStateJson = JsonConfig.json.encodeToString(
+                    AppStateModel.serializer(),
+                    buildAppState(hasJoinRequest = true)
+                )
+            }
+            val (handler, socketClient) = newHandler(core)
+
+            handler.actionsToFollow(
+                add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN),
+                exclude = null
+            )
+            handler.refreshAppState()
+            waitUntil { handler.socketActionType.value == SocketActionModel.ASK_TO_JOIN }
+
+            core.appStateJson = JsonConfig.json.encodeToString(
+                AppStateModel.serializer(),
+                buildAppState(hasJoinRequest = true, candidateIsMember = true)
+            )
+            socketClient.emit(MetaSecretSocketEvent.StateInvalidated())
+
+            waitUntil { handler.socketActionType.value == SocketActionModel.NONE }
+            assertEquals(SocketActionModel.NONE, handler.socketActionType.value)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
     fun testWaitingForJoinApproveRefreshesAfterSocketErrorFallback() = runBlocking {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         try {
@@ -438,7 +503,7 @@ class MetaSecretSocketHandlerInvalidationTest {
         }
         val (handler, socketClient) = newHandler(core)
         handler.onAppForeground()
-        delay(100)
+        waitUntil { core.getAppStateCalls == 1 }
         core.getAppStateCalls = 0
         socketClient.emit(MetaSecretSocketEvent.Connected)
         delay(100)
@@ -448,22 +513,27 @@ class MetaSecretSocketHandlerInvalidationTest {
 
     @Test
     fun testDoneRecoveryClaimDismissesVisibleClaimAfterInvalidationRefresh() = runBlocking {
-        val claim = recoverClaim("claim1", "secret1", ClientStatus.DONE)
         val core = FakeMetaSecretCore().apply {
             appStateJson = JsonConfig.json.encodeToString(
                 AppStateModel.serializer(),
-                buildAppState(claims = mapOf("claim1" to claim))
+                buildAppState()
             )
         }
         val (handler, socketClient) = newHandler(core)
         handler.onAppForeground()
         delay(100)
 
-        socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = "claim1"))
-
-        val action = withTimeout(2000) {
+        val claim = recoverClaim("claim1", "secret1", ClientStatus.DONE)
+        core.appStateJson = JsonConfig.json.encodeToString(
+            AppStateModel.serializer(),
+            buildAppState(claims = mapOf("claim1" to claim))
+        )
+        val dismissAction = async(start = CoroutineStart.UNDISPATCHED) {
             handler.socketActions.first { it is SocketActionModel.DISMISS_RECOVERY_REQUEST }
         }
+        socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = "claim1"))
+
+        val action = withTimeout(2000) { dismissAction.await() }
         assertEquals(SocketActionModel.DISMISS_RECOVERY_REQUEST, action)
     }
 

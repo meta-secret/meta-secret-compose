@@ -199,7 +199,30 @@ class MainScreenViewModel(
                         if (TabStateHolder.selectedTabIndex.value != 1) {
                             _isWarningShown.value = true
                         }
+                    } else if (vaultStatsProvider.devicesCount.value >= 3) {
+                        _isWarningShown.value = false
+                        _isWarningDismissedByUser.value = false
                     }
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            var joinRequestWasVisible = false
+            socketHandler.socketActionType.collect { action ->
+                when (action) {
+                    SocketActionModel.ASK_TO_JOIN -> joinRequestWasVisible = true
+                    SocketActionModel.NONE -> if (joinRequestWasVisible) {
+                        // The socket handler has refreshed the vault and confirmed that
+                        // the request is no longer pending. Clear a stale warning before
+                        // the stats collector receives the same snapshot.
+                        joinRequestWasVisible = false
+                        _joinRequestsCount.value = 0
+                        _isJoinBadgeDismissed.value = false
+                        _isWarningDismissedByUser.value = false
+                        _isWarningShown.value = false
+                    }
+                    else -> Unit
                 }
             }
         }

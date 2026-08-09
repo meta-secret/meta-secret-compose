@@ -29,6 +29,7 @@ val googleServerClientId = providers.gradleProperty("GOOGLE_SERVER_CLIENT_ID").o
     ?: ""
 val appleClientId = providers.gradleProperty("APPLE_CLIENT_ID").orNull ?: ""
 val appleRedirectUri = providers.gradleProperty("APPLE_REDIRECT_URI").orNull ?: "metasecret://apple-auth"
+val metaSecretEnvironment = providers.gradleProperty("META_SECRET_ENV").orNull ?: "remote"
 val metaSecretSocketUrl = providers.gradleProperty("META_SECRET_SOCKET_URL").orNull ?: ""
 
 kotlin {
@@ -208,6 +209,7 @@ android {
         buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"$googleServerClientId\"")
         buildConfigField("String", "APPLE_CLIENT_ID", "\"$appleClientId\"")
         buildConfigField("String", "APPLE_REDIRECT_URI", "\"$appleRedirectUri\"")
+        buildConfigField("String", "META_SECRET_ENV", "\"$metaSecretEnvironment\"")
         buildConfigField("String", "META_SECRET_SOCKET_URL", "\"$metaSecretSocketUrl\"")
 
     }
