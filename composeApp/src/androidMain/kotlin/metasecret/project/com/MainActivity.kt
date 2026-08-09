@@ -28,6 +28,7 @@ import core.BiometricAuthenticatorInterface
 import core.KeyChainInterface
 import core.KeyChainManagerAndroid
 import core.KeyValueStorageInterface
+import core.metaSecretCore.MetaSecretSocketHandlerInterface
 
 
 class MainActivity : FragmentActivity() {
@@ -98,5 +99,19 @@ class MainActivity : FragmentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        org.koin.java.KoinJavaComponent.getKoin()
+            .get<MetaSecretSocketHandlerInterface>()
+            .onAppForeground()
+    }
+
+    override fun onStop() {
+        org.koin.java.KoinJavaComponent.getKoin()
+            .get<MetaSecretSocketHandlerInterface>()
+            .onAppBackground()
+        super.onStop()
     }
 }

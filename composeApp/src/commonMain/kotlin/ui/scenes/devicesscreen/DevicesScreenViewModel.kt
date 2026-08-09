@@ -66,6 +66,14 @@ class DevicesScreenViewModel(
         }
 
         viewModelScope.launch {
+            socketHandler.socketActions.collect { action ->
+                if (action == SocketActionModel.UPDATE_STATE) {
+                    loadDevicesList(true)
+                }
+            }
+        }
+
+        viewModelScope.launch {
             vaultStatsProvider.secretsCount.collect { count ->
                 _devicesList.value = _devicesList.value.map { it.copy(secretsCount = count) }
             }

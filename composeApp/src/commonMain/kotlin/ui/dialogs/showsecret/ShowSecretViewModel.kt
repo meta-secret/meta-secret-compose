@@ -58,7 +58,7 @@ class ShowSecretViewModel(
                     logger.log(LogTag.ShowSecretVM.Message.RecoverSecretId, event.secretName, success = true)
                     currentSecretName = event.secretName
                     userRequestedRecovery = true
-                    socketHandler.pausePolling()
+                    socketHandler.pauseRefreshes()
                     findClaim(event.secretName)
                 }
 
@@ -91,7 +91,7 @@ class ShowSecretViewModel(
         if (devicesCount.value <= 2) {
             logger.log(LogTag.ShowSecretVM.Message.SingleDeviceMode, success = true)
             showRecoveredSecret(secretName)
-            socketHandler.resumePolling()
+            socketHandler.resumeRefreshes()
             return
         }
 
@@ -121,10 +121,10 @@ class ShowSecretViewModel(
                             success = true
                         )
                         showNotification(stringProvider.recoverRequestSent(), isError = false)
-                        socketHandler.resumePolling()
+                        socketHandler.resumeRefreshes()
                     }
 
-                    // ACCEPTED / DECLINED: owned by checkRecoverSentStatus() polling on processingSecretName,
+                    // ACCEPTED / DECLINED: owned by invalidation refresh on processingSecretName,
                     // avoids double-dispatching showRecoveredSecret()/the declined path from here too.
                     else -> {
                         logger.log(
@@ -132,13 +132,13 @@ class ShowSecretViewModel(
                             "clientStatus=${existingClaim?.clientStatus}",
                             success = true
                         )
-                        socketHandler.resumePolling()
+                        socketHandler.resumeRefreshes()
                     }
                 }
             } catch (t: Throwable) {
                 logger.log(LogTag.ShowSecretVM.Message.RecoverFailed, "${t.message}", success = false)
                 _isLoading.value = false
-                socketHandler.resumePolling()
+                socketHandler.resumeRefreshes()
             }
         }
     }
@@ -148,7 +148,7 @@ class ShowSecretViewModel(
             metaSecretAppManager.recover(secretModel = SecretModel(secretName, null))
         }
         showNotification(stringProvider.recoverRequestSent(), isError = false)
-        socketHandler.resumePolling()
+        socketHandler.resumeRefreshes()
     }
 
     private fun showRecoveredSecret(secretId: String) {

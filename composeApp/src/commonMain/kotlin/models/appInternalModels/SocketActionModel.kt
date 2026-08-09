@@ -11,7 +11,7 @@ sealed class SocketActionModel {
     data class READY_TO_RECOVER(val restoreData: RestoreData) : SocketActionModel()
     data class RECOVER_ACCEPTED(val claimId: String, val secretId: String) : SocketActionModel()
     data class RECOVER_DECLINED(val secretId: String) : SocketActionModel()
-    data class DISMISS_RECOVERY_REQUEST(val claimId: String) : SocketActionModel()
+    data object DISMISS_RECOVERY_REQUEST : SocketActionModel()
 }
 
 @Serializable

@@ -138,13 +138,14 @@ class MainScreen : Screen {
                     .fillMaxSize()) {
                     CurrentTab()
 
-                    if (devicesCount < 3 || (joinRequestsCount != null && selectedTabIndex != 1)) {
+                    val hasJoinRequests = (joinRequestsCount ?: 0) > 0
+                    if (devicesCount < 3 || (hasJoinRequests && selectedTabIndex != 1)) {
                         viewModel.handle(MainViewEvents.ShowWarning(true))
                     } else {
                         viewModel.handle(MainViewEvents.ShowWarning(false))
                     }
 
-                    val computedWarningText = if (selectedTabIndex == 1 && joinRequestsCount != null && joinRequestsCount!! > 0) {
+                    val computedWarningText = if (selectedTabIndex == 1 && hasJoinRequests) {
                         null
                     } else {
                         getWarningText(joinRequestsCount, devicesCount)

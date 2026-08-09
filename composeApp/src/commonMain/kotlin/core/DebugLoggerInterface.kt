@@ -64,6 +64,8 @@ sealed class LogTag(val displayName: String) {
             object BiometricAuthFailed : Message("Biometric authentication failed")
             object BiometricAuthFallback : Message("Biometric authentication fallback")
             object ClearingSecretId : Message("Clearing secretIdToShow")
+            object RecoveryAlertShown : Message("Recovery alert shown")
+            object RecoveryAlertDismissed : Message("Recovery alert dismissed")
         }
     }
 
@@ -171,9 +173,9 @@ sealed class LogTag(val displayName: String) {
             object Init : Message("init")
             object UpdateActionsToFollow : Message("Update actions to follow")
             object ActualActionsToFollow : Message("Actual actions to follow")
-            object TimerStarted : Message("Timer is started")
-            object FireTimer : Message("Fire the timer!")
             object AppStateReceived : Message("AppState is")
+            object JoinRequestState : Message("Join request state after refresh")
+            object JoinRequestCleared : Message("Join request notification cleared")
             object NeedShowAskToJoin : Message("Need to show Ask to join pop up")
             object WaitingForJoinResponse : Message("Waiting for join response")
             object SocketEmmitOnStateResponse : Message("Emmit signal on state response")
@@ -192,11 +194,8 @@ sealed class LogTag(val displayName: String) {
             object RecoverSentForSecretId : Message("Recover sent for secretId")
             object RecoverDeclinedForSecretId : Message("Recover declined for secretId")
             object MarkingClaimAsDeclined : Message("Marking claim as locally declined")
-            object TimerStopped : Message("Timer is stopped")
-            object TimerRestartSkipped : Message("Timer restart skipped (already restarting)")
-            object PollingPaused : Message("Polling paused")
-            object PollingResumed : Message("Polling resumed")
-            object PollingSkippedWhilePaused : Message("Polling skipped while paused")
+            object RefreshesPaused : Message("AppState refreshes paused")
+            object RefreshesResumed : Message("AppState refreshes resumed")
             object ErrorGettingState : Message("Error getting app state")
             object ErrorCheckingRecoverRequest : Message("Error checking recover request")
             object ErrorCheckingRecoverSentStatus : Message("Error checking recover sent status")
@@ -205,6 +204,14 @@ sealed class LogTag(val displayName: String) {
             object RecoverSentStatusClaimStatus : Message("Claim status from findClaim")
             object DismissRecoveryRequest : Message("Dismiss recovery request for claimId")
             object ReceiverClaimStatuses : Message("Recover claims clientStatus for this device")
+            object StateInvalidated : Message("state_invalidated received")
+            object AppStateRefreshCompleted : Message("getAppState refresh completed")
+            object SocketReconnectRefresh : Message("Socket connected/reconnected, refreshing AppState")
+            object AppLaunchRefresh : Message("App launch refresh")
+            object ForegroundRefresh : Message("App foreground refresh")
+            object BackgroundSocketSuspend : Message("App background socket suspend")
+            object RefreshSkippedWhilePaused : Message("Refresh skipped while paused")
+            object SocketError : Message("Socket error")
         }
     }
 
@@ -284,7 +291,7 @@ sealed class LogTag(val displayName: String) {
             object RecoveredSecretLoaded : Message("Recovered secret loaded successfully")
             object FailedToRecoverSecret : Message("Failed to recover secret")
             object ShowRecoveredFailed : Message("showRecovered failed")
-            object AwaitingPollerResolution : Message("Claim already accepted/declined, waiting for socket poller to dispatch")
+            object AwaitingPollerResolution : Message("Claim already accepted/declined, waiting for socket invalidation refresh")
         }
     }
 
@@ -310,6 +317,7 @@ sealed class LogTag(val displayName: String) {
             object UpdateStateReceived : Message("UPDATE_STATE received, refreshing stats")
             object AskToJoinSignal : Message("ASK_TO_JOIN signal received, refreshing join requests count")
             object StatsUpdated : Message("Stats updated")
+            object JoinRequestsCount : Message("Join requests count after state refresh")
             object VaultSummaryNull : Message("VaultSummary is null during stats refresh")
             object FailedToRefreshStats : Message("Failed to refresh stats")
             object AppStateUpdated : Message("AppState updated from cache")

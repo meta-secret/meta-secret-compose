@@ -14,9 +14,9 @@ interface AlertCoordinatorInterface {
     
     fun showRecoveryRequest(restoreData: RestoreData)
     fun dismissRecoveryRequest()
-    fun dismissRecoveryRequestForClaim(claimId: String)
     fun onRecoveryRequestDecision(isAccepted: Boolean)
     fun setRecoveryRequestHandler(handler: (Boolean) -> Unit)
+    fun setRecoveryRequestDismissHandler(handler: (RestoreData) -> Unit)
     fun onRecoveryRequestProcessingComplete()
     fun showRecoverDeclinedNotification()
 }

@@ -17,8 +17,7 @@ class AlertCoordinator(
     
     private var joinRequestHandler: ((Boolean) -> Unit)? = null
     private var recoveryRequestHandler: ((Boolean) -> Unit)? = null
-    
-    private val recoverQueue: ArrayDeque<RestoreData> = ArrayDeque()
+    private var recoveryRequestDismissHandler: ((RestoreData) -> Unit)? = null
     
     override fun showJoinRequest(deviceId: String) {
         _joinRequestAlert.value = JoinRequestAlertState.Visible(deviceId)
@@ -41,31 +40,33 @@ class AlertCoordinator(
     }
     
     override fun showRecoveryRequest(restoreData: RestoreData) {
-        recoverQueue.addLast(restoreData)
-        if (_recoveryRequestAlert.value is RecoveryRequestAlertState.Hidden) {
-            showNextRecoveryPrompt()
-        }
-    }
-    
-    override fun dismissRecoveryRequest() {
-        _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
-        showNextRecoveryPrompt()
-    }
-
-    override fun dismissRecoveryRequestForClaim(claimId: String) {
-        recoverQueue.removeAll { it.claimId == claimId }
         val current = _recoveryRequestAlert.value
         val currentClaimId = when (current) {
             is RecoveryRequestAlertState.Visible -> current.restoreData.claimId
             is RecoveryRequestAlertState.Processing -> current.restoreData.claimId
             else -> null
         }
-        if (currentClaimId == claimId) {
-            _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
-            showNextRecoveryPrompt()
+        if (currentClaimId == restoreData.claimId) {
+            return
+        }
+        if (current is RecoveryRequestAlertState.Hidden) {
+            _recoveryRequestAlert.value = RecoveryRequestAlertState.Visible(restoreData)
         }
     }
     
+    override fun dismissRecoveryRequest() {
+        val current = _recoveryRequestAlert.value
+        val restoreData = when (current) {
+            is RecoveryRequestAlertState.Visible -> current.restoreData
+            is RecoveryRequestAlertState.Processing -> current.restoreData
+            else -> null
+        }
+        if (restoreData != null) {
+            recoveryRequestDismissHandler?.invoke(restoreData)
+        }
+        _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
+    }
+
     override fun onRecoveryRequestDecision(isAccepted: Boolean) {
         val currentState = _recoveryRequestAlert.value
         if (currentState is RecoveryRequestAlertState.Visible) {
@@ -77,19 +78,13 @@ class AlertCoordinator(
     override fun setRecoveryRequestHandler(handler: (Boolean) -> Unit) {
         recoveryRequestHandler = handler
     }
+
+    override fun setRecoveryRequestDismissHandler(handler: (RestoreData) -> Unit) {
+        recoveryRequestDismissHandler = handler
+    }
     
     override fun onRecoveryRequestProcessingComplete() {
         _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
-        showNextRecoveryPrompt()
-    }
-    
-    private fun showNextRecoveryPrompt() {
-        if (recoverQueue.isNotEmpty()) {
-            val next = recoverQueue.removeFirst()
-            _recoveryRequestAlert.value = RecoveryRequestAlertState.Visible(next)
-        } else {
-            _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
-        }
     }
     
     override fun showRecoverDeclinedNotification() {
