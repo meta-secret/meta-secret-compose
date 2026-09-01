@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,7 +41,8 @@ import ui.theme.AppTextStyles
 fun YesNoDialog(
     title: String,
     onDismiss: (Boolean?) -> Unit,
-    isVisible: Boolean
+    isVisible: Boolean,
+    testTag: String = "yes-no-dialog"
 ) {
     AnimatedVisibility(
         visible = isVisible,
@@ -55,6 +57,7 @@ fun YesNoDialog(
     ) {
         Box(
             modifier = Modifier
+                .testTag(testTag)
                 .fillMaxWidth()
                 .background(AppColors.PopUp, RoundedCornerShape(10.dp))
                 .height(200.dp)
@@ -83,14 +86,14 @@ fun YesNoDialog(
                     ClassicButton(
                         { onDismiss(true) },
                         appString(AppString.accept),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).testTag("$testTag-accept")
                     )
 
                     ClassicButton(
                         { onDismiss(false) },
                         appString(AppString.decline),
                         color = Color.Transparent,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).testTag("$testTag-decline")
                     )
                 }
 

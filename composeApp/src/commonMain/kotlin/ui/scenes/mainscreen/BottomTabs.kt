@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.Tab
@@ -85,6 +86,7 @@ object DevicesTab : Tab{
             if (hasJoinRequests) {
                 Box(
                     modifier = Modifier
+                        .testTag("devices-join-request-badge")
                         .size(12.dp)
                         .offset(x = 8.dp, y = (-8).dp)
                         .clip(CircleShape)

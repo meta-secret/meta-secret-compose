@@ -59,23 +59,6 @@ Stage 10: Create branch, commit, and pull request.
 
 ---
 
-## 🧪 Maestro E2E Testing
-
-**`write test-flow "<description>"`**  
-Write a new Maestro test flow from text description. Creates `.maestro/<test-name>.yaml`.
-
-Examples:
-- `write test-flow "User opens app and sees onboarding"`
-- `write test-flow "iOS: User enables biometry" --ios`
-- `write test-flow "Android: User taps back button" --android`
-
-**`check test-flow <test-name>`**  
-Run Maestro test on simulator/emulator. Builds, installs, runs test, reports results.
-
-Examples:
-- `check test-flow onboarding`
-- `check test-flow android-join-device`
-
 **`check-simulators [ios|android]`**  
 Check availability of iOS simulators and Android emulators. Shows which devices are ready to use.
 

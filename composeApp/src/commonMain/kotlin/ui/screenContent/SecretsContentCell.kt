@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -89,6 +90,7 @@ fun SecretsContent(
 //        content = {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    .testTag("secret-row-${secret.secretName}")
                     .background(AppColors.White5, RoundedCornerShape(12.dp)).height(96.dp)
                     .clickable {
                         onClick()

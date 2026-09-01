@@ -24,6 +24,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import core.AlertCoordinatorInterface
@@ -78,6 +79,7 @@ fun AlertProvider(
     
     BgFade(
         isVisible = isAlertVisible,
+        modifier = Modifier.testTag("alert-dismiss"),
         onDismiss = {
             if (canDismiss) {
                 when (alertType) {
@@ -113,7 +115,12 @@ fun AlertProvider(
                     }
                 }
             },
-            isVisible = isAlertVisible && !isProcessing
+            isVisible = isAlertVisible && !isProcessing,
+            testTag = when (alertType) {
+                AlertType.JoinRequest -> "alert-join-request"
+                AlertType.RecoveryRequest -> "alert-recovery-request"
+                null -> "alert-hidden"
+            }
         )
     }
 
@@ -121,7 +128,14 @@ fun AlertProvider(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .zIndex(10f),
+                .zIndex(10f)
+                .testTag(
+                    when (alertType) {
+                        AlertType.JoinRequest -> "alert-join-request-processing"
+                        AlertType.RecoveryRequest -> "alert-recovery-request-processing"
+                        null -> "alert-processing"
+                    }
+                ),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(
@@ -152,6 +166,7 @@ private fun determineAlertType(
 @Composable
 private fun BgFade(
     isVisible: Boolean,
+    modifier: Modifier = Modifier,
     onDismiss: () -> Unit
 ) {
     AnimatedVisibility(
@@ -161,7 +176,7 @@ private fun BgFade(
         label = "AlertBackgroundFade"
     ) {
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .background(color = AppColors.Black60)
                 .clickable { onDismiss() }

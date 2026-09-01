@@ -363,6 +363,7 @@ private fun PasswordSecretField(value: String, imageProvider: ImageProviderInter
                 style = AppTextStyles.Body(),
                 color = AppColors.White,
                 modifier = Modifier
+                    .testTag("revealed-secret-value")
                     .weight(1f)
                     .padding(end = 12.dp)
             )

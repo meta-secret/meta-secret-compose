@@ -338,16 +338,6 @@ class MetaSecretSocketHandler(
                 success = true
             )
         }
-        val hasDoneClaim = claims.values.any { claim ->
-            claim.distributionType == DistributionType.RECOVER &&
-                claim.receivers.contains(currentDeviceId) &&
-                claim.clientStatus == ClientStatus.DONE
-        }
-        if (hasDoneClaim) {
-            lastEmittedReadyToRecoverClaimId = null
-            logger.log(core.LogTag.SocketHandler.Message.DismissRecoveryRequest, success = true)
-            _socketActions.tryEmit(SocketActionModel.DISMISS_RECOVERY_REQUEST)
-        }
         val firstNeedApproveClaim = claims.values.firstOrNull { claim ->
             val isRecoverType = claim.distributionType == DistributionType.RECOVER
             val isReceiverForThisDevice = claim.receivers.contains(currentDeviceId)
@@ -363,6 +353,11 @@ class MetaSecretSocketHandler(
                 _socketActionType.value = SocketActionModel.READY_TO_RECOVER(restoreData = restoreData)
             }
         } else {
+            val hasDoneClaim = recoverClaimsForDevice.any { it.clientStatus == ClientStatus.DONE }
+            if (hasDoneClaim) {
+                logger.log(core.LogTag.SocketHandler.Message.DismissRecoveryRequest, success = true)
+                _socketActions.tryEmit(SocketActionModel.DISMISS_RECOVERY_REQUEST)
+            }
             lastEmittedReadyToRecoverClaimId = null
             logger.log(core.LogTag.SocketHandler.Message.NothingToRecover, success = true)
         }
