@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -102,6 +103,13 @@ class MainScreen : Screen {
                         ) {
                             tabs.forEachIndexed { index, tab ->
                                 NavigationBarItem(
+                                    modifier = Modifier.testTag(
+                                        when (index) {
+                                            0 -> "tab-secrets"
+                                            1 -> "tab-devices"
+                                            else -> "tab-profile"
+                                        }
+                                    ),
                                     selected = selectedTabIndex == index,
                                     onClick = {
                                         viewModel.handle(MainViewEvents.SetTabIndex(index))

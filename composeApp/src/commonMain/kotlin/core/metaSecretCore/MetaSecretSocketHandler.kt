@@ -87,9 +87,15 @@ class MetaSecretSocketHandler(
         
         add?.let { toAdd ->
             actionsToFollow.addAll(toAdd)
+            // A fresh vault is created after the app's first launch refresh. At that
+            // time there is no vault name yet, so no SSE subscription can be opened.
+            // Starting to follow vault state or join requests must therefore refresh
+            // immediately and subscribe to the newly created vault.
             val needsImmediateSync = toAdd.any {
                 it == SocketRequestModel.SHOW_SECRET ||
-                    it == SocketRequestModel.WAIT_FOR_JOIN_APPROVE
+                    it == SocketRequestModel.WAIT_FOR_JOIN_APPROVE ||
+                    it == SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN ||
+                    it == SocketRequestModel.GET_STATE
             }
             if (needsImmediateSync) {
                 refreshAppState()

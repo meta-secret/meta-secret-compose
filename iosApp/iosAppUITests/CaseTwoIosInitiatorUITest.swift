@@ -1,7 +1,7 @@
 import XCTest
 
 @MainActor
-final class CaseOneJoinFromIosUITest: XCTestCase {
+final class CaseTwoIosInitiatorUITest: XCTestCase {
     private var app: XCUIApplication!
 
     override func setUpWithError() throws {
@@ -11,7 +11,7 @@ final class CaseOneJoinFromIosUITest: XCTestCase {
         app.launch()
     }
 
-    func testJoinApprovedVaultAndShowSecret() throws {
+    func testCreateVaultThenApproveAndroidAndWeb() throws {
         let vaultName = env("E2E_VAULT_NAME", defaultValue: "test@test.ru")
         let secretName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
         let secretValue = env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
@@ -22,53 +22,40 @@ final class CaseOneJoinFromIosUITest: XCTestCase {
         tap("manual-signin-continue")
         tap("email-confirmation-continue")
         enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
+        tap("add-secret-fab", timeout: 180)
+        typeSecretNameAndValue(name: secretName, value: secretValue)
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.47)).tap()
         enterSimulatorPasscodeIfNeeded()
-
-        print("E2E: IOS_JOIN_REQUEST_SENT")
-
         waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        print("E2E: IOS_MAIN_AFTER_APPROVE")
-        print("E2E: IOS_SECRET_VISIBLE")
-
         tap("secret-row-\(secretName)")
         tap("show-secret-button", timeout: 60)
         enterSimulatorPasscodeIfNeeded()
         waitForVisible(identifier: "revealed-secret-value", timeout: 90)
         XCTAssertTrue(app.descendants(matching: .any)[secretValue].waitForExistence(timeout: 10), "iOS revealed secret value was not visible")
-        print("E2E: IOS_SHOW_SECRET_SUCCESS")
         tap("show-secret-close")
         XCTAssertFalse(app.descendants(matching: .any)[secretValue].waitForExistence(timeout: 5), "iOS secret value stayed visible after closing")
-        print("E2E: IOS_CLOSE_SECRET_SUCCESS")
+        print("E2E: IOS_INITIATOR_READY")
 
-        waitForText("Go to the Devices tab and add the necessary ones to your network", timeout: 300)
-        print("E2E: IOS_ANDROID_JOIN_NOTIFICATION_SUCCESS")
+        approvePendingJoin(marker: "IOS_ANDROID_JOIN_APPROVED")
+        approvePendingJoin(marker: "IOS_WEB_JOIN_APPROVED")
 
+        // iOS is the recovery sender in Test #2. Web and Android receive the
+        // requests and the orchestrator selects which one approves each cycle.
+        tap("tab-secrets")
         let recoveryCycles = Int(env("E2E_RECOVERY_CYCLES", defaultValue: "18")) ?? 18
-        let approvalCycles = Set(
-            env("E2E_IOS_RECOVERY_APPROVALS", defaultValue: "1,2,3,4,5,6,13,15,17")
-                .split(separator: ",")
-                .compactMap { Int($0) }
-        )
-
         for cycle in 1...recoveryCycles {
-            print("E2E: IOS_RECOVERY_REQUEST_WAITING_\(cycle)")
-            waitForVisible(
-                identifier: "alert-recovery-request",
-                timeout: 45,
-                failureMessage: "recovery cycle \(cycle): alert-recovery-request was not visible"
-            )
-            print("E2E: IOS_RECOVERY_REQUEST_ALERT_\(cycle)")
-            if approvalCycles.contains(cycle) {
-                waitForApproval(platform: "ios", cycle: cycle)
-                tap("alert-recovery-request-accept")
-                enterSimulatorPasscodeIfNeeded()
-                waitForHidden(identifier: "alert-recovery-request", timeout: 120)
-                print("E2E: IOS_RECOVERY_APPROVE_SUCCESS_\(cycle)")
-            } else {
-                waitForHidden(identifier: "alert-recovery-request", timeout: 180)
-            }
-            print("E2E: IOS_RECOVERY_REQUEST_CLOSED_\(cycle)")
+            // The orchestrator owns the sequence. Do not send the next request
+            // before the previous recovery has been fully observed and closed.
+            waitForApproval(platform: "ios-sender", cycle: cycle)
+            tap("secret-row-\(secretName)")
+            tap("show-secret-button")
+            enterSimulatorPasscodeIfNeeded()
+            print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)")
+            waitForVisible(identifier: "revealed-secret-value", timeout: 180)
+            XCTAssertTrue(app.descendants(matching: .any)[secretValue].waitForExistence(timeout: 10))
+            print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)")
+            tap("show-secret-close")
+            print("E2E: IOS_RECOVERY_CLOSED_\(cycle)")
         }
     }
 
@@ -112,6 +99,30 @@ final class CaseOneJoinFromIosUITest: XCTestCase {
         field.typeText(email)
         dismissKeyboardIfNeeded()
         waitUntilHittable(app.descendants(matching: .any)["manual-signin-continue"], timeout: 10)
+    }
+
+    private func typeSecretNameAndValue(name: String, value: String) {
+        let nameField = app.descendants(matching: .any)["secret-name-input"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 30), "secret-name-input was not visible")
+        nameField.typeText(name)
+
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.40)).tap()
+        let valueField = app.descendants(matching: .any)["secret-value-input"]
+        XCTAssertTrue(valueField.waitForExistence(timeout: 5), "secret-value-input was not visible")
+        valueField.typeText(value)
+    }
+
+    private func approvePendingJoin(marker: String) {
+        print("E2E: IOS_OPENING_DEVICES_FOR_JOIN_\(marker)")
+        tap("tab-devices")
+        print("E2E: IOS_DEVICES_TAB_OPENED_\(marker)")
+        waitForVisible(identifier: "pending-device-row", timeout: 180)
+        tap("pending-device-row")
+        print("E2E: IOS_PENDING_DEVICE_OPENED_\(marker)")
+        tap("alert-join-request-accept")
+        enterSimulatorPasscodeIfNeeded()
+        waitForHidden(identifier: "alert-join-request", timeout: 120)
+        print("E2E: \(marker)")
     }
 
     private func tap(_ identifier: String, timeout: TimeInterval = 30) {

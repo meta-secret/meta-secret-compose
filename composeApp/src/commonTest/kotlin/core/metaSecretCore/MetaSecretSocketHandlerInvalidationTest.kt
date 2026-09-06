@@ -388,7 +388,6 @@ class MetaSecretSocketHandlerInvalidationTest {
                 add = listOf(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN),
                 exclude = null
             )
-            handler.refreshAppState()
             waitUntil { handler.socketActionType.value == SocketActionModel.ASK_TO_JOIN }
 
             core.appStateJson = JsonConfig.json.encodeToString(

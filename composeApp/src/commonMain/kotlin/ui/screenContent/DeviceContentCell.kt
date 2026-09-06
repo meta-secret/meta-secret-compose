@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -77,6 +78,7 @@ fun DeviceContent(
 //        content = {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    .testTag(if (effectiveStatus == DeviceStatus.Pending) "pending-device-row" else "device-row-${model.id}")
                     .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
                     .border(1.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(14.dp))
                     .height(88.dp)

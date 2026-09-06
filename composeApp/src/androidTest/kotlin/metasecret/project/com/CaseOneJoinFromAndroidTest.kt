@@ -10,6 +10,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.net.HttpURLConnection
+import java.net.URL
 
 @RunWith(AndroidJUnit4::class)
 class CaseOneJoinFromAndroidTest {
@@ -42,11 +44,16 @@ class CaseOneJoinFromAndroidTest {
             .split(',')
             .mapNotNull(String::toIntOrNull)
             .toSet()
+        val approvalCoordinatorUrl = instrumentationArgument(
+            "approvalCoordinatorUrl",
+            "http://10.0.2.2:5180",
+        )
 
         for (cycle in 1..recoveryCycles) {
             composeRule.waitForTag("alert-recovery-request", 45_000)
             marker("ANDROID_RECOVERY_REQUEST_ALERT_$cycle")
             if (cycle in approvalCycles) {
+                waitForApproval(approvalCoordinatorUrl, "android", cycle)
                 composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
                 // The dialog is hidden as soon as the acceptance starts.  Do not let the
                 // instrumentation process finish until the async core/server operation did.
@@ -78,6 +85,22 @@ class CaseOneJoinFromAndroidTest {
         androidx.test.platform.app.InstrumentationRegistry.getArguments().getString(name) ?: fallback
 
     private fun marker(message: String) = Log.i("MetaSecretE2E", "E2E: $message")
+
+    private fun waitForApproval(coordinatorUrl: String, platform: String, cycle: Int) {
+        val deadline = System.currentTimeMillis() + 120_000
+        while (System.currentTimeMillis() < deadline) {
+            val result = runCatching {
+                val connection = URL("$coordinatorUrl/approval?platform=$platform&cycle=$cycle")
+                    .openConnection() as HttpURLConnection
+                connection.connectTimeout = 2_000
+                connection.readTimeout = 2_000
+                connection.inputStream.bufferedReader().use { it.readText() }.also { connection.disconnect() }
+            }.getOrNull()
+            if (result == "allowed") return
+            Thread.sleep(200)
+        }
+        error("Timed out waiting for orchestrator approval for Android recovery cycle $cycle")
+    }
 
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitForTag(tag: String, timeoutMillis: Long) {
         waitUntil(timeoutMillis) {
