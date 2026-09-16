@@ -74,12 +74,15 @@ class SecretsScreen : Screen {
         val previousCount = remember { mutableStateOf(secretsList.size) }
         val isInitialized = remember { mutableStateOf(false) }
         val devicesCount by viewModel.devicesCount.collectAsState()
+        val primaryActions by viewModel.primaryActions.collectAsState()
         var isAddSecretDialogVisible by remember { mutableStateOf(false) }
         var isShowSecretDialogVisible by remember { mutableStateOf(false) }
         var selectedSecret: core.Secret? by remember { mutableStateOf(null) }
+        var selectedPrimaryAction by remember { mutableStateOf(SecretPrimaryAction.Show) }
         val isRedirected by remember { mutableStateOf(false) }
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
         val secretIdToShow by mainScreenViewModel.secretIdToShow.collectAsState()
+        val pendingRecoveryRequests by mainScreenViewModel.pendingRecoveryRequests.collectAsState()
         
         val secretAddSuccessText = appString(AppString.secretAdded)
         val secretAddFailedText = appString(AppString.secretAddFailed)
@@ -118,12 +121,34 @@ class SecretsScreen : Screen {
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 itemsIndexed(secretsList.sortedBy { it.secretName }) { _, secret ->
+                    val requestsForSecret = pendingRecoveryRequests.filter { it.secretId == secret.secretName }
                     SecretsContent(
                         secret = secret,
                         devicesCount = devicesCount,
-                        onClick = {
+                        pendingRecoveryRequests = requestsForSecret.size,
+                        // In replicated (one/two-device) vaults recovery is
+                        // never needed, even if the asynchronous claim map
+                        // has not arrived yet.
+                        primaryAction = if (devicesCount <= 2) {
+                            SecretPrimaryAction.Show
+                        } else {
+                            primaryActions[secret.secretName] ?: SecretPrimaryAction.Recover
+                        },
+                        pendingRequestSender = requestsForSecret.firstOrNull()?.senderType,
+                        onPrimaryAction = {
                             selectedSecret = secret
+                            selectedPrimaryAction = if (devicesCount <= 2) {
+                                SecretPrimaryAction.Show
+                            } else {
+                                primaryActions[secret.secretName] ?: SecretPrimaryAction.Recover
+                            }
                             isShowSecretDialogVisible = true
+                        },
+                        onOpenRecoveryRequest = {
+                            val recoveryRequest = requestsForSecret.firstOrNull()
+                            if (recoveryRequest != null) {
+                                mainScreenViewModel.openRecoveryRequest(recoveryRequest)
+                            }
                         }
                     )
                 }
@@ -176,8 +201,11 @@ class SecretsScreen : Screen {
                 selectedSecret?.let { secret ->
                     ShowSecret(
                         secret = secret,
+                        primaryAction = selectedPrimaryAction,
                         secretIdToShow = secretIdToShow,
-                        onDismiss = { isShowSecretDialogVisible = false },
+                        onDismiss = {
+                            isShowSecretDialogVisible = false
+                        },
                         onClearSecretId = { mainScreenViewModel.clearSecretIdToShow() }
                     )
                 }

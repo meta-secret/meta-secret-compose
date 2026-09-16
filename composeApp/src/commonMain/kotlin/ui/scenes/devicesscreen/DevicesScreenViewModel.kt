@@ -158,6 +158,14 @@ class DevicesScreenViewModel(
                 if (updateResult?.success == false) {
                     logger.log(LogTag.DevicesVM.Message.UpdateCandidateFailed, "${updateResult.error}", success = false)
                 }
+                // `fetchDevicesList(false)` below reads a fresh state directly,
+                // but the shared cache (which drives VaultStatsProvider and the
+                // Secrets screen action label) would otherwise remain on the
+                // pre-approval member count. Refresh the cache before exposing
+                // the completed join to the rest of the UI.
+                withContext(Dispatchers.IO) {
+                    appManager.getStateModel()
+                }
                 _currentDeviceId.value = null
                 alertCoordinator.dismissJoinRequest()
                 _devicesList.value = fetchDevicesList(isSocketAction = false)

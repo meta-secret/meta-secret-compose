@@ -7,6 +7,7 @@ import core.appString
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.stateIn
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
@@ -23,6 +24,8 @@ import models.appInternalModels.SocketRequestModel
 import ui.TabStateHolder
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
+import models.apiModels.ClientStatus
+import models.apiModels.SecretApiModel
 
 class SecretsScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
@@ -36,6 +39,8 @@ class SecretsScreenViewModel(
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val secrets: StateFlow<List<Secret>> = secretsList
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
+    private val _primaryActions = MutableStateFlow<Map<String, SecretPrimaryAction>>(emptyMap())
+    val primaryActions: StateFlow<Map<String, SecretPrimaryAction>> = _primaryActions
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -87,6 +92,7 @@ class SecretsScreenViewModel(
                 val secretsFromVault = metaSecretAppManager.getSecretsFromVault(isSocketAction)
                 if (secretsFromVault != null) {
                     keyValueStorage.syncSecretsFromVault(secretsFromVault)
+                    refreshPrimaryActions(secretsFromVault)
                     logger.log(LogTag.SecretsVM.Message.SecretsSyncedSuccess, success = true)
                 } else {
                     logger.log(LogTag.SecretsVM.Message.FailedToGetSecrets, success = false)
@@ -97,6 +103,19 @@ class SecretsScreenViewModel(
                 logger.log(LogTag.SecretsVM.Message.ErrorLoadingSecrets, "${e.message}", success = false)
             }
         }
+    }
+
+    private suspend fun refreshPrimaryActions(secrets: List<SecretApiModel>) {
+        val actions = secrets.associate { secret ->
+            val claim = metaSecretAppManager.findClaim(secret.name)
+            secret.name to if (claim?.clientStatus == ClientStatus.ACCEPTED) {
+                SecretPrimaryAction.Show
+            } else {
+                SecretPrimaryAction.Recover
+            }
+        }
+        _primaryActions.value = actions
+        logger.log(LogTag.SecretsVM.Message.NewStateForSecrets, "recovery primary actions=$actions", success = true)
     }
 
     // TODO: For the future
@@ -117,6 +136,8 @@ class SecretsScreenViewModel(
 //        }
 //    }
 }
+
+enum class SecretPrimaryAction { Show, Recover }
 
 sealed class SecretsEvents : CommonViewModelEventsInterface {
     data class GetSecret(val index: Int) : SecretsEvents()

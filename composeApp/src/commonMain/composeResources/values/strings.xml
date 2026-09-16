@@ -74,6 +74,9 @@
     <string name = "removeSecret">Remove secret</string>
     <string name = "showSecret">Show secret</string>
     <string name = "recoverSecret">Recover secret</string>
+    <string name = "recover">Recover</string>
+    <string name = "openRecoveryRequest">Open request</string>
+    <string name = "requestsRecovery">requests recovery for this secret.</string>
     <string name = "removeSecretConfirmation">Do you really want to delete </string>
     <string name = "remove">Remove</string>
     <string name = "cancel">Cancel</string>

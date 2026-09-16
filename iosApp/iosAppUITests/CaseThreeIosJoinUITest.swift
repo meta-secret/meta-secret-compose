@@ -50,20 +50,21 @@ final class CaseThreeIosJoinUITest: XCTestCase {
         for cycle in 1...recoveryCycles {
             print("E2E: IOS_RECOVERY_REQUEST_WAITING_\(cycle)")
             waitForVisible(
-                identifier: "alert-recovery-request",
+                identifier: "recovery-request-badge-\(secretName)",
                 timeout: 45,
-                failureMessage: "recovery cycle \(cycle): alert-recovery-request was not visible"
+                failureMessage: "recovery cycle \(cycle): incoming recovery badge was not visible"
             )
             print("E2E: IOS_RECOVERY_REQUEST_ALERT_\(cycle)")
             if approvalCycles.contains(cycle) {
                 waitForApproval(platform: "ios", cycle: cycle)
+                tap("open-recovery-request-\(secretName)")
+                waitForVisible(identifier: "alert-recovery-request", timeout: 30)
                 tap("alert-recovery-request-accept")
                 enterSimulatorPasscodeIfNeeded()
                 waitForHidden(identifier: "alert-recovery-request", timeout: 120)
                 print("E2E: IOS_RECOVERY_APPROVE_SUCCESS_\(cycle)")
-            } else {
-                waitForHidden(identifier: "alert-recovery-request", timeout: 180)
             }
+            waitForHidden(identifier: "recovery-request-badge-\(secretName)", timeout: 180)
             print("E2E: IOS_RECOVERY_REQUEST_CLOSED_\(cycle)")
         }
     }

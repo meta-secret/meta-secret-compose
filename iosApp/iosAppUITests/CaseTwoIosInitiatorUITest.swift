@@ -27,8 +27,7 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.47)).tap()
         enterSimulatorPasscodeIfNeeded()
         waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        tap("secret-row-\(secretName)")
-        tap("show-secret-button", timeout: 60)
+        tap("secret-primary-action-\(secretName)")
         enterSimulatorPasscodeIfNeeded()
         waitForVisible(identifier: "revealed-secret-value", timeout: 90)
         XCTAssertTrue(app.descendants(matching: .any)[secretValue].waitForExistence(timeout: 10), "iOS revealed secret value was not visible")
@@ -47,8 +46,7 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
             // The orchestrator owns the sequence. Do not send the next request
             // before the previous recovery has been fully observed and closed.
             waitForApproval(platform: "ios-sender", cycle: cycle)
-            tap("secret-row-\(secretName)")
-            tap("show-secret-button")
+            tap("secret-primary-action-\(secretName)")
             enterSimulatorPasscodeIfNeeded()
             print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)")
             waitForVisible(identifier: "revealed-secret-value", timeout: 180)

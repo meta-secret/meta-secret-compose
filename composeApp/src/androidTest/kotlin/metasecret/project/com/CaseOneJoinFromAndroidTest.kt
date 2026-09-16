@@ -50,10 +50,12 @@ class CaseOneJoinFromAndroidTest {
         )
 
         for (cycle in 1..recoveryCycles) {
-            composeRule.waitForTag("alert-recovery-request", 45_000)
+            composeRule.waitForTag("recovery-request-badge-$secretName", 45_000)
             marker("ANDROID_RECOVERY_REQUEST_ALERT_$cycle")
             if (cycle in approvalCycles) {
                 waitForApproval(approvalCoordinatorUrl, "android", cycle)
+                composeRule.onNodeWithTag("open-recovery-request-$secretName").performClick()
+                composeRule.waitForTag("alert-recovery-request", 30_000)
                 composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
                 // The dialog is hidden as soon as the acceptance starts.  Do not let the
                 // instrumentation process finish until the async core/server operation did.
@@ -66,7 +68,8 @@ class CaseOneJoinFromAndroidTest {
                 marker("ANDROID_RECOVERY_APPROVE_SUCCESS_$cycle")
             }
             composeRule.waitUntil(180_000) {
-                composeRule.onAllNodes(hasTestTag("alert-recovery-request")).fetchSemanticsNodes().isEmpty()
+                composeRule.onAllNodes(hasTestTag("recovery-request-badge-$secretName"), useUnmergedTree = true)
+                    .fetchSemanticsNodes().isEmpty()
             }
             marker("ANDROID_RECOVERY_REQUEST_CLOSED_$cycle")
         }

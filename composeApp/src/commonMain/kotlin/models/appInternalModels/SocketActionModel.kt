@@ -15,4 +15,9 @@ sealed class SocketActionModel {
 }
 
 @Serializable
-data class RestoreData(val claimId: String, val secretId: String)
+data class RestoreData(
+    val claimId: String,
+    val secretId: String,
+    val senderId: String = "",
+    val senderType: String = "",
+)

@@ -21,6 +21,7 @@ import core.AlertCoordinatorInterface
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.appInternalModels.ClaimModel
+import models.appInternalModels.RestoreData
 import ui.TabStateHolder
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -45,6 +46,7 @@ class MainScreenViewModel(
     
     private val _secretIdToShow = MutableStateFlow<String?>(null)
     val secretIdToShow: StateFlow<String?> = _secretIdToShow
+    val pendingRecoveryRequests: StateFlow<List<RestoreData>> = socketHandler.pendingRecoveryRequests
 
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
 
@@ -54,6 +56,15 @@ class MainScreenViewModel(
             (count ?: 0) > 0 && !dismissed
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    fun openRecoveryRequest(restoreData: RestoreData) {
+        logger.log(
+            LogTag.MainVM.Message.RecoveryAlertShown,
+            "open recovery alert claimId=${restoreData.claimId} secretId=${restoreData.secretId} senderId=${restoreData.senderId} senderType=${restoreData.senderType}",
+            success = true
+        )
+        alertCoordinator.showRecoveryRequest(restoreData)
+    }
 
     init {
         logger.log(LogTag.MainVM.Message.FollowResponsibleToAcceptJoin, success = true)
@@ -130,6 +141,30 @@ class MainScreenViewModel(
 
         alertCoordinator.setRecoveryRequestDismissHandler { restoreData ->
             socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
+        }
+
+        // Recovery requests are deliberately surfaced as badges on the
+        // affected secret, rather than as a FIFO queue of automatic dialogs.
+        // Another receiver may complete a claim while this device has its
+        // approval dialog open; refreshed state is authoritative, so close
+        // that obsolete dialog.
+        viewModelScope.launch {
+            socketHandler.pendingRecoveryRequests.collect { pendingRequests ->
+                val visibleClaimId = (alertCoordinator.recoveryRequestAlert.value
+                    as? core.RecoveryRequestAlertState.Visible)
+                    ?.restoreData
+                    ?.claimId
+                    ?: return@collect
+
+                if (pendingRequests.none { it.claimId == visibleClaimId }) {
+                    logger.log(
+                        LogTag.MainVM.Message.RecoveryAlertDismissed,
+                        "claimId=$visibleClaimId is no longer pending",
+                        success = true,
+                    )
+                    alertCoordinator.dismissRecoveryRequest()
+                }
+            }
         }
 
         viewModelScope.launch(Dispatchers.IO) {

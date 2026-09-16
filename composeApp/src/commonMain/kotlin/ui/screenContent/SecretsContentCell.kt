@@ -45,12 +45,18 @@ import core.AppColors
 import models.appInternalModels.DevicesQuantity
 import core.Secret
 import org.koin.compose.koinInject
+import ui.ClassicButton
+import ui.scenes.secretsscreen.SecretPrimaryAction
 
 @Composable
 fun SecretsContent(
     secret: Secret,
     devicesCount: Int,
-    onClick: () -> Unit
+    pendingRecoveryRequests: Int = 0,
+    primaryAction: SecretPrimaryAction,
+    pendingRequestSender: String? = null,
+    onPrimaryAction: () -> Unit,
+    onOpenRecoveryRequest: () -> Unit,
 ) {
     val imageProvider: ImageProviderInterface = koinInject()
     val deviceText = when {
@@ -91,17 +97,18 @@ fun SecretsContent(
             Box(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     .testTag("secret-row-${secret.secretName}")
-                    .background(AppColors.White5, RoundedCornerShape(12.dp)).height(96.dp)
-                    .clickable {
-                        onClick()
-                    }
+                    .background(AppColors.White5, RoundedCornerShape(12.dp)).height(150.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxSize().height(60.dp).padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Column(
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                      Column(
                         verticalArrangement = Arrangement.spacedBy(5.dp),
                     ) {
                         Row(
@@ -113,6 +120,17 @@ fun SecretsContent(
                                 text = secret.secretName,
                                 style = AppTextStyles.Strong18().copy(color = AppColors.White)
                             )
+                            if (pendingRecoveryRequests > 0) {
+                                Text(
+                                    text = "✉ $pendingRecoveryRequests",
+                                    color = AppColors.White,
+                                    style = AppTextStyles.Micro(),
+                                    modifier = Modifier
+                                        .testTag("recovery-request-badge-${secret.secretName}")
+                                        .background(AppColors.RedError, RoundedCornerShape(10.dp))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                                )
+                            }
                         }
                         Row(
                             modifier = Modifier.height(24.dp)
@@ -124,11 +142,12 @@ fun SecretsContent(
                             )
                             Text(
                                 text = "$devicesCount $deviceText",
-                                style = AppTextStyles.Paragraph().copy(color = AppColors.White75)
+                                style = AppTextStyles.Paragraph().copy(color = AppColors.White75),
+                                modifier = Modifier.testTag("secret-devices-count-${secret.secretName}"),
                             )
                         }
                     }
-                    Column(
+                      Column(
                         verticalArrangement = Arrangement.spacedBy(3.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -141,6 +160,34 @@ fun SecretsContent(
                             modifier = Modifier.height(22.dp),
                             text = protectionLevelText,
                             style = AppTextStyles.Micro().copy(color = AppColors.White75)
+                        )
+                      }
+                    }
+                    if (pendingRecoveryRequests > 0 && pendingRequestSender != null) {
+                        Text(
+                            text = "$pendingRequestSender ${appString(AppString.requestsRecovery)}",
+                            color = AppColors.White75,
+                            style = AppTextStyles.Micro(),
+                            modifier = Modifier.testTag("recovery-request-notice-${secret.secretName}"),
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (pendingRecoveryRequests > 0) {
+                            ClassicButton(
+                                action = onOpenRecoveryRequest,
+                                text = appString(AppString.openRecoveryRequest),
+                                fillMaxWidth = false,
+                                modifier = Modifier.weight(1f).testTag("open-recovery-request-${secret.secretName}"),
+                            )
+                        }
+                        ClassicButton(
+                            action = onPrimaryAction,
+                            // Keep the card action short: the full “Recover
+                            // secret” label belongs in the dialog, while the
+                            // compact card must remain usable beside Open request.
+                            text = if (primaryAction == SecretPrimaryAction.Show) appString(AppString.show) else appString(AppString.recover),
+                            fillMaxWidth = false,
+                            modifier = Modifier.weight(1f).testTag("secret-primary-action-${secret.secretName}"),
                         )
                     }
                 }

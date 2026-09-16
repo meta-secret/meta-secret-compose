@@ -12,6 +12,7 @@
 		61E7A1012F30A00000A00101 /* CaseOneJoinFromIosUITest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E7A1002F30A00000A00100 /* CaseOneJoinFromIosUITest.swift */; };
 		61E7A1032F30A00000A00103 /* CaseTwoIosInitiatorUITest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E7A1022F30A00000A00102 /* CaseTwoIosInitiatorUITest.swift */; };
 		61E7A1052F30A00000A00105 /* CaseThreeIosJoinUITest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E7A1042F30A00000A00104 /* CaseThreeIosJoinUITest.swift */; };
+		61E7A1072F30A00000A00107 /* CaseFourIosConcurrentRecoveryUITest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E7A1062F30A00000A00106 /* CaseFourIosConcurrentRecoveryUITest.swift */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		E56CFB602DDFA36500D674CD /* SwiftBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56CFB5F2DDFA36500D674CD /* SwiftBridge.swift */; };
@@ -37,6 +38,7 @@
 		61E7A1002F30A00000A00100 /* CaseOneJoinFromIosUITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaseOneJoinFromIosUITest.swift; sourceTree = "<group>"; };
 		61E7A1022F30A00000A00102 /* CaseTwoIosInitiatorUITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaseTwoIosInitiatorUITest.swift; sourceTree = "<group>"; };
 		61E7A1042F30A00000A00104 /* CaseThreeIosJoinUITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaseThreeIosJoinUITest.swift; sourceTree = "<group>"; };
+		61E7A1062F30A00000A00106 /* CaseFourIosConcurrentRecoveryUITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaseFourIosConcurrentRecoveryUITest.swift; sourceTree = "<group>"; };
 		61E7A0062F30A00000A00001 /* iosAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iosAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF7B242A565900829871 /* MetaSecret.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MetaSecret.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				61E7A1002F30A00000A00100 /* CaseOneJoinFromIosUITest.swift */,
 				61E7A1022F30A00000A00102 /* CaseTwoIosInitiatorUITest.swift */,
 				61E7A1042F30A00000A00104 /* CaseThreeIosJoinUITest.swift */,
+				61E7A1062F30A00000A00106 /* CaseFourIosConcurrentRecoveryUITest.swift */,
 			);
 			path = iosAppUITests;
 			sourceTree = "<group>";
@@ -308,6 +311,7 @@
 				61E7A1012F30A00000A00101 /* CaseOneJoinFromIosUITest.swift in Sources */,
 				61E7A1032F30A00000A00103 /* CaseTwoIosInitiatorUITest.swift in Sources */,
 				61E7A1052F30A00000A00105 /* CaseThreeIosJoinUITest.swift in Sources */,
+				61E7A1072F30A00000A00107 /* CaseFourIosConcurrentRecoveryUITest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

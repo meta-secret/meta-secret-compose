@@ -53,8 +53,7 @@ class CaseThreeAndroidInitiatorTest {
         composeRule.onNodeWithTag("tab-secrets").performClick()
         for (cycle in 1..recoveryCycles) {
             waitForApproval(approvalCoordinatorUrl, "android-sender", cycle)
-            composeRule.onNodeWithTag("secret-row-$secretName").performClick()
-            composeRule.onNodeWithTag("show-secret-button").performClick()
+            composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
             marker("ANDROID_RECOVERY_REQUEST_SENT_$cycle")
             composeRule.waitForTag("revealed-secret-value", 180_000)
             marker("ANDROID_RECOVERY_SECRET_VISIBLE_$cycle")

@@ -2,6 +2,7 @@ package core
 
 import com.metasecret.core.MetaSecretNative
 import android.content.Context
+import android.util.Log
 import android.system.Os
 import com.sun.jna.Library
 import com.sun.jna.Native
@@ -15,6 +16,10 @@ import core.LogFormatterInterface
 import java.io.File
 
 class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
+
+    private fun e2eLog(message: String) {
+        Log.i("MetaSecretE2E", "E2E: $message")
+    }
 
     private interface LibC : Library {
         fun chdir(path: String): Int
@@ -236,11 +241,14 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
 
     override fun findClaim(secretId: String): String {
         try {
+            e2eLog("ANDROID_NATIVE_FIND_CLAIM_START secret=$secretId")
             logger.log(LogTag.MetaSecretCoreService.Message.CallingFindClaim, success = true)
             val result = MetaSecretNative.find_claim_by_(secretId)
             logger.log(LogTag.MetaSecretCoreService.Message.FindClaimResult, result, success = true)
+            e2eLog("ANDROID_NATIVE_FIND_CLAIM_RESULT secret=$secretId bytes=${result.length}")
             return result
         } catch (e: Exception) {
+            e2eLog("ANDROID_NATIVE_FIND_CLAIM_ERROR secret=$secretId error=${e.message}")
             logger.log(LogTag.MetaSecretCoreService.Message.FindClaimError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
@@ -249,11 +257,14 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
 
     override fun recover(secretId: String): String {
         try {
+            e2eLog("ANDROID_NATIVE_RECOVER_START secret=$secretId")
             logger.log(LogTag.MetaSecretCoreService.Message.CallingRecover, success = true)
             val result = MetaSecretNative.recover(secretId)
             logger.log(LogTag.MetaSecretCoreService.Message.RecoverResult, result, success = true)
+            e2eLog("ANDROID_NATIVE_RECOVER_RESULT secret=$secretId bytes=${result.length}")
             return result
         } catch (e: Exception) {
+            e2eLog("ANDROID_NATIVE_RECOVER_ERROR secret=$secretId error=${e.message}")
             logger.log(LogTag.MetaSecretCoreService.Message.RecoverError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
@@ -262,11 +273,14 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
 
     override fun acceptRecover(claimId: String): String {
         try {
+            e2eLog("ANDROID_NATIVE_ACCEPT_RECOVER_START claim=$claimId")
             logger.log(LogTag.MetaSecretCoreService.Message.CallingAcceptRecover, success = true)
             val result = MetaSecretNative.acceptRecover(claimId)
             logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverResult, result, success = true)
+            e2eLog("ANDROID_NATIVE_ACCEPT_RECOVER_RESULT claim=$claimId bytes=${result.length}")
             return result
         } catch (e: Exception) {
+            e2eLog("ANDROID_NATIVE_ACCEPT_RECOVER_ERROR claim=$claimId error=${e.message}")
             logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverError, "${e.message}", success = false)
             e.printStackTrace()
             throw e
@@ -301,11 +315,14 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
 
     override fun showRecovered(secretId: String): String {
         try {
+            e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_START secret=$secretId")
             logger.log(LogTag.MetaSecretCoreService.Message.CallingShowRecovered, success = true)
             val result = MetaSecretNative.showRecovered(secretId)
             logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredResult, result, success = true)
+            e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_RESULT secret=$secretId bytes=${result.length}")
             return result
         } catch (e: Exception) {
+            e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_ERROR secret=$secretId error=${e.message}")
             logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredError, "${e.message}", success = false)
             e.printStackTrace()
             throw e

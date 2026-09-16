@@ -475,6 +475,38 @@ class MetaSecretSocketHandlerInvalidationTest {
     }
 
     @Test
+    fun testResumeRefreshesRetriesInvalidationSkippedWhilePaused() = runBlocking {
+        val core = FakeMetaSecretCore().apply {
+            appStateJson = JsonConfig.json.encodeToString(
+                AppStateModel.serializer(),
+                buildAppState()
+            )
+        }
+        val (handler, socketClient) = newHandler(core)
+
+        handler.onAppForeground()
+        waitUntil { core.getAppStateCalls == 1 }
+        core.getAppStateCalls = 0
+        handler.pauseRefreshes()
+
+        val claim = recoverClaim("claim-after-resume", "secret1", ClientStatus.NEED_APPROVE)
+        core.appStateJson = JsonConfig.json.encodeToString(
+            AppStateModel.serializer(),
+            buildAppState(claims = mapOf(claim.distClaimId.id to claim))
+        )
+        socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = claim.distClaimId.id))
+        delay(100)
+        assertEquals(0, core.getAppStateCalls)
+
+        handler.resumeRefreshes()
+
+        waitUntil {
+            handler.pendingRecoveryRequests.value.any { it.claimId == claim.distClaimId.id }
+        }
+        assertTrue(core.getAppStateCalls >= 1)
+    }
+
+    @Test
     fun testSocketInvalidationRefreshesEvenWhenLifecycleFlagIsNotForeground() = runBlocking {
         val claim = recoverClaim("claim1", "secret1", ClientStatus.NEED_APPROVE)
         val core = FakeMetaSecretCore().apply {

@@ -280,6 +280,7 @@ sealed class LogTag(val displayName: String) {
             object IgnoringAutoRecovery : Message("Ignoring auto-recovery event, user did not request it")
             object HideSecret : Message("hide secret")
             object StartRecovering : Message("Start recovering process")
+            object DeviceCountForAction : Message("Device count used for show/recover action")
             object SingleDeviceMode : Message("Single device mode, showing secret directly")
             object ExistingClaimFound : Message("Existing claim found")
             object ClaimAlreadyUsed : Message("Claim already used (sender has DELIVERED status), need new request")

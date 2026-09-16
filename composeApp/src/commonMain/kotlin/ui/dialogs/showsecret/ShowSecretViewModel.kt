@@ -59,7 +59,12 @@ class ShowSecretViewModel(
                     currentSecretName = event.secretName
                     userRequestedRecovery = true
                     socketHandler.pauseRefreshes()
-                    findClaim(event.secretName)
+                    if (event.forceRecovery) {
+                        findClaim(event.secretName)
+                    } else {
+                        showRecoveredSecret(event.secretName)
+                        socketHandler.resumeRefreshes()
+                    }
                 }
 
                 is ShowSecretEvents.SecretReadyToShow -> {
@@ -86,14 +91,6 @@ class ShowSecretViewModel(
     private fun findClaim(secretName: String) {
         _isLoading.value = true
         logger.log(LogTag.ShowSecretVM.Message.StartRecovering, success = true)
-
-        // Two-device vaults are fully replicated in core, so the secret should already be local.
-        if (devicesCount.value <= 2) {
-            logger.log(LogTag.ShowSecretVM.Message.SingleDeviceMode, success = true)
-            showRecoveredSecret(secretName)
-            socketHandler.resumeRefreshes()
-            return
-        }
 
         viewModelScope.launch {
             try {
@@ -124,8 +121,23 @@ class ShowSecretViewModel(
                         socketHandler.resumeRefreshes()
                     }
 
-                    // ACCEPTED / DECLINED: owned by invalidation refresh on processingSecretName,
-                    // avoids double-dispatching showRecoveredSecret()/the declined path from here too.
+                    // A sender may deliberately close the waiting dialog in
+                    // order to handle an incoming recovery request. Reopening
+                    // the secret after another device has approved it must
+                    // still complete that sender's own claim.
+                    ClientStatus.ACCEPTED -> {
+                        logger.log(
+                            LogTag.ShowSecretVM.Message.StartShowingRecovered,
+                            "resuming accepted claimId=${existingClaim.claimId}",
+                            success = true,
+                        )
+                        showRecoveredSecret(secretName)
+                        socketHandler.resumeRefreshes()
+                    }
+
+                    // DECLINED is owned by invalidation refresh on
+                    // processingSecretName, keeping the notification path
+                    // centralized and avoiding a duplicate UI error here.
                     else -> {
                         logger.log(
                             LogTag.ShowSecretVM.Message.AwaitingPollerResolution,
@@ -187,7 +199,10 @@ class ShowSecretViewModel(
 }
 
 sealed class ShowSecretEvents : CommonViewModelEventsInterface {
-    data class ShowSecret(val secretName: String) : ShowSecretEvents()
+    data class ShowSecret(
+        val secretName: String,
+        val forceRecovery: Boolean = true,
+    ) : ShowSecretEvents()
     data class SecretReadyToShow(val secretId: String) : ShowSecretEvents()
     data object HideSecret : ShowSecretEvents()
 }

@@ -63,7 +63,8 @@ fun AlertProvider(
             val restoreData = (recoveryRequestState as? RecoveryRequestAlertState.Visible)?.restoreData
                 ?: (recoveryRequestState as? RecoveryRequestAlertState.Processing)?.restoreData
             if (restoreData != null) {
-                "${appString(AppString.wanna_recover)} \"${restoreData.secretId}\"?"
+                val sender = restoreData.senderType.takeIf { it.isNotBlank() }?.let { " from $it" } ?: ""
+                "${appString(AppString.wanna_recover)} \"${restoreData.secretId}\"$sender?"
             } else {
                 appString(AppString.wanna_recover)
             }

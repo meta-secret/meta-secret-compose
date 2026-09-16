@@ -47,6 +47,9 @@ class MetaSecretSocketHandler(
     )
     override val socketActions: SharedFlow<SocketActionModel> = _socketActions
 
+    private val _pendingRecoveryRequests = MutableStateFlow<List<RestoreData>>(emptyList())
+    override val pendingRecoveryRequests: StateFlow<List<RestoreData>> = _pendingRecoveryRequests
+
     private var actionsToFollow = mutableSetOf<SocketRequestModel>()
     private val socketScope = CoroutineScope(Dispatchers.IO)
     private var refreshJob: Job? = null
@@ -321,21 +324,39 @@ class MetaSecretSocketHandler(
         if (vaultFullInfo is VaultFullInfo.Member) {
             val claims = vaultFullInfo.member.ssClaims?.claims
             if (claims.isNullOrEmpty()) {
+                _pendingRecoveryRequests.value = emptyList()
                 logger.log(core.LogTag.SocketHandler.Message.NoClaimsFound, success = true)
                 return
             }
 
             logger.log(core.LogTag.SocketHandler.Message.FoundClaims, "${claims.size}", success = true)
-            checkRecoverRequest(claims, currentDeviceId)
+            checkRecoverRequest(claims, currentDeviceId, vaultFullInfo.member.member.vault.users)
             if (actionsToFollow.contains(SocketRequestModel.SHOW_SECRET)) {
                 checkRecoverSentStatus()
             }
+        } else {
+            _pendingRecoveryRequests.value = emptyList()
         }
     }
 
-    private fun checkRecoverRequest(claims: Map<String, ClaimObject>, currentDeviceId: String) {
+    private fun checkRecoverRequest(
+        claims: Map<String, ClaimObject>,
+        currentDeviceId: String,
+        users: Map<String, models.apiModels.UserMembership>,
+    ) {
         val recoverClaimsForDevice = claims.values.filter {
             it.distributionType == DistributionType.RECOVER && it.receivers.contains(currentDeviceId)
+        }
+        if (recoverClaimsForDevice.isNotEmpty()) {
+            logger.log(
+                core.LogTag.SocketHandler.Message.ReceiverClaimStatuses,
+                "E2E_DIAG recovery claims for device=$currentDeviceId: " +
+                    recoverClaimsForDevice.joinToString { claim ->
+                        "claim=${claim.distClaimId.id},sender=${claim.sender},client=${claim.clientStatus}," +
+                            "receivers=${claim.receivers.joinToString()}"
+                    },
+                success = true
+            )
         }
         if (recoverClaimsForDevice.isNotEmpty()) {
             logger.log(
@@ -344,29 +365,32 @@ class MetaSecretSocketHandler(
                 success = true
             )
         }
-        val firstNeedApproveClaim = claims.values.firstOrNull { claim ->
+        val pendingClaims = claims.values.filter { claim ->
             val isRecoverType = claim.distributionType == DistributionType.RECOVER
             val isReceiverForThisDevice = claim.receivers.contains(currentDeviceId)
             val needsApproval = claim.clientStatus == ClientStatus.NEED_APPROVE
             isRecoverType && isReceiverForThisDevice && needsApproval
         }
-        if (firstNeedApproveClaim != null) {
-            val claimId = firstNeedApproveClaim.distClaimId.id
-            if (claimId != lastEmittedReadyToRecoverClaimId) {
-                lastEmittedReadyToRecoverClaimId = claimId
-                val restoreData = RestoreData(claimId, firstNeedApproveClaim.distClaimId.passId.name)
-                logger.log(core.LogTag.SocketHandler.Message.ReadyToRecover, "claimId=$claimId secretId=${restoreData.secretId}", success = true)
-                _socketActionType.value = SocketActionModel.READY_TO_RECOVER(restoreData = restoreData)
+        _pendingRecoveryRequests.value = pendingClaims
+            .map {
+                val rawSenderType = users[it.sender]?.member?.userData?.device?.deviceType
+                    ?: users[it.sender]?.outsider?.userData?.device?.deviceType
+                    ?: "Other"
+                val senderType = when {
+                    rawSenderType.equals("iphone", ignoreCase = true) ||
+                        rawSenderType.equals("ios", ignoreCase = true) -> "iOS"
+                    rawSenderType.equals("android", ignoreCase = true) -> "Android"
+                    rawSenderType.equals("web", ignoreCase = true) -> "Web"
+                    else -> rawSenderType
+                }
+                RestoreData(it.distClaimId.id, it.distClaimId.passId.name, it.sender, senderType)
             }
-        } else {
-            val hasDoneClaim = recoverClaimsForDevice.any { it.clientStatus == ClientStatus.DONE }
-            if (hasDoneClaim) {
-                logger.log(core.LogTag.SocketHandler.Message.DismissRecoveryRequest, success = true)
-                _socketActions.tryEmit(SocketActionModel.DISMISS_RECOVERY_REQUEST)
-            }
-            lastEmittedReadyToRecoverClaimId = null
-            logger.log(core.LogTag.SocketHandler.Message.NothingToRecover, success = true)
-        }
+            .sortedBy { it.claimId }
+        logger.log(
+            core.LogTag.SocketHandler.Message.ReceiverClaimStatuses,
+            "pending=${_pendingRecoveryRequests.value.joinToString { it.claimId }}",
+            success = true,
+        )
     }
 
     private suspend fun checkRecoverSentStatus() {
@@ -422,5 +446,11 @@ class MetaSecretSocketHandler(
     override fun resumeRefreshes() {
         logger.log(LogTag.SocketHandler.Message.RefreshesResumed, success = true)
         isPaused = false
+        // An invalidation may arrive while a secret action pauses refreshes. The
+        // paused request is intentionally skipped, so retry once on resume while
+        // the app is visible to avoid leaving pending requests stale.
+        if (isForeground) {
+            scheduleRefresh()
+        }
     }
 }

@@ -82,11 +82,13 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.platform.LocalClipboardManager
 import ui.ClassicButton
+import ui.scenes.secretsscreen.SecretPrimaryAction
 import ui.theme.AppTextStyles
 
 @Composable
 fun ShowSecret(
     secret: Secret,
+    primaryAction: SecretPrimaryAction,
     secretIdToShow: String?,
     onDismiss: () -> Unit,
     onClearSecretId: () -> Unit,
@@ -107,6 +109,18 @@ fun ShowSecret(
         }
     }
 
+    // The dialog is opened only by the card's primary Show/Recover action.
+    // Start that action as soon as the dialog enters composition so the user
+    // does not have to press a second, identical button inside the dialog.
+    LaunchedEffect(secret.secretName) {
+        viewModel.handle(
+            ShowSecretEvents.ShowSecret(
+                secretName = secret.secretName,
+                forceRecovery = primaryAction == SecretPrimaryAction.Recover,
+            )
+        )
+    }
+
     val deviceText = when {
         devicesCount == 0 || devicesCount > 4 -> appString(AppString.devices_5)
         devicesCount in 2..4 -> appString(AppString.devices_4)
@@ -121,7 +135,8 @@ fun ShowSecret(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(AppColors.Black30),
+                .background(AppColors.Black30)
+                .testTag("show-secret-dialog"),
             contentAlignment = Alignment.Center
         ) {
             Box(
@@ -197,7 +212,12 @@ fun ShowSecret(
                         ClassicButton(
                             action = {
                                 if (!isLoading) {
-                                    viewModel.handle(ShowSecretEvents.ShowSecret(secret.secretName))
+                                    viewModel.handle(
+                                        ShowSecretEvents.ShowSecret(
+                                            secretName = secret.secretName,
+                                            forceRecovery = primaryAction == SecretPrimaryAction.Recover,
+                                        )
+                                    )
                                 }
                             },
                             text = showActionLabel,
