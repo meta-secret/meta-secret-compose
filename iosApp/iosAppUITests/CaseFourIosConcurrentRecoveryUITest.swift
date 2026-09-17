@@ -38,10 +38,16 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
             ?? env("E2E_VAULT_NAME", defaultValue: "test@test.ru")
         let secrets = coordinator?.secrets ?? secretDefinitions()
         let recoveryPlan = coordinator?.recoveryPlan ?? recoveryCyclePlan()
+        let secretCreationPlan = coordinator?.secretCreationPlan ?? self.secretCreationPlan()
         print(
             "E2E: IOS_SCENARIO_CONFIG vault=\(vaultName) " +
                 "secrets=\(secrets.map(\.name).joined(separator: ",")) " +
                 "cycles=\(recoveryPlan.count)"
+        )
+        print(
+            "E2E: IOS_SECRET_CREATION_PLAN initial=\(configuredSecretNames(plan: secretCreationPlan, stage: "initial")) " +
+                "afterWebJoin=\(configuredSecretNames(plan: secretCreationPlan, stage: "afterWebJoin", platform: "web")) " +
+                "afterIosJoin=\(configuredSecretNames(plan: secretCreationPlan, stage: "afterIosJoin", platform: "ios"))"
         )
 
         skipOnboardingIfNeeded()
@@ -58,6 +64,23 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         // Approval happens on Android after this test has sent the join
         // request. iOS may present its device PIN only at that later point;
         // keep handling it while waiting for the vault to become available.
+        // Test #6 deliberately creates its final secret on iOS after this
+        // join, so first wait only for the secrets redistributed to the new
+        // member, then perform the iOS-owned creation and wait for the final
+        // set on every device.
+        let preExistingSecrets = secretsBeforeIosJoin(secrets, plan: secretCreationPlan)
+        waitForSecretsAfterJoin(preExistingSecrets, timeout: 180)
+        for secretName in configuredSecretNames(
+            plan: secretCreationPlan,
+            stage: "afterIosJoin",
+            platform: "ios"
+        ) {
+            guard let secret = secrets.first(where: { $0.name == secretName }) else {
+                XCTFail("secretCreationPlan.afterIosJoin.ios contains unknown secret \(secretName)")
+                continue
+            }
+            createSecret(secret)
+        }
         waitForSecretsAfterJoin(secrets, timeout: 180)
         print("E2E: IOS_MAIN_AFTER_APPROVE")
         print("E2E: IOS_SECRETS_READY")
@@ -118,6 +141,7 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         let vaultName: String
         let secrets: [SecretDefinition]
         let recoveryPlan: [RecoveryCycle]
+        let secretCreationPlan: [String: Any]?
     }
 
     private func loadCoordinatorScenario() -> CoordinatorScenario? {
@@ -137,7 +161,8 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
                 return CoordinatorScenario(
                     vaultName: vaultName,
                     secrets: secrets,
-                    recoveryPlan: recoveryPlan
+                    recoveryPlan: recoveryPlan,
+                    secretCreationPlan: raw["secretCreation"] as? [String: Any]
                 )
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
@@ -158,6 +183,46 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         return definitions.isEmpty
             ? [SecretDefinition(name: fallbackName, value: fallbackValue)]
             : definitions
+    }
+
+    private func secretCreationPlan() -> [String: Any]? {
+        let raw = env("E2E_SECRET_CREATION_PLAN", defaultValue: "")
+        guard !raw.isEmpty, raw != "null", let data = raw.data(using: .utf8) else { return nil }
+        return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    }
+
+    private func configuredSecretNames(
+        plan: [String: Any]?,
+        stage: String,
+        platform: String
+    ) -> [String] {
+        guard let plan,
+              let stagePlan = plan[stage] as? [String: Any],
+              let rawNames = stagePlan[platform] as? [Any]
+        else { return [] }
+        return rawNames.compactMap { $0 as? String }
+    }
+
+    private func configuredSecretNames(
+        plan: [String: Any]?,
+        stage: String
+    ) -> [String] {
+        guard let plan, let stagePlan = plan[stage] as? [String: Any] else { return [] }
+        return stagePlan.values
+            .compactMap { $0 as? [Any] }
+            .flatMap { $0.compactMap { $0 as? String } }
+    }
+
+    private func secretsBeforeIosJoin(
+        _ allSecrets: [SecretDefinition],
+        plan: [String: Any]?
+    ) -> [SecretDefinition] {
+        guard plan != nil else { return allSecrets }
+        let names = Set(
+            configuredSecretNames(plan: plan, stage: "initial")
+                + configuredSecretNames(plan: plan, stage: "afterWebJoin", platform: "web")
+        )
+        return allSecrets.filter { names.contains($0.name) }
     }
 
     private func parseSecretDefinitions(_ raw: [String: Any]) -> [SecretDefinition] {
@@ -417,6 +482,39 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         field.typeText(email)
         dismissKeyboardIfNeeded()
         waitUntilHittable(app.descendants(matching: .any)["manual-signin-continue"], timeout: 10)
+    }
+
+    private func typeSecretNameAndValue(name: String, value: String) {
+        let nameField = app.descendants(matching: .any)["secret-name-input"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 30), "secret-name-input was not visible")
+        // The add-secret dialog auto-focuses the name field. Tapping it again
+        // can report `not hittable` while the keyboard is animating in; the
+        // semantic existence check above is sufficient before typing.
+        nameField.typeText(name)
+
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.40)).tap()
+        let valueField = app.descendants(matching: .any)["secret-value-input"]
+        XCTAssertTrue(valueField.waitForExistence(timeout: 30), "secret-value-input was not visible")
+        valueField.typeText(value)
+    }
+
+    private func createSecret(_ secret: SecretDefinition) {
+        print("E2E: IOS_CREATING_SECRET_\(secret.name)")
+        tap("add-secret-fab", timeout: 180)
+        typeSecretNameAndValue(name: secret.name, value: secret.value)
+        // The Compose dialog keeps the submit button behind the software
+        // keyboard, so XCTest reports the accessibility button as existing
+        // but not hittable. The established iOS E2E flow submits by tapping
+        // the dialog's semantic button coordinate after both fields are set.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.47)).tap()
+        enterSimulatorPasscodeIfNeeded()
+        waitForVisible(
+            identifier: "secret-row-\(secret.name)",
+            timeout: 180,
+            failureMessage: "iOS secret \(secret.name) was not visible after creation"
+        )
+        waitForHidden(identifier: "secret-name-input", timeout: 30)
+        print("E2E: IOS_SECRET_ADDED_\(secret.name)")
     }
 
     private func tap(_ identifier: String, timeout: TimeInterval = 30) {

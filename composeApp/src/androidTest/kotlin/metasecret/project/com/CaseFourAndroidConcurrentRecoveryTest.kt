@@ -37,7 +37,13 @@ class CaseFourAndroidConcurrentRecoveryTest {
         composeRule.waitForTag("email-confirmation-continue", 30_000)
         composeRule.onNodeWithTag("email-confirmation-continue").performClick()
         composeRule.waitForTag("add-secret-fab", 180_000)
-        secrets.forEach { secret ->
+        val initialSecrets = initialSecretsToCreate(secrets)
+        Log.i(
+            "MetaSecretE2E",
+            "E2E: ANDROID_INITIAL_SECRET_PLAN names="
+                + initialSecrets.joinToString(",") { it.name },
+        )
+        initialSecrets.forEach { secret ->
             createSecret(secret)
         }
         marker("ANDROID_INITIATOR_READY")
@@ -203,6 +209,24 @@ class CaseFourAndroidConcurrentRecoveryTest {
             )
         }
         return result.ifEmpty { listOf(SecretDefinition(fallbackName, fallbackValue)) }
+    }
+
+    private fun initialSecretsToCreate(allSecrets: List<SecretDefinition>): List<SecretDefinition> {
+        val rawPlan = instrumentationArgument("secretCreationPlan", "")
+        if (rawPlan.isBlank() || rawPlan == "null") return allSecrets
+
+        val plan = runCatching { JSONObject(rawPlan) }
+            .getOrElse { error("Invalid secretCreationPlan: ${it.message}") }
+        val initial = plan.optJSONObject("initial") ?: return emptyList()
+        val names = initial.optJSONArray("android")?.let { rawNames ->
+            (0 until rawNames.length()).map { rawNames.getString(it) }
+        }.orEmpty()
+        val knownNames = allSecrets.map { it.name }.toSet()
+        val unknownNames = names.filterNot(knownNames::contains)
+        check(unknownNames.isEmpty()) {
+            "secretCreationPlan.initial.android contains unknown secrets: ${unknownNames.joinToString(",")}"
+        }
+        return allSecrets.filter { it.name in names }
     }
 
     private fun createSecret(secret: SecretDefinition) {
