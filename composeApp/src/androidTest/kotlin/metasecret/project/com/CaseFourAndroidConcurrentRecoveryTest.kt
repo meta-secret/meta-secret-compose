@@ -6,12 +6,15 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.json.JSONArray
+import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -23,7 +26,7 @@ class CaseFourAndroidConcurrentRecoveryTest {
     @Test
     fun createVaultThenHandleConcurrentRecovery() {
         val vaultName = instrumentationArgument("vaultName", "test@test.ru")
-        val secretName = instrumentationArgument("secretName", "test-secret")
+        val secrets = secretDefinitions()
 
         clickIfPresent("onboarding-skip", timeoutMillis = 10_000)
         composeRule.waitForTag("signin-email-manual", 30_000)
@@ -34,12 +37,9 @@ class CaseFourAndroidConcurrentRecoveryTest {
         composeRule.waitForTag("email-confirmation-continue", 30_000)
         composeRule.onNodeWithTag("email-confirmation-continue").performClick()
         composeRule.waitForTag("add-secret-fab", 180_000)
-        composeRule.onNodeWithTag("add-secret-fab").performClick()
-        composeRule.waitForTag("secret-name-input", 30_000)
-        composeRule.onNodeWithTag("secret-name-input").performTextInput(secretName)
-        composeRule.onNodeWithTag("secret-value-input").performTextInput("test-secret-value")
-        composeRule.onNodeWithTag("add-secret-submit").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        secrets.forEach { secret ->
+            createSecret(secret)
+        }
         marker("ANDROID_INITIATOR_READY")
 
         val approvalCoordinatorUrl = instrumentationArgument(
@@ -59,41 +59,47 @@ class CaseFourAndroidConcurrentRecoveryTest {
         // action are the state this recovery test actually needs, so use those
         // semantic nodes as the readiness gate instead of waiting for a
         // localized text string such as "3 devices".
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
-        composeRule.waitForTag("secret-primary-action-$secretName", 180_000)
-        Log.i("MetaSecretE2E", "E2E: ANDROID_SECRET_READY_$secretName")
+        secrets.forEach { secret ->
+            composeRule.waitForTag("secret-row-${secret.name}", 180_000)
+            composeRule.waitForTag("secret-primary-action-${secret.name}", 180_000)
+            Log.i("MetaSecretE2E", "E2E: ANDROID_SECRET_READY_${secret.name}")
+        }
+        marker("ANDROID_SECRETS_READY")
         for (cycle in recoveryCyclePlan()) {
-            if ("android" in cycle.senders) {
+            val ownSecret = cycle.senderSecrets["android"]
+            if (ownSecret != null) {
                 waitForApproval(approvalCoordinatorUrl, "android-sender", cycle.number)
-                requestRecovery(secretName)
+                requestRecovery(ownSecret)
                 marker("ANDROID_RECOVERY_REQUEST_SENT_${cycle.number}")
                 // Keep the sender's waiting dialog open until both approvals
                 // complete. Reopening it in a receiver-only cycle would start
                 // a second recovery request instead of revealing this claim.
                 // Only a sender that must approve the peer's claim needs to
                 // leave its dialog before the reveal phase.
-                if ("android" in setOf(cycle.firstApprover, cycle.secondApprover)) {
+                if (cycle.approvals.any { it.platform == "android" }) {
                     closeShowSecretDialog()
                 }
             }
 
-            listOf(cycle.firstApprover, cycle.secondApprover).forEachIndexed { index, approver ->
-                if (approver == "android") {
+            cycle.approvals.forEachIndexed { index, approval ->
+                if (approval.platform == "android") {
                     val step = index + 1
                     waitForApproval(approvalCoordinatorUrl, "android-approve-$step", cycle.number)
                     approveIncomingRecovery(
-                        secretName,
-                        awaitNextRequest = step == 1 && cycle.secondApprover == "android",
+                        approval.secret,
+                        awaitNextRequest = step == 1
+                            && cycle.approvals.getOrNull(1)?.platform == "android"
+                            && cycle.approvals.getOrNull(1)?.secret == approval.secret,
                     )
                     marker("ANDROID_APPROVED_INCOMING_${cycle.number}_$step")
                 }
             }
 
-            if ("android" in cycle.senders) {
+            if (ownSecret != null) {
                 waitForApproval(approvalCoordinatorUrl, "android-show", cycle.number)
                 revealAndClose(
-                    secretName,
-                    reopenClaim = "android" in setOf(cycle.firstApprover, cycle.secondApprover),
+                    ownSecret,
+                    reopenClaim = cycle.approvals.any { it.platform == "android" },
                 )
                 marker("ANDROID_RECOVERY_SECRET_VISIBLE_${cycle.number}")
                 marker("ANDROID_RECOVERY_CLOSED_${cycle.number}")
@@ -103,26 +109,168 @@ class CaseFourAndroidConcurrentRecoveryTest {
 
     private data class RecoveryCycle(
         val number: Int,
-        val senders: Set<String>,
-        val firstApprover: String,
-        val secondApprover: String,
+        val senderSecrets: Map<String, String>,
+        val approvals: List<RecoveryApproval>,
+    ) {
+        val senders: Set<String> get() = senderSecrets.keys
+    }
+
+    private data class RecoveryApproval(
+        val platform: String,
+        val secret: String,
+    )
+
+    private data class SecretDefinition(
+        val name: String,
+        val value: String,
     )
 
     private fun recoveryCyclePlan(): List<RecoveryCycle> {
         val rawPlan = instrumentationArgument("cyclePlan", "[]")
         val json = runCatching { JSONArray(rawPlan) }.getOrElse { error("Invalid cyclePlan: ${it.message}") }
+        val defaultSecret = secretDefinitions().first().name
         return (0 until json.length()).map { index ->
             val cycle = json.getJSONObject(index)
+            val senderSecrets = buildMap {
+                val explicitSecrets = cycle.optJSONObject("senderSecrets")
+                val senders = cycle.optJSONArray("senders") ?: JSONArray()
+                for (senderIndex in 0 until senders.length()) {
+                    val sender = senders.get(senderIndex)
+                    val platform = if (sender is JSONObject) {
+                        sender.getString("platform")
+                    } else {
+                        sender.toString()
+                    }
+                    put(platform, explicitSecrets?.optString(platform, defaultSecret)
+                        ?: if (sender is JSONObject) sender.optString("secret", defaultSecret)
+                        else defaultSecret)
+                }
+                // Keep compatibility with plans that carry senderSecrets but
+                // omit the redundant senders array.
+                explicitSecrets?.keys()?.forEach { platform ->
+                    put(platform, explicitSecrets.optString(platform, defaultSecret))
+                }
+            }
+            val approvals = if (cycle.has("approvals")) {
+                val rawApprovals = cycle.getJSONArray("approvals")
+                (0 until rawApprovals.length()).map { approvalIndex ->
+                    val approval = rawApprovals.get(approvalIndex)
+                    if (approval is JSONObject) {
+                        RecoveryApproval(
+                            platform = approval.optString("platform", approval.optString("approver")),
+                            secret = approval.optString("secret", defaultSecret),
+                        )
+                    } else {
+                        RecoveryApproval(approval.toString(), defaultSecret)
+                    }
+                }
+            } else {
+                listOf(
+                    RecoveryApproval(cycle.getString("firstApprover"), defaultSecret),
+                    RecoveryApproval(cycle.getString("secondApprover"), defaultSecret),
+                )
+            }
             RecoveryCycle(
                 number = cycle.getInt("number"),
-                senders = (0 until cycle.getJSONArray("senders").length())
-                    .map { cycle.getJSONArray("senders").getString(it) }
-                    .toSet(),
-                firstApprover = cycle.getString("firstApprover"),
-                secondApprover = cycle.getString("secondApprover"),
-            )
+                senderSecrets = senderSecrets,
+                approvals = approvals,
+            ).also { parsed ->
+                Log.i(
+                    "MetaSecretE2E",
+                    "E2E: ANDROID_RECOVERY_PLAN_${parsed.number} "
+                        + "senders=${parsed.senderSecrets} approvals="
+                        + parsed.approvals.joinToString { "${it.platform}:${it.secret}" },
+                )
+            }
         }
     }
+
+    private fun secretDefinitions(): List<SecretDefinition> {
+        val fallbackName = instrumentationArgument("secretName", "test-secret")
+        val fallbackValue = instrumentationArgument("secretValue", "test-secret-value")
+        val fallback = "{\"default\":{\"name\":\"$fallbackName\",\"value\":\"$fallbackValue\"}}"
+        val json = runCatching {
+            JSONObject(instrumentationArgument("secretConfig", fallback))
+        }.getOrElse { error("Invalid secretConfig: ${it.message}") }
+        val result = mutableListOf<SecretDefinition>()
+        val keys = json.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            val value = json.getJSONObject(key)
+            result += SecretDefinition(
+                name = value.getString("name"),
+                value = value.getString("value"),
+            )
+        }
+        return result.ifEmpty { listOf(SecretDefinition(fallbackName, fallbackValue)) }
+    }
+
+    private fun createSecret(secret: SecretDefinition) {
+        // The FAB is rendered underneath the modal and therefore remains in
+        // the semantics tree while the previous dialog is animating out.
+        // Require the dialog itself to be gone before opening the next one.
+        composeRule.waitForTagGone("secret-name-input", 30_000)
+        composeRule.onNodeWithTag("add-secret-fab").performClick()
+        composeRule.waitForTag("secret-name-input", 30_000)
+        setTextEventually("secret-name-input", secret.name)
+        composeRule.waitForTag("secret-value-input", 30_000)
+        setTextEventually("secret-value-input", secret.value)
+        composeRule.onNodeWithTag("add-secret-submit").performClick()
+        composeRule.waitForTag("secret-row-${secret.name}", 180_000)
+        composeRule.waitForTagGone("secret-name-input", 30_000)
+    }
+
+    /**
+     * A state refresh can replace a TextInput semantics node between the
+     * lookup and the text action. Re-fetch the node on every polling pass and
+     * verify the resulting value; this handles an action that was applied just
+     * before Compose detached the old node without introducing a fixed delay.
+     */
+    private fun setTextEventually(tag: String, value: String) {
+        var lastObserved: String? = null
+        composeRule.waitUntil(30_000) {
+            val observed = editableText(tag)
+            if (observed != lastObserved) {
+                Log.i(
+                    "MetaSecretE2E",
+                    "E2E: ANDROID_TEXT_STATE tag=$tag value=${observed ?: "missing"}",
+                )
+                lastObserved = observed
+            }
+            if (observed == value) {
+                true
+            } else {
+                runCatching {
+                    composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+                        .performTextInput(value)
+                }
+                if (editableText(tag) == value) {
+                    true
+                } else {
+                    runCatching {
+                        composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+                            .performTextReplacement(value)
+                    }
+                    editableText(tag) == value
+                }
+            }
+        }
+    }
+
+    private fun editableText(tag: String): String? = runCatching {
+        val config = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .config
+        val value = if (config.contains(SemanticsProperties.EditableText)) {
+            config[SemanticsProperties.EditableText].text
+        } else {
+            null
+        }
+        value ?: Regex("(?:EditableText|InputText) = '([^']*)'")
+            .find(config.toString())
+            ?.groupValues
+            ?.getOrNull(1)
+    }.getOrNull()
 
     private fun requestRecovery(secretName: String) {
         ensurePrimaryActionReadyForRecovery(secretName)
@@ -368,6 +516,19 @@ class CaseFourAndroidConcurrentRecoveryTest {
                 onAllNodes(hasTestTag(tag), useUnmergedTree = true)
                     .fetchSemanticsNodes()
                     .isNotEmpty()
+            }.getOrDefault(false)
+        }
+    }
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitForTagGone(
+        tag: String,
+        timeoutMillis: Long,
+    ) {
+        waitUntil(timeoutMillis) {
+            runCatching {
+                onAllNodes(hasTestTag(tag), useUnmergedTree = true)
+                    .fetchSemanticsNodes()
+                    .isEmpty()
             }.getOrDefault(false)
         }
     }

@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 
 @MainActor
@@ -12,53 +13,36 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
     }
 
     func testJoinAndroidInitiatedVaultAndHandleConcurrentRecovery() throws {
-        let recoveryCycles = Int(env("E2E_RECOVERY_CYCLES", defaultValue: "18")) ?? 18
-        let senderCycles = cycleSet(
-            "E2E_IOS_SENDER_CYCLES",
-            defaultValue: "7,8,9,10,11,12,13,14,15,16,17,18"
-        )
-        let approvalSteps = approvalStepSet(
-            defaultValue: "1:1,1:2,2:1,2:2,9:2,10:1,11:2,12:1,15:2,16:1,17:2,18:1"
-        )
-        XCTAssertEqual(recoveryCycles, 18, "Full Test #4 must receive all 18 recovery cycles")
-        try joinAndroidInitiatedVaultAndRunRecovery(
-            recoveryCycles: recoveryCycles,
-            senderCycles: senderCycles,
-            approvalSteps: approvalSteps,
-        )
+        try joinAndroidInitiatedVaultAndRunRecovery()
     }
 
     func testJoinAndroidInitiatedVaultAndHandleConcurrentRecoveryBlock1() throws {
-        try joinAndroidInitiatedVaultAndRunRecovery(
-            recoveryCycles: 6,
-            senderCycles: [],
-            approvalSteps: ["1:1", "1:2", "2:1", "2:2"],
-        )
+        try joinAndroidInitiatedVaultAndRunRecovery()
     }
 
     func testJoinAndroidInitiatedVaultAndHandleConcurrentRecoveryBlock2() throws {
-        try joinAndroidInitiatedVaultAndRunRecovery(
-            recoveryCycles: 6,
-            senderCycles: [1, 2, 3, 4, 5, 6],
-            approvalSteps: ["3:2", "4:1", "5:2", "6:1"],
-        )
+        try joinAndroidInitiatedVaultAndRunRecovery()
     }
 
     func testJoinAndroidInitiatedVaultAndHandleConcurrentRecoveryBlock3() throws {
-        try joinAndroidInitiatedVaultAndRunRecovery(
-            recoveryCycles: 6,
-            senderCycles: [1, 2, 3, 4, 5, 6],
-            approvalSteps: ["3:2", "4:1", "5:2", "6:1"],
-        )
+        try joinAndroidInitiatedVaultAndRunRecovery()
     }
 
-    private func joinAndroidInitiatedVaultAndRunRecovery(
-        recoveryCycles: Int,
-        senderCycles: Set<Int>,
-        approvalSteps: Set<String>,
-    ) throws {
-        let vaultName = env("E2E_VAULT_NAME", defaultValue: "test@test.ru")
-        let secretName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
+    private func joinAndroidInitiatedVaultAndRunRecovery() throws {
+        // xcodebuild does not consistently forward arbitrary environment
+        // variables to the XCTest runner. Read the orchestrator's authoritative
+        // scenario over the same localhost coordinator used for approvals, and
+        // keep environment variables as a fallback for standalone runs.
+        let coordinator = loadCoordinatorScenario()
+        let vaultName = coordinator?.vaultName
+            ?? env("E2E_VAULT_NAME", defaultValue: "test@test.ru")
+        let secrets = coordinator?.secrets ?? secretDefinitions()
+        let recoveryPlan = coordinator?.recoveryPlan ?? recoveryCyclePlan()
+        print(
+            "E2E: IOS_SCENARIO_CONFIG vault=\(vaultName) " +
+                "secrets=\(secrets.map(\.name).joined(separator: ",")) " +
+                "cycles=\(recoveryPlan.count)"
+        )
 
         skipOnboardingIfNeeded()
         openManualEmailSignIn()
@@ -74,43 +58,196 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         // Approval happens on Android after this test has sent the join
         // request. iOS may present its device PIN only at that later point;
         // keep handling it while waiting for the vault to become available.
-        waitForSecretAfterJoin(secretName, timeout: 180)
+        waitForSecretsAfterJoin(secrets, timeout: 180)
         print("E2E: IOS_MAIN_AFTER_APPROVE")
-        print("E2E: IOS_SECRET_VISIBLE")
+        print("E2E: IOS_SECRETS_READY")
 
-        for cycle in 1...recoveryCycles {
-            if senderCycles.contains(cycle) {
-                waitForApproval(platform: "ios-sender", cycle: cycle)
-                requestRecovery(secretName, cycle: cycle)
-                print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)")
+        for cycle in recoveryPlan {
+            if let ownSecret = cycle.senderSecrets["ios"] {
+                waitForApproval(platform: "ios-sender", cycle: cycle.number)
+                requestRecovery(ownSecret, cycle: cycle.number)
+                print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle.number)")
                 // Preserve the sender dialog until both approvals finish. A
                 // receiver-only iOS sender must not reopen it, because that
                 // would issue a second recovery request rather than reveal
                 // the accepted claim. Close early only when iOS also needs
                 // to approve its peer's request in this cycle.
-                if approvalSteps.contains("\(cycle):1") || approvalSteps.contains("\(cycle):2") {
+                if cycle.approvals.contains(where: { $0.platform == "ios" }) {
                     closeShowSecretDialog()
                 }
             }
 
-            for step in 1...2 where approvalSteps.contains("\(cycle):\(step)") {
-                waitForApproval(platform: "ios-approve-\(step)", cycle: cycle)
-                approveIncomingRecovery(secretName, cycle: cycle, request: step)
-                print("E2E: IOS_APPROVED_INCOMING_\(cycle)_\(step)")
+            for (index, approval) in cycle.approvals.enumerated() where approval.platform == "ios" {
+                let step = index + 1
+                waitForApproval(platform: "ios-approve-\(step)", cycle: cycle.number)
+                approveIncomingRecovery(approval.secret, cycle: cycle.number, request: step)
+                print("E2E: IOS_APPROVED_INCOMING_\(cycle.number)_\(step)")
             }
 
-            if senderCycles.contains(cycle) {
-                waitForApproval(platform: "ios-show", cycle: cycle)
-                if approvalSteps.contains("\(cycle):1") || approvalSteps.contains("\(cycle):2") {
-                    showAcceptedSecret(secretName, cycle: cycle)
+            if let ownSecret = cycle.senderSecrets["ios"] {
+                waitForApproval(platform: "ios-show", cycle: cycle.number)
+                if cycle.approvals.contains(where: { $0.platform == "ios" }) {
+                    showAcceptedSecret(ownSecret, cycle: cycle.number)
                 }
                 waitForVisible(identifier: "revealed-secret-value", timeout: 180)
-                print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)")
+                print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle.number)")
                 closeShowSecretDialog()
                 waitForHidden(identifier: "revealed-secret-value", timeout: 30)
-                print("E2E: IOS_RECOVERY_CLOSED_\(cycle)")
+                print("E2E: IOS_RECOVERY_CLOSED_\(cycle.number)")
             }
         }
+    }
+
+    private struct RecoveryApproval {
+        let platform: String
+        let secret: String
+    }
+
+    private struct RecoveryCycle {
+        let number: Int
+        let senderSecrets: [String: String]
+        let approvals: [RecoveryApproval]
+    }
+
+    private struct SecretDefinition {
+        let name: String
+        let value: String
+    }
+
+    private struct CoordinatorScenario {
+        let vaultName: String
+        let secrets: [SecretDefinition]
+        let recoveryPlan: [RecoveryCycle]
+    }
+
+    private func loadCoordinatorScenario() -> CoordinatorScenario? {
+        let baseUrl = env("E2E_APPROVAL_COORDINATOR_URL", defaultValue: "http://127.0.0.1:5180")
+        guard let url = URL(string: "\(baseUrl)/scenario") else { return nil }
+
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline {
+            if let data = readDataResponse(url),
+               let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let vaultName = raw["vaultName"] as? String,
+               let secretConfig = raw["secretConfig"] as? [String: Any],
+               let rawCycles = raw["recoveryPlan"] as? [[String: Any]] {
+                let secrets = parseSecretDefinitions(secretConfig)
+                let recoveryPlan = parseRecoveryCyclePlan(rawCycles, defaultSecret: secrets.first?.name ?? "test-secret")
+                guard !secrets.isEmpty, !recoveryPlan.isEmpty else { return nil }
+                return CoordinatorScenario(
+                    vaultName: vaultName,
+                    secrets: secrets,
+                    recoveryPlan: recoveryPlan
+                )
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return nil
+    }
+
+    private func secretDefinitions() -> [SecretDefinition] {
+        let fallbackName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
+        let fallbackValue = env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
+        guard let data = env("E2E_SECRET_CONFIG", defaultValue: "").data(using: .utf8),
+              let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else {
+            return [SecretDefinition(name: fallbackName, value: fallbackValue)]
+        }
+
+        let definitions = parseSecretDefinitions(raw)
+        return definitions.isEmpty
+            ? [SecretDefinition(name: fallbackName, value: fallbackValue)]
+            : definitions
+    }
+
+    private func parseSecretDefinitions(_ raw: [String: Any]) -> [SecretDefinition] {
+        raw.keys.sorted().compactMap { key -> SecretDefinition? in
+            guard let value = raw[key] as? [String: Any],
+                  let name = value["name"] as? String,
+                  let secretValue = value["value"] as? String else { return nil }
+            return SecretDefinition(name: name, value: secretValue)
+        }
+    }
+
+    private func recoveryCyclePlan() -> [RecoveryCycle] {
+        let defaultSecret = secretDefinitions().first?.name ?? "test-secret"
+        let rawPlan = env("E2E_RECOVERY_PLAN", defaultValue: "")
+        if let data = rawPlan.data(using: .utf8),
+           let rawCycles = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+           !rawCycles.isEmpty {
+            return parseRecoveryCyclePlan(rawCycles, defaultSecret: defaultSecret)
+        }
+
+        let count = Int(env("E2E_RECOVERY_CYCLES", defaultValue: "18")) ?? 18
+        let senderCycles = cycleSet(
+            "E2E_IOS_SENDER_CYCLES",
+            defaultValue: "7,8,9,10,11,12,13,14,15,16,17,18"
+        )
+        let approvalSteps = approvalStepSet(
+            defaultValue: "1:1,1:2,2:1,2:2,9:2,10:1,11:2,12:1,15:2,16:1,17:2,18:1"
+        )
+        return (1...count).map { number in
+            let senderSecrets = senderCycles.contains(number) ? ["ios": defaultSecret] : [:]
+            let approvals: [RecoveryApproval] = (1...2).compactMap { step in
+                guard approvalSteps.contains("\(number):\(step)") else { return nil }
+                return RecoveryApproval(platform: "ios", secret: defaultSecret)
+            }
+            return RecoveryCycle(number: number, senderSecrets: senderSecrets, approvals: approvals)
+        }
+    }
+
+    private func parseRecoveryCyclePlan(
+        _ rawCycles: [[String: Any]],
+        defaultSecret: String
+    ) -> [RecoveryCycle] {
+        rawCycles.compactMap { rawCycle in
+                guard let number = rawCycle["number"] as? Int else { return nil }
+                var senderSecrets: [String: String] = [:]
+                if let explicitSecrets = rawCycle["senderSecrets"] as? [String: Any] {
+                    for (platform, secret) in explicitSecrets {
+                        if let secret = secret as? String {
+                            senderSecrets[platform] = secret
+                        }
+                    }
+                }
+                if let senders = rawCycle["senders"] as? [Any] {
+                    for sender in senders {
+                        if let sender = sender as? [String: Any],
+                           let platform = sender["platform"] as? String,
+                           let secret = sender["secret"] as? String {
+                            senderSecrets[platform] = senderSecrets[platform] ?? secret
+                        } else if let platform = sender as? String {
+                            senderSecrets[platform] = senderSecrets[platform] ?? defaultSecret
+                        }
+                    }
+                }
+                var approvals: [RecoveryApproval] = []
+                if let rawApprovals = rawCycle["approvals"] as? [Any] {
+                    for approval in rawApprovals {
+                        if let approval = approval as? [String: Any],
+                           let platform = (approval["platform"] ?? approval["approver"]) as? String,
+                           let secret = approval["secret"] as? String {
+                            approvals.append(RecoveryApproval(platform: platform, secret: secret))
+                        } else if let platform = approval as? String {
+                            approvals.append(RecoveryApproval(platform: platform, secret: defaultSecret))
+                        }
+                    }
+                } else {
+                    if let first = rawCycle["firstApprover"] as? String {
+                        approvals.append(RecoveryApproval(platform: first, secret: defaultSecret))
+                    }
+                    if let second = rawCycle["secondApprover"] as? String {
+                        approvals.append(RecoveryApproval(platform: second, secret: defaultSecret))
+                    }
+                }
+                let cycle = RecoveryCycle(number: number, senderSecrets: senderSecrets, approvals: approvals)
+                print(
+                    "E2E: IOS_RECOVERY_PLAN_\(number) "
+                        + "senders=\(senderSecrets) approvals="
+                        + approvals.map { "\($0.platform):\($0.secret)" }.joined(separator: ",")
+                )
+                return cycle
+            }
     }
 
     private func requestRecovery(_ secretName: String, cycle: Int) {
@@ -246,16 +383,19 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         // Keep the test runner's main actor responsive. String(contentsOf:)
         // performs synchronous URL loading and makes XCTest report a UI
         // unresponsiveness warning on every poll.
-        var response: String?
+        guard let data = readDataResponse(url) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    private func readDataResponse(_ url: URL) -> Data? {
+        let response = ResponseBox()
         let semaphore = DispatchSemaphore(value: 0)
         URLSession.shared.dataTask(with: url) { data, _, _ in
-            if let data {
-                response = String(data: data, encoding: .utf8)
-            }
+            response.set(data)
             semaphore.signal()
         }.resume()
         _ = semaphore.wait(timeout: .now() + 2)
-        return response
+        return response.getData()
     }
 
     private func openManualEmailSignIn() {
@@ -320,6 +460,12 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         XCTFail("secret-row-\(secretName) was not visible after join approval")
     }
 
+    private func waitForSecretsAfterJoin(_ secrets: [SecretDefinition], timeout: TimeInterval) {
+        for secret in secrets {
+            waitForSecretAfterJoin(secret.name, timeout: timeout)
+        }
+    }
+
     private func waitForHidden(identifier: String, timeout: TimeInterval) {
         let element = app.descendants(matching: .any)[identifier]
         XCTAssertTrue(element.waitForNonExistence(timeout: timeout), "\(identifier) did not disappear")
@@ -375,6 +521,36 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
 
     private func env(_ key: String, defaultValue: String) -> String {
         ProcessInfo.processInfo.environment[key] ?? defaultValue
+    }
+}
+
+private final class ResponseBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: String?
+    private var data: Data?
+
+    func set(_ value: String?) {
+        lock.lock()
+        defer { lock.unlock() }
+        self.value = value
+    }
+
+    func get() -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+
+    func set(_ data: Data?) {
+        lock.lock()
+        defer { lock.unlock() }
+        self.data = data
+    }
+
+    func getData() -> Data? {
+        lock.lock()
+        defer { lock.unlock() }
+        return data
     }
 }
 
