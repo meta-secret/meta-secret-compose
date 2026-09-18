@@ -1,6 +1,7 @@
 package metasecret.project.com
 
 import android.util.Log
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -10,6 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -66,6 +68,76 @@ class CaseThreeAndroidInitiatorTest {
             }
             marker("ANDROID_RECOVERY_CLOSED_$cycle")
         }
+    }
+
+    @Test
+    fun createVaultAndWaitForJoins() {
+        val vaultName = instrumentationArgument("vaultName", "test@test.ru")
+        clickIfPresent("onboarding-skip", timeoutMillis = 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("add-secret-fab", 180_000)
+
+        val configuredNames = instrumentationArgument("secretNames", "").split(',').filter { it.isNotBlank() }
+        val configuredValues = instrumentationArgument("secretValues", "").split(',')
+        val secretConfigRaw = instrumentationArgument("secretConfig", "")
+        val configuredSecrets = if (configuredNames.isNotEmpty()) {
+            configuredNames.zip(configuredValues + List(configuredNames.size) { "test-secret-value" })
+        } else {
+            val secretConfig = runCatching { JSONObject(secretConfigRaw) }
+                .getOrElse { error("Invalid secretConfig: ${it.message}") }
+            val keys = mutableListOf<String>()
+            val iterator = secretConfig.keys()
+            while (iterator.hasNext()) keys += iterator.next()
+            keys.sorted().map { key ->
+                val secret = secretConfig.getJSONObject(key)
+                secret.getString("name") to secret.getString("value")
+            }
+        }
+        configuredSecrets.forEach { (name, value) ->
+            createSecret(name, value)
+            // Initialize the creator's claim exactly as the iOS initiator
+            // setup does. Without this first Show, the Android owner can
+            // retain a PENDING claim; the recovery step then only reports
+            // "request already sent" and emits no new recovery request.
+            showCreatedSecret(name)
+        }
+        marker("ANDROID_INITIATOR_READY")
+        approvePendingJoin("ANDROID_WEB_JOIN_APPROVED")
+        approvePendingJoin("ANDROID_IOS_JOIN_APPROVED")
+        // Join approval leaves the owner on Devices. Switch back to Secrets
+        // before asserting that all configured secret rows are visible.
+        composeRule.onNodeWithTag("tab-secrets").performClick()
+        configuredSecrets.forEach { (name, _) ->
+            composeRule.waitForTag("secret-row-$name", 180_000)
+            composeRule.waitForTag("secret-primary-action-$name", 180_000)
+        }
+        marker("ANDROID_SECRETS_READY")
+    }
+
+    private fun createSecret(name: String, value: String) {
+        composeRule.onNodeWithTag("add-secret-fab").performClick()
+        composeRule.waitForTag("secret-name-input", 30_000)
+        composeRule.onNodeWithTag("secret-name-input").performTextInput(name)
+        composeRule.onNodeWithTag("secret-value-input").performTextInput(value)
+        composeRule.onNodeWithTag("add-secret-submit").performClick()
+        composeRule.waitForTag("secret-row-$name", 180_000)
+        composeRule.waitForTagGone("secret-name-input", 30_000)
+    }
+
+    private fun showCreatedSecret(name: String) {
+        composeRule.onNodeWithTag("secret-primary-action-$name")
+            .assertTextContains("Show", substring = true)
+            .performClick()
+        composeRule.waitForTag("revealed-secret-value", 180_000)
+        composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+        composeRule.waitForTagGone("revealed-secret-value", 30_000)
+        composeRule.waitForTagGone("show-secret-dialog", 30_000)
     }
 
     private fun clickIfPresent(tag: String, timeoutMillis: Long) {
@@ -132,6 +204,12 @@ class CaseThreeAndroidInitiatorTest {
             // merges its descendants. Test tags attached to nested content are
             // only visible in the unmerged tree.
             onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitForTagGone(tag: String, timeoutMillis: Long) {
+        waitUntil(timeoutMillis) {
+            onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()
         }
     }
 }

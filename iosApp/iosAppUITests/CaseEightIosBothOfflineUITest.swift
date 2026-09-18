@@ -9,6 +9,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let step: String?
         let approvalPlatform: String?
         let sender: String?
+        let secretName: String?
     }
 
     private static let stepConfigPath = "/tmp/metasecret-e2e-ios-step.json"
@@ -22,8 +23,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     }
 
     func joinWebInitiatedVault() throws {
-        let vaultName = env("E2E_VAULT_NAME", defaultValue: "test8@test.ru")
-        let secretName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
+        let vaultName = coordinatorVaultName(defaultValue: "test8@test.ru")
 
         skipOnboardingIfNeeded()
         openManualEmailSignIn()
@@ -35,14 +35,49 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         enterSimulatorPasscodeIfNeeded()
         print("E2E: IOS_JOIN_REQUEST_SENT")
 
-        waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
+        for name in configuredSecretNames() {
+            waitForVisible(identifier: "secret-row-\(name)", timeout: 180)
+        }
         print("E2E: IOS_JOIN_READY")
+        print("E2E: IOS_SECRETS_READY")
+    }
+
+    func sendRecoveryRequestAndExit() throws {
+        let config = stepConfig()
+        let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test-secret")
+        let cycle = config.cycle ?? env("E2E_CYCLE", defaultValue: "1")
+        waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
+        waitForPrimaryAction(secretName, expected: "Recover", timeout: 180)
+        waitForApproval(platform: "ios-sender", cycle: cycle, step: "1")
+        tap("secret-primary-action-\(secretName)")
+        enterSimulatorPasscodeIfNeeded()
+        waitForVisible(identifier: "show-secret-dialog", timeout: 30)
+        print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)_1")
+        print("E2E: IOS_SENDER_OFFLINE_BOUNDARY_\(cycle)")
+    }
+
+    func showAcceptedRecoveryAfterOffline() throws {
+        let config = stepConfig()
+        let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test-secret")
+        let cycle = config.cycle ?? env("E2E_CYCLE", defaultValue: "1")
+        waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
+        waitForPrimaryAction(secretName, expected: "Show", timeout: 180)
+        waitForApproval(platform: "ios-show", cycle: cycle, step: "1")
+        tap("secret-primary-action-\(secretName)")
+        enterSimulatorPasscodeIfNeeded()
+        waitForVisible(identifier: "revealed-secret-value", timeout: 180)
+        print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)_1")
+        tap("show-secret-close")
+        waitForHidden(identifier: "revealed-secret-value", timeout: 30)
+        waitForHidden(identifier: "show-secret-dialog", timeout: 30)
+        waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
+        print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_1")
     }
 
     func handleRecoveryStep() throws {
-        let secretName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
-        let secretValue = env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
         let config = stepConfig()
+        let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test-secret")
+        let secretValue = env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
         let role = config.role ?? env("E2E_ROLE", defaultValue: "receiver")
         let cycle = config.cycle ?? env("E2E_CYCLE", defaultValue: "1")
         let step = config.step ?? env("E2E_STEP", defaultValue: "1")
@@ -238,12 +273,46 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         ProcessInfo.processInfo.environment[key] ?? defaultValue
     }
 
+    private func coordinatorVaultName(defaultValue: String) -> String {
+        let baseUrl = env("E2E_APPROVAL_COORDINATOR_URL", defaultValue: "http://127.0.0.1:5180")
+        guard let url = URL(string: "\(baseUrl)/scenario") else { return env("E2E_VAULT_NAME", defaultValue: defaultValue) }
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline {
+            if let data = try? Data(contentsOf: url),
+               let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let vaultName = raw["vaultName"] as? String {
+                return vaultName
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return env("E2E_VAULT_NAME", defaultValue: defaultValue)
+    }
+
+    private func configuredSecretNames() -> [String] {
+        let fallback = env("E2E_SECRET_NAME", defaultValue: "test-secret")
+        let baseUrl = env("E2E_APPROVAL_COORDINATOR_URL", defaultValue: "http://127.0.0.1:5180")
+        if let url = URL(string: "\(baseUrl)/scenario"),
+           let data = try? Data(contentsOf: url),
+           let scenario = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let raw = scenario["secretConfig"] as? [String: Any] {
+            let names = raw.keys.sorted().compactMap { raw[$0] as? [String: Any] }
+                .compactMap { $0["name"] as? String }
+            if !names.isEmpty { return names }
+        }
+        guard let data = env("E2E_SECRET_CONFIG", defaultValue: "").data(using: .utf8),
+              let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return [fallback] }
+        let names = raw.keys.sorted().compactMap { raw[$0] as? [String: Any] }
+            .compactMap { $0["name"] as? String }
+        return names.isEmpty ? [fallback] : names
+    }
+
     private func stepConfig() -> StepConfig {
         guard
             let data = FileManager.default.contents(atPath: Self.stepConfigPath),
             let config = try? JSONDecoder().decode(StepConfig.self, from: data)
         else {
-            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil)
+            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil)
         }
         return config
     }

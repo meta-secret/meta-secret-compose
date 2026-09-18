@@ -11,6 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -34,8 +35,45 @@ class CaseEightAndroidBothOfflineTest {
         composeRule.waitForTag("email-confirmation-join", 60_000)
         composeRule.onNodeWithTag("email-confirmation-join").performClick()
         marker("ANDROID_JOIN_REQUEST_SENT")
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        configuredSecretNames().forEach { name -> composeRule.waitForTag("secret-row-$name", 180_000) }
         marker("ANDROID_JOIN_READY")
+        marker("ANDROID_SECRETS_READY")
+    }
+
+    @Test
+    fun sendRecoveryRequestAndExit() {
+        val secretName = argument("secretName", "test-secret")
+        val cycle = argument("cycle", "1")
+        val coordinator = argument("approvalCoordinatorUrl", "http://10.0.2.2:5180")
+        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        waitForApproval(coordinator, "android-sender-1", cycle)
+        waitForPrimaryAction(secretName, "Recover")
+        composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
+        composeRule.waitForTag("show-secret-dialog", 30_000)
+        marker("ANDROID_RECOVERY_REQUEST_SENT_${cycle}_1")
+        // Keep the instrumentation alive until the native call has flushed
+        // the claim. The orchestrator releases this gate after observing the
+        // cycle-specific native log marker.
+        waitForApproval(coordinator, "android-request-persisted", cycle)
+        Log.i("MetaSecretE2E", "E2E: ANDROID_SENDER_OFFLINE_BOUNDARY_$cycle")
+    }
+
+    @Test
+    fun showAcceptedRecoveryAfterOffline() {
+        val secretName = argument("secretName", "test-secret")
+        val cycle = argument("cycle", "1")
+        val coordinator = argument("approvalCoordinatorUrl", "http://10.0.2.2:5180")
+        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        waitForPrimaryAction(secretName, "Show")
+        waitForApproval(coordinator, "android-show-1", cycle)
+        composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
+        composeRule.waitForTag("revealed-secret-value", 180_000)
+        marker("ANDROID_RECOVERY_SECRET_VISIBLE_${cycle}_1")
+        composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+        composeRule.waitForTagGone("revealed-secret-value", 30_000)
+        composeRule.waitForTagGone("show-secret-dialog", 30_000)
+        waitForPrimaryAction(secretName, "Recover")
+        marker("ANDROID_RECOVERY_CLOSED_${cycle}_1")
     }
 
     @Test
@@ -175,6 +213,23 @@ class CaseEightAndroidBothOfflineTest {
 
     private fun argument(name: String, fallback: String): String =
         androidx.test.platform.app.InstrumentationRegistry.getArguments().getString(name) ?: fallback
+
+    private fun configuredSecretNames(): List<String> {
+        val raw = argument("secretConfig", "")
+        if (raw.isBlank()) {
+            val scalarNames = argument("secretNames", "").split(',').filter { it.isNotBlank() }
+            return scalarNames.ifEmpty { listOf(argument("secretName", "test-secret")) }
+        }
+        val json = runCatching { JSONObject(raw) }.getOrNull()
+            ?: return listOf(argument("secretName", "test-secret"))
+        val names = mutableListOf<String>()
+        val keys = json.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            names += json.getJSONObject(key).getString("name")
+        }
+        return names.ifEmpty { listOf(argument("secretName", "test-secret")) }
+    }
 
     private fun marker(message: String) = Log.i("MetaSecretE2E", "E2E: $message")
 

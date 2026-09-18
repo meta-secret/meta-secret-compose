@@ -4,6 +4,11 @@ import XCTest
 final class CaseTwoIosInitiatorUITest: XCTestCase {
     private var app: XCUIApplication!
 
+    private struct SecretDefinition {
+        let name: String
+        let value: String
+    }
+
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
@@ -57,6 +62,35 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
         }
     }
 
+    func createVaultAndWaitForJoins() throws {
+        let vaultName = coordinatorVaultName(defaultValue: "test@test.ru")
+        let secrets = configuredSecrets()
+        skipOnboardingIfNeeded()
+        openManualEmailSignIn()
+        typeEmail(vaultName)
+        tap("manual-signin-continue")
+        tap("email-confirmation-continue")
+        enterSimulatorPasscodeIfNeeded()
+        for secret in secrets {
+            tap("add-secret-fab", timeout: 180)
+            typeSecretNameAndValue(name: secret.name, value: secret.value)
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.47)).tap()
+            enterSimulatorPasscodeIfNeeded()
+            waitForVisible(identifier: "secret-row-\(secret.name)", timeout: 180)
+            waitForHidden(identifier: "secret-name-input", timeout: 30)
+        }
+        print("E2E: IOS_INITIATOR_READY")
+        approvePendingJoin(marker: "IOS_WEB_JOIN_APPROVED")
+        approvePendingJoin(marker: "IOS_ANDROID_JOIN_APPROVED")
+        // Join approval leaves the app on the Devices tab. Return to Secrets
+        // before asserting that the owner's secret rows remain available.
+        tap("tab-secrets")
+        for secret in secrets {
+            waitForVisible(identifier: "secret-row-\(secret.name)", timeout: 180)
+        }
+        print("E2E: IOS_SECRETS_READY")
+    }
+
     private func skipOnboardingIfNeeded() {
         let skip = app.descendants(matching: .any)["onboarding-skip"]
         if skip.waitForExistence(timeout: 10) {
@@ -108,6 +142,53 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
         let valueField = app.descendants(matching: .any)["secret-value-input"]
         XCTAssertTrue(valueField.waitForExistence(timeout: 5), "secret-value-input was not visible")
         valueField.typeText(value)
+    }
+
+    private func configuredSecrets() -> [SecretDefinition] {
+        let fallbackName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
+        let fallbackValue = env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
+        let baseUrl = env("E2E_APPROVAL_COORDINATOR_URL", defaultValue: "http://127.0.0.1:5180")
+        if let url = URL(string: "\(baseUrl)/scenario"),
+           let data = try? Data(contentsOf: url),
+           let scenario = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let raw = scenario["secretConfig"] as? [String: Any] {
+            let secrets = raw.keys.sorted().compactMap { key -> SecretDefinition? in
+                guard let definition = raw[key] as? [String: Any],
+                      let name = definition["name"] as? String,
+                      let value = definition["value"] as? String else { return nil }
+                return SecretDefinition(name: name, value: value)
+            }
+            if !secrets.isEmpty { return secrets }
+        }
+        guard let data = env("E2E_SECRET_CONFIG", defaultValue: "").data(using: .utf8),
+              let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else {
+            return [SecretDefinition(name: fallbackName, value: fallbackValue)]
+        }
+        let secrets = raw.keys.sorted().compactMap { key -> SecretDefinition? in
+            guard let definition = raw[key] as? [String: Any],
+                  let name = definition["name"] as? String,
+                  let value = definition["value"] as? String else { return nil }
+            return SecretDefinition(name: name, value: value)
+        }
+        return secrets.isEmpty
+            ? [SecretDefinition(name: fallbackName, value: fallbackValue)]
+            : secrets
+    }
+
+    private func coordinatorVaultName(defaultValue: String) -> String {
+        let baseUrl = env("E2E_APPROVAL_COORDINATOR_URL", defaultValue: "http://127.0.0.1:5180")
+        guard let url = URL(string: "\(baseUrl)/scenario") else { return env("E2E_VAULT_NAME", defaultValue: defaultValue) }
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline {
+            if let data = try? Data(contentsOf: url),
+               let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let vaultName = raw["vaultName"] as? String {
+                return vaultName
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return env("E2E_VAULT_NAME", defaultValue: defaultValue)
     }
 
     private func approvePendingJoin(marker: String) {
