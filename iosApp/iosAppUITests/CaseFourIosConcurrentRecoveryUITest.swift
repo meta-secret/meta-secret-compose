@@ -28,6 +28,22 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         try joinAndroidInitiatedVaultAndRunRecovery()
     }
 
+    func assertNoStaleRecoveryAlertAfterOfflineRestart() throws {
+        let coordinator = loadCoordinatorScenario()
+        let secrets = coordinator?.secrets ?? secretDefinitions()
+        guard let secret = secrets.first else {
+            XCTFail("No configured secret available for stale-alert assertion")
+            return
+        }
+        print("E2E: IOS_STALE_ALERT_ASSERTION_STARTED secret=\(secret.name)")
+        waitForVisible(identifier: "secret-row-\(secret.name)", timeout: 180)
+        waitForHidden(identifier: "recovery-request-badge-\(secret.name)", timeout: 30)
+        waitForHidden(identifier: "open-recovery-request-\(secret.name)", timeout: 30)
+        waitForHidden(identifier: "alert-recovery-request", timeout: 30)
+        waitForHidden(identifier: "alert-recovery-request-processing", timeout: 30)
+        print("E2E: IOS_STALE_ALERT_ABSENT")
+    }
+
     private func joinAndroidInitiatedVaultAndRunRecovery() throws {
         // xcodebuild does not consistently forward arbitrary environment
         // variables to the XCTest runner. Read the orchestrator's authoritative
@@ -86,6 +102,17 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         print("E2E: IOS_SECRETS_READY")
 
         for cycle in recoveryPlan {
+            if cycle.offlineReceiver == "ios" {
+                // The orchestrator terminates iOS only after this semantic
+                // boundary. Waiting for its gate keeps the XCTest process
+                // alive long enough to distinguish a deliberate offline
+                // interval from an unexpected app crash.
+                print("E2E: IOS_OFFLINE_READY_\(cycle.number)")
+                waitForApproval(platform: "ios-offline-stop", cycle: cycle.number)
+                print("E2E: IOS_OFFLINE_STOP_ALLOWED_\(cycle.number)")
+                return
+            }
+
             if let ownSecret = cycle.senderSecrets["ios"] {
                 waitForApproval(platform: "ios-sender", cycle: cycle.number)
                 requestRecovery(ownSecret, cycle: cycle.number)
@@ -130,6 +157,7 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         let number: Int
         let senderSecrets: [String: String]
         let approvals: [RecoveryApproval]
+        let offlineReceiver: String?
     }
 
     private struct SecretDefinition {
@@ -257,7 +285,12 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
                 guard approvalSteps.contains("\(number):\(step)") else { return nil }
                 return RecoveryApproval(platform: "ios", secret: defaultSecret)
             }
-            return RecoveryCycle(number: number, senderSecrets: senderSecrets, approvals: approvals)
+            return RecoveryCycle(
+                number: number,
+                senderSecrets: senderSecrets,
+                approvals: approvals,
+                offlineReceiver: nil
+            )
         }
     }
 
@@ -305,7 +338,13 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
                         approvals.append(RecoveryApproval(platform: second, secret: defaultSecret))
                     }
                 }
-                let cycle = RecoveryCycle(number: number, senderSecrets: senderSecrets, approvals: approvals)
+                let offlineReceiver = rawCycle["offlineReceiver"] as? String
+                let cycle = RecoveryCycle(
+                    number: number,
+                    senderSecrets: senderSecrets,
+                    approvals: approvals,
+                    offlineReceiver: offlineReceiver
+                )
                 print(
                     "E2E: IOS_RECOVERY_PLAN_\(number) "
                         + "senders=\(senderSecrets) approvals="

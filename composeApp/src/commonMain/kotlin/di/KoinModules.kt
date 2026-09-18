@@ -51,7 +51,7 @@ val appModule = module {
     single<AlertCoordinatorInterface> { AlertCoordinator(get(), get()) }
 
     single { MainScreenViewModel(get(), get(), get(), get(), get(), get()) }
-    factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
     factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { ManualSignInScreenViewModel(get()) }

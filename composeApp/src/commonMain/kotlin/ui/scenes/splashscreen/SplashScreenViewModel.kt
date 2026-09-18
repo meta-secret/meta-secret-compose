@@ -12,6 +12,7 @@ import core.BiometricState
 import core.KeyChainInterface
 import core.metaSecretCore.AuthState
 import core.metaSecretCore.MetaSecretAppManagerInterface
+import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
@@ -28,6 +29,7 @@ class SplashScreenViewModel(
     private val vaultStatsProvider: VaultStatsProviderInterface,
     private val stringProvider: StringProviderInterface,
     private val keyChainManager: KeyChainInterface,
+    private val socketHandler: MetaSecretSocketHandlerInterface,
 ) : CommonViewModel() {
     private val _navigationEvent = MutableStateFlow<SplashNavigationEvent>(SplashNavigationEvent.Idle)
     val navigationEvent: StateFlow<SplashNavigationEvent> = _navigationEvent
@@ -78,6 +80,11 @@ class SplashScreenViewModel(
             OnboardingState.COMPLETED -> {
                 when (checkAuth()) {
                     AuthState.COMPLETED -> {
+                        // AppManager initialization happens in checkAuth(). Trigger one
+                        // foreground refresh afterwards so the first screen observes the
+                        // current server state even when the native lifecycle callback
+                        // arrived before AppManager was ready.
+                        socketHandler.onAppForeground()
                         try {
                             vaultStatsProvider.refresh()
                         } catch (_: Throwable) {}

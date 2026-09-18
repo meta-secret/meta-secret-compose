@@ -65,7 +65,13 @@ class MetaSecretStateEventsClient(
     private val stateEventsUrl = normalizeStateEventsEndpoint(endpoint, environment, localEndpoint)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val json = Json { ignoreUnknownKeys = true }
-    private val _events = MutableSharedFlow<MetaSecretSocketEvent>(extraBufferCapacity = 8)
+    // Keep the latest connection state available to a collector that starts just
+    // after the native lifecycle initializes. Without replay, the first Connected
+    // event can be lost and no refresh follows until the next invalidation.
+    private val _events = MutableSharedFlow<MetaSecretSocketEvent>(
+        replay = 1,
+        extraBufferCapacity = 8,
+    )
     private var subscription: MetaSecretSocketSubscription? = null
     private var streamJob: Job? = null
     private var connectedVaultName: String? = null
