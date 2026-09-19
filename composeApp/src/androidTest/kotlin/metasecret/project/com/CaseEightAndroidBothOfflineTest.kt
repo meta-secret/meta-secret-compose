@@ -84,6 +84,7 @@ class CaseEightAndroidBothOfflineTest {
         val step = argument("step", "1")
         val approvalPlatform = argument("approvalPlatform", "")
         val coordinator = argument("approvalCoordinatorUrl", "http://10.0.2.2:5180")
+        marker("ANDROID_STEP_CONFIG role=$role cycle=$cycle step=$step approval=$approvalPlatform")
         composeRule.waitForTag("secret-row-$secretName", 180_000)
 
         if (role == "sender") {
@@ -96,6 +97,14 @@ class CaseEightAndroidBothOfflineTest {
             composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
             composeRule.waitForTag("show-secret-dialog", 30_000)
             marker("ANDROID_RECOVERY_REQUEST_SENT_${cycle}_$step")
+            if (approvalPlatform == "cli") {
+                composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+                composeRule.waitForTagGone("show-secret-dialog", 30_000)
+                waitForApproval(coordinator, "android-invalidated-$step", cycle)
+                waitForPrimaryAction(secretName, "Recover")
+                marker("ANDROID_RECOVERY_INVALIDATED_${cycle}_$step")
+                return
+            }
             waitForApproval(coordinator, "android-show-$step", cycle)
             revealAcceptedSecret(secretName, cycle, step)
             marker("ANDROID_RECOVERY_SECRET_VISIBLE_${cycle}_$step")

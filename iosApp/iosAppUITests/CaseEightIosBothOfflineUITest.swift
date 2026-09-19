@@ -104,6 +104,13 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             enterSimulatorPasscodeIfNeeded()
             waitForVisible(identifier: "show-secret-dialog", timeout: 30)
             print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)_\(step)")
+            if approvalPlatform == "cli" {
+                closeShowSecretDialog()
+                waitForApproval(platform: "ios-invalidated", cycle: cycle, step: step)
+                waitForPrimaryAction(secretName, expected: "Recover", timeout: 180)
+                print("E2E: IOS_RECOVERY_INVALIDATED_\(cycle)_\(step)")
+                return
+            }
             waitForApproval(platform: "ios-show", cycle: cycle, step: step)
             revealAcceptedSecret(secretName, cycle: cycle, step: step)
             XCTAssertTrue(
@@ -317,12 +324,25 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     private func waitForPrimaryAction(_ secretName: String, expected: String, timeout: TimeInterval) {
         let action = app.descendants(matching: .any)["secret-primary-action-\(secretName)"]
         let deadline = Date().addingTimeInterval(timeout)
+        var lastObservedLabel = "<missing>"
         while Date() < deadline {
+            let observedLabel = action.exists ? action.label : "<missing>"
+            if observedLabel != lastObservedLabel {
+                print(
+                    "E2E: IOS_PRIMARY_ACTION_STATE secret=\(secretName) "
+                        + "expected=\(expected) label=\(observedLabel)"
+                )
+                lastObservedLabel = observedLabel
+            }
             if action.exists, action.label.localizedCaseInsensitiveContains(expected) {
                 return
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
+        print(
+            "E2E: IOS_PRIMARY_ACTION_TIMEOUT secret=\(secretName) expected=\(expected) "
+                + "exists=\(action.exists) label=\(action.label)"
+        )
         XCTFail("Primary action for \(secretName) did not become \(expected)")
     }
 
