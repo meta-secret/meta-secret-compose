@@ -108,7 +108,20 @@ class CaseEightAndroidBothOfflineTest {
         }
 
         composeRule.waitForTag("recovery-request-badge-$secretName", 180_000)
-        composeRule.waitForTag("open-recovery-request-$secretName", 30_000)
+        // The first responder can close this receiver's request before the
+        // second runner reaches the open button. Wait for either the button
+        // or the terminal badge disappearance instead of asserting the
+        // button at a fixed instant.
+        composeRule.waitUntil(30_000) {
+            hasTagNow("open-recovery-request-$secretName") || !hasTagNow("recovery-request-badge-$secretName")
+        }
+        if (!hasTagNow("open-recovery-request-$secretName")) {
+            if (!hasTagNow("recovery-request-badge-$secretName")) {
+                marker("ANDROID_ACTION_SKIPPED_AFTER_TERMINAL_${cycle}_$step")
+                return
+            }
+            throw AssertionError("Android recovery request button did not appear while the request remained pending")
+        }
         marker("ANDROID_INCOMING_VISIBLE_${cycle}_$step")
         if (approvalPlatform == "android") {
             waitForApproval(coordinator, "android-approve-$step", cycle)
@@ -129,6 +142,136 @@ class CaseEightAndroidBothOfflineTest {
             marker("ANDROID_DISMISSED_INCOMING_${cycle}_$step")
         }
     }
+
+    @Test
+    fun handleApproveDeclineStep() {
+        val secretName = argument("secretName", "test-secret")
+        val role = argument("role", "receiver")
+        val cycle = argument("cycle", "1")
+        val step = argument("step", "1")
+        val decision = argument("decision", "approve")
+        val expectedOutcome = argument("expectedOutcome", "approved")
+        val repeatApprove = argument("repeatApprove", "false") == "true"
+        val duplicateRecovery = argument("duplicateRecovery", "false") == "true"
+        val coordinator = argument("approvalCoordinatorUrl", "http://10.0.2.2:5180")
+        composeRule.waitForTag("secret-row-$secretName", 180_000)
+
+        if (role == "sender") {
+            waitForApproval(coordinator, "android-sender-$step", cycle)
+            showAcceptedSecretIfNeeded(secretName, cycle, step)
+            waitForPrimaryAction(secretName, "Recover")
+            composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
+            composeRule.waitForTag("show-secret-dialog", 30_000)
+            marker("ANDROID_RECOVERY_REQUEST_SENT_${cycle}_$step")
+            if (duplicateRecovery) {
+                val duplicateSent = runCatching {
+                    composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
+                    true
+                }.getOrDefault(false)
+                marker(
+                    if (duplicateSent) {
+                        "ANDROID_DUPLICATE_RECOVERY_SENT_${cycle}_$step"
+                    } else {
+                        "ANDROID_DUPLICATE_RECOVERY_SKIPPED_AFTER_GUARD_${cycle}_$step"
+                    },
+                )
+                if (hasTagNow("show-secret-dialog") && hasTagNow("show-secret-close")) {
+                    composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+                    composeRule.waitForTagGone("show-secret-dialog", 30_000)
+                }
+                waitForApproval(coordinator, "android-duplicate-finish-$step", cycle)
+                revealAcceptedSecret(secretName, cycle, step)
+                marker("ANDROID_RECOVERY_SECRET_VISIBLE_${cycle}_$step")
+                composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+                composeRule.waitForTagGone("revealed-secret-value", 30_000)
+                composeRule.waitForTagGone("show-secret-dialog", 30_000)
+                waitForPrimaryAction(secretName, "Recover")
+                marker("ANDROID_RECOVERY_CLOSED_${cycle}_$step")
+                return
+            }
+            // Close the waiting dialog so the sender cannot auto-complete the
+            // claim on the first approval. The race test releases Show only
+            // after both receiver decisions have been observed.
+            composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+            composeRule.waitForTagGone("show-secret-dialog", 30_000)
+            if (expectedOutcome == "approved") {
+                waitForApproval(coordinator, "android-show-$step", cycle)
+                revealAcceptedSecret(secretName, cycle, step)
+                marker("ANDROID_RECOVERY_SECRET_VISIBLE_${cycle}_$step")
+                composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+                composeRule.waitForTagGone("revealed-secret-value", 30_000)
+                composeRule.waitForTagGone("show-secret-dialog", 30_000)
+                waitForPrimaryAction(secretName, "Recover")
+                marker("ANDROID_RECOVERY_CLOSED_${cycle}_$step")
+            } else {
+                waitForApproval(coordinator, "android-declined-$step", cycle)
+                if (hasTagNow("show-secret-close")) {
+                    composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+                }
+                composeRule.waitForTagGone("show-secret-dialog", 30_000)
+                composeRule.waitForTagGone("revealed-secret-value", 30_000)
+                waitForPrimaryAction(secretName, "Recover")
+                marker("ANDROID_RECOVERY_NOT_VISIBLE_${cycle}_$step")
+                marker("ANDROID_RECOVERY_CLOSED_${cycle}_$step")
+            }
+            return
+        }
+
+        composeRule.waitForTag("recovery-request-badge-$secretName", 180_000)
+        if (duplicateRecovery) {
+            composeRule.waitUntil(180_000) {
+                runCatching {
+                    composeRule.onNodeWithTag("recovery-request-badge-$secretName", useUnmergedTree = true)
+                        .assertTextContains("1", substring = true)
+                }.isSuccess
+            }
+            marker("ANDROID_SINGLE_ACTIVE_CLAIM_${cycle}_$step")
+        }
+        composeRule.waitForTag("open-recovery-request-$secretName", 30_000)
+        marker("ANDROID_INCOMING_VISIBLE_${cycle}_$step")
+        waitForApproval(coordinator, "android-$decision-$step", cycle)
+        if (!hasTagNow("open-recovery-request-$secretName")) {
+            marker("ANDROID_ACTION_SKIPPED_AFTER_TERMINAL_${cycle}_$step")
+            return
+        }
+        composeRule.onNodeWithTag("open-recovery-request-$secretName").performClick()
+        // A first terminal response can remove this receiver's alert before
+        // the second runner opens it. Wait for either the dialog or the
+        // terminal badge disappearance and record a skipped late response.
+        composeRule.waitUntil(30_000) {
+            hasTagNow("alert-recovery-request") || !hasTagNow("recovery-request-badge-$secretName")
+        }
+        if (!hasTagNow("alert-recovery-request")) {
+            marker("ANDROID_ACTION_SKIPPED_AFTER_TERMINAL_${cycle}_$step")
+            return
+        }
+        marker("ANDROID_ACTION_STARTED_${cycle}_$step")
+        if (decision == "decline") {
+            composeRule.onNodeWithTag("alert-recovery-request-decline").performClick()
+            composeRule.waitUntil(120_000) {
+                composeRule.onAllNodes(hasTestTag("alert-recovery-request"), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()
+                    && composeRule.onAllNodes(hasTestTag("alert-recovery-request-processing"), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()
+            }
+            marker("ANDROID_DECLINED_INCOMING_${cycle}_$step")
+        } else {
+            composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
+            if (repeatApprove && hasTagNow("alert-recovery-request-accept")) {
+                marker("ANDROID_REPEAT_APPROVE_SECOND_TAP_SENT_${cycle}_$step")
+                composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
+            } else if (repeatApprove) {
+                marker("ANDROID_REPEAT_APPROVE_SECOND_TAP_SKIPPED_AFTER_DISMISS_${cycle}_$step")
+            }
+            composeRule.waitUntil(120_000) {
+                composeRule.onAllNodes(hasTestTag("alert-recovery-request"), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()
+                    && composeRule.onAllNodes(hasTestTag("alert-recovery-request-processing"), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()
+            }
+            marker("ANDROID_APPROVED_INCOMING_${cycle}_$step")
+        }
+    }
+
+    private fun hasTagNow(tag: String): Boolean = runCatching {
+        composeRule.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }.getOrDefault(false)
 
     private fun revealAcceptedSecret(secretName: String, cycle: String, step: String) {
         var showClicked = false

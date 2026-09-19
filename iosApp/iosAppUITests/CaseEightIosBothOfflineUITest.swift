@@ -10,6 +10,10 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let approvalPlatform: String?
         let sender: String?
         let secretName: String?
+        let action: String?
+        let expectedOutcome: String?
+        let repeatApprove: Bool?
+        let duplicateRecovery: Bool?
     }
 
     private static let stepConfigPath = "/tmp/metasecret-e2e-ios-step.json"
@@ -114,7 +118,23 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         }
 
         waitForVisible(identifier: "recovery-request-badge-\(secretName)", timeout: 180)
-        waitForVisible(identifier: "open-recovery-request-\(secretName)", timeout: 30)
+        // The first responder can close this receiver's request before the
+        // second runner reaches the open button. Wait for either the button
+        // or the terminal badge disappearance instead of asserting the
+        // button at a fixed instant.
+        let openBeforeDecision = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
+        let badgeBeforeDecision = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
+        let openOrTerminal = NSPredicate { _, _ in openBeforeDecision.exists || !badgeBeforeDecision.exists }
+        let openWait = XCTNSPredicateExpectation(predicate: openOrTerminal, object: nil)
+        _ = XCTWaiter.wait(for: [openWait], timeout: 30)
+        if !openBeforeDecision.exists {
+            if !badgeBeforeDecision.exists {
+                print("E2E: IOS_ACTION_SKIPPED_AFTER_TERMINAL_\(cycle)_\(step)")
+                return
+            }
+            XCTFail("iOS recovery request button did not appear while the request remained pending")
+            return
+        }
         print("E2E: IOS_INCOMING_VISIBLE_\(cycle)_\(step)")
         if approvalPlatform == "ios" {
             waitForApproval(platform: "ios-approve", cycle: cycle, step: step)
@@ -131,6 +151,144 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             waitForHidden(identifier: "open-recovery-request-\(secretName)", timeout: 120)
             print("E2E: IOS_DISMISSED_INCOMING_\(cycle)_\(step)")
         }
+    }
+
+    func handleApproveDeclineStep() throws {
+        let config = stepConfig()
+        let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test-secret")
+        let role = config.role ?? env("E2E_ROLE", defaultValue: "receiver")
+        let cycle = config.cycle ?? env("E2E_CYCLE", defaultValue: "1")
+        let step = config.step ?? env("E2E_STEP", defaultValue: "1")
+        let action = config.action ?? env("E2E_ACTION", defaultValue: "approve")
+        let expectedOutcome = config.expectedOutcome ?? env("E2E_EXPECTED_OUTCOME", defaultValue: "approved")
+        let repeatApprove = config.repeatApprove ?? (env("E2E_REPEAT_APPROVE", defaultValue: "0") == "1")
+        let duplicateRecovery = config.duplicateRecovery ?? (env("E2E_DUPLICATE_RECOVERY", defaultValue: "0") == "1")
+
+        enterSimulatorPasscodeIfNeeded()
+        waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
+
+        if role == "sender" {
+            waitForApproval(platform: "ios-sender", cycle: cycle, step: step)
+            showAcceptedSecretIfNeeded(secretName, cycle: cycle, step: step)
+            waitForPrimaryAction(secretName, expected: "Recover", timeout: 180)
+            tap("secret-primary-action-\(secretName)")
+            enterSimulatorPasscodeIfNeeded()
+            waitForVisible(identifier: "show-secret-dialog", timeout: 30)
+            print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)_\(step)")
+            if duplicateRecovery {
+                let duplicateAction = app.descendants(matching: .any)["secret-primary-action-\(secretName)"]
+                if duplicateAction.exists && duplicateAction.isHittable {
+                    duplicateAction.tap()
+                    print("E2E: IOS_DUPLICATE_RECOVERY_SENT_\(cycle)_\(step)")
+                } else {
+                    print("E2E: IOS_DUPLICATE_RECOVERY_SKIPPED_AFTER_GUARD_\(cycle)_\(step)")
+                }
+                closeShowSecretDialog()
+                waitForApproval(platform: "ios-duplicate-finish", cycle: cycle, step: step)
+                revealAcceptedSecret(secretName, cycle: cycle, step: step)
+                XCTAssertTrue(app.descendants(matching: .any)[env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")].exists)
+                print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)_\(step)")
+                closeShowSecretDialog()
+                waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
+                print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_\(step)")
+                return
+            }
+            // Keep the sender from auto-completing the claim when the first
+            // receiver approves. The race test must process both receiver
+            // decisions before the explicit Show gate is released.
+            closeShowSecretDialog()
+            if expectedOutcome == "approved" {
+                waitForApproval(platform: "ios-show", cycle: cycle, step: step)
+                revealAcceptedSecret(secretName, cycle: cycle, step: step)
+                XCTAssertTrue(app.descendants(matching: .any)[env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")].exists)
+                print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)_\(step)")
+                closeShowSecretDialog()
+                waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
+                print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_\(step)")
+            } else {
+                waitForApproval(platform: "ios-declined", cycle: cycle, step: step)
+                closeShowSecretDialog()
+                waitForHidden(identifier: "revealed-secret-value", timeout: 30)
+                waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
+                print("E2E: IOS_RECOVERY_NOT_VISIBLE_\(cycle)_\(step)")
+                print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_\(step)")
+            }
+            return
+        }
+
+        waitForVisible(identifier: "recovery-request-badge-\(secretName)", timeout: 180)
+        if duplicateRecovery {
+            waitForSingleActiveClaim(secretName, cycle: cycle, step: step)
+        }
+        // The first responder can close this receiver's request before the
+        // second runner reaches the open button. Wait for either the button
+        // or the terminal badge disappearance instead of asserting the
+        // button at a fixed instant.
+        let openBeforeDecision = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
+        let badgeBeforeDecision = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
+        let openOrTerminal = NSPredicate { _, _ in openBeforeDecision.exists || !badgeBeforeDecision.exists }
+        let openWait = XCTNSPredicateExpectation(predicate: openOrTerminal, object: nil)
+        _ = XCTWaiter.wait(for: [openWait], timeout: 30)
+        if !openBeforeDecision.exists {
+            if !badgeBeforeDecision.exists {
+                print("E2E: IOS_ACTION_SKIPPED_AFTER_TERMINAL_\(cycle)_\(step)")
+                return
+            }
+            XCTFail("iOS recovery request button did not appear while the request remained pending")
+            return
+        }
+        print("E2E: IOS_INCOMING_VISIBLE_\(cycle)_\(step)")
+        waitForApproval(platform: "ios-\(action)", cycle: cycle, step: step)
+        let open = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
+        let badgeAfterGate = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
+        // The first response is committed before this gate is released. Give
+        // the local accessibility tree a bounded, state-based opportunity to
+        // observe that terminal transition; if it remains pending, this
+        // runner is the first responder and may open the request.
+        let terminalAfterGate = NSPredicate { _, _ in !badgeAfterGate.exists || !open.exists }
+        let terminalWait = XCTNSPredicateExpectation(predicate: terminalAfterGate, object: nil)
+        let terminalResult = XCTWaiter.wait(for: [terminalWait], timeout: 5)
+        if terminalResult == .completed || !badgeAfterGate.exists || !open.exists || !open.isHittable {
+            print("E2E: IOS_ACTION_SKIPPED_AFTER_TERMINAL_\(cycle)_\(step)")
+            return
+        }
+        open.tap()
+        // The first responder may have already made the recovery terminal
+        // before this runner opens its local sheet. In that case the badge is
+        // removed and there is no alert to act on; record a skipped late
+        // response instead of failing while waiting for a dialog that should
+        // no longer exist.
+        let alert = app.descendants(matching: .any)["alert-recovery-request"]
+        let badge = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
+        let terminalOrAlert = NSPredicate { _, _ in alert.exists || !badge.exists }
+        let alertWait = XCTNSPredicateExpectation(predicate: terminalOrAlert, object: nil)
+        _ = XCTWaiter.wait(for: [alertWait], timeout: 30)
+        if !alert.exists {
+            if !badge.exists {
+                print("E2E: IOS_ACTION_SKIPPED_AFTER_TERMINAL_\(cycle)_\(step)")
+                return
+            }
+            XCTFail("iOS recovery alert did not appear while the request remained pending")
+            return
+        }
+        print("E2E: IOS_ACTION_STARTED_\(cycle)_\(step)")
+        // The shared scenario calls the positive decision `approve`, while
+        // the iOS accessibility identifier follows the product label `accept`.
+        let actionIdentifier = action == "approve" ? "accept" : action
+        tap("alert-recovery-request-\(actionIdentifier)")
+        enterSimulatorPasscodeIfNeeded()
+        if repeatApprove && action == "approve" {
+            let secondApprove = app.descendants(matching: .any)["alert-recovery-request-accept"]
+            if secondApprove.exists && secondApprove.isHittable {
+                print("E2E: IOS_REPEAT_APPROVE_SECOND_TAP_SENT_\(cycle)_\(step)")
+                secondApprove.tap()
+            } else {
+                print("E2E: IOS_REPEAT_APPROVE_SECOND_TAP_SKIPPED_AFTER_DISMISS_\(cycle)_\(step)")
+            }
+        }
+        waitForHidden(identifier: "alert-recovery-request", timeout: 120)
+        waitForHidden(identifier: "alert-recovery-request-processing", timeout: 120)
+        print("E2E: IOS_\(action == "decline" ? "DECLINED" : "APPROVED")_INCOMING_\(cycle)_\(step)")
     }
 
     private func revealAcceptedSecret(_ secretName: String, cycle: String, step: String) {
@@ -166,6 +324,23 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
         XCTFail("Primary action for \(secretName) did not become \(expected)")
+    }
+
+    private func waitForSingleActiveClaim(_ secretName: String, cycle: String, step: String) {
+        let badge = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
+        let deadline = Date().addingTimeInterval(180)
+        while Date() < deadline {
+            if badge.exists {
+                let label = badge.label.trimmingCharacters(in: .whitespacesAndNewlines)
+                let count = label.split(whereSeparator: { $0 == " " || $0 == "\u{00a0}" }).last.map(String.init)
+                if count == "1" {
+                    print("E2E: IOS_SINGLE_ACTIVE_CLAIM_\(cycle)_\(step)")
+                    return
+                }
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        XCTFail("iOS expected exactly one active recovery claim, badge=\(badge.label)")
     }
 
     private func showAcceptedSecretIfNeeded(_ secretName: String, cycle: String, step: String) {
@@ -247,6 +422,34 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
     }
 
+    private func closeShowSecretDialog() {
+        let dialog = app.descendants(matching: .any)["show-secret-dialog"]
+        let close = app.descendants(matching: .any)["show-secret-close"]
+        let deadline = Date().addingTimeInterval(30)
+        var tapAttempts = 0
+
+        // Compose can recreate the close control during the exit transition.
+        // Retry only while the dialog is present and the control is hittable;
+        // this is a state-based wait, not an artificial sleep.
+        while Date() < deadline {
+            if !dialog.exists {
+                return
+            }
+            if close.exists && close.isHittable {
+                tapAttempts += 1
+                print("E2E: IOS_SHOW_SECRET_CLOSE_ATTEMPT_\(tapAttempts)")
+                close.tap()
+                if dialog.waitForNonExistence(timeout: 5) {
+                    return
+                }
+            } else {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+            }
+        }
+
+        XCTFail("show-secret-dialog did not disappear")
+    }
+
     private func dismissKeyboardIfNeeded() {
         if app.keyboards.element.exists {
             app.keyboards.buttons["Done"].tapIfExists()
@@ -312,7 +515,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             let data = FileManager.default.contents(atPath: Self.stepConfigPath),
             let config = try? JSONDecoder().decode(StepConfig.self, from: data)
         else {
-            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil)
+            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil)
         }
         return config
     }

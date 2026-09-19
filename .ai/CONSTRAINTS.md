@@ -4,6 +4,8 @@
 
 Read this file first. If you need details on any section, follow the links below.
 
+**Last updated:** 2026-09-19
+
 ---
 
 ## 🚨 Core Constraints (Must Know)
@@ -97,6 +99,8 @@ Read this file first. If you need details on any section, follow the links below
 | 35 | JSON over UniFFI | Core & FFI |
 | 36 | Restore Secret requires approval (biometric) from other device | Operations |
 | 37 | All state-changing operations (JOIN, RESTORE SECRET, DELETE) require biometric approval | Operations |
+| 38 | Recovery uses first-response-wins: the first receiver decision processed by the server is authoritative | Operations |
+| 39 | Recovery receiver decisions are terminal and monotonic; stale snapshots and late opposite decisions cannot reopen or revoke them | Operations |
 
 ---
 
@@ -148,6 +152,11 @@ Read this file first. If you need details on any section, follow the links below
 - ❌ Deviations from k=n-1 schema
 - ❌ Device removing itself
 - ❌ Removing last device
+
+**Recovery decision ordering:**
+- ✅ If the first server-processed receiver decision is `DECLINE`, remaining pending receivers become terminally declined and the sender must not reveal the secret.
+- ✅ If the first decision is `APPROVE`, the approving receiver reaches `SENT`/`DELIVERED` and a later `DECLINE` cannot revoke recovery.
+- ✅ Web, iOS, and Android render the `clientStatus`/claim state supplied by Core; UI code must not implement its own quorum or race resolution.
 - ❌ Cloud backup/sync of any app data (DMK, DB, keys)
 - ❌ Storing DMK in external storage or plaintext
 

@@ -413,7 +413,14 @@ class MetaSecretAppManager(
         }
         return try {
             val result = AppStateModel.fromJson(declineResult, logger, logFormatter)
-            logger.log(LogTag.AppManager.Message.DeclineRecoverResult, "success=${result.success}", success = true)
+            logger.log(
+                LogTag.AppManager.Message.DeclineRecoverResult,
+                "success=${result.success}",
+                success = result.success
+            )
+            if (!result.success) {
+                throw IllegalStateException("Decline recovery request was not accepted by core")
+            }
             result
         } catch (e: Exception) {
             logger.log(LogTag.AppManager.Message.FailedToParseDeclineRecoverJson, "${e.message}", success = false)

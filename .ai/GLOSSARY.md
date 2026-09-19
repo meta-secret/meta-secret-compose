@@ -2,7 +2,7 @@
 
 Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, user) uses these terms.
 
-**Last updated:** 2026-06-22  
+**Last updated:** 2026-09-19
 **Maintenance:** Monthly or when codebase grows significantly
 
 ---
@@ -73,6 +73,8 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **ClaimObject** | API claim record: id, distribution type, list of receivers, status map | API layer | `AppStateModel.kt` |
 | **ClaimModel** | Internal model: `ClaimId`, sender, distribution type, receivers, status | Internal | `ClaimModel.kt` |
 | **ClaimStatus** | Enum: `PENDING`, `SENT`, `DELIVERED`, `ACCEPTED`, `DECLINED` | Claim lifecycle | `AppStateModel.kt` |
+| **Terminal Recovery Decision** | Receiver recovery outcome that cannot return to `PENDING`: `DECLINED` or `SENT`/`DELIVERED` | Recovery race handling | Stale state must not reopen the action |
+| **First-Response-Wins** | The first receiver decision processed by the server determines the recovery result | Recovery flow | First decline blocks reveal; first approve permits reveal; late opposite action is ignored |
 | **ClaimStatusInfo** | Map of `ClaimStatus` keyed by device — per-device delivery tracking | Claims detail | `AppStateModel.kt` |
 | **SsClaims** | Map of secret-sharing claims, keyed by secret id | Vault state | `AppStateModel.kt` |
 | **SearchClaimModel** | API response for a claim lookup: success, `SearchClaimMessage`, error | Recovery | `SearchClaimModel.kt` |
