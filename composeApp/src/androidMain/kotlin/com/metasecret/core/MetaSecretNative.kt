@@ -10,6 +10,10 @@ object MetaSecretNative {
     fun generateMasterKey(): String = uniffi.mobile_uniffi.generateMasterKey()
 
     @JvmStatic
+    fun databaseFileName(masterKey: String): String =
+        uniffi.mobile_uniffi.databaseFileName(masterKey)
+
+    @JvmStatic
     fun init(masterKey: String): String = uniffi.mobile_uniffi.initAndroid(masterKey)
 
     @JvmStatic

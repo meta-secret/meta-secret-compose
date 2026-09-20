@@ -306,7 +306,7 @@ internal inline fun<T, reified E: Throwable> uniffiTraitInterfaceCallWithError(
         }
     }
 }
-// Initial value and increment amount for handles. 
+// Initial value and increment amount for handles.
 // These ensure that Kotlin-generated handles always have the lowest bit set
 private const val UNIFFI_HANDLEMAP_INITIAL = 1.toLong()
 private const val UNIFFI_HANDLEMAP_DELTA = 2.toLong()
@@ -316,7 +316,7 @@ private const val UNIFFI_HANDLEMAP_DELTA = 2.toLong()
 // This is used pass an opaque 64-bit handle representing a foreign object to the Rust code.
 internal class UniffiHandleMap<T: Any> {
     private val map = ConcurrentHashMap<Long, T>()
-    // Start 
+    // Start
     private val counter = java.util.concurrent.atomic.AtomicLong(UNIFFI_HANDLEMAP_INITIAL)
 
     val size: Int
@@ -639,6 +639,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_clean_up_database(
     ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_database_file_name(
+    ): Int
     external fun uniffi_metasecret_mobile_checksum_func_decline_recover(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_device_ui_category_discriminant(
@@ -676,61 +678,63 @@ internal object IntegrityCheckingUniffiLib {
     external fun ffi_metasecret_mobile_uniffi_contract_version(
     ): Int
 
-        
+
 }
 
 internal object UniffiLib {
-    
+
 
     init {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "mobile_uniffi"))
-        
+
     }
-    external fun uniffi_metasecret_mobile_fn_func_accept_recover(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_accept_recover(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_clean_up_database(uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_clean_up_database(uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_decline_recover(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_database_file_name(`masterKey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_device_ui_category_discriminant(`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_decline_recover(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBuffer.ByValue
+    external fun uniffi_metasecret_mobile_fn_func_device_ui_category_discriminant(`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): Int
-    external fun uniffi_metasecret_mobile_fn_func_find_claim_by(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_find_claim_by(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_find_claim_id_by(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_find_claim_id_by(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_generate_master_key(uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_generate_master_key(uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_generate_user_creds(`vaultName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_generate_user_creds(`vaultName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_get_state(uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_get_state(uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_init_android(`masterKey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_init_android(`masterKey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_init_android_with_device(`masterKey`: RustBuffer.ByValue,`deviceName`: RustBuffer.ByValue,`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_init_android_with_device(`masterKey`: RustBuffer.ByValue,`deviceName`: RustBuffer.ByValue,`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_init_ios(`masterKey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_init_ios(`masterKey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_init_ios_with_device(`masterKey`: RustBuffer.ByValue,`deviceName`: RustBuffer.ByValue,`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_init_ios_with_device(`masterKey`: RustBuffer.ByValue,`deviceName`: RustBuffer.ByValue,`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_recover(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_recover(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_send_decline_completion(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_send_decline_completion(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_show_recovered(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_show_recovered(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_sign_up(uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_sign_up(uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_split_secret(`secretId`: RustBuffer.ByValue,`secret`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_split_secret(`secretId`: RustBuffer.ByValue,`secret`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_update_membership(`candidate`: RustBuffer.ByValue,`actionUpdate`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_update_membership(`candidate`: RustBuffer.ByValue,`actionUpdate`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun ffi_metasecret_mobile_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun ffi_metasecret_mobile_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun ffi_metasecret_mobile_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): Unit
-    external fun ffi_metasecret_mobile_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
     external fun ffi_metasecret_mobile_rust_future_poll_u8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -738,7 +742,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_u8(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Int
     external fun ffi_metasecret_mobile_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -746,7 +750,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_i8(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Byte
     external fun ffi_metasecret_mobile_rust_future_poll_u16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -754,7 +758,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_u16(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Int
     external fun ffi_metasecret_mobile_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -762,7 +766,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_i16(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Short
     external fun ffi_metasecret_mobile_rust_future_poll_u32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -770,7 +774,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_u32(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Int
     external fun ffi_metasecret_mobile_rust_future_poll_i32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -778,7 +782,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_i32(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Int
     external fun ffi_metasecret_mobile_rust_future_poll_u64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -786,7 +790,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_u64(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Long
     external fun ffi_metasecret_mobile_rust_future_poll_i64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -794,7 +798,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_i64(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Long
     external fun ffi_metasecret_mobile_rust_future_poll_f32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -802,7 +806,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_f32(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Float
     external fun ffi_metasecret_mobile_rust_future_poll_f64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -810,7 +814,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_f64(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Double
     external fun ffi_metasecret_mobile_rust_future_poll_rust_buffer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -818,7 +822,7 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_rust_buffer(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
     external fun ffi_metasecret_mobile_rust_future_poll_void(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
@@ -826,10 +830,10 @@ internal object UniffiLib {
     ): Unit
     external fun ffi_metasecret_mobile_rust_future_free_void(`handle`: Long,
     ): Unit
-    external fun ffi_metasecret_mobile_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    external fun ffi_metasecret_mobile_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Unit
 
-        
+
 }
 
 private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
@@ -847,6 +851,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_clean_up_database() != 5094) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_metasecret_mobile_checksum_func_database_file_name() != 39011) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_decline_recover() != 6398) {
@@ -975,7 +982,7 @@ inline fun <T : Disposable?, R> T.use(block: (T) -> R) =
         }
     }
 
-/** 
+/**
  * Placeholder object used to signal that we're constructing an interface with a FFI handle.
  *
  * This is the first argument for interface constructors that input a raw handle. It exists is that
@@ -986,7 +993,7 @@ inline fun <T : Disposable?, R> T.use(block: (T) -> R) =
  * */
 object UniffiWithHandle
 
-/** 
+/**
  * Used to instantiate an interface without an actual pointer, for fakes in tests, mostly.
  *
  * @suppress
@@ -1075,191 +1082,201 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_accept_recover(
-    
+
         FfiConverterString.lower(`claimId`),_status)
 }
     )
     }
-    
+
  fun `cleanUpDatabase`(): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_clean_up_database(
-    
+
         _status)
 }
     )
     }
-    
+
+ fun `databaseFileName`(`masterKey`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_database_file_name(
+
+        FfiConverterString.lower(`masterKey`),_status)
+}
+    )
+    }
+
  fun `declineRecover`(`claimId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_decline_recover(
-    
+
         FfiConverterString.lower(`claimId`),_status)
 }
     )
     }
-    
+
  fun `deviceUiCategoryDiscriminant`(`deviceType`: kotlin.String): kotlin.Int {
             return FfiConverterInt.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_device_ui_category_discriminant(
-    
+
         FfiConverterString.lower(`deviceType`),_status)
 }
     )
     }
-    
+
  fun `findClaimBy`(`secretId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_find_claim_by(
-    
+
         FfiConverterString.lower(`secretId`),_status)
 }
     )
     }
-    
+
  fun `findClaimIdBy`(`secretId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_find_claim_id_by(
-    
+
         FfiConverterString.lower(`secretId`),_status)
 }
     )
     }
-    
+
  fun `generateMasterKey`(): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_generate_master_key(
-    
+
         _status)
 }
     )
     }
-    
+
  fun `generateUserCreds`(`vaultName`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_generate_user_creds(
-    
+
         FfiConverterString.lower(`vaultName`),_status)
 }
     )
     }
-    
+
  fun `getState`(): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_get_state(
-    
+
         _status)
 }
     )
     }
-    
+
  fun `initAndroid`(`masterKey`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_init_android(
-    
+
         FfiConverterString.lower(`masterKey`),_status)
 }
     )
     }
-    
+
  fun `initAndroidWithDevice`(`masterKey`: kotlin.String, `deviceName`: kotlin.String, `deviceType`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_init_android_with_device(
-    
+
         FfiConverterString.lower(`masterKey`),FfiConverterString.lower(`deviceName`),FfiConverterString.lower(`deviceType`),_status)
 }
     )
     }
-    
+
  fun `initIos`(`masterKey`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_init_ios(
-    
+
         FfiConverterString.lower(`masterKey`),_status)
 }
     )
     }
-    
+
  fun `initIosWithDevice`(`masterKey`: kotlin.String, `deviceName`: kotlin.String, `deviceType`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_init_ios_with_device(
-    
+
         FfiConverterString.lower(`masterKey`),FfiConverterString.lower(`deviceName`),FfiConverterString.lower(`deviceType`),_status)
 }
     )
     }
-    
+
  fun `recover`(`secretId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_recover(
-    
+
         FfiConverterString.lower(`secretId`),_status)
 }
     )
     }
-    
+
  fun `sendDeclineCompletion`(`claimId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_send_decline_completion(
-    
+
         FfiConverterString.lower(`claimId`),_status)
 }
     )
     }
-    
+
  fun `showRecovered`(`secretId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_show_recovered(
-    
+
         FfiConverterString.lower(`secretId`),_status)
 }
     )
     }
-    
+
  fun `signUp`(): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_sign_up(
-    
+
         _status)
 }
     )
     }
-    
+
  fun `splitSecret`(`secretId`: kotlin.String, `secret`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_split_secret(
-    
+
         FfiConverterString.lower(`secretId`),FfiConverterString.lower(`secret`),_status)
 }
     )
     }
-    
+
  fun `updateMembership`(`candidate`: kotlin.String, `actionUpdate`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_update_membership(
-    
+
         FfiConverterString.lower(`candidate`),FfiConverterString.lower(`actionUpdate`),_status)
 }
     )
     }
-    
+
 
 

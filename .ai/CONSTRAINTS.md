@@ -26,6 +26,7 @@ Read this file first. If you need details on any section, follow the links below
   - **iOS:** Keychain (`kSecAttrSynchronizable: false`) — survives reinstall, no iCloud sync
   - **Android:** AES-256-GCM encrypted file in `noBackupFilesDir`, key in Android Keystore — does NOT survive reinstall (accepted behavior)
 - Used to create AppManager and restore database
+- Never written to logs, crash output, or database filenames. Local databases use `meta-secret-db-<SHA-256(master_key)>.db` with lowercase hexadecimal digest.
 - NOT transmitted to server
 - NOT a password, NOT a share, NOT Vault key
 - NOT synced to cloud on either platform
@@ -35,6 +36,7 @@ Read this file first. If you need details on any section, follow the links below
 - ✅ May temporarily queue Claim metadata and Encrypted Key Shares while delivery/synchronization is pending; the Encrypted Key Share is removed after delivery and the server must not be able to decrypt it
 - ❌ Never stores Device Master Key
 - ❌ Never stores device database
+- ❌ Never logs Device Master Key, plaintext Secrets, or Key Shares (Доли), including in debug builds
 - ✅ Only: signaling, message delivery, device communication
 
 ### Shamir Secret Sharing

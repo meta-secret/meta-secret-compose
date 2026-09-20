@@ -253,7 +253,8 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **MetaSecretCoreService** | Platform-specific class (Android/iOS) that bridges Kotlin to Rust FFI via `MetaSecretCoreInterface` | FFI | `androidMain` / `iosMain` |
 | **SwiftBridge** | Swift class on iOS that wraps the compiled Rust `.xcframework` for use by `MetaSecretCoreService` | iOS FFI | `SwiftBridge.swift` |
 | **ClientDeviceInfoProvider** | Platform interface providing current device hardware info | Registration | per-platform |
-| **DatabasePathProvider** | Platform interface returning the filename for the local database (`meta-secret-{masterKey}.db`). iOS: `SwiftBridge` sets `isExcludedFromBackup = true` on the file after init. Android: DB lives in `noBackupFilesDir` (set by `chdir` in `MetaSecretCoreServiceAndroid`) — excluded from Auto Backup by OS. | Storage | per-platform |
+| **DatabasePathProvider** | Platform interface returning the filename for the local database (`meta-secret-db-<SHA-256(master_key)>.db`, lowercase hexadecimal digest). iOS: `SwiftBridge` sets `isExcludedFromBackup = true` on the file after init. Android: DB lives in `noBackupFilesDir` (set by `chdir` in `MetaSecretCoreServiceAndroid`) — excluded from Auto Backup by OS. | Storage | per-platform |
+| **Sensitive Logging** | Logging policy forbidding Device Master Keys, plaintext Secrets, Key Shares (Доли), encrypted Key Shares, and recovery material in debug and production builds. | Security | Log IDs, statuses, and counts only |
 | **ScreenMetricsProvider** | Platform interface for screen dimensions and density | UI layout | per-platform |
 | **StringProvider** | Interface for localized string resolution across platforms | i18n | `StringProviderInterface.kt` |
 

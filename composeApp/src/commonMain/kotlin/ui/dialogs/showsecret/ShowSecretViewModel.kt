@@ -51,7 +51,7 @@ class ShowSecretViewModel(
     }
 
     override fun handle(event: CommonViewModelEventsInterface) {
-        logger.log(LogTag.ShowSecretVM.Message.HandleEvent, "$event", success = true)
+        logger.log(LogTag.ShowSecretVM.Message.HandleEvent, "eventReceived=true", success = true)
         if (event is ShowSecretEvents) {
             when (event) {
                 is ShowSecretEvents.ShowSecret -> {
@@ -98,7 +98,11 @@ class ShowSecretViewModel(
                     metaSecretAppManager.findClaim(secretName)
                 }
 
-                logger.log(LogTag.ShowSecretVM.Message.ExistingClaimFound, "$existingClaim", success = true)
+                logger.log(
+                    LogTag.ShowSecretVM.Message.ExistingClaimFound,
+                    "exists=${existingClaim != null}",
+                    success = true
+                )
                 socketHandler.actionsToFollow(
                     add = listOf(SocketRequestModel.SHOW_SECRET),
                     exclude = null
