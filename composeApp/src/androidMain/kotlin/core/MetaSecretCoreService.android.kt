@@ -14,6 +14,7 @@ import org.koin.java.KoinJavaComponent.inject
 import core.metaSecretCore.MetaSecretCoreInterface
 import core.LogFormatterInterface
 import java.io.File
+import metasecret.project.com.BuildConfig
 
 class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
 
@@ -64,7 +65,19 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
     init {
         setLogger(logger)
         setLogFormatter(logFormatter)
+        configureE2eServerOverride()
         ensureWritableWorkingDirectory()
+    }
+
+    private fun configureE2eServerOverride() {
+        val endpoint = BuildConfig.META_SECRET_E2E_SERVER_URL.trim()
+        if (endpoint.isNotEmpty()) {
+            runCatching { Os.setenv("METASECRET_E2E_SERVER_URL", endpoint, true) }
+                .onFailure { error ->
+                    Log.w("MetaSecretE2E", "Unable to configure E2E server override: ${error.message}")
+                }
+            e2eLog("ANDROID_E2E_SERVER_OVERRIDE=$endpoint")
+        }
     }
 
     private fun ensureWritableWorkingDirectory() {

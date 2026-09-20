@@ -41,6 +41,95 @@ class CaseEightAndroidBothOfflineTest {
     }
 
     @Test
+    fun runNetworkLossCycles() {
+        val role = argument("networkRole", "")
+        val cycleNumbers = argument("networkCycles", "")
+            .split(',')
+            .filter { it.isNotBlank() }
+        val secretName = argument("secretName", "test-secret")
+        val coordinator = argument("approvalCoordinatorUrl", "http://10.0.2.2:5180")
+        check(role in setOf("sender", "offline-receiver", "observer")) {
+            "Unsupported network-loss role: $role"
+        }
+        check(cycleNumbers.isNotEmpty()) { "No network-loss cycles configured" }
+        Log.i(
+            "MetaSecretE2E",
+            "E2E: ANDROID_NETWORK_CONFIG role=$role cycles=${cycleNumbers.joinToString(",")}",
+        )
+        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        // Let the orchestrator release the first request only after Compose
+        // has rendered the secret row on this emulator.
+        marker("ANDROID_NETWORK_READY")
+
+        cycleNumbers.forEach { cycle ->
+            when (role) {
+                "sender" -> {
+                    waitForApproval(coordinator, "android-sender-1", cycle)
+                    showAcceptedSecretIfNeeded(secretName, cycle, "1")
+                    waitForPrimaryAction(secretName, "Recover")
+                    composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
+                    composeRule.waitForTag("show-secret-dialog", 30_000)
+                    marker("ANDROID_RECOVERY_REQUEST_SENT_${cycle}_1")
+                    // Do not leave the request dialog open while waiting for
+                    // the explicit Show phase. An accepted socket event can
+                    // otherwise reveal the secret through that same dialog.
+                    composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+                    composeRule.waitForTagGone("show-secret-dialog", 30_000)
+                    waitForApproval(coordinator, "android-show-1", cycle)
+                    revealAcceptedSecret(secretName, cycle, "1")
+                    marker("ANDROID_RECOVERY_SECRET_VISIBLE_${cycle}_1")
+                    composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+                    composeRule.waitForTagGone("revealed-secret-value", 30_000)
+                    waitForPrimaryAction(secretName, "Recover")
+                    marker("ANDROID_RECOVERY_CLOSED_${cycle}_1")
+                }
+
+                "offline-receiver" -> {
+                    composeRule.waitForTag("recovery-request-badge-$secretName", 180_000)
+                    composeRule.waitForTag("open-recovery-request-$secretName", 180_000)
+                    marker("ANDROID_INCOMING_VISIBLE_${cycle}_1")
+                    marker("ANDROID_NETWORK_LOSS_READY_${cycle}")
+                    waitForApproval(coordinator, "android-offline-attempt-1", cycle)
+                    composeRule.onNodeWithTag("open-recovery-request-$secretName").performClick()
+                    composeRule.waitForTag("alert-recovery-request", 30_000)
+                    composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
+                    marker("ANDROID_OFFLINE_APPROVE_CLICKED_${cycle}")
+                    waitForApproval(coordinator, "android-offline-online-1", cycle)
+                    // The failed request may be retried automatically as soon
+                    // as the transport comes back. In that case the alert is
+                    // already gone and there must not be a second click. If
+                    // the action is still exposed, click it exactly once.
+                    val approveStillVisible = waitForRecoveryResolutionOrApprove(120_000)
+                    if (approveStillVisible) {
+                        composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
+                    }
+                    composeRule.waitUntil(120_000) {
+                        composeRule.onAllNodes(
+                            hasTestTag("alert-recovery-request"),
+                            useUnmergedTree = true,
+                        ).fetchSemanticsNodes().isEmpty() && composeRule.onAllNodes(
+                            hasTestTag("alert-recovery-request-processing"),
+                            useUnmergedTree = true,
+                        ).fetchSemanticsNodes().isEmpty()
+                    }
+                    marker("ANDROID_APPROVED_AFTER_RECONNECT_${cycle}_1")
+                }
+
+                "observer" -> {
+                    composeRule.waitForTag("recovery-request-badge-$secretName", 180_000)
+                    composeRule.waitForTag("open-recovery-request-$secretName", 180_000)
+                    marker("ANDROID_INCOMING_VISIBLE_${cycle}_1")
+                    waitForApproval(coordinator, "android-observer-finish-1", cycle)
+                    composeRule.waitForTagGone("recovery-request-badge-$secretName", 120_000)
+                    composeRule.waitForTagGone("open-recovery-request-$secretName", 120_000)
+                    marker("ANDROID_OBSERVER_CLOSED_${cycle}_1")
+                }
+            }
+        }
+        marker("ANDROID_NETWORK_LOSS_DONE")
+    }
+
+    @Test
     fun sendRecoveryRequestAndExit() {
         val secretName = argument("secretName", "test-secret")
         val cycle = argument("cycle", "1")
@@ -361,6 +450,27 @@ class CaseEightAndroidBothOfflineTest {
             composeRule.waitForTag(tag, timeout)
             composeRule.onNodeWithTag(tag).performClick()
         }
+    }
+
+    private fun waitForRecoveryResolutionOrApprove(timeoutMillis: Long): Boolean {
+        var approveVisible = false
+        composeRule.waitUntil(timeoutMillis) {
+            val approveNodes = composeRule.onAllNodes(
+                hasTestTag("alert-recovery-request-accept"),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes()
+            val alertNodes = composeRule.onAllNodes(
+                hasTestTag("alert-recovery-request"),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes()
+            val processingNodes = composeRule.onAllNodes(
+                hasTestTag("alert-recovery-request-processing"),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes()
+            approveVisible = approveNodes.isNotEmpty()
+            approveVisible || (alertNodes.isEmpty() && processingNodes.isEmpty())
+        }
+        return approveVisible
     }
 
     private fun argument(name: String, fallback: String): String =

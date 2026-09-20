@@ -31,6 +31,7 @@ val appleClientId = providers.gradleProperty("APPLE_CLIENT_ID").orNull ?: ""
 val appleRedirectUri = providers.gradleProperty("APPLE_REDIRECT_URI").orNull ?: "metasecret://apple-auth"
 val metaSecretEnvironment = providers.gradleProperty("META_SECRET_ENV").orNull ?: "remote"
 val metaSecretSocketUrl = providers.gradleProperty("META_SECRET_SOCKET_URL").orNull ?: ""
+val metaSecretE2eServerUrl = providers.gradleProperty("META_SECRET_E2E_SERVER_URL").orNull ?: ""
 
 kotlin {
     // BACKLOG(AGP 9+): migrate KMP + Android app to recommended multi-module layout —
@@ -211,6 +212,7 @@ android {
         buildConfigField("String", "APPLE_REDIRECT_URI", "\"$appleRedirectUri\"")
         buildConfigField("String", "META_SECRET_ENV", "\"$metaSecretEnvironment\"")
         buildConfigField("String", "META_SECRET_SOCKET_URL", "\"$metaSecretSocketUrl\"")
+        buildConfigField("String", "META_SECRET_E2E_SERVER_URL", "\"$metaSecretE2eServerUrl\"")
 
     }
     packaging {

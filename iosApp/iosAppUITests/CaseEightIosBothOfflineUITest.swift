@@ -14,6 +14,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let expectedOutcome: String?
         let repeatApprove: Bool?
         let duplicateRecovery: Bool?
+        let networkRole: String?
+        let networkCycles: String?
     }
 
     private static let stepConfigPath = "/tmp/metasecret-e2e-ios-step.json"
@@ -23,6 +25,11 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["METASECRET_UI_TEST_MODE"] = "true"
+        let e2eServerUrl = (ProcessInfo.processInfo.environment["E2E_CORE_SERVER_URL"] ?? "")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if !e2eServerUrl.isEmpty {
+            app.launchEnvironment["METASECRET_E2E_SERVER_URL"] = e2eServerUrl
+        }
         app.launch()
     }
 
@@ -44,6 +51,87 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         }
         print("E2E: IOS_JOIN_READY")
         print("E2E: IOS_SECRETS_READY")
+    }
+
+    func runNetworkLossCycles() throws {
+        let config = stepConfig()
+        let role = config.networkRole ?? config.role ?? env("E2E_NETWORK_ROLE", defaultValue: "")
+        let cycles = (config.networkCycles ?? env("E2E_NETWORK_CYCLES", defaultValue: ""))
+            .split(separator: ",")
+            .map(String.init)
+            .filter { !$0.isEmpty }
+        let secretName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
+        XCTAssertTrue(
+            ["sender", "offline-receiver", "observer"].contains(role),
+            "Unsupported network-loss role: \(role)"
+        )
+        XCTAssertFalse(cycles.isEmpty, "No network-loss cycles configured")
+        print("E2E: IOS_NETWORK_CONFIG role=\(role) cycles=\(cycles.joined(separator: ","))")
+        waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
+        // Signal readiness only after the native UI has loaded the secret row;
+        // the orchestrator uses this marker instead of racing the first request
+        // against simulator startup.
+        print("E2E: IOS_NETWORK_READY")
+
+        for cycle in cycles {
+            switch role {
+            case "sender":
+                waitForApproval(platform: "ios-sender", cycle: cycle, step: "1")
+                showAcceptedSecretIfNeeded(secretName, cycle: cycle, step: "1")
+                waitForPrimaryAction(secretName, expected: "Recover", timeout: 180)
+                tap("secret-primary-action-\(secretName)")
+                enterSimulatorPasscodeIfNeeded()
+                waitForVisible(identifier: "show-secret-dialog", timeout: 30)
+                print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)_1")
+                // Keep the request dialog separate from the later Show step.
+                // If it remains open, the socket's RECOVER_ACCEPTED event can
+                // reveal the secret immediately, before the coordinator
+                // releases the explicit show phase.
+                closeShowSecretDialog()
+                waitForApproval(platform: "ios-show", cycle: cycle, step: "1")
+                revealAcceptedSecret(secretName, cycle: cycle, step: "1")
+                print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)_1")
+                tap("show-secret-close")
+                waitForHidden(identifier: "revealed-secret-value", timeout: 30)
+                waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
+                print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_1")
+
+            case "offline-receiver":
+                waitForVisible(identifier: "recovery-request-badge-\(secretName)", timeout: 180)
+                tap("open-recovery-request-\(secretName)")
+                waitForVisible(identifier: "alert-recovery-request", timeout: 30)
+                print("E2E: IOS_INCOMING_VISIBLE_\(cycle)_1")
+                print("E2E: IOS_NETWORK_LOSS_READY_\(cycle)")
+                waitForApproval(platform: "ios-offline-attempt", cycle: cycle, step: "1")
+                tap("alert-recovery-request-accept")
+                enterSimulatorPasscodeIfNeeded()
+                print("E2E: IOS_OFFLINE_APPROVE_CLICKED_\(cycle)")
+                waitForApproval(platform: "ios-offline-online", cycle: cycle, step: "1")
+                // Reconnect can flush the failed approval automatically. Do
+                // not create a second response when the alert has already
+                // disappeared; tap only if the action is still present.
+                if waitForRecoveryResolutionOrApprove(timeout: 120) {
+                    tap("alert-recovery-request-accept")
+                    enterSimulatorPasscodeIfNeeded()
+                }
+                waitForHidden(identifier: "alert-recovery-request", timeout: 120)
+                waitForHidden(identifier: "alert-recovery-request-processing", timeout: 120)
+                print("E2E: IOS_APPROVED_AFTER_RECONNECT_\(cycle)_1")
+
+            case "observer":
+                waitForVisible(identifier: "recovery-request-badge-\(secretName)", timeout: 180)
+                waitForVisible(identifier: "open-recovery-request-\(secretName)", timeout: 180)
+                print("E2E: IOS_INCOMING_VISIBLE_\(cycle)_1")
+                waitForApproval(platform: "ios-observer-finish", cycle: cycle, step: "1")
+                waitForHidden(identifier: "recovery-request-badge-\(secretName)", timeout: 120)
+                waitForHidden(identifier: "open-recovery-request-\(secretName)", timeout: 120)
+                print("E2E: IOS_OBSERVER_CLOSED_\(cycle)_1")
+
+            default:
+                XCTFail("Unsupported network-loss role: \(role)")
+            }
+        }
+        print("E2E: IOS_NETWORK_LOSS_DONE")
     }
 
     func sendRecoveryRequestAndExit() throws {
@@ -442,6 +530,20 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
     }
 
+    private func waitForRecoveryResolutionOrApprove(timeout: TimeInterval) -> Bool {
+        let accept = app.descendants(matching: .any)["alert-recovery-request-accept"]
+        let alert = app.descendants(matching: .any)["alert-recovery-request"]
+        let processing = app.descendants(matching: .any)["alert-recovery-request-processing"]
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if accept.exists { return true }
+            if !alert.exists && !processing.exists { return false }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        XCTFail("Recovery alert did not resolve after reconnect")
+        return false
+    }
+
     private func closeShowSecretDialog() {
         let dialog = app.descendants(matching: .any)["show-secret-dialog"]
         let close = app.descendants(matching: .any)["show-secret-close"]
@@ -535,7 +637,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             let data = FileManager.default.contents(atPath: Self.stepConfigPath),
             let config = try? JSONDecoder().decode(StepConfig.self, from: data)
         else {
-            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil)
+            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil, networkRole: nil, networkCycles: nil)
         }
         return config
     }

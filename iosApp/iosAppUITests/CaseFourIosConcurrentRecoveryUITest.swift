@@ -9,6 +9,11 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["METASECRET_UI_TEST_MODE"] = "true"
+        let e2eServerUrl = (ProcessInfo.processInfo.environment["E2E_CORE_SERVER_URL"] ?? "")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if !e2eServerUrl.isEmpty {
+            app.launchEnvironment["METASECRET_E2E_SERVER_URL"] = e2eServerUrl
+        }
         app.launch()
     }
 
@@ -101,6 +106,11 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         print("E2E: IOS_MAIN_AFTER_APPROVE")
         print("E2E: IOS_SECRETS_READY")
 
+        if env("E2E_SETUP_ONLY", defaultValue: "0") == "1" {
+            print("E2E: IOS_SETUP_ONLY_DONE")
+            return
+        }
+
         for cycle in recoveryPlan {
             if cycle.offlineReceiver == "ios" {
                 // The orchestrator terminates iOS only after this semantic
@@ -148,6 +158,71 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         }
     }
 
+    func runNetworkLossCycles() throws {
+        let role = env("E2E_NETWORK_ROLE", defaultValue: "")
+        let block = env("E2E_NETWORK_BLOCK", defaultValue: "")
+        XCTAssertTrue(
+            ["sender", "approver", "offline-receiver"].contains(role),
+            "Unsupported network-loss role: \(role)"
+        )
+        guard let coordinator = loadCoordinatorScenario() else {
+            XCTFail("Network-loss test could not load coordinator scenario")
+            return
+        }
+        let cycles = coordinator.recoveryPlan.filter { $0.block == block }
+        XCTAssertFalse(cycles.isEmpty, "No network-loss cycles found for block=\(block)")
+        print(
+            "E2E: IOS_NETWORK_CONFIG role=\(role) block=\(block) "
+                + "cycles=\(cycles.map { String($0.number) }.joined(separator: ","))"
+        )
+
+        for cycle in cycles {
+            let senderSecret = cycle.senderSecrets["ios"]
+                ?? cycle.senderSecrets.values.first
+                ?? coordinator.secrets.first?.name
+                ?? "test-secret"
+            let incomingSecret = cycle.approvals.first?.secret ?? senderSecret
+            switch role {
+            case "sender":
+                waitForApproval(platform: "ios-sender", cycle: cycle.number)
+                requestRecovery(senderSecret, cycle: cycle.number)
+                print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle.number)_1")
+                waitForApproval(platform: "ios-show", cycle: cycle.number)
+                showAcceptedSecret(senderSecret, cycle: cycle.number)
+                waitForVisible(identifier: "revealed-secret-value", timeout: 180)
+                print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle.number)_1")
+                closeShowSecretDialog()
+                print("E2E: IOS_RECOVERY_CLOSED_\(cycle.number)_1")
+
+            case "approver":
+                waitForApproval(platform: "ios-approve", cycle: cycle.number)
+                approveIncomingRecovery(incomingSecret, cycle: cycle.number, request: 1)
+                print("E2E: IOS_APPROVED_INCOMING_\(cycle.number)_1")
+
+            case "offline-receiver":
+                tap("open-recovery-request-\(incomingSecret)")
+                waitForVisible(identifier: "alert-recovery-request", timeout: 180)
+                print("E2E: IOS_INCOMING_VISIBLE_\(cycle.number)_1")
+                print("E2E: IOS_NETWORK_LOSS_READY_\(cycle.number)")
+                waitForApproval(platform: "ios-offline-attempt", cycle: cycle.number)
+                tap("alert-recovery-request-accept")
+                enterSimulatorPasscodeIfNeeded()
+                print("E2E: IOS_OFFLINE_APPROVE_CLICKED_\(cycle.number)")
+                waitForApproval(platform: "ios-offline-online", cycle: cycle.number)
+                waitForVisible(identifier: "alert-recovery-request-accept", timeout: 120)
+                tap("alert-recovery-request-accept")
+                enterSimulatorPasscodeIfNeeded()
+                waitForHidden(identifier: "alert-recovery-request", timeout: 120)
+                waitForHidden(identifier: "alert-recovery-request-processing", timeout: 120)
+                print("E2E: IOS_APPROVED_AFTER_RECONNECT_\(cycle.number)_1")
+
+            default:
+                XCTFail("Unsupported network-loss role: \(role)")
+            }
+        }
+        print("E2E: IOS_NETWORK_LOSS_DONE")
+    }
+
     private struct RecoveryApproval {
         let platform: String
         let secret: String
@@ -155,9 +230,12 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
 
     private struct RecoveryCycle {
         let number: Int
+        let block: String
         let senderSecrets: [String: String]
         let approvals: [RecoveryApproval]
         let offlineReceiver: String?
+
+        var sender: String { senderSecrets.keys.first ?? "" }
     }
 
     private struct SecretDefinition {
@@ -287,6 +365,7 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
             }
             return RecoveryCycle(
                 number: number,
+                block: "",
                 senderSecrets: senderSecrets,
                 approvals: approvals,
                 offlineReceiver: nil
@@ -341,6 +420,7 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
                 let offlineReceiver = rawCycle["offlineReceiver"] as? String
                 let cycle = RecoveryCycle(
                     number: number,
+                    block: rawCycle["block"] as? String ?? "",
                     senderSecrets: senderSecrets,
                     approvals: approvals,
                     offlineReceiver: offlineReceiver

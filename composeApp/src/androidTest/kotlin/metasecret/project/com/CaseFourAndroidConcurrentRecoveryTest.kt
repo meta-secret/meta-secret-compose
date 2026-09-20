@@ -71,6 +71,10 @@ class CaseFourAndroidConcurrentRecoveryTest {
             Log.i("MetaSecretE2E", "E2E: ANDROID_SECRET_READY_${secret.name}")
         }
         marker("ANDROID_SECRETS_READY")
+        if (instrumentationArgument("setupOnly", "false").toBoolean()) {
+            marker("ANDROID_SETUP_ONLY_DONE")
+            return
+        }
         for (cycle in recoveryCyclePlan()) {
             val ownSecret = cycle.senderSecrets["android"]
             if (ownSecret != null) {
@@ -113,12 +117,73 @@ class CaseFourAndroidConcurrentRecoveryTest {
         }
     }
 
+    @Test
+    fun runNetworkLossCycles() {
+        val role = instrumentationArgument("networkRole", "")
+        val block = instrumentationArgument("networkBlock", "")
+        check(role in setOf("sender", "approver", "offline-receiver")) {
+            "Unsupported network-loss role: $role"
+        }
+        val coordinatorUrl = instrumentationArgument(
+            "approvalCoordinatorUrl",
+            "http://10.0.2.2:5180",
+        )
+        val cycles = recoveryCyclePlan().filter { it.block == block }
+        check(cycles.isNotEmpty()) { "No network-loss cycles found for block=$block" }
+        Log.i(
+            "MetaSecretE2E",
+            "E2E: ANDROID_NETWORK_CONFIG role=$role block=$block cycles="
+                + cycles.joinToString(",") { it.number.toString() },
+        )
+
+        cycles.forEach { cycle ->
+            val senderSecret = cycle.senderSecrets[cycle.sender]
+                ?: cycle.senderSecrets.values.firstOrNull()
+                ?: instrumentationArgument("secretName", "test-secret")
+            when (role) {
+                "sender" -> {
+                    waitForApproval(coordinatorUrl, "android-sender", cycle.number)
+                    requestRecovery(senderSecret)
+                    marker("ANDROID_RECOVERY_REQUEST_SENT_${cycle.number}_1")
+                    waitForApproval(coordinatorUrl, "android-show", cycle.number)
+                    revealAndClose(senderSecret, reopenClaim = false)
+                    marker("ANDROID_RECOVERY_SECRET_VISIBLE_${cycle.number}_1")
+                    marker("ANDROID_RECOVERY_CLOSED_${cycle.number}_1")
+                }
+
+                "approver" -> {
+                    waitForApproval(coordinatorUrl, "android-approve", cycle.number)
+                    approveIncomingRecovery(cycle.secretName)
+                    marker("ANDROID_APPROVED_INCOMING_${cycle.number}_1")
+                }
+
+                "offline-receiver" -> {
+                    waitForIncomingRecoveryUi(cycle.secretName)
+                    marker("ANDROID_INCOMING_VISIBLE_${cycle.number}_1")
+                    marker("ANDROID_NETWORK_LOSS_READY_${cycle.number}")
+                    waitForApproval(coordinatorUrl, "android-offline-attempt", cycle.number)
+                    clickIncomingApproveWithoutWaiting(cycle.secretName)
+                    marker("ANDROID_OFFLINE_APPROVE_CLICKED_${cycle.number}")
+                    waitForApproval(coordinatorUrl, "android-offline-online", cycle.number)
+                    approveIncomingRecoveryAfterReconnect(cycle.secretName)
+                    marker("ANDROID_APPROVED_AFTER_RECONNECT_${cycle.number}_1")
+                }
+            }
+        }
+        marker("ANDROID_NETWORK_LOSS_DONE")
+    }
+
     private data class RecoveryCycle(
         val number: Int,
+        val block: String,
         val senderSecrets: Map<String, String>,
         val approvals: List<RecoveryApproval>,
     ) {
         val senders: Set<String> get() = senderSecrets.keys
+        val sender: String get() = senderSecrets.keys.firstOrNull() ?: ""
+        val secretName: String get() = approvals.firstOrNull()?.secret
+            ?: senderSecrets.values.firstOrNull()
+            ?: "test-secret"
     }
 
     private data class RecoveryApproval(
@@ -178,6 +243,7 @@ class CaseFourAndroidConcurrentRecoveryTest {
             }
             RecoveryCycle(
                 number = cycle.getInt("number"),
+                block = cycle.optString("block", ""),
                 senderSecrets = senderSecrets,
                 approvals = approvals,
             ).also { parsed ->
@@ -394,6 +460,41 @@ class CaseFourAndroidConcurrentRecoveryTest {
                 }
             }
         }
+    }
+
+    private fun clickIncomingApproveWithoutWaiting(secretName: String) {
+        marker("ANDROID_NETWORK_LOSS_OPENING_ALERT_$secretName")
+        composeRule.onNodeWithTag("open-recovery-request-$secretName").performClick()
+        composeRule.waitForTag("alert-recovery-request", 30_000)
+        composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
+        Log.i(
+            "MetaSecretE2E",
+            "E2E: ANDROID_NETWORK_LOSS_ACCEPT_DISPATCHED secret=$secretName "
+                + "alertVisible=${composeRule.onAllNodes(hasTestTag("alert-recovery-request"), useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty()} "
+                + "processingVisible=${composeRule.onAllNodes(hasTestTag("alert-recovery-request-processing"), useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty()}",
+        )
+    }
+
+    private fun approveIncomingRecoveryAfterReconnect(secretName: String) {
+        composeRule.waitUntil(120_000) {
+            runCatching {
+                composeRule.onNodeWithTag("alert-recovery-request-accept", useUnmergedTree = true)
+                    .performClick()
+                true
+            }.getOrDefault(false)
+        }
+        composeRule.waitUntil(120_000) {
+            composeRule.onAllNodes(
+                hasTestTag("alert-recovery-request"),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes().isEmpty() && composeRule.onAllNodes(
+                hasTestTag("alert-recovery-request-processing"),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes().isEmpty()
+        }
+        Log.i("MetaSecretE2E", "E2E: ANDROID_NETWORK_LOSS_RECONNECTED_ACCEPTED secret=$secretName")
     }
 
     private fun semanticsText(tag: String): String? = runCatching {
