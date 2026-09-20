@@ -19,6 +19,19 @@ require_text "$CONSTRAINTS" "Sharing scheme: **k = 1 for 1 device, k = 1 for 2 d
 require_text "$CONSTRAINTS" "A fourth or later device is rejected by Core"
 require_text "$VAULT_MODEL" 'there is no generic `k=n−1` rule'
 require_text "$GLOSSARY" 'n=3: k=2'
+require_text "$GLOSSARY" '**Master Key**'
+require_text "$GLOSSARY" 'It is not derived from a user password or passphrase.'
+require_text "$GLOSSARY" '**Encrypted Key Share**'
+
+# Protocol terminology must use "Encrypted Key Share". Do not reintroduce
+# the ambiguous encrypted-share/envelope wording in Compose documentation.
+if rg -n -i --glob '*.md' --glob '*.kt' --glob '*.swift' \
+  --glob '!**/.ai/artifacts/**' \
+  'encrypted[[:space:]-]+(share|shares|envelope|envelopes)|зашифрованн[^[:space:]]*[[:space:]]+конверт' \
+  "$ROOT_DIR/.ai" "$ROOT_DIR/docs" "$ROOT_DIR/composeApp" 2>/dev/null; then
+  echo 'Ambiguous encrypted-share/envelope terminology found; use Encrypted Key Share.' >&2
+  exit 1
+fi
 
 # The quick-reference constraints must never reintroduce the old generic rule
 # or an unsupported 3+ device state.

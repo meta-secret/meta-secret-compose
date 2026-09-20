@@ -44,8 +44,8 @@ Read this file first. If you need details on any section, follow the links below
 - Not used with 1 device (secret stored whole)
 - 1 device: k=1; 2 devices: k=1 full replication; 3 devices: k=2
 - Old shares invalid after resharing
-- In a 3-device Vault each device stores only its own Key Share. Remote encrypted
-  shares are temporary outbound workflows and are removed from the sender's local
+- In a 3-device Vault each device stores only its own Key Share. Remote Encrypted
+  Key Shares are temporary outbound workflows and are removed from the sender's local
   database after successful upload.
 
 ### Shared Logic Ownership
