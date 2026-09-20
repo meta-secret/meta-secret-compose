@@ -26,6 +26,13 @@ Overall assessment of code quality.
 - **Naming:** [clarity assessment]
 - **Documentation:** [completeness]
 
+## Documentation Impact Verification
+
+- **Plan decision:** Required / Not required
+- **Required documentation updates completed:** YES / NO / N/A
+- **Files/sections checked:**
+- **Outstanding documentation blocker:**
+
 ---
 
 ## Test Coverage

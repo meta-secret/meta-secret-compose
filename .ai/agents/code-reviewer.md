@@ -26,6 +26,11 @@ Review implementation for architecture compliance, style consistency, and best p
 - .ai/rules/tdd-principles.md (test coverage requirements: 80% minimum)
 - .ai/rules/kmp-principles.md (file size, reusability, method params, visibility)
 - .ai/rules/kmp-code-style.md (strings, typography, naming, comments)
+- Documentation Impact decision from the implementation plan
+
+The review must confirm that every item marked `Required` is updated and uses
+current Glossary/Constraints terminology. If the decision is `Not required`,
+verify that its reason is still valid.
 
 ## Required Skills
 

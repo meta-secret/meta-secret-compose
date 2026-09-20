@@ -14,7 +14,7 @@ After planning, BEFORE implementation:
 
 1. **Invoke Constraint Validator Agent**
    - Input: implementation-plan.md
-   - Reference: CONSTRAINTS.md (all 35 rules)
+   - Reference: CONSTRAINTS.md (all 42 rules)
    - Output: constraint-validation-report.md
 
 2. **Validation Rules**

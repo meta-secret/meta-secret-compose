@@ -45,6 +45,19 @@ Key constraints to validate (Stage 3.5):
 
 ---
 
+## Documentation Impact
+
+- **Status:** Required / Not required
+- **Affected files or sections:**
+  - `CONSTRAINTS.md`:
+  - `GLOSSARY.md`:
+  - `ARCHITECTURE.md` / protocol/API docs:
+  - README / E2E scenario docs:
+- **If not required, concrete reason:**
+- **Verification that updates are complete:**
+
+---
+
 ## Test Strategy
 
 - Total tests planned: [number]

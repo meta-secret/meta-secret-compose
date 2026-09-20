@@ -37,6 +37,15 @@ If any constraint failed:
 
 ---
 
+## Documentation Impact Gate
+
+- **Plan decision:** Required / Not required
+- **Affected files/sections reviewed:**
+- **Decision is complete and reviewable:** YES / NO
+- **Documentation blocker:**
+
+---
+
 ## Sign-Off
 
 Ready to implement: YES / NO

@@ -12,6 +12,10 @@ Single source of truth for `implement issue <id>` / `implement issue "<text>"` a
 
 Stage 7 (Design Review) may be skipped only if Figma link is missing; in that case, mark status as "Skipped".
 
+The conditional **Stage 9.5 (Final UI E2E)** is mandatory for applicable
+client-visible, synchronization/recovery, FFI-consumed, or explicitly requested
+UI behavior. Otherwise it must be marked `Skipped` with a concrete reason.
+
 **If any of these stages are missing from execution, the workflow is INCOMPLETE and INVALID.**
 
 ## Command Contract
@@ -21,6 +25,23 @@ Stage 7 (Design Review) may be skipped only if Figma link is missing; in that ca
 - Artifacts directory: `.ai/artifacts/run/`
 - Artifact naming: `MS-<run-id>-<stage-number>-<stage-name>[ -retry-N ].md`
 - Retry budget: `2` full fix loops
+
+## Root orchestration mode
+
+When started by `MetaSecret` root via `get_issue`, the root passes a normalized
+Issue context bundle containing the source repository, canonical Issue URL,
+title/body, root run ID, scope decision, and (for `core+compose`) the successful
+Core handoff. Do not assume that the source Issue number exists in this
+repository.
+
+Compose remains responsible for every stage in this document, including its
+constraints, tests, coverage, documentation checks, and user approval before
+commit/PR. Consume Core API/FFI contracts from the handoff; do not reimplement
+cryptography or shared protocol logic in Kotlin/Swift.
+
+When root scope is `core+compose`, Compose consumes the Core pre-release
+handoff, runs through Stage 9.5, and defers Stage 10 release actions until the
+root final UI E2E gate has passed. No repository is committed before that gate.
 
 `<run-id>` rules:
 - Numeric issue input: use issue number (`123`)
@@ -52,6 +73,7 @@ Stage 7 (Design Review) may be skipped only if Figma link is missing; in that ca
 7. Stage 7: Design Review (only if Figma link exists; may run in parallel with Stage 6)
 8. Stage 8: Test Coverage Verification
 9. Stage 9: Test Run
+9.5. Stage 9.5: Final UI E2E (conditional, before release)
 10. Stage 10: Branch + Commit + PR
 
 ## Stage Specs
@@ -106,6 +128,10 @@ Required behavior:
 - Create implementation plan aligned with architecture/security/style
 - Incorporate all clarifications from Stage 2
 - If Figma present, include design constraints and acceptance checks
+- Complete the **Documentation Impact** section in the plan. Mark it
+  `Required` and list files/sections when behavior, terminology, constraints,
+  architecture, protocol/API contracts, or workflows change. Mark it `Not
+  required` only with a concrete reason.
 - If retry, add explicit fix plan derived from failure artifact
 
 ### Stage 3.5: Constraint Validation
@@ -119,7 +145,7 @@ Input:
 Output: `.ai/artifacts/run/MS-<run-id>-0035-constraints.md`
 
 Required behavior:
-- Validate plan against all 35 confirmed constraints (Section 28 of CONSTRAINTS.md)
+- Validate plan against all 42 confirmed constraints in the confirmed-rules table of CONSTRAINTS.md
 - Check: Device Master Key handling, Vault model, Shamir distribution, biometry, approval model
 - Identify affected constraints
 - Check: PASS or FAIL for each constraint
@@ -207,6 +233,10 @@ Required behavior:
 - Review against architecture and style rules
 - Check for security issues
 - Verify Stage 2 clarifications are addressed
+- Verify the plan's Documentation Impact decision. Every item marked
+  `Required` must be updated, or the review must identify the exact blocker and
+  keep the workflow failed/pending. If marked `Not required`, verify that the
+  reason is still valid.
 - Pass condition: `Status: PASSED`
 
 ### Stage 7: Design Review (conditional)
@@ -248,6 +278,34 @@ Required behavior:
 - Capture failing test details
 - Pass condition: `Status: PASSED` + `Coverage: >=80%`
 
+### Stage 9.5: Final UI E2E (CONDITIONAL RELEASE GATE)
+
+**Agents:** root `ui-e2e-test-author`, then root `ui-e2e-test-runner`
+**Skill:** root `.ai/skills/ui-e2e-testing/SKILL.md`
+**Contract:** root `.ai/rules/ui-e2e-test-contract.md`
+**Template:** root `.ai/artifacts/ui-e2e-report-template.md`
+**Artifact:** `.ai/artifacts/run/MS-<run-id>-0095-ui-e2e.md`
+
+Run only after Stages 5–9 and the documentation check have passed. The gate
+is required for client-visible behavior, client-consumed Core/FFI behavior,
+synchronization/recovery changes, or an explicit UI E2E requirement.
+Otherwise record `Status: Skipped` with a concrete reason.
+
+The author uses the existing `meta-secret-core/e2eTest` harness and prepares a
+complete platform/role matrix. The runner executes visible Web/iOS/Android
+flows (and CLI when required) in sequential blocks. Every relevant platform
+occupies every relevant role; every variant runs three cycles by default, with
+any lower count documented as a resource exception. Use only marker/state/
+deadline waits—never arbitrary sleeps, fixed delays, or `slowMo`.
+
+The report includes exact commands, block/cycle/role assignments, marker
+timeline, Core-driven Recover/Show decisions, receiver badge/alert assertions,
+screenshots, browser/server/device logs, cleanup, and deviations. A failure
+blocks Stage 10. Scenario-only failures may return to the author; evidence of
+a production defect returns to planning and follows the normal approval rule.
+For `core+compose`, this is the final root-owned gate after Core handoff and
+Compose validation.
+
 ### Stage 10: Branch + Commit + PR
 
 Agent: `release-manager`
@@ -273,6 +331,7 @@ Retry trigger:
 - Code review failed (Stage 6)
 - Design review failed (Stage 7)
 - Test run failed (Stage 9)
+- Final UI E2E failed (Stage 9.5)
 
 Retry path:
 - Return to Stage 3 (Planning) with failed artifact as input
@@ -361,6 +420,7 @@ After running `implement issue #42`:
 ├── MS-42-007-design-review.md        ✅ Design Review (if Figma)
 ├── MS-42-008-coverage.md             ✅ Coverage Check (Pass or Fail?)
 ├── MS-42-009-test-run.md             ✅ Final Tests
+├── MS-42-0095-ui-e2e.md              ✅ Final visible UI E2E gate
 └── MS-42-010-pr.md                   ✅ Pull Request Created
 ```
 

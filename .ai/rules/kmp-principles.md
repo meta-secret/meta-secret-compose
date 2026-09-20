@@ -3,7 +3,7 @@
 ## Architecture
 
 - **MVVM** — Model-View-ViewModel with Coordinator pattern
-- **Shared Logic** — `commonMain/` for business logic
+- **Shared Client Logic** — `commonMain/` for FFI adapters, client models, ViewModel orchestration, and platform-independent presentation logic; security/domain decisions remain in Rust Core
 - **Platform-Specific UI** — `androidMain/` for Jetpack Compose, `iosMain/` for SwiftUI
 - **No platform code in commonMain** — Ever
 
@@ -27,7 +27,13 @@
 
 ## Shared Kotlin
 
-- Pure business logic in `commonMain/`
+- Client integration logic in `commonMain/` may map Core responses, coordinate
+  ViewModels, and prepare UI state. It must not implement cryptography, Key
+  Share operations, K-of-N/quorum, recovery claims, Approve/Decline ordering,
+  JOIN/DELETE authorization, resharing, synchronization conflict resolution, or
+  Secret reveal eligibility; those decisions belong to Rust Core. Simple
+  non-security form validation and platform UI behavior are allowed, but Core
+  remains authoritative.
 - Platform abstractions must be done via `interface + DI` (platform implementations in `androidMain/` and `iosMain/`)
 - `expect/actual` is forbidden in this project
 - No UI framework imports in commonMain

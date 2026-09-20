@@ -21,7 +21,7 @@ Execute Constraint Validator agent to ensure plan compliance with CONSTRAINTS.md
 5. Invoke constraint-validator agent with:
    - implementation-plan.md (from Stage 3)
    - clarification-report.md (from Stage 2)
-6. Agent validates against all 35 confirmed constraints
+6. Agent validates against all 42 confirmed constraints
 7. Output constraint-validation-report.md
 8. If FAIL: block implementation, return to planning
 9. If PASS: proceed to Stage 4

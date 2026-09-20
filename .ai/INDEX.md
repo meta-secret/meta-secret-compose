@@ -12,7 +12,7 @@ meta-secret-compose is a KMM (Kotlin Multiplatform Mobile) application for iOS a
 
 **CONSTRAINTS.md** is the single source of truth for MetaSecret architecture and design rules.
 - All planning must reference CONSTRAINTS.md
-- All implementation must comply with CONSTRAINTS.md (35 confirmed rules)
+- All implementation must comply with CONSTRAINTS.md (42 confirmed rules)
 - Validation is **MANDATORY** before coding (Stage 3.5)
 - Use `only-constraint-validator` command to validate
 
@@ -94,6 +94,13 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
 - `.ai/agents/maestro-test-runner.md` — Run Maestro tests
 - `.ai/agents/simulator-checker.md` — Check device availability
 
+#### Final visible UI E2E gate
+
+The root workflow invokes the final UI E2E author and runner after Compose
+validation and before release. The shared contract is
+`../../.ai/rules/ui-e2e-test-contract.md`; the working harness is
+`../meta-secret-core/e2eTest`.
+
 #### Quick Launch Agents
 - `.ai/agents/app-launcher-ios.md` — Build, install, launch iOS app
 - `.ai/agents/app-launcher-android.md` — Build, install, launch Android app
@@ -105,6 +112,7 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
   - `skills/test-driven-development/` — TDD methodology
   - `skills/red-green-refactor/` — Red-Green-Refactor execution
   - `skills/maestro-testing/` — Maestro E2E testing methodology
+  - Root `../../.ai/skills/ui-e2e-testing/` — final visible cross-platform gate
 
 - `.ai/hooks/` — Lifecycle hooks and callbacks
 

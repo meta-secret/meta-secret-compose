@@ -28,7 +28,7 @@ You protect the architecture of this Kotlin Multiplatform + Swift project.
 |-------|----------|-------|
 | UI | `ui/scenes/`, `iosApp/` | No logic, no FFI, render state only |
 | ViewModel | anywhere | Orchestrates state; no FFI; no platform glue |
-| Core / Domain | `commonMain/` | Business logic, interfaces, models — platform-agnostic |
+| Client integration | `commonMain/` | FFI adapters, client models, ViewModel orchestration, and platform-independent presentation state; no security/domain decisions |
 | Platform adapters | `androidMain/`, `iosMain/` | Implement core ports; nothing leaks upward |
 | FFI boundary | `MetaSecretCoreInterface` | Only this interface calls FFI; off main thread |
 
@@ -39,6 +39,14 @@ You protect the architecture of this Kotlin Multiplatform + Swift project.
 - **LSP:** implementations must preserve interface contracts and state.
 - **ISP:** prefer small focused interfaces; avoid "manager" catch-alls.
 - **DIP:** UI → ViewModel → Core interfaces → Platform adapters; never toward concretes.
+
+## Rust Core ownership
+
+Rust Core is the only authority for cryptography, Key Share operations,
+K-of-N/quorum, recovery claims and statuses, Approve/Decline ordering, JOIN,
+DELETE DEVICE, resharing, synchronization conflicts, and Secret reveal
+eligibility. Compose code may call Core, adapt its results, and render UI, but
+must not reimplement those decisions.
 
 ## Code generation checklist
 

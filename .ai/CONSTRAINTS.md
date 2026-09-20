@@ -46,6 +46,24 @@ Read this file first. If you need details on any section, follow the links below
   shares are temporary outbound workflows and are removed from the sender's local
   database after successful upload.
 
+### Shared Logic Ownership
+
+Rust Core is the only authority for shared security and domain decisions:
+
+- cryptography and Key Share operations;
+- K-of-N/quorum calculations;
+- recovery claims and lifecycle statuses;
+- Approve/Decline and first-response-wins;
+- JOIN, DELETE DEVICE, and resharing;
+- synchronization, conflict resolution, and Secret reveal eligibility.
+
+Web, CLI, Android, and iOS clients may call Core, map Core responses into
+client models, coordinate ViewModels and platform adapters, and render UI. They
+must not reimplement these decisions. They may perform non-security UX
+validation (for example, reject an empty form field) and invoke platform UI
+such as biometry or navigation. A client may choose presentation (for example
+`Recover` versus `Show`) only from the status returned by Core.
+
 ---
 
 ## 📋 Categories (Detailed Files)
@@ -61,7 +79,7 @@ Read this file first. If you need details on any section, follow the links below
 
 ---
 
-## ✅ 41 Confirmed Rules
+## ✅ 42 Confirmed Rules
 
 | # | Constraint | Category |
 |---|---|---|
@@ -106,6 +124,7 @@ Read this file first. If you need details on any section, follow the links below
 | 39 | Recovery receiver decisions are terminal and monotonic; stale snapshots and late opposite decisions cannot reopen or revoke them | Operations |
 | 40 | Vault contains at most 3 devices; Core rejects the fourth and later join | Operations |
 | 41 | After 3-device redistribution, each device retains only its own Key Share | Vault Model |
+| 42 | Core owns shared security/domain decisions; clients only adapt and render Core results | Core & FFI |
 
 ---
 
@@ -162,6 +181,7 @@ Read this file first. If you need details on any section, follow the links below
 - ✅ If the first server-processed receiver decision is `DECLINE`, remaining pending receivers become terminally declined and the sender must not reveal the secret.
 - ✅ If the first decision is `APPROVE`, the approving receiver reaches `SENT`/`DELIVERED` and a later `DECLINE` cannot revoke recovery.
 - ✅ Web, iOS, and Android render the `clientStatus`/claim state supplied by Core; UI code must not implement its own quorum or race resolution.
+- ✅ Clients may only map Core results to UI/platform behavior; they must not calculate quorum, mutate recovery status, authorize JOIN/DELETE, run resharing, or decide whether a Secret may be shown.
 - ❌ Cloud backup/sync of any app data (DMK, DB, keys)
 - ❌ Storing DMK in external storage or plaintext
 

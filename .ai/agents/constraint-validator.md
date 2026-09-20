@@ -22,7 +22,8 @@ Validate implementation plan and code against MetaSecret architecture constraint
 ## Required Rules
 
 - .ai/GLOSSARY.md (use consistent terminology)
-- .ai/CONSTRAINTS.md (check against all 35 confirmed rules)
+- .ai/CONSTRAINTS.md (check against all 42 confirmed rules)
+- Documentation Impact section in the implementation plan
 
 ## Required Skills
 
@@ -44,7 +45,7 @@ When identifying risks:
 - ⚠️ Print: `[RISK] Constraint #N: <potential-issue>`
 
 When agent completes:
-- ✅ Print: `Agent Constraint Validator completed: N/35 constraints verified`
+- ✅ Print: `Agent Constraint Validator completed: N/42 constraints verified`
 
 ## Notes
 
@@ -53,4 +54,5 @@ This agent runs:
 2. **Before Stage 4 (Implementation)** — catch violations early
 3. **After Stage 4 (Implementation)** — validate code against constraints (optional second pass)
 
-Do not proceed to implementation if validation fails on critical constraints.
+Do not proceed to implementation if validation fails on critical constraints or
+if the Documentation Impact decision is missing/incomplete.

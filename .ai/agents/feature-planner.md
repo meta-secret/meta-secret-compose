@@ -24,6 +24,10 @@ Create detailed implementation plan from issue analysis. Align with architecture
 
 - .ai/GLOSSARY.md (use consistent terminology)
 - rules/kmp-principles.md
+- Complete the plan's **Documentation Impact** section. Mark `Required` and
+  list affected `CONSTRAINTS.md`, `GLOSSARY.md`, architecture, protocol/API,
+  README, or E2E documentation when applicable. Mark `Not required` only with
+  a concrete reason.
 
 ## Required Skills
 
