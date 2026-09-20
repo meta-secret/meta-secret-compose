@@ -14,14 +14,17 @@ Where `<payload>`:
 
 ## Purpose
 
-Execute complete 11-stage automated workflow for meta-secret-compose,
+Execute complete 12-stage automated workflow for meta-secret-compose,
 including the conditional final UI E2E release gate.
 
-**⚠️ CRITICAL:** All 11 stages are MANDATORY. Do NOT skip any stages:
+**⚠️ CRITICAL:** Execute all applicable stages in the 12-stage workflow. Do NOT
+skip a labelled stage; Stage 11 is recorded as `Skipped` only when no CI run
+exists:
 - **Stage 6 (Code Review)** is CRITICAL - must check constraints + 80% coverage minimum
 - **Stage 7 (Design Review)** can be skipped only if Figma missing (mark "Skipped")
 - **Stage 8 (Coverage Verification)** is CRITICAL - must run `./gradlew koverReport` and verify >= 80%
 - **Stage 10 (PR Creation)** must ASK USER for approval before committing and creating PR
+- **Stage 11 (CI Monitor)** must bind any CI evidence to the exact PR head SHA
 
 ## Flow
 
@@ -40,8 +43,9 @@ including the conditional final UI E2E release gate.
 9. **test-verifier** — Execute full test suite
 9.5. **Final UI E2E** — Run the visible cross-platform gate when applicable
 10. **release-manager** — **STOP and ASK USER** before Branch + Commit + PR
+11. **ci-monitor** — Inspect the exact completed Compose CI run when present
 
-See `.ai/WORKFLOW.md` for complete 11-stage specification.
+See `.ai/WORKFLOW.md` for complete 12-stage specification.
 
 ## Expected Input
 
@@ -73,6 +77,7 @@ Each stage creates an artifact in `.ai/artifacts/run/`:
 - **Stage 9:** `MS-<run-id>-009-test-run.md` — Test execution results
 - **Stage 9.5:** `MS-<run-id>-0095-ui-e2e.md` — Final visible UI E2E gate
 - **Stage 10:** `MS-<run-id>-010-pr.md` — PR details
+- **Stage 11:** `MS-<run-id>-011-ci-monitor.md` — CI result and remediation decision
 
 Each artifact includes **Status: Success / Failed / Skipped**.
 

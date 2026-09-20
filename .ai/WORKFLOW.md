@@ -59,7 +59,7 @@ root final UI E2E gate has passed. No repository is committed before that gate.
 
 ---
 
-## 11-Stage Pipeline (with TDD + Enhanced Validation)
+## 12-Stage Pipeline (with TDD + Enhanced Validation)
 
 1. Stage 1: Issue Intake + Optional Figma Context
 2. Stage 2: Grill Me (Clarification & Deep Dive)
@@ -75,6 +75,7 @@ root final UI E2E gate has passed. No repository is committed before that gate.
 9. Stage 9: Test Run
 9.5. Stage 9.5: Final UI E2E (conditional, before release)
 10. Stage 10: Branch + Commit + PR
+11. Stage 11: Post-PR CI Monitoring (when a GitHub CI run exists)
 
 ## Stage Specs
 
@@ -324,6 +325,32 @@ Required behavior:
 
 Pass condition: `Status: Success`
 
+### Stage 11: Post-PR CI Monitoring
+
+**Agent:** `ci-monitor`
+
+**Skill:** `.ai/skills/ci-monitoring/SKILL.md`
+
+**Rule:** `.ai/rules/ci-monitoring.md`
+
+**Template:** `.ai/artifacts/ci-monitor-report-template.md`
+**Output:** `.ai/artifacts/run/MS-<run-id>-011-ci-monitor.md`
+
+After a `Compose CI` run completes, bind the report to its exact run ID and
+`head_sha`, collect bounded sanitized failed-job evidence, and classify it as
+passed, cancelled, timeout, infrastructure, dependency, permission, product,
+or unknown. If no CI run exists, record `Status: Skipped` with the reason.
+Timeout/infrastructure results have at most one bounded rerun; product,
+unknown, permission, dependency, and security-sensitive output remain blocked.
+
+The read-only monitor never edits code or changes a release gate. A separate
+guarded `cursor-fix.yml` path may invoke Cursor only for a trusted
+same-repository PR's single product failure, with redacted evidence, a
+`CURSOR_API_KEY`, and no previous `cursor-fix-attempt-<head_sha>` marker.
+Cursor is limited to a focused Kotlin/Swift source fix and opens a PR for
+human review; it cannot edit workflows, AI rules, secrets, Rust/Core code, or
+generated native artifacts.
+
 ## Retry Rules
 
 Retry trigger:
@@ -337,6 +364,9 @@ Retry path:
 - Return to Stage 3 (Planning) with failed artifact as input
 - Re-run stages from Stage 4 onward
 - Max retries: 2
+
+Stage 11 does not create an unbounded retry loop. Cursor is attempted at most
+once per failing head SHA; a new SHA receives a new bounded decision.
 
 ## Failure Markers
 
@@ -388,6 +418,7 @@ All templates are in `.ai/artifacts/`:
 - `coverage-report-template.md` (Stage 8)
 - `test-report-template.md` (Stage 9)
 - `pr-template.md` (Stage 10)
+- `ci-monitor-report-template.md` (Stage 11)
 
 ### How Agents Use Artifacts
 

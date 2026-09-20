@@ -9,7 +9,7 @@ description: Display available commands with descriptions (renamed from /help to
 ## 🚀 Full Workflow
 
 **`implement issue <payload>`**  
-Execute complete 10-stage automated workflow.
+Execute complete 12-stage automated workflow.
 
 **`implement issue <payload> --from stage-<n>`**  
 Resume workflow from specific stage (for retries/debugging).
@@ -57,6 +57,10 @@ Stage 6: Code review of implementation + 80% coverage check.
 **`only-release-manager <payload>`**  
 Stage 10: Create branch, commit, and pull request.
 
+**`only-ci-monitor <run-id-or-url>`**
+Stage 11: Inspect the exact Compose CI run, classify bounded sanitized evidence,
+and record the release-gate decision.
+
 ---
 
 **`check-simulators [ios|android]`**  
@@ -95,7 +99,7 @@ Capture and document workflow patterns for future reuse.
 
 ## 📖 Documentation
 
-See `.ai/WORKFLOW.md` for 10-stage workflow specification.  
+See `.ai/WORKFLOW.md` for 12-stage workflow specification.
 See `.ai/ORCHESTRATOR.md` for command routing.  
 See `.ai/INDEX.md` for complete file structure.  
 See `.ai/rules/maestro-test-writing.md` for Maestro YAML syntax.  

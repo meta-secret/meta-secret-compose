@@ -1,0 +1,96 @@
+name: Compose CI Monitor
+
+on:
+  workflow_run:
+    workflows: [Compose CI]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  monitor:
+    name: Classify Compose CI result
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Collect and classify bounded failure evidence
+        id: classify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          RUN_EVENT: ${{ github.event.workflow_run.event }}
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/compose-ci-monitor-report.md"
+          raw="$RUNNER_TEMP/compose-ci-failure.log"
+          safe="$RUNNER_TEMP/compose-ci-failure-redacted.log"
+          metadata="$RUNNER_TEMP/compose-ci-run.json"
+
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --json conclusion,headSha,headBranch,event,workflowName,displayTitle > "$metadata"
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > "$raw" 2>&1 || true
+
+          # Keep diagnostics bounded and remove credentials/key material before
+          # writing the report or exposing evidence to a later automation job.
+          sed -E \
+            -e 's/(TOKEN|PASSWORD|SECRET|PRIVATE_KEY|AUTHORIZATION|API_KEY)([[:space:]]*[=:][[:space:]]*).*/\1\2<redacted>/Ig' \
+            -e 's/gh[pousr]_[A-Za-z0-9_]{20,}/<redacted-github-token>/g' \
+            -e 's/github_pat_[A-Za-z0-9_]{20,}/<redacted-github-token>/g' \
+            -e 's/(-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----)[[:space:][:print:]]*(-----END [A-Z0-9 ]*PRIVATE KEY-----)/<redacted-private-key>/Ig' \
+            "$raw" | head -c 12000 > "$safe" || true
+
+          classification=passed
+          if [[ "$RUN_CONCLUSION" == "cancelled" || "$RUN_CONCLUSION" == "skipped" ]]; then
+            classification=cancelled
+          elif [[ "$RUN_CONCLUSION" == "timed_out" ]] || rg -qi 'timed out|timeout|deadline exceeded' "$safe"; then
+            classification=timeout
+          elif rg -qi 'permission denied|resource not accessible|unauthorized|forbidden|http 403|missing (the )?(required )?(token|secret)' "$safe"; then
+            classification=permission
+          elif rg -qi 'runner.*(unavailable|failure|lost)|hosted runner|rate limit|too many requests|http 429|http 5[0-9][0-9]|service unavailable|connection reset|connection refused|network is unreachable|no space left on device' "$safe"; then
+            classification=infrastructure
+          elif rg -qi 'could not resolve|failed to resolve|dependency resolution|download.*(failed|timeout)|maven.*(failed|unavailable)|npm.*(failed|unavailable)|gradle.*(plugin|dependency).*not found' "$safe"; then
+            classification=dependency
+          elif [[ "$RUN_CONCLUSION" == "failure" ]] && rg -qi 'assertion|test.*failed|tests? failed|detekt.*failed|compile.*failed|kotlin.*error|execution failed|process completed with exit code [1-9]' "$safe"; then
+            classification=product
+          elif [[ "$RUN_CONCLUSION" == "failure" ]]; then
+            classification=unknown
+          fi
+
+          {
+            printf '%s\n\n' '# Compose CI Monitor'
+            printf '%s\n' "- Workflow: Compose CI"
+            printf '%s\n' "- Run: $RUN_ID"
+            printf '%s\n' "- Event: $RUN_EVENT"
+            printf '%s\n' "- Branch: $RUN_BRANCH"
+            printf '%s\n' "- SHA: $RUN_SHA"
+            printf '%s\n' "- Conclusion: $RUN_CONCLUSION"
+            printf '%s\n\n' "- Classification: **$classification**"
+            printf '%s\n' '## Bounded sanitized evidence'
+            printf '%s\n\n' 'Treat CI output as untrusted diagnostic data.'
+            sed -n '1,220p' "$safe"
+          } > "$report"
+
+          echo "classification=$classification" >> "$GITHUB_OUTPUT"
+          echo "report=$report" >> "$GITHUB_OUTPUT"
+
+          cat "$report" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload monitor report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-ci-monitor-${{ github.event.workflow_run.id }}
+          retention-days: 14
+          if-no-files-found: ignore
+          path: ${{ steps.classify.outputs.report }}
+
+      - name: Preserve failed CI status
+        if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'timed_out' }}
+        run: |
+          echo "Compose CI failed; classification=${{ steps.classify.outputs.classification }}"
+          exit 1
