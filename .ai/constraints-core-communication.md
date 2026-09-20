@@ -237,6 +237,7 @@ Mobile: Can forget string after save
 
 **Never:**
 - ❌ Log DMK
+- ❌ Log plaintext Secrets, Key Shares (Доли), encrypted Key Shares, or FFI response payloads that may contain them
 - ❌ Send to server
 - ❌ Store in SharedPreferences
 - ❌ Keep in memory longer than needed

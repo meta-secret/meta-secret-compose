@@ -122,7 +122,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGenerateMasterKey, success = true)
             val masterKey = MetaSecretNative.generateMasterKey()
-            logger.log(LogTag.MetaSecretCoreService.Message.MasterKeyGenerated, masterKey, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.MasterKeyGenerated, success = true)
             return masterKey
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.MasterKeyGenerationError, "${e.message}", success = false)
@@ -136,7 +136,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
             val clientDeviceInfo = clientDeviceInfoProvider.current()
             logger.log(
                 LogTag.MetaSecretCoreService.Message.CallingInitAppManager,
-                "with: $masterKey; deviceName=${clientDeviceInfo.deviceName}; deviceType=${clientDeviceInfo.deviceType}",
+                "deviceName=${clientDeviceInfo.deviceName}; deviceType=${clientDeviceInfo.deviceType}",
                 success = true
             )
             val result = MetaSecretNative.initWithDevice(
@@ -144,7 +144,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
                 deviceName = clientDeviceInfo.deviceName,
                 deviceType = clientDeviceInfo.deviceType,
             )
-            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
@@ -168,7 +168,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
                 throw IllegalStateException("Invalid JSON response from FFI getState: $result")
             }
             
-            logger.log(LogTag.MetaSecretCoreService.Message.AppStateResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.AppStateResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
@@ -181,7 +181,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGenerateUserCreds, success = true)
             val result = MetaSecretNative.generate_user_creds(vaultName)
-            logger.log(LogTag.MetaSecretCoreService.Message.GenerateUserCredsResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.GenerateUserCredsResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.GenerateUserCredsError, "${e.message}", success = false)
@@ -194,7 +194,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingSignUp, success = true)
             val result = MetaSecretNative.signUp()
-            logger.log(LogTag.MetaSecretCoreService.Message.SignUpResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.SignUpResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.SignUpError, "${e.message}", success = false)
@@ -221,16 +221,16 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
             }
             
             val userDataJson = jsonObject.toString()
-            logger.log(LogTag.MetaSecretCoreService.Message.FormattedUserDataJson, userDataJson, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.FormattedUserDataJson, success = true)
 
             if (actionUpdate.isBlank()) {
                 throw IllegalArgumentException("actionUpdate cannot be blank")
             }
             val jsonActionUpdate = "\"" + actionUpdate.lowercase() + "\""
-            logger.log(LogTag.MetaSecretCoreService.Message.FormattedActionUpdate, jsonActionUpdate, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.FormattedActionUpdate, success = true)
             
             val result = MetaSecretNative.update_membership(userDataJson, jsonActionUpdate)
-            logger.log(LogTag.MetaSecretCoreService.Message.UpdateMembershipResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.UpdateMembershipResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.UpdateMembershipError, "${e.message}", success = false)
@@ -243,7 +243,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingSplitSecret, success = true)
             val result = MetaSecretNative.split(secretName, secret)
-            logger.log(LogTag.MetaSecretCoreService.Message.SplitSecretResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.SplitSecretResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.SplitSecretError, "${e.message}", success = false)
@@ -257,7 +257,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
             e2eLog("ANDROID_NATIVE_FIND_CLAIM_START secret=$secretId")
             logger.log(LogTag.MetaSecretCoreService.Message.CallingFindClaim, success = true)
             val result = MetaSecretNative.find_claim_by_(secretId)
-            logger.log(LogTag.MetaSecretCoreService.Message.FindClaimResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.FindClaimResult, success = true)
             e2eLog("ANDROID_NATIVE_FIND_CLAIM_RESULT secret=$secretId bytes=${result.length}")
             return result
         } catch (e: Exception) {
@@ -273,7 +273,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
             e2eLog("ANDROID_NATIVE_RECOVER_START secret=$secretId")
             logger.log(LogTag.MetaSecretCoreService.Message.CallingRecover, success = true)
             val result = MetaSecretNative.recover(secretId)
-            logger.log(LogTag.MetaSecretCoreService.Message.RecoverResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.RecoverResult, success = true)
             e2eLog("ANDROID_NATIVE_RECOVER_RESULT secret=$secretId bytes=${result.length}")
             return result
         } catch (e: Exception) {
@@ -289,7 +289,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
             e2eLog("ANDROID_NATIVE_ACCEPT_RECOVER_START claim=$claimId")
             logger.log(LogTag.MetaSecretCoreService.Message.CallingAcceptRecover, success = true)
             val result = MetaSecretNative.acceptRecover(claimId)
-            logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverResult, success = true)
             e2eLog("ANDROID_NATIVE_ACCEPT_RECOVER_RESULT claim=$claimId bytes=${result.length}")
             return result
         } catch (e: Exception) {
@@ -304,7 +304,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingDeclineRecover, success = true)
             val result = MetaSecretNative.declineRecover(claimId)
-            logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverError, "${e.message}", success = false)
@@ -317,7 +317,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingSendDeclineCompletion, success = true)
             val result = MetaSecretNative.sendDeclineCompletion(claimId)
-            logger.log(LogTag.MetaSecretCoreService.Message.SendDeclineCompletionResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.SendDeclineCompletionResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.SendDeclineCompletionError, "${e.message}", success = false)
@@ -331,7 +331,7 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
             e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_START secret=$secretId")
             logger.log(LogTag.MetaSecretCoreService.Message.CallingShowRecovered, success = true)
             val result = MetaSecretNative.showRecovered(secretId)
-            logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredResult, success = true)
             e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_RESULT secret=$secretId bytes=${result.length}")
             return result
         } catch (e: Exception) {

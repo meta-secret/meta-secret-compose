@@ -61,7 +61,7 @@ class KeyChainManagerIos(
             removeKey("pending_vault_email")
             removeKey("pending_email_provider")
             if (isCleanDB && masterKeyValue != null) {
-                SwiftBridge().clearAllWithDbFileName("meta-secret-${masterKeyValue}.db")
+                SwiftBridge().clearAllWithDbFileName(SwiftBridge().databaseFileName(masterKeyValue))
             }
 
             logger.log(LogTag.KeyChainManager.Message.ClearAllCompleted, success = true)

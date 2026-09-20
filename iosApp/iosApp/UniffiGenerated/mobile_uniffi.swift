@@ -490,6 +490,13 @@ public func cleanUpDatabase() -> String  {
     )
 })
 }
+public func databaseFileName(masterKey: String) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_database_file_name(
+        FfiConverterString.lower(masterKey),$0
+    )
+})
+}
 public func declineRecover(claimId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_decline_recover(
@@ -632,6 +639,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_clean_up_database() != 5094) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_metasecret_mobile_checksum_func_database_file_name() != 39011) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_decline_recover() != 6398) {

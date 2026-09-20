@@ -1,0 +1,135 @@
+name: Compose Cursor Auto-Fix
+
+# This is deliberately separate from the read-only CI monitor. It can invoke
+# Cursor only for a deterministic product failure on a trusted same-repository
+# pull request, and only once for each failing commit SHA.
+on:
+  workflow_run:
+    workflows: [Compose CI]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
+jobs:
+  cursor-fix:
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.pull_requests[0].number != null
+    name: Guarded Compose source remediation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: compose-cursor-fix-${{ github.event.workflow_run.head_sha }}
+      cancel-in-progress: false
+    steps:
+      # Automation is loaded from the default branch, never from the failing
+      # PR, so an untrusted PR cannot replace the guard or Cursor prompt.
+      - name: Checkout trusted automation
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Cursor SDK
+        working-directory: .github/scripts/cursor-fix
+        run: bun install --frozen-lockfile=false
+
+      - name: Classify failure and enforce one attempt per SHA
+        id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          set -euo pipefail
+          raw="$RUNNER_TEMP/compose-cursor-failure.log"
+          safe="$RUNNER_TEMP/compose-cursor-failure-redacted.log"
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > "$raw" 2>&1 || true
+          sed -E \
+            -e 's/(TOKEN|PASSWORD|SECRET|PRIVATE_KEY|AUTHORIZATION|API_KEY)([[:space:]]*[=:][[:space:]]*).*/\1\2<redacted>/Ig' \
+            -e 's/gh[pousr]_[A-Za-z0-9_]{20,}/<redacted-github-token>/g' \
+            -e 's/github_pat_[A-Za-z0-9_]{20,}/<redacted-github-token>/g' \
+            -e 's/(-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----)[[:space:][:print:]]*(-----END [A-Z0-9 ]*PRIVATE KEY-----)/<redacted-private-key>/Ig' \
+            "$raw" | head -c 12000 > "$safe" || true
+
+          # Artifacts are the durable once-per-SHA marker. A workflow_run's
+          # own head_sha is the default branch SHA, so querying it directly is
+          # not sufficient to identify the failed PR commit.
+          prior="$(gh api --paginate \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=cursor-fix-attempt-${HEAD_SHA}&per_page=100" \
+            --jq '.artifacts[] | select(.expired == false) | .id' 2>/dev/null || true)"
+          if [[ -n "$prior" ]]; then
+            echo 'should_fix=false' >> "$GITHUB_OUTPUT"
+            echo 'classification=already_attempted' >> "$GITHUB_OUTPUT"
+            echo "Cursor auto-fix already attempted for $HEAD_SHA"
+            exit 0
+          fi
+
+          classification=unknown
+          if rg -qi 'permission denied|resource not accessible|unauthorized|forbidden|http 403|missing (the )?(required )?(token|secret)' "$safe"; then
+            classification=permission
+          elif rg -qi 'timed out|timeout|deadline exceeded|runner.*(unavailable|failure|lost)|hosted runner|rate limit|too many requests|http 429|http 5[0-9][0-9]|service unavailable|connection reset|connection refused|network is unreachable|no space left on device' "$safe"; then
+            classification=infrastructure
+          elif rg -qi 'could not resolve|failed to resolve|dependency resolution|download.*(failed|timeout)|maven.*(failed|unavailable)|gradle.*(plugin|dependency).*not found' "$safe"; then
+            classification=dependency
+          elif rg -qi 'assertion|test.*failed|tests? failed|detekt.*failed|compile.*failed|kotlin.*error|execution failed|process completed with exit code [1-9]' "$safe"; then
+            classification=product
+          fi
+
+          echo "classification=$classification" >> "$GITHUB_OUTPUT"
+          echo "failure_log=$safe" >> "$GITHUB_OUTPUT"
+          if [[ "$classification" == product ]]; then
+            echo 'should_fix=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'should_fix=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check Cursor credential
+        id: credentials
+        if: steps.guard.outputs.should_fix == 'true'
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          if [[ -n "${CURSOR_API_KEY:-}" ]]; then
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+            echo 'CURSOR_API_KEY is not configured; leaving this failure for manual repair.'
+          fi
+
+      - name: Record auto-fix attempt marker
+        if: steps.credentials.outputs.available == 'true'
+        run: |
+          marker="$RUNNER_TEMP/cursor-fix-attempt-${{ github.event.workflow_run.head_sha }}.txt"
+          printf 'sha=%s\nrun=%s\npr=%s\n' \
+            '${{ github.event.workflow_run.head_sha }}' \
+            '${{ github.event.workflow_run.id }}' \
+            '${{ github.event.workflow_run.pull_requests[0].number }}' > "$marker"
+
+      - name: Upload once-per-SHA marker
+        if: steps.credentials.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cursor-fix-attempt-${{ github.event.workflow_run.head_sha }}
+          retention-days: 90
+          path: ${{ runner.temp }}/cursor-fix-attempt-${{ github.event.workflow_run.head_sha }}.txt
+
+      - name: Ask Cursor for a minimal source fix
+        if: steps.credentials.outputs.available == 'true'
+        working-directory: .github/scripts/cursor-fix
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          FAILURE_LOG_FILE: ${{ steps.guard.outputs.failure_log }}
+        run: bun run fix

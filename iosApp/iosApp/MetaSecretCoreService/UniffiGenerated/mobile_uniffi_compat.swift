@@ -1,6 +1,7 @@
 // Backward-compatible aliases for existing SwiftBridge code.
 
 public func uniffiMobileGenerateMasterKey() -> String { generateMasterKey() }
+public func uniffiMobileDatabaseFileName(masterKey: String) -> String { databaseFileName(masterKey: masterKey) }
 public func uniffiMobileInitIos(masterKey: String) -> String { initIos(masterKey: masterKey) }
 public func uniffiMobileInitIosWithDevice(masterKey: String, deviceName: String, deviceType: String) -> String {
     initIosWithDevice(masterKey: masterKey, deviceName: deviceName, deviceType: deviceType)

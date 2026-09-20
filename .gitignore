@@ -37,8 +37,11 @@ libmetasecret_mobile.so
 # Claude Code local settings (developer-specific allowlists, not for repo)
 .claude/settings.local.json
 
-# AI artifacts (generated reports and templates)
-.ai/artifacts/
+# AI artifacts: keep static templates, ignore generated run reports.
+.ai/artifacts/*
+!.ai/artifacts/
+!.ai/artifacts/*.md
+.ai/artifacts/run/
 
 # Design
 design/

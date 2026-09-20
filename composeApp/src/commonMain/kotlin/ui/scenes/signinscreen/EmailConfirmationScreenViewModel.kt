@@ -236,7 +236,7 @@ class EmailConfirmationScreenViewModel(
         val model = MasterKeyModel.fromJson(jsonResponse)
 
         if (model.success && !model.masterKey.isNullOrEmpty()) {
-            logger.log(LogTag.SignInVM.Message.GeneratedMasterKey, "$model", success = true)
+            logger.log(LogTag.SignInVM.Message.GeneratedMasterKey, success = true)
             val saved = keyChainManager.saveString("master_key", model.masterKey)
             logger.setMasterKeyGenerated(saved)
             return saved

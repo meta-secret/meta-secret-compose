@@ -17,6 +17,8 @@ See CONSTRAINTS.md for quick reference. This file has full details.
 
 **Key property:** MUST survive app reinstall
 
+**Local database filename:** `meta-secret-db-<SHA-256(master_key)>.db`, using lowercase hexadecimal. The raw Device Master Key is never embedded in a filename or path log. Existing local databases using the legacy raw-key filename may be deleted and recreated; no migration is required while the product has no existing users.
+
 ---
 
 ## 2. First App Launch

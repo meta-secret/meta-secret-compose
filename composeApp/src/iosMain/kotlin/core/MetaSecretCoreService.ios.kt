@@ -20,7 +20,7 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGenerateMasterKey, success = true)
             val masterKey = swiftBridge.generateMasterKey()
-            logger.log(LogTag.MetaSecretCoreService.Message.MasterKeyGenerated, masterKey, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.MasterKeyGenerated, success = true)
             return masterKey
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.MasterKeyGenerationError, "${e.message}", success = false)
@@ -35,7 +35,7 @@ class MetaSecretCoreServiceIos(
             val clientDeviceInfo = clientDeviceInfoProvider.current()
             logger.log(
                 LogTag.MetaSecretCoreService.Message.CallingInitAppManager,
-                "with: $masterKey; deviceName=${clientDeviceInfo.deviceName}; deviceType=${clientDeviceInfo.deviceType}",
+                "deviceName=${clientDeviceInfo.deviceName}; deviceType=${clientDeviceInfo.deviceType}",
                 success = true
             )
             val result = swiftBridge.initWithMasterKeyAndDevice(
@@ -43,7 +43,7 @@ class MetaSecretCoreServiceIos(
                 clientDeviceInfo.deviceName,
                 clientDeviceInfo.deviceType,
             )
-            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
@@ -63,7 +63,7 @@ class MetaSecretCoreServiceIos(
                 throw IllegalStateException("Empty response from FFI getState")
             }
             
-            logger.log(LogTag.MetaSecretCoreService.Message.AppStateResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.AppStateResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "${e.message}", success = false)
@@ -77,7 +77,7 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGenerateUserCreds, success = true)
             val result = swiftBridge.generateUserCredsWithVaultName(vaultName)
-            logger.log(LogTag.MetaSecretCoreService.Message.GenerateUserCredsResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.GenerateUserCredsResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.GenerateUserCredsError, "${e.message}", success = false)
@@ -91,7 +91,7 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingSignUp, success = true)
             val result = swiftBridge.signUp()
-            logger.log(LogTag.MetaSecretCoreService.Message.SignUpResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.SignUpResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.SignUpError, "${e.message}", success = false)
@@ -116,16 +116,16 @@ class MetaSecretCoreServiceIos(
                 }
             }
             val userDataJson = jsonObject.toString()
-            logger.log(LogTag.MetaSecretCoreService.Message.FormattedUserDataJson, userDataJson, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.FormattedUserDataJson, success = true)
 
             if (actionUpdate.isBlank()) {
                 throw IllegalArgumentException("actionUpdate cannot be blank")
             }
             val jsonActionUpdate = "\"" + actionUpdate.lowercase() + "\""
-            logger.log(LogTag.MetaSecretCoreService.Message.FormattedActionUpdate, jsonActionUpdate, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.FormattedActionUpdate, success = true)
 
             val result = swiftBridge.updateMembership(userDataJson, jsonActionUpdate)
-            logger.log(LogTag.MetaSecretCoreService.Message.UpdateMembershipResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.UpdateMembershipResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.UpdateMembershipError, "${e.message}", success = false)
@@ -138,7 +138,7 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingSplitSecret, "with: $secretName", success = true)
             val result = swiftBridge.splitSecret(secretName, secret)
-            logger.log(LogTag.MetaSecretCoreService.Message.SplitSecretResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.SplitSecretResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.SplitSecretError, "${e.message}", success = false)
@@ -150,7 +150,7 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingFindClaim, "with: $secretId", success = true)
             val result = swiftBridge.findClaim(secretId)
-            logger.log(LogTag.MetaSecretCoreService.Message.FindClaimResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.FindClaimResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.FindClaimError, "${e.message}", success = false)
@@ -163,7 +163,7 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingRecover, "with: $secretId", success = true)
             val result = swiftBridge.recover(secretId)
-            logger.log(LogTag.MetaSecretCoreService.Message.RecoverResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.RecoverResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.RecoverError, "${e.message}", success = false)
@@ -176,7 +176,7 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingAcceptRecover, "with: $claimId", success = true)
             val result = swiftBridge.acceptRecover(claimId)
-            logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.AcceptRecoverError, "${e.message}", success = false)
@@ -189,7 +189,7 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingDeclineRecover, "with: $claimId", success = true)
             val result = swiftBridge.declineRecover(claimId)
-            logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.DeclineRecoverError, "${e.message}", success = false)
@@ -202,7 +202,7 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingSendDeclineCompletion, "with: $claimId", success = true)
             val result = swiftBridge.sendDeclineCompletion(claimId)
-            logger.log(LogTag.MetaSecretCoreService.Message.SendDeclineCompletionResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.SendDeclineCompletionResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.SendDeclineCompletionError, "${e.message}", success = false)
@@ -215,7 +215,7 @@ class MetaSecretCoreServiceIos(
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingShowRecovered, "with: $secretId", success = true)
             val result = swiftBridge.showRecovered(secretId)
-            logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredResult, result, success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredResult, success = true)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredError, "${e.message}", success = false)

@@ -251,7 +251,12 @@ RustBuffer uniffi_metasecret_mobile_fn_func_accept_recover(RustBuffer claim_id, 
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_CLEAN_UP_DATABASE
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_CLEAN_UP_DATABASE
 RustBuffer uniffi_metasecret_mobile_fn_func_clean_up_database(RustCallStatus *_Nonnull out_status
-    
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DATABASE_FILE_NAME
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DATABASE_FILE_NAME
+RustBuffer uniffi_metasecret_mobile_fn_func_database_file_name(RustBuffer master_key, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECLINE_RECOVER
@@ -277,7 +282,7 @@ RustBuffer uniffi_metasecret_mobile_fn_func_find_claim_id_by(RustBuffer secret_i
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_GENERATE_MASTER_KEY
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_GENERATE_MASTER_KEY
 RustBuffer uniffi_metasecret_mobile_fn_func_generate_master_key(RustCallStatus *_Nonnull out_status
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_GENERATE_USER_CREDS
@@ -288,7 +293,7 @@ RustBuffer uniffi_metasecret_mobile_fn_func_generate_user_creds(RustBuffer vault
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_GET_STATE
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_GET_STATE
 RustBuffer uniffi_metasecret_mobile_fn_func_get_state(RustCallStatus *_Nonnull out_status
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_INIT_ANDROID
@@ -329,7 +334,7 @@ RustBuffer uniffi_metasecret_mobile_fn_func_show_recovered(RustBuffer secret_id,
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_SIGN_UP
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_SIGN_UP
 RustBuffer uniffi_metasecret_mobile_fn_func_sign_up(RustCallStatus *_Nonnull out_status
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_SPLIT_SECRET
@@ -605,121 +610,127 @@ void ffi_metasecret_mobile_rust_future_complete_void(uint64_t handle, RustCallSt
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_ACCEPT_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_ACCEPT_RECOVER
 uint16_t uniffi_metasecret_mobile_checksum_func_accept_recover(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_CLEAN_UP_DATABASE
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_CLEAN_UP_DATABASE
 uint16_t uniffi_metasecret_mobile_checksum_func_clean_up_database(void
-    
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DATABASE_FILE_NAME
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DATABASE_FILE_NAME
+uint16_t uniffi_metasecret_mobile_checksum_func_database_file_name(void
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECLINE_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECLINE_RECOVER
 uint16_t uniffi_metasecret_mobile_checksum_func_decline_recover(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DEVICE_UI_CATEGORY_DISCRIMINANT
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DEVICE_UI_CATEGORY_DISCRIMINANT
 uint16_t uniffi_metasecret_mobile_checksum_func_device_ui_category_discriminant(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_FIND_CLAIM_BY
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_FIND_CLAIM_BY
 uint16_t uniffi_metasecret_mobile_checksum_func_find_claim_by(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_FIND_CLAIM_ID_BY
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_FIND_CLAIM_ID_BY
 uint16_t uniffi_metasecret_mobile_checksum_func_find_claim_id_by(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_GENERATE_MASTER_KEY
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_GENERATE_MASTER_KEY
 uint16_t uniffi_metasecret_mobile_checksum_func_generate_master_key(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_GENERATE_USER_CREDS
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_GENERATE_USER_CREDS
 uint16_t uniffi_metasecret_mobile_checksum_func_generate_user_creds(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_GET_STATE
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_GET_STATE
 uint16_t uniffi_metasecret_mobile_checksum_func_get_state(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_ANDROID
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_ANDROID
 uint16_t uniffi_metasecret_mobile_checksum_func_init_android(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_ANDROID_WITH_DEVICE
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_ANDROID_WITH_DEVICE
 uint16_t uniffi_metasecret_mobile_checksum_func_init_android_with_device(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_IOS
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_IOS
 uint16_t uniffi_metasecret_mobile_checksum_func_init_ios(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_IOS_WITH_DEVICE
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_INIT_IOS_WITH_DEVICE
 uint16_t uniffi_metasecret_mobile_checksum_func_init_ios_with_device(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_RECOVER
 uint16_t uniffi_metasecret_mobile_checksum_func_recover(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SEND_DECLINE_COMPLETION
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SEND_DECLINE_COMPLETION
 uint16_t uniffi_metasecret_mobile_checksum_func_send_decline_completion(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SHOW_RECOVERED
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SHOW_RECOVERED
 uint16_t uniffi_metasecret_mobile_checksum_func_show_recovered(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SIGN_UP
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SIGN_UP
 uint16_t uniffi_metasecret_mobile_checksum_func_sign_up(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SPLIT_SECRET
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SPLIT_SECRET
 uint16_t uniffi_metasecret_mobile_checksum_func_split_secret(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_UPDATE_MEMBERSHIP
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_UPDATE_MEMBERSHIP
 uint16_t uniffi_metasecret_mobile_checksum_func_update_membership(void
-    
+
 );
 #endif
 #ifndef UNIFFI_FFIDEF_FFI_METASECRET_MOBILE_UNIFFI_CONTRACT_VERSION
 #define UNIFFI_FFIDEF_FFI_METASECRET_MOBILE_UNIFFI_CONTRACT_VERSION
 uint32_t ffi_metasecret_mobile_uniffi_contract_version(void
-    
+
 );
 #endif
 

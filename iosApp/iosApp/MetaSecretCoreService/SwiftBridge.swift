@@ -19,6 +19,10 @@ import Security
         uniffiMobileGenerateMasterKey()
     }
 
+    @objc public func databaseFileName(_ masterKey: String) -> String {
+        uniffiMobileDatabaseFileName(masterKey: masterKey)
+    }
+
     @objc public func initWithMasterKey(_ masterKey: String) -> String {
         let result = uniffiMobileInitIos(masterKey: masterKey)
         excludeDBFromSystemBackup(masterKey: masterKey)
@@ -53,9 +57,7 @@ import Security
     }
 
     @objc public func generateUserCreds(vaultName: String) -> String {
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "generateUserCreds with \(vaultName)")
         let resultString = uniffiMobileGenerateUserCreds(vaultName: vaultName)
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "generateUserCreds resultString \(resultString)")
         return resultString
     }
 
@@ -108,7 +110,6 @@ import Security
     fileprivate static var googleEmailAuthSession: GoogleEmailAuthSession?
     
     @objc public func saveString(key: String, value: String) -> Bool {
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "saveString key \(key) value: \(value)")
         guard let data = value.data(using: .utf8) else {
             return false
         }
@@ -142,7 +143,6 @@ import Security
     }
     
     @objc public func getString(key: String) -> String? {
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "getString key \(key)")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -163,7 +163,6 @@ import Security
     }
     
     @objc public func removeKey(key: String) -> Bool {
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "removeKey key \(key)")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -176,7 +175,6 @@ import Security
     }
     
     @objc public func containsKey(key: String) -> Bool {
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "containsKey key \(key)?")
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -187,7 +185,6 @@ import Security
         ]
         
         let status = SecItemCopyMatching(query as CFDictionary, nil)
-        SwiftLogger.shared.logInfo(tag: .swiftBridge, message: "containsKey key \(key) \(status == errSecSuccess)")
         return status == errSecSuccess
     }
     
@@ -242,7 +239,7 @@ private extension SwiftBridge {
     func excludeDBFromSystemBackup(masterKey: String) {
         let fileManager = FileManager.default
         guard let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
-        var dbURL = documentsPath.appendingPathComponent("meta-secret-\(masterKey).db")
+        var dbURL = documentsPath.appendingPathComponent(databaseFileName(masterKey))
         guard fileManager.fileExists(atPath: dbURL.path) else { return }
         var resourceValues = URLResourceValues()
         resourceValues.isExcludedFromBackup = true

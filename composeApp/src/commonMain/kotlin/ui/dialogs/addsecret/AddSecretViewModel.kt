@@ -87,7 +87,7 @@ class AddSecretViewModel(
                     }
                     AddSecretState.ADDED_SUCCESSFULLY
                 } else {
-                    logger.log(LogTag.AddSecretVM.Message.AddingFailed, "splitResult=$splitResult", success = false)
+                    logger.log(LogTag.AddSecretVM.Message.AddingFailed, "success=false", success = false)
                     AddSecretState.ADDING_FAILURE
                 }
             } catch (e: Exception) {

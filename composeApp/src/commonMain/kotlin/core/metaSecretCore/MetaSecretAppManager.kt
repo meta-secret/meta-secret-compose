@@ -184,7 +184,7 @@ class MetaSecretAppManager(
         return try {
             val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
             val vaultState = currentState.getVaultFullInfo()
-            logger.log(LogTag.AppManager.Message.VaultInfo, "$vaultState", success = true)
+            logger.log(LogTag.AppManager.Message.VaultInfo, "stateLoaded=true", success = true)
             vaultState
         } catch (e: Exception) {
             logger.log(LogTag.AppManager.Message.FailedToParseVaultInfoJson, "${e.message}", success = false)
@@ -237,7 +237,7 @@ class MetaSecretAppManager(
         
         return try {
             val vaultSummary = currentState.getVaultSummary()
-            logger.log(LogTag.AppManager.Message.VaultSummary, "$vaultSummary", success = true)
+            logger.log(LogTag.AppManager.Message.VaultSummary, "loaded=true", success = true)
             vaultSummary
         } catch (e: Exception) {
             logger.log(LogTag.AppManager.Message.FailedToParseVaultSummaryJson, "${e.message}", success = false)
@@ -254,7 +254,7 @@ class MetaSecretAppManager(
         }
         return try {
             val result = CommonResponseModel.fromJson(updateResult)
-            logger.log(LogTag.AppManager.Message.UpdateCandidateResult, "$result", success = true)
+            logger.log(LogTag.AppManager.Message.UpdateCandidateResult, "success=${result.success}", success = true)
             result
         } catch (e: Exception) {
             logger.log(LogTag.AppManager.Message.FailedToParseUpdateCandidateJson, "${e.message}", success = false)
@@ -325,7 +325,7 @@ class MetaSecretAppManager(
         }
         return try {
             val result = CommonResponseModel.fromJson(splitResult)
-            logger.log(LogTag.AppManager.Message.SplitSecretResult, "$result", success = true)
+            logger.log(LogTag.AppManager.Message.SplitSecretResult, "success=${result.success}", success = true)
             result
         } catch (e: Exception) {
             logger.log(LogTag.AppManager.Message.FailedToParseSplitSecretJson, "${e.message}", success = false)
@@ -371,7 +371,7 @@ class MetaSecretAppManager(
         }
         return try {
             val result = CommonResponseModel.fromJson(recoverRequestResult)
-            logger.log(LogTag.AppManager.Message.RecoverRequestResult, "$result", success = true)
+            logger.log(LogTag.AppManager.Message.RecoverRequestResult, "success=${result.success}", success = true)
             result
         } catch (e: Exception) {
             logger.log(LogTag.AppManager.Message.FailedToParseRecoverRequestJson, "${e.message}", success = false)
@@ -486,7 +486,7 @@ class MetaSecretAppManager(
                 is VaultFullInfo.Member -> vaultInfo.member.member.vault.secrets
                 else -> emptyList()
             }
-            logger.log(LogTag.AppManager.Message.GetSecretsFromVaultResult, "$secrets", success = true)
+            logger.log(LogTag.AppManager.Message.GetSecretsFromVaultResult, "count=${secrets.size}", success = true)
             secrets
         } catch (e: Exception) {
             logger.log(LogTag.AppManager.Message.FailedToParseGetSecretsFromVaultJson, "${e.message}", success = false)

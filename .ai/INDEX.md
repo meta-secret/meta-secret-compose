@@ -43,8 +43,8 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
 
 ### Commands & Flows
 
-#### 10-Stage Pipeline Commands
-- `.ai/commands/implement-issue.md` — Execute full 10-stage workflow
+#### 12-Stage Pipeline Commands
+- `.ai/commands/implement-issue.md` — Execute full 12-stage workflow
 - `.ai/commands/only-issue-coordinator.md` — Run stage 1 only
 - `.ai/commands/only-grill-me.md` — Run stage 2 only
 - `.ai/commands/only-planner.md` — Run stage 3 only
@@ -54,6 +54,7 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
 - `.ai/commands/only-tdd-refactorer.md` — Run stage 4c only
 - `.ai/commands/only-reviewer.md` — Run stage 6 only
 - `.ai/commands/only-release-manager.md` — Run stage 10 only
+- `.ai/commands/only-ci-monitor.md` — Run stage 11 only
 
 #### Maestro Testing Commands
 - `.ai/commands/write-test-flow.md` — Write a new Maestro test
@@ -76,7 +77,8 @@ See `.ai/ORCHESTRATOR.md` for command routing and agent execution.
 
 ### Agents & Skills
 
-#### Workflow Agents (10-Stage Pipeline)
+#### Workflow Agents (12-Stage Pipeline)
+- `.ai/agents/ci-monitor.md` — Stage 11 post-PR CI monitoring
 - `.ai/agents/github-issue-coordinator.md` — Stage 1
 - `.ai/agents/requirements-clarifier.md` — Stage 2
 - `.ai/agents/feature-planner.md` — Stage 3
@@ -107,6 +109,7 @@ validation and before release. The shared contract is
 
 #### Skills
 - `.ai/skills/` — Reusable skill implementations
+  - `skills/ci-monitoring/` — bounded CI classification and guarded remediation
   - `skills/grill-me/` — Relentless interviewing methodology
   - `skills/requirements-probing/` — Structured question categories
   - `skills/test-driven-development/` — TDD methodology
@@ -148,6 +151,7 @@ validation and before release. The shared contract is
 - `.ai/artifacts/coverage-report-template.md` — Stage 8
 - `.ai/artifacts/test-report-template.md` — Stage 9
 - `.ai/artifacts/pr-template.md` — Stage 10
+- `.ai/artifacts/ci-monitor-report-template.md` — Stage 11
 
 ##### Maestro Testing Templates
 - `.ai/artifacts/maestro-test-template.md` — Maestro test results

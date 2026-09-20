@@ -1,0 +1,162 @@
+name: Compose CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      core_ref:
+        description: Core branch, tag, or SHA used to build the native FFI
+        required: false
+        default: main
+
+concurrency:
+  group: compose-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  GRADLE_USER_HOME: ${{ github.workspace }}/.gradle-home
+  # Cross-repository PRs use the matching Core branch when it exists (the
+  # current Core and Compose PRs intentionally share this branch name). A
+  # manual dispatch can override it with core_ref; ordinary pushes use main.
+  CORE_REF: ${{ inputs.core_ref || github.event.pull_request.head.ref || 'main' }}
+
+jobs:
+  android:
+    name: Android build, tests, lint, coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout Compose
+        uses: actions/checkout@v4
+        with:
+          path: meta-secret-compose
+
+      - name: Checkout Core
+        uses: actions/checkout@v4
+        with:
+          repository: meta-secret/meta-secret-core
+          ref: ${{ env.CORE_REF }}
+          token: ${{ secrets.META_SECRET_CORE_TOKEN || secrets.GITHUB_TOKEN }}
+          path: meta-secret-core
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018"
+          echo "ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/27.2.12479018" >> "$GITHUB_ENV"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+
+      - name: Build Core Android FFI
+        run: bash meta-secret-core/meta-secret/mobile/scripts/build-android.sh
+
+      - name: Assemble Android debug APK
+        working-directory: meta-secret-compose
+        run: ./gradlew :composeApp:assembleDebug --no-daemon --console=plain
+
+      - name: Run Android unit tests
+        working-directory: meta-secret-compose
+        run: ./gradlew :composeApp:testDebugUnitTest --no-daemon --console=plain
+
+      - name: Run Detekt
+        working-directory: meta-secret-compose
+        run: ./gradlew :composeApp:detekt --no-daemon --console=plain
+
+      - name: Generate Kover report
+        working-directory: meta-secret-compose
+        run: ./gradlew koverReport --no-daemon --console=plain
+
+      - name: Upload Android verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-android-${{ github.run_id }}
+          retention-days: 14
+          if-no-files-found: ignore
+          path: |
+            meta-secret-compose/composeApp/build/reports/**
+            meta-secret-compose/composeApp/build/test-results/**
+            meta-secret-compose/composeApp/build/outputs/apk/debug/*.apk
+
+  ios:
+    name: iOS native build and tests
+    runs-on: macos-14
+    timeout-minutes: 35
+    steps:
+      - name: Checkout Compose
+        uses: actions/checkout@v4
+        with:
+          path: meta-secret-compose
+
+      - name: Checkout Core
+        uses: actions/checkout@v4
+        with:
+          repository: meta-secret/meta-secret-core
+          ref: ${{ env.CORE_REF }}
+          token: ${{ secrets.META_SECRET_CORE_TOKEN || secrets.GITHUB_TOKEN }}
+          path: meta-secret-core
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.96.0
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim
+
+      - name: Build Core iOS FFI
+        run: bash meta-secret-core/meta-secret/mobile/scripts/build-ios.sh
+
+      - name: Run iOS simulator unit tests
+        working-directory: meta-secret-compose
+        run: ./gradlew :composeApp:iosSimulatorArm64Test --no-daemon --console=plain
+
+      - name: Upload iOS verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-ios-${{ github.run_id }}
+          retention-days: 14
+          if-no-files-found: ignore
+          path: |
+            meta-secret-compose/composeApp/build/reports/**
+            meta-secret-compose/composeApp/build/test-results/**
+            meta-secret-compose/composeApp/build/**/*.xcresult/**
+
+  summary:
+    name: Compose CI summary
+    if: always()
+    needs: [android, ios]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require platform jobs to pass
+        run: |
+          test "${{ needs.android.result }}" = success
+          test "${{ needs.ios.result }}" = success
