@@ -33,15 +33,17 @@ class MetaSecretStateResolver(
     override suspend fun continueSignUp(): AppStateResult {
         val vaultState = preparedVaultState ?: return AppStateResult(null, AppErrors.SignUpError)
         val memberResult = vaultState.signUp()
-            ?: return AppStateResult(null, AppErrors.SignUpError)
+        if (memberResult.appState == null) {
+            return AppStateResult(null, AppErrors.SignUpError, memberResult.errorMessage)
+        }
 
-        if (memberResult is MemberState) {
+        if (memberResult.appState is MemberState) {
             preparedVaultState = null
         }
 
         logger.log(LogTag.StateResolver.Message.MemberState, success = true)
 
-        return AppStateResult(memberResult, null)
+        return AppStateResult(memberResult.appState, null)
     }
 
     override fun clearPreparedSignUp() {

@@ -5,12 +5,16 @@ package io.github.ttypic.swiftklib.gradle.templates
 
 internal fun createPackageSwiftContents(
     cinteropName: String,
+    moduleMapPath: String,
 ): String = """
     // swift-tools-version:5.5
     import PackageDescription
 
     let package = Package(
         name: "$cinteropName",
+        platforms: [
+            .iOS(.v13)
+        ],
         products: [
             .library(
                 name: "$cinteropName",
@@ -25,7 +29,7 @@ internal fun createPackageSwiftContents(
                 path: "$cinteropName",
                 swiftSettings: [
                     .unsafeFlags([
-                        "-Xcc", "-fmodule-map-file=$cinteropName/UniffiGenerated/mobile_uniffiFFI.modulemap"
+                        "-Xcc", "-fmodule-map-file=$moduleMapPath"
                     ])
                 ])
         ]

@@ -29,6 +29,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **Claim** | A request to distribute or recover a secret among vault members | Secret sharing | `ClaimObject`, `ClaimModel` |
 | **Key Share** | Individual cryptographic share assigned to a Device under the Vault's K-of-N policy | Secret sharing | A 3-device Vault has 3 Key Shares and k=2 |
 | **Encrypted Key Share** | A Key Share encrypted for the recipient Device's Transport Public Key before delivery. The server may temporarily queue it, but must not be able to decrypt it. | Share delivery | Recovery sends an Encrypted Key Share through the server |
+| **Resharing** | Recreating the current Key Shares after a membership change. In the supported 2→3 transition, each device receives one new Key Share and the sender removes temporary remote copies. | Vault operations | A 3-device Vault remains 2-of-3 |
 | **Device** | Registered hardware endpoint: `DeviceMake` + username | Core entity | `KeyValueStorageInterface.kt` |
 | **UniFFI** | Interface layer bridging Kotlin/Swift to the Rust cryptography library | Technical | `MetaSecretCoreService` |
 | **E2E (End-to-End)** | Encryption from sender to receiver; server never has access to plaintext | Feature property | All message/secret flows |
@@ -62,6 +63,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **DeviceUiCategory** | Enum: `Android`, `Iphone`, `Tablet`, `Desktop`, `Cli`, `Web`, `Other` | UI icons | `DevicesScreen` |
 | **DeviceStatus** | String-valued enum for device-level status | Devices list | `AppStateModel.kt` |
 | **DeviceCellModel** | Display model for a single device row in the UI | `DevicesScreen` | `DeviceCellModel.kt` |
+| **Device Limit** | Core-enforced maximum of 3 devices in one Vault | Membership | A fourth-device join returns an error |
 | **DevicesQuantity** | Enum with associated amount — number of devices in a vault | Vault stats | `DevicesQuantity.kt` |
 | **ClientDeviceInfo** | Current device's own info used during registration | Sign-up | `ClientDeviceInfo.kt` |
 | **OpenBox** | Public key container with `dsaPk` (signing key) and `transportPk` (encryption key) | Cryptography | `AppStateModel.kt` |

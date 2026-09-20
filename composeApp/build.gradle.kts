@@ -100,8 +100,8 @@ kotlin {
 
     targets.withType<KotlinNativeTarget>().configureEach {
         compilerOptions {
-            freeCompilerArgs.add("-Xoverride-konan-properties=platform.ios_simulator_arm64.version_min=14.0")
-            freeCompilerArgs.add("-Xoverride-konan-properties=platform.ios_arm64.version_min=14.0")
+            freeCompilerArgs.add("-Xoverride-konan-properties=platform.ios_simulator_arm64.version_min=15.0")
+            freeCompilerArgs.add("-Xoverride-konan-properties=platform.ios_arm64.version_min=15.0")
         }
     }
 
@@ -260,6 +260,9 @@ swiftklib {
     create("SwiftBridge") {
         path = file("../iosApp/iosApp/MetaSecretCoreService/")
         packageName("com.metaSecret.ios")
+        // Xcode 27 no longer supports simulator deployment targets below iOS 15.
+        // Keep the SwiftBridge target aligned with iosApp's supported deployment range.
+        minIos.set(15)
     }
 }
 

@@ -53,6 +53,39 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         print("E2E: IOS_SECRETS_READY")
     }
 
+    func rejectFourthDeviceAndRegisterNewVault() throws {
+        // Read the active scenario from the coordinator. XCTest does not
+        // consistently forward xcodebuild's environment into the test
+        // process, while the coordinator is already the source of truth used
+        // by the join flow.
+        let vaultName = coordinatorVaultName(defaultValue: env("E2E_VAULT_NAME", defaultValue: "test21@test.ru"))
+        let retryVaultName = env("E2E_RETRY_VAULT_NAME", defaultValue: "test21-retry@test.ru")
+
+        skipOnboardingIfNeeded()
+        openManualEmailSignIn()
+        typeEmail(vaultName)
+        tap("manual-signin-continue")
+        tap("email-confirmation-continue")
+        enterSimulatorPasscodeIfNeeded()
+        tap("email-confirmation-join", timeout: 60)
+        enterSimulatorPasscodeIfNeeded()
+
+        waitForVisible(identifier: "email-confirmation-error", timeout: 120)
+        let error = app.descendants(matching: .any)["email-confirmation-error"]
+        XCTAssertTrue(error.label.lowercased().contains("maximum of 3 devices"), "Unexpected fourth-device error: \(error.label)")
+        print("E2E: IOS_FOURTH_DEVICE_REJECTED")
+        waitForApproval(platform: "ios-rejection", cycle: "1", step: "screenshot")
+
+        tap("email-confirmation-error-reset")
+        openManualEmailSignIn()
+        typeEmail(retryVaultName)
+        tap("manual-signin-continue")
+        tap("email-confirmation-continue")
+        enterSimulatorPasscodeIfNeeded()
+        waitForVisible(identifier: "tab-secrets", timeout: 120)
+        print("E2E: IOS_FOURTH_DEVICE_RETRY_REGISTERED")
+    }
+
     func runNetworkLossCycles() throws {
         let config = stepConfig()
         let role = config.networkRole ?? config.role ?? env("E2E_NETWORK_ROLE", defaultValue: "")

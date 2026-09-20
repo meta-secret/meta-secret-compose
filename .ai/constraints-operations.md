@@ -17,13 +17,14 @@ See CONSTRAINTS.md for quick reference. This file has full details.
    - Approval source: Any existing device in vault
    - Approval method: Biometric (Face ID, Touch ID) or PIN fallback
    - Quorum: 1 approval sufficient (from any existing member)
+   - Device limit: rejected when the Vault already has 3 members
    - Flow: New device sends request → Existing device shows biometric prompt → User approves → Resharing proceeds
 
 2. **RESTORE SECRET (Recover Encrypted Secret)**
    - Initiator: Any device in vault wanting to reveal a secret
    - Approval source: Other device(s) in vault
    - Approval method: Biometric (Face ID, Touch ID) or PIN fallback
-   - Quorum: For 3+ devices: 1 approval from any other device
+   - Quorum: For 3 devices: 1 approval from any other device
             For 2 devices: 1 approval from the other device
             For 1 device: None (trivial case)
    - Flow: User taps "Reveal Secret" → App shows "Approval needed from another device" → Other device shows biometric prompt → User approves → Secret decrypted and shown
@@ -33,7 +34,7 @@ See CONSTRAINTS.md for quick reference. This file has full details.
    - Initiator: Device owner requesting removal of another device
    - Approval source: Other remaining device(s) in vault
    - Approval method: Biometric (Face ID, Touch ID) or PIN fallback
-   - Quorum: For 3+ devices: 1 approval from any other device
+   - Quorum: For 3 devices: 1 approval from any other device
             For 2 devices: BLOCKED by UI (cannot remove, would leave only 1 device)
             For 1 device: Cannot delete (last device)
    - Flow: User taps "Remove Device" → App shows "Approval needed from another device" → Other device shows biometric prompt → User approves → Resharing proceeds → Device removed
@@ -68,6 +69,8 @@ All three operations follow same flow:
 ## 1. Join New Device (Process)
 
 **Requirement:** New device cannot join without approval
+**Limit:** Core rejects a fourth or later device with a device-limit error. The
+existing three-device state remains unchanged.
 
 ```
 New Device:
@@ -114,15 +117,16 @@ Before join:
 
 During resharing:
   1. Decrypt all secrets with current k-of-n
-  2. New count: n+1 devices
-  3. New threshold: k = (n+1) - 1
-  4. Each secret: split into n+1 shares
-  5. Distribute to n+1 devices
+  2. New count: at most 3 devices
+  3. New threshold: k=1 for two devices, k=2 for three devices
+  4. Each secret: split into the supported number of shares
+  5. Distribute exactly one new share to each device; remove temporary remote
+     outbound copies from the sender after successful upload
 
 After resharing complete:
-  Device 1: k'-of-(n+1) shares (new shares!)
-  Device 2: k'-of-(n+1) shares (new shares!)
-  Device N+1: k'-of-(n+1) shares (new shares!)
+  Device 1: one new Key Share
+  Device 2: one new Key Share
+  Device N+1: one new Key Share (only when the transition is 2→3)
   
 Old shares INVALID
 ```
@@ -165,7 +169,8 @@ User approves via biometry/PIN on Device Y
   ↓
 Resharing BEFORE removal:
   Same as join resharing
-  Generate new shares for n-1 devices
+  Generate new shares for the remaining devices (only supported transitions are
+  3→2 and 2→1 where the latter is blocked by the existing removal rule)
   Distribute to remaining devices
   ✓ Verify success
   ↓
@@ -299,7 +304,7 @@ Or: Remove Device 2, then Device 3 can join
 
 **Device removed (via process):**
 - No longer vault member
-- Future resharing includes n-1 devices
+- Future resharing includes only the supported remaining devices
 - User must approve removal on another device
 
 ---

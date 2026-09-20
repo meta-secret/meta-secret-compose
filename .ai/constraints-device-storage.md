@@ -115,7 +115,7 @@ Result: Device treated as NEW (fresh DMK)
 
 **What's in it:**
 - Local database copy
-- Device's shares for all secrets
+- Device's own Key Share for each secret (never another device's Key Share)
 - Device's claim statuses
 - Local metadata
 

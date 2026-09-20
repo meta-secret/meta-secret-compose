@@ -311,7 +311,8 @@ data class Message(
 @Serializable
 data class AppStateModel(
     val message: Message? = null,
-    val success: Boolean = false
+    val success: Boolean = false,
+    val error: String? = null
 ) {
     fun getCurrentAppState(): State? {
         return message?.state

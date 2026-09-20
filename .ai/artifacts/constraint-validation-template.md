@@ -15,7 +15,7 @@ Plan constraint compliance assessment.
 | # | Constraint | Status | Notes |
 |---|---|---|---|
 | 1 | [Constraint name] | ✅/❌ | [Details] |
-| 7 | k=1 for 1–2 devices; k=2 for 3+ devices | ✅/❌ | [Details] |
+| 7 | k=1 for 1–2 devices; k=2 for 3 devices (4+ rejected) | ✅/❌ | [Details] |
 | 21 | Approval for join | ✅/❌ | [Details] |
 
 ---

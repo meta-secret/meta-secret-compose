@@ -37,8 +37,8 @@ libmetasecret_mobile.so
 # Claude Code local settings (developer-specific allowlists, not for repo)
 .claude/settings.local.json
 
-# Workflow runtime artifacts
-.ai/artifacts/run/
+# AI artifacts (generated reports and templates)
+.ai/artifacts/
 
 # Design
 design/

@@ -69,6 +69,7 @@ enum class AppString {
     errorSecretAddFailed,
     errorUnknownPrefix,
     errorValidation,
+    vaultDeviceLimitReached,
     yes,
     no,
     fromAllDevices,
@@ -209,6 +210,7 @@ fun AppString.resource(): StringResource = when (this) {
     AppString.errorSecretAddFailed -> Res.string.errorSecretAddFailed
     AppString.errorUnknownPrefix -> Res.string.errorUnknownPrefix
     AppString.errorValidation -> Res.string.errorValidation
+    AppString.vaultDeviceLimitReached -> Res.string.vaultDeviceLimitReached
     AppString.yes -> Res.string.yes
     AppString.no -> Res.string.no
     AppString.fromAllDevices -> Res.string.fromAllDevices

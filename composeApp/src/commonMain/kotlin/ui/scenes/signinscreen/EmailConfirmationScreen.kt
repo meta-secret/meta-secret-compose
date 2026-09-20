@@ -255,6 +255,19 @@ class EmailConfirmationScreen(
                         )
                     }
 
+                    val errorState = screenState as? EmailConfirmationScreenState.Error
+                    if (errorState != null) {
+                        Text(
+                            text = errorState.message,
+                            style = AppTextStyles.CaptionStrong(),
+                            color = AppColors.RedError,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 6.dp)
+                                .testTag("email-confirmation-error")
+                        )
+                    }
+
                     Spacer(modifier = Modifier.weight(1f))
 
                     Column(
@@ -300,6 +313,20 @@ class EmailConfirmationScreen(
                                         focusManager.clearFocus()
                                         viewModel.handle(EmailConfirmationViewEvents.StartOver)
                                     }
+                                )
+                            }
+                            is EmailConfirmationScreenState.Error -> {
+                                ClassicButton(
+                                    action = {
+                                        focusManager.clearFocus()
+                                        viewModel.handle(EmailConfirmationViewEvents.StartOver)
+                                    },
+                                    text = appString(AppString.emailSelectionChange),
+                                    color = AppColors.Warning,
+                                    isEnabled = !isLoading,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("email-confirmation-error-reset")
                                 )
                             }
                             is EmailConfirmationScreenState.Default -> {

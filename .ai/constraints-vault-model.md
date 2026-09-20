@@ -17,7 +17,8 @@ See CONSTRAINTS.md for quick reference. This file has full details.
 **Minimum configs:**
 - 1 device (initial, allowed)
 - 2 devices (basic replication)
-- 3+ devices (recommended for safety)
+- 3 devices (maximum supported configuration)
+- 4 or more devices are rejected by Core until a new redistribution protocol is designed
 
 ---
 
@@ -73,9 +74,9 @@ Full copy → Device 2
 
 ---
 
-## 4. Three+ Devices (k=2 Schema)
+## 4. Three Devices (2-of-3 Schema)
 
-When third device joins (or more):
+When the third device joins:
 
 ```
 Before: 1-of-2 (Device 1, Device 2)
@@ -86,7 +87,7 @@ Device 2 approves + reshares
   ↓
 Secrets re-split with 3 shares
   ↓
-New schema: 2-of-n (k=2; for three devices, any 2 of 3)
+New schema: 2-of-3 (k=2; any 2 of 3)
   ↓
 Share 1 → Device 1
 Share 2 → Device 2
@@ -99,10 +100,10 @@ Share 3 → Device 3
 - Lose 1 device = still have access (2 left)
 - Lose 2 devices = **DATA LOST** (only 1 share remains)
 
-**Pattern continues:**
-- 4 devices → 3-of-4
-- 5 devices → 4-of-5
-- N devices → (N-1)-of-N
+**Device limit:**
+- A fourth device cannot join the Vault.
+- Core returns a device-limit error; clients show the error and keep the existing
+  three-device state unchanged.
 
 ---
 
@@ -142,8 +143,8 @@ Each user secret:
   1. Decrypt current shares (with old k-of-n)
   2. Recover secret
   3. Split with NEW shares count
-  4. Distribute to devices
-  5. Verify receipt
+  4. Distribute one new share to each device
+  5. Verify receipt and remove temporary outbound copies from the sender
 ```
 
 **Important:**
@@ -159,7 +160,7 @@ Each user secret:
 MetaSecret is **serverless for data storage**:
 
 - ❌ Server does NOT store secrets
-- ❌ Server does NOT store shares
+- ❌ Server does NOT store plaintext shares
 - ❌ Server does NOT store device databases
 - ✅ Server = only message delivery
 - ✅ Server = device signaling
@@ -170,9 +171,9 @@ MetaSecret is **serverless for data storage**:
 - Only communication goes through server
 
 **Consequence:**
-- Shares NEVER sent to server
-- Resharing happens device-to-device
-- Server only relays encrypted messages
+- Encrypted Key Shares may be temporarily queued on the server for delivery
+- Resharing is coordinated by Core; clients only render the resulting state
+- The server removes the temporary encrypted workflow after delivery
 
 ---
 

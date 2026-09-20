@@ -2,6 +2,7 @@ package metasecret.project.com
 
 import android.util.Log
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -38,6 +39,44 @@ class CaseEightAndroidBothOfflineTest {
         configuredSecretNames().forEach { name -> composeRule.waitForTag("secret-row-$name", 180_000) }
         marker("ANDROID_JOIN_READY")
         marker("ANDROID_SECRETS_READY")
+    }
+
+    @Test
+    fun rejectFourthDeviceAndRegisterNewVault() {
+        val vaultName = argument("vaultName", "test21@test.ru")
+        val retryVaultName = argument("retryVaultName", "test21-retry@test.ru")
+
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("email-confirmation-join", 60_000)
+        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+
+        composeRule.waitForTag("email-confirmation-error", 120_000)
+        composeRule.onNodeWithTag("email-confirmation-error", useUnmergedTree = true)
+            .assertTextEquals("This vault already has the maximum of 3 devices.")
+        marker("ANDROID_FOURTH_DEVICE_REJECTED")
+        waitForApproval(
+            argument("approvalCoordinatorUrl", "http://10.0.2.2:5180"),
+            "android-rejection-screenshot",
+            "1",
+        )
+
+        composeRule.onNodeWithTag("email-confirmation-error-reset").performClick()
+        composeRule.waitForTag("signin-email-manual", 60_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(retryVaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("tab-secrets", 120_000)
+        marker("ANDROID_FOURTH_DEVICE_RETRY_REGISTERED")
     }
 
     @Test

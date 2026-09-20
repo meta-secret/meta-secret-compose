@@ -63,6 +63,10 @@ abstract class CompileSwiftTask @Inject constructor(
             headerPath = headerPath,
             packageName = packageName,
             xcodeVersion = xcodeMajorVersion,
+            moduleMapPath = File(
+                swiftBuildDir,
+                ".build/out/Intermediates.noindex/GeneratedModuleMaps-${compileTarget.os()}/${cinteropName}.modulemap",
+            ),
         )
     }
 
@@ -92,19 +96,22 @@ abstract class CompileSwiftTask @Inject constructor(
      */
     private fun createPackageSwift() {
         File(swiftBuildDir, "Package.swift")
-            .writeText(createPackageSwiftContents(cinteropName))
+            .writeText(
+                createPackageSwiftContents(
+                    cinteropName = cinteropName,
+                    moduleMapPath = File(buildDir(), "UniffiGenerated/mobile_uniffiFFI.modulemap").absolutePath,
+                )
+            )
     }
 
     private fun buildSwift(xcodeVersion: Int): SwiftBuildResult {
         val sourceFilePathReplacements = mapOf(
             buildDir().absolutePath to pathProperty.get().absolutePath
         )
-        val extraArgs = if (xcodeVersion >= 15 && compileTarget in SDKLESS_TARGETS) {
-            additionalSysrootArgs()
-        } else {
-            emptyList()
-        }
-        val args = generateBuildArgs() + extraArgs
+        // Pass the target through SwiftPM itself. Passing -sdk/-target via -Xswiftc
+        // makes SwiftPM append its host macOS target as well, which breaks iOS SDK
+        // module resolution on recent Xcode versions.
+        val args = generateBuildArgs()
 
         logger.info("-- Running swift build --")
         logger.info("Working directory: $swiftBuildDir")
@@ -114,10 +121,6 @@ abstract class CompileSwiftTask @Inject constructor(
             it.executable = "xcrun"
             it.workingDir = swiftBuildDir
             it.args = args
-            // Xcode build phases inherit SDKROOT=iphoneos, but SwiftPM evaluates the manifest as a host
-            // macOS process. Overriding SDKROOT keeps manifest compilation on the host SDK while the
-            // actual package build still uses the explicit iOS -sdk passed above.
-            it.environment("SDKROOT", readHostSdkPath())
             it.standardOutput = StringReplacingOutputStream(
                 delegate = System.out,
                 replacements = sourceFilePathReplacements
@@ -128,26 +131,25 @@ abstract class CompileSwiftTask @Inject constructor(
             )
         }
 
-        val releaseBuildPath = File(swiftBuildDir, ".build/${compileTarget.arch()}-apple-macosx/release")
-
         return SwiftBuildResult(
-            libPath = File(releaseBuildPath, "lib${cinteropName}.a"),
-            headerPath = File(releaseBuildPath, "$cinteropName.build/$cinteropName-Swift.h")
+            libPath = File(swiftBuildDir, ".build/out/Products/Release-${compileTarget.os()}/lib${cinteropName}.a"),
+            headerPath = File(
+                swiftBuildDir,
+                ".build/out/Intermediates.noindex/${cinteropName}.build/Release-${compileTarget.os()}/${cinteropName}-t.build/Objects-normal/${compileTarget.arch()}/${cinteropName}-Swift.h",
+            ),
         )
     }
 
     private fun generateBuildArgs(): List<String> {
         val sdkPath = readSdkPath()
-        val baseArgs = "swift build --arch ${compileTarget.arch()} -c release".split(" ")
+        val baseArgs = "swift build -c release".split(" ")
 
-        val xcrunArgs = listOf(
-            "-sdk",
-            sdkPath,
-            "-target",
+        return baseArgs + listOf(
+            "--triple",
             compileTarget.asSwiftcTarget(compileTarget.operatingSystem()),
-        ).asSwiftcArgs()
-
-        return baseArgs + xcrunArgs
+            "--sdk",
+            sdkPath,
+        )
     }
 
     /** Workaround for bug in toolchain where the sdk path (via `swiftc -sdk` flag) is not propagated to clang. */
@@ -232,7 +234,13 @@ abstract class CompileSwiftTask @Inject constructor(
      * Note: adds lib-file md5 hash to library in order to automatically
      * invalidate connected cinterop task
      */
-    private fun createDefFile(libPath: File, headerPath: File, packageName: String, xcodeVersion: Int) {
+    private fun createDefFile(
+        libPath: File,
+        headerPath: File,
+        packageName: String,
+        xcodeVersion: Int,
+        moduleMapPath: File,
+    ) {
         val xcodePath = readXcodePath()
 
         val linkerPlatformVersion =
@@ -240,6 +248,11 @@ abstract class CompileSwiftTask @Inject constructor(
             else compileTarget.linkerMinOsVersionName()
 
         val modulePath = headerPath.parentFile.absolutePath
+        // Kotlin/Native cinterop discovers Objective-C modules from a conventional
+        // module.modulemap next to the generated Swift compatibility header.
+        // SwiftPM keeps its generated map in a separate intermediates directory,
+        // so copy it next to the header before invoking cinterop.
+        moduleMapPath.copyTo(File(headerPath.parentFile, "module.modulemap"), overwrite = true)
 
         val basicLinkerOpts = listOf(
             "-L/usr/lib/swift",
@@ -254,13 +267,13 @@ abstract class CompileSwiftTask @Inject constructor(
         val content = """
             package = $packageName
             language = Objective-C
-            modules = $cinteropName
+            headers = "$headerPath"
 
             # md5 ${libPath.md5()}
             staticLibraries = ${libPath.name}
             libraryPaths = "${libPath.parentFile.absolutePath}"
 
-            compilerOpts = -fmodules -I"$modulePath"
+            compilerOpts = -mios-simulator-version-min=15.0 -I"$modulePath"
             linkerOpts = $linkerOpts
         """.trimIndent()
 

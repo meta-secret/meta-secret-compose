@@ -296,7 +296,7 @@ Vault operation:
 
 **To minimize data loss:**
 
-1. **3+ devices recommended** (lose 1 safely)
+1. **3 devices is the maximum supported configuration** (lose 1 safely)
 2. **Regular backup verification**
 3. **Contact devices regularly** (detect loss early)
 4. **Monitor vault health** (alerts if risky state)

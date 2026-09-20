@@ -11,7 +11,8 @@ import models.appInternalModels.AppErrors
 
 data class AppStateResult (
     val appState: AppState?,
-    val error: AppErrors?
+    val error: AppErrors?,
+    val errorMessage: String? = null
 )
 
 enum class VaultAvailability {
@@ -121,7 +122,7 @@ class VaultState(
     private val metaSecretCore: MetaSecretCoreInterface,
     private val logger: core.DebugLoggerInterface
 ) : AppState {
-    suspend fun signUp(): AppState? {
+    suspend fun signUp(): SignUpStateResult {
         logger.log(core.LogTag.StateResolver.Message.StartSignUp, success = true)
         val jsonResult = withContext(Dispatchers.IO) {
             metaSecretCore.signUp()
@@ -133,20 +134,25 @@ class VaultState(
         val stateModel = coreStateModel.getCurrentAppState()
         logger.setVaultState(stateModel?.description())
 
-        val result: AppState? = if (isSuccess && vaultInfo is VaultFullInfo.Member) {
+        val result: SignUpStateResult = if (isSuccess && vaultInfo is VaultFullInfo.Member) {
             logger.log(core.LogTag.StateResolver.Message.CurrentStateIsMember, success = true)
-            MemberState()
+            SignUpStateResult(MemberState(), null)
         } else if (isSuccess && vaultInfo is VaultFullInfo.Outsider) {
             logger.log(core.LogTag.StateResolver.Message.CurrentStateIsOutsider, success = true)
-            OutsiderState()
+            SignUpStateResult(OutsiderState(), null)
         } else {
             logger.log(core.LogTag.StateResolver.Message.SwwWithMemberState, success = false)
-            null
+            SignUpStateResult(null, coreStateModel.error)
         }
 
         return result
     }
 }
+
+data class SignUpStateResult(
+    val appState: AppState?,
+    val errorMessage: String?
+)
 
 class  MemberState : AppState
 

@@ -20,6 +20,7 @@ interface StringProviderInterface {
     fun errorInternal(): String = getString(AppString.errorInternal)
     fun errorParse(): String = getString(AppString.errorParse)
     fun errorValidation(): String = getString(AppString.errorValidation)
+    fun vaultDeviceLimitReached(): String = getString(AppString.vaultDeviceLimitReached)
     fun errorUnknownPrefix(): String = getString(AppString.errorUnknownPrefix)
     fun errorBiometricAuthFailed(): String = getString(AppString.errorBiometricAuthFailed)
     fun errorSecretAddFailed(): String = getString(AppString.errorSecretAddFailed)

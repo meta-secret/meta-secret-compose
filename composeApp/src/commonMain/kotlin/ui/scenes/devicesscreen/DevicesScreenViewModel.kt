@@ -157,6 +157,10 @@ class DevicesScreenViewModel(
                 }
                 if (updateResult?.success == false) {
                     logger.log(LogTag.DevicesVM.Message.UpdateCandidateFailed, "${updateResult.error}", success = false)
+                    showNotification(
+                        updateResult.error ?: stringProvider.errorInternal(),
+                        isError = true,
+                    )
                 }
                 // `fetchDevicesList(false)` below reads a fresh state directly,
                 // but the shared cache (which drives VaultStatsProvider and the

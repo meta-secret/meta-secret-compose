@@ -162,7 +162,12 @@ class EmailConfirmationScreenViewModel(
 
         val signUpResult = metaSecretStateResolver.continueSignUp()
         if (signUpResult.error != null) {
-            failWithInternalError()
+            val message = if (signUpResult.errorMessage?.contains("at most 3 devices", ignoreCase = true) == true) {
+                stringProvider.vaultDeviceLimitReached()
+            } else {
+                signUpResult.errorMessage ?: stringProvider.errorInternal()
+            }
+            failWithError(message)
             return
         }
 
@@ -218,9 +223,12 @@ class EmailConfirmationScreenViewModel(
     }
 
     private suspend fun failWithInternalError() {
+        failWithError(stringProvider.errorInternal())
+    }
+
+    private suspend fun failWithError(message: String) {
         _isLoading.value = false
-        resetScreenState()
-        showNotification(stringProvider.errorInternal(), isError = true)
+        _screenState.value = EmailConfirmationScreenState.Error(message)
     }
 
     private suspend fun generateMasterKey(): Boolean {
@@ -332,6 +340,7 @@ sealed class EmailConfirmationScreenState {
     data object Default : EmailConfirmationScreenState()
     data object VaultExists : EmailConfirmationScreenState()
     data object JoiningPending : EmailConfirmationScreenState()
+    data class Error(val message: String) : EmailConfirmationScreenState()
 }
 
 sealed class EmailConfirmationNavigationEvent {
