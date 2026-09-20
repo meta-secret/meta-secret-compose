@@ -21,7 +21,10 @@ permissions:
 
 env:
   GRADLE_USER_HOME: ${{ github.workspace }}/.gradle-home
-  CORE_REF: ${{ inputs.core_ref || 'main' }}
+  # Cross-repository PRs use the matching Core branch when it exists (the
+  # current Core and Compose PRs intentionally share this branch name). A
+  # manual dispatch can override it with core_ref; ordinary pushes use main.
+  CORE_REF: ${{ inputs.core_ref || github.event.pull_request.head.ref || 'main' }}
 
 jobs:
   android:
