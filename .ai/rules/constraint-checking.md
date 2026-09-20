@@ -41,12 +41,12 @@ After implementation, during code review:
    - Confirms implementation stays within bounds
    - Reports any violations
 
-## Constraint Categories (CONSTRAINTS.md Section 28)
+## Constraint Categories (CONSTRAINTS.md confirmed-rules table)
 
 When validating a feature, consider which constraints are affected:
 
 - **Device Storage** (Constraints 12-20): Device Master Key, Database, Backup
-- **Vault Model** (Constraints 1-11): Single device, 1-of-2 full replication, and k=2 for the maximum 3-device state
+- **Vault Model** (Constraints 1-11): Single device, 1-of-2 full replication, and 2-of-3 sharing for the maximum 3-device state
 - **Shamir Sharing** (Constraints 4-11): Individual share distribution, resharing
 - **Approval Model** (Constraints 22-29): Who approves what
 - **Biometry** (Constraints 30-34): When biometry is used, fallback to PIN
@@ -74,8 +74,9 @@ When validating a feature, consider which constraints are affected:
 ## Reference
 
 **CONSTRAINTS.md:**
-- Section 28: 35 Confirmed Rules (numbered 1-35)
-- Section 29: Open Questions (not constraints, only questions)
+- The confirmed-rules table is the authoritative list of 42 rules.
+- The K-of-N policy must match the 1/2/3-device table in `CONSTRAINTS.md` and
+  `constraints-vault-model.md`; generic `k=n−1` wording is unsupported.
 
 **Key Constraint Numbers:**
 - #1-3: Vault and device basics
@@ -86,4 +87,4 @@ When validating a feature, consider which constraints are affected:
 
 ---
 
-Last updated: 2026-06-10
+Last updated: 2026-09-20

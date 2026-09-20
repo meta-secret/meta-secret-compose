@@ -2,7 +2,7 @@
 
 Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, user) uses these terms.
 
-**Last updated:** 2026-09-19
+**Last updated:** 2026-09-20
 **Maintenance:** Monthly or when codebase grows significantly
 
 ---
@@ -29,6 +29,8 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **Claim** | A request to distribute or recover a secret among vault members | Secret sharing | `ClaimObject`, `ClaimModel` |
 | **Key Share** | Individual cryptographic share assigned to a Device under the Vault's K-of-N policy | Secret sharing | A 3-device Vault has 3 Key Shares and k=2 |
 | **Encrypted Key Share** | A Key Share encrypted for the recipient Device's Transport Public Key before delivery. The server may temporarily queue it, but must not be able to decrypt it. | Share delivery | Recovery sends an Encrypted Key Share through the server |
+| **Threshold (k)** | Minimum number of Key Shares needed to recover a Secret | Secret sharing | `n=1: k=1`; `n=2: k=1`; `n=3: k=2` |
+| **K-of-N Policy** | Supported device-count policy: one-device whole Secret, two-device full replication, and three-device 2-of-3 sharing. A Vault cannot exceed 3 devices | Vault architecture | A 3-device Vault needs any 2 Key Shares |
 | **Resharing** | Recreating the current Key Shares after a membership change. In the supported 2→3 transition, each device receives one new Key Share and the sender removes temporary remote copies. | Vault operations | A 3-device Vault remains 2-of-3 |
 | **Device** | Registered hardware endpoint: `DeviceMake` + username | Core entity | `KeyValueStorageInterface.kt` |
 | **UniFFI** | Interface layer bridging Kotlin/Swift to the Rust cryptography library | Technical | `MetaSecretCoreService` |

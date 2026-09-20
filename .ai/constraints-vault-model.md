@@ -10,15 +10,19 @@ See CONSTRAINTS.md for quick reference. This file has full details.
 
 - One user creates one Vault
 - Then connects their own devices to it
-- Examples: iPhone + Android + iPad + MacBook
+- Examples: iPhone + Android + MacBook
 - All devices belong to SAME user
 - Vault has a globally unique name (user-provided)
 
-**Minimum configs:**
+**Supported configurations:**
 - 1 device (initial, allowed)
 - 2 devices (basic replication)
 - 3 devices (maximum supported configuration)
 - 4 or more devices are rejected by Core until a new redistribution protocol is designed
+
+The policy is intentionally explicit; there is no generic `k=n−1` rule. The
+supported threshold is `k=1` for one device, `k=1` with full replication for two
+devices, and `k=2` for the three-device Vault.
 
 ---
 

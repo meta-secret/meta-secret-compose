@@ -27,6 +27,16 @@ env:
   CORE_REF: ${{ inputs.core_ref || github.event.pull_request.head.ref || 'main' }}
 
 jobs:
+  docs:
+    name: Constraint documentation consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Compose
+        uses: actions/checkout@v4
+
+      - name: Check vault K-of-N policy documentation
+        run: bash .ai/scripts/check-vault-policy.sh
+
   android:
     name: Android build, tests, lint, coverage
     runs-on: ubuntu-latest
@@ -153,10 +163,11 @@ jobs:
   summary:
     name: Compose CI summary
     if: always()
-    needs: [android, ios]
+    needs: [docs, android, ios]
     runs-on: ubuntu-latest
     steps:
       - name: Require platform jobs to pass
         run: |
+          test "${{ needs.docs.result }}" = success
           test "${{ needs.android.result }}" = success
           test "${{ needs.ios.result }}" = success
