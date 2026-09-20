@@ -27,6 +27,8 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **RecoveredSecretModel** | API response after recovery: success flag + recovered message | Recovery flow | `RecoveredSecretModel.kt` |
 | **RecoveredSecretMessage** | Wrapper holding the revealed secret string | Recovery flow | `RecoveredSecretModel.kt` |
 | **Claim** | A request to distribute or recover a secret among vault members | Secret sharing | `ClaimObject`, `ClaimModel` |
+| **Key Share** | Individual cryptographic share assigned to a Device under the Vault's K-of-N policy | Secret sharing | A 3-device Vault has 3 Key Shares and k=2 |
+| **Encrypted Key Share** | A Key Share encrypted for the recipient Device's Transport Public Key before delivery. The server may temporarily queue it, but must not be able to decrypt it. | Share delivery | Recovery sends an Encrypted Key Share through the server |
 | **Device** | Registered hardware endpoint: `DeviceMake` + username | Core entity | `KeyValueStorageInterface.kt` |
 | **UniFFI** | Interface layer bridging Kotlin/Swift to the Rust cryptography library | Technical | `MetaSecretCoreService` |
 | **E2E (End-to-End)** | Encryption from sender to receiver; server never has access to plaintext | Feature property | All message/secret flows |

@@ -46,7 +46,7 @@ After implementation, during code review:
 When validating a feature, consider which constraints are affected:
 
 - **Device Storage** (Constraints 12-20): Device Master Key, Database, Backup
-- **Vault Model** (Constraints 1-11): Single device, 1-of-2, 2-of-3, k=n-1 rule
+- **Vault Model** (Constraints 1-11): Single device, 1-of-2 full replication, and k=2 for 3+ devices
 - **Shamir Sharing** (Constraints 4-11): Individual share distribution, resharing
 - **Approval Model** (Constraints 22-29): Who approves what
 - **Biometry** (Constraints 30-34): When biometry is used, fallback to PIN

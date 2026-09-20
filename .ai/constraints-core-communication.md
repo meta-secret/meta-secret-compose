@@ -254,7 +254,7 @@ Core: "You need 2 shares. Get from Device B"
         ↓
 Mobile: Requests from Device B via server
         ↓
-Device B: Sends encrypted share
+Device B: Sends an Encrypted Key Share
         ↓
 Mobile: Receives share
         ↓

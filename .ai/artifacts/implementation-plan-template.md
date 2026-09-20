@@ -38,7 +38,7 @@ How this design aligns with MetaSecret architecture:
 ## Constraint Compliance Preview
 
 Key constraints to validate (Stage 3.5):
-- Vault model: [how design respects k=n-1]
+- Vault model: [how design respects k=1 for 1–2 devices and k=2 for 3+ devices]
 - Device storage: [DMK handling, backup strategy]
 - Approval model: [when approval required]
 - Biometry: [if applicable]

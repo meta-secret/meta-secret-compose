@@ -50,22 +50,22 @@ Recovery: biometry → Device 1 → full secret
 When second device joins:
 
 ```
-Device 1 (has secret whole)
+Device 1 (has Secret whole)
   ↓
 Device 2 requests join
   ↓
 Device 1 approves + reshares
   ↓
-Secret splits into 2 shares
+Secret is fully replicated
   ↓
-Share 1 → Device 1
-Share 2 → Device 2
+Full copy → Device 1
+Full copy → Device 2
 ```
 
 **Schema: 1-of-2**
-- Need: 1 share to recover
-- Both shares sufficient
-- Each device alone can recover secret
+- Threshold: k=1
+- Either device alone can recover the Secret
+- This is full replication, not SSS
 
 **Trade-off:** Accessibility > Threshold security
 - Can lose 1 device, still have access
@@ -73,7 +73,7 @@ Share 2 → Device 2
 
 ---
 
-## 4. Three+ Devices (k=n-1 Schema)
+## 4. Three+ Devices (k=2 Schema)
 
 When third device joins (or more):
 
@@ -86,7 +86,7 @@ Device 2 approves + reshares
   ↓
 Secrets re-split with 3 shares
   ↓
-New schema: 2-of-3 (need any 2 of 3)
+New schema: 2-of-n (k=2; for three devices, any 2 of 3)
   ↓
 Share 1 → Device 1
 Share 2 → Device 2
@@ -226,4 +226,4 @@ Does feature touch:
 
 ---
 
-Last updated: 2026-06-10
+Last updated: 2026-09-20
