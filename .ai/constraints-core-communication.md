@@ -268,7 +268,8 @@ Core: Recovers secret
 Returns: Secret to mobile
 ```
 
-**Share is encrypted in transit** (server doesn't see plain share).
+**Each Key Share is encrypted in transit** (the server never sees the plaintext
+share and may only temporarily queue the Encrypted Key Share for delivery).
 
 ---
 

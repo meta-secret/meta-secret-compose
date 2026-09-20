@@ -20,7 +20,7 @@ See CONSTRAINTS.md for quick reference. This file has full details.
    - Device limit: rejected when the Vault already has 3 members
    - Flow: New device sends request → Existing device shows biometric prompt → User approves → Resharing proceeds
 
-2. **RESTORE SECRET (Recover Encrypted Secret)**
+2. **RESTORE SECRET (Recover a Secret)**
    - Initiator: Any device in vault wanting to reveal a secret
    - Approval source: Other device(s) in vault
    - Approval method: Biometric (Face ID, Touch ID) or PIN fallback

@@ -22,6 +22,8 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **Secret** | Core entity: an encrypted piece of data with `SecretId` and `SecretName` | Core feature | `KeyValueStorageInterface.kt` |
 | **SecretApiModel** | API representation of a secret: id, name, type, wordCount | API layer | `AppStateModel.kt` |
 | **SecretModel** | Internal model: `SecretName` and encrypted value | Internal storage | `SecretModel.kt` |
+| **Master Key** | Per-device root encryption key generated randomly by Rust Core from the OS CSPRNG. It is not derived from a user password or passphrase. | Key generation and storage | Returned through UniFFI and protected by platform secure storage |
+| **Device Master Key (DMK)** | The Master Key while it is stored for a specific device. Each device has its own DMK; it is never sent to the server or synced to cloud storage. | Device storage | iOS Keychain / Android Keystore-backed storage |
 | **SecretValueType** | Enum: `PASSWORD` or `SEED_PHRASE` — type of secret being stored | Add Secret dialog | `AddSecretDialog.kt` |
 | **ParsedSecretValue** | Structured secret input: type, word list, word count | Add Secret dialog | `AddSecretDialog.kt` |
 | **RecoveredSecretModel** | API response after recovery: success flag + recovered message | Recovery flow | `RecoveredSecretModel.kt` |
