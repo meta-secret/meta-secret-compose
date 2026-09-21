@@ -226,11 +226,22 @@ class MetaSecretCoreServiceIos(
         }
     }
 
-    override fun showRecovered(secretId: String): String {
+    override fun showRecovered(claimId: String): String {
         try {
-            logger.log(LogTag.MetaSecretCoreService.Message.CallingShowRecovered, "with: $secretId", success = true)
-            val result = swiftBridge.showRecovered(secretId)
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingShowRecovered, "with claim: $claimId", success = true)
+            val result = swiftBridge.showRecovered(claimId)
             logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredResult, success = true)
+            return result
+        } catch (e: Exception) {
+            logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredError, "${e.message}", success = false)
+            e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun showLocalSecret(secretId: String): String {
+        try {
+            val result = swiftBridge.showLocalSecret(secretId)
             return result
         } catch (e: Exception) {
             logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredError, "${e.message}", success = false)

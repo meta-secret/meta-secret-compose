@@ -356,7 +356,8 @@ MetaSecretAppManager
 | **Request recovery** | `recover(secretId)` | Recovery: ask members to release shares |
 | **Accept recovery** | `acceptRecover(claimId)` | Recovery: release your share |
 | **Decline recovery** | `declineRecover(claimId)` | Recovery: refuse to release share |
-| **Show recovered** | `showRecovered(secretId)` | Recovery: reveal reassembled secret |
+| **Show recovered** | `showRecovered(claimId)` | Recovery: reveal reassembled secret for the exact accepted claim; Core derives the Pass ID |
+| **Show local secret** | `showLocalSecret(secretId)` | Replicated 1–2-device path; reveal the local distribution without a recovery claim |
 | **Find claim** | `findClaim(secretId)` | Recovery: locate the active claim |
 | **Get state** | `getAppState()` | Canonical refresh after a state event or lifecycle transition |
 | **Check auth** | `checkAuth()` | Startup: verify biometric auth status |

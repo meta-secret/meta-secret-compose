@@ -12,8 +12,35 @@ import testutils.FakeLogFormatter
 import testutils.FakeMetaSecretCore
 import testutils.FakeNotificationCoordinator
 import testutils.FakeStringProvider
+import models.appInternalModels.SecretModel
 
 class MetaSecretAppManagerTest {
+
+    @Test
+    fun `showRecovered forwards the exact claim id`() = kotlinx.coroutines.test.runTest {
+        val core = FakeMetaSecretCore()
+        val manager = createManager(core = core, keyChain = FakeKeyChain(mutableMapOf("master_key" to "mk")))
+        assertIs<InitResult.Success>(manager.initWithSavedKey())
+
+        val recovered = manager.showRecovered(SecretModel("secret-name", null, "claim-123"))
+
+        assertEquals("test-secret", recovered)
+        assertEquals(listOf("claim-123"), core.showRecoveredCalls)
+        assertEquals(emptyList(), core.showLocalSecretCalls)
+    }
+
+    @Test
+    fun `showRecovered uses local path when no recovery claim exists`() = kotlinx.coroutines.test.runTest {
+        val core = FakeMetaSecretCore()
+        val manager = createManager(core = core, keyChain = FakeKeyChain(mutableMapOf("master_key" to "mk")))
+        assertIs<InitResult.Success>(manager.initWithSavedKey())
+
+        val recovered = manager.showRecovered(SecretModel("secret-name", null))
+
+        assertEquals("test-secret", recovered)
+        assertEquals(emptyList(), core.showRecoveredCalls)
+        assertEquals(listOf("secret-name"), core.showLocalSecretCalls)
+    }
 
     @Test
     fun `initWithSavedKey returns error and clears storage when key is missing`() = kotlinx.coroutines.test.runTest {

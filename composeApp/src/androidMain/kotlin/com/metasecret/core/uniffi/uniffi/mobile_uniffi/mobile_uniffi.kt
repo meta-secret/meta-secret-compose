@@ -667,6 +667,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_send_decline_completion(
     ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_show_local_secret(
+    ): Int
     external fun uniffi_metasecret_mobile_checksum_func_show_recovered(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_sign_up(
@@ -722,7 +724,9 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_metasecret_mobile_fn_func_send_decline_completion(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    external fun uniffi_metasecret_mobile_fn_func_show_recovered(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    external fun uniffi_metasecret_mobile_fn_func_show_local_secret(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_metasecret_mobile_fn_func_show_recovered(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_metasecret_mobile_fn_func_sign_up(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -899,7 +903,10 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_metasecret_mobile_checksum_func_send_decline_completion() != 48010) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_metasecret_mobile_checksum_func_show_recovered() != 48134) {
+    if (lib.uniffi_metasecret_mobile_checksum_func_show_local_secret() != 48841) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_metasecret_mobile_checksum_func_show_recovered() != 57592) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_sign_up() != 56874) {
@@ -1245,12 +1252,22 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     )
     }
     
- fun `showRecovered`(`secretId`: kotlin.String): kotlin.String {
+ fun `showLocalSecret`(`secretId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_show_local_secret(
+    
+        FfiConverterString.lower(`secretId`),_status)
+}
+    )
+    }
+    
+ fun `showRecovered`(`claimId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_show_recovered(
     
-        FfiConverterString.lower(`secretId`),_status)
+        FfiConverterString.lower(`claimId`),_status)
 }
     )
     }

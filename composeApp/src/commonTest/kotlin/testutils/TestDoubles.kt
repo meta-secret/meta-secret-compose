@@ -178,6 +178,9 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
     var appStateJson: String = "{}"
     var findClaimJson: String = "{}"
     var getAppStateCalls: Int = 0
+    var showRecoveredJson: String = "{\"success\":true,\"message\":{\"secret\":\"test-secret\"}}"
+    val showRecoveredCalls = mutableListOf<String>()
+    val showLocalSecretCalls = mutableListOf<String>()
 
     override fun generateMasterKey(): String = "master-key"
     override fun initAppManager(masterKey: String): String {
@@ -199,7 +202,14 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
     override fun acceptRecover(claimId: String): String = "{}"
     override fun declineRecover(claimId: String): String = "{}"
     override fun sendDeclineCompletion(claimId: String): String = "{}"
-    override fun showRecovered(secretId: String): String = "{}"
+    override fun showRecovered(claimId: String): String {
+        showRecoveredCalls += claimId
+        return showRecoveredJson
+    }
+    override fun showLocalSecret(secretId: String): String {
+        showLocalSecretCalls += secretId
+        return showRecoveredJson
+    }
 }
 
 class FakeAlertCoordinator : AlertCoordinatorInterface {

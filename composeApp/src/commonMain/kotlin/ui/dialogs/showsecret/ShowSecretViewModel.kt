@@ -62,7 +62,7 @@ class ShowSecretViewModel(
                     if (event.forceRecovery) {
                         findClaim(event.secretName)
                     } else {
-                        showRecoveredSecret(event.secretName)
+                        showRecoveredSecret(event.secretName, event.claimId)
                         socketHandler.resumeRefreshes()
                     }
                 }
@@ -72,9 +72,13 @@ class ShowSecretViewModel(
                         logger.log(LogTag.ShowSecretVM.Message.IgnoringAutoRecovery, event.secretId, success = true)
                         return
                     }
-                    logger.log(LogTag.ShowSecretVM.Message.SecretIdMatches, event.secretId, success = true)
+                    logger.log(
+                        LogTag.ShowSecretVM.Message.SecretIdMatches,
+                        "secretId=${event.secretId} claimId=${event.claimId}",
+                        success = true,
+                    )
                     if (event.secretId == currentSecretName) {
-                        showRecoveredSecret(event.secretId)
+                        showRecoveredSecret(event.secretId, event.claimId)
                     }
                 }
 
@@ -135,7 +139,7 @@ class ShowSecretViewModel(
                             "resuming accepted claimId=${existingClaim.claimId}",
                             success = true,
                         )
-                        showRecoveredSecret(secretName)
+                        showRecoveredSecret(secretName, existingClaim?.claimId)
                         socketHandler.resumeRefreshes()
                     }
 
@@ -167,13 +171,13 @@ class ShowSecretViewModel(
         socketHandler.resumeRefreshes()
     }
 
-    private fun showRecoveredSecret(secretId: String) {
+    private fun showRecoveredSecret(secretId: String, claimId: String? = null) {
         _isLoading.value = true
         logger.log(LogTag.ShowSecretVM.Message.StartShowingRecovered, success = true)
         viewModelScope.launch {
             try {
                 val recoveredSecretValue = withContext(Dispatchers.IO) {
-                    metaSecretAppManager.showRecovered(SecretModel(secretId, null))
+                    metaSecretAppManager.showRecovered(SecretModel(secretId, null, claimId))
                 }
                 if (!recoveredSecretValue.isNullOrBlank()) {
                     val parsed = parseSecretValue(recoveredSecretValue)
@@ -206,8 +210,12 @@ sealed class ShowSecretEvents : CommonViewModelEventsInterface {
     data class ShowSecret(
         val secretName: String,
         val forceRecovery: Boolean = true,
+        val claimId: String? = null,
     ) : ShowSecretEvents()
-    data class SecretReadyToShow(val secretId: String) : ShowSecretEvents()
+    data class SecretReadyToShow(
+        val secretId: String,
+        val claimId: String,
+    ) : ShowSecretEvents()
     data object HideSecret : ShowSecretEvents()
 }
 

@@ -590,10 +590,17 @@ public func sendDeclineCompletion(claimId: String) -> String  {
     )
 })
 }
-public func showRecovered(secretId: String) -> String  {
+public func showLocalSecret(secretId: String) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_show_local_secret(
+        FfiConverterString.lower(secretId),$0
+    )
+})
+}
+public func showRecovered(claimId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_show_recovered(
-        FfiConverterString.lower(secretId),$0
+        FfiConverterString.lower(claimId),$0
     )
 })
 }
@@ -690,7 +697,10 @@ private let initializationResult: InitializationResult = {
     if (uniffi_metasecret_mobile_checksum_func_send_decline_completion() != 48010) {
         return InitializationResult.apiChecksumMismatch
     }
-    if (uniffi_metasecret_mobile_checksum_func_show_recovered() != 48134) {
+    if (uniffi_metasecret_mobile_checksum_func_show_local_secret() != 48841) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_metasecret_mobile_checksum_func_show_recovered() != 57592) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_sign_up() != 56874) {
