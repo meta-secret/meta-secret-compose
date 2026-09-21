@@ -56,6 +56,10 @@ import Security
         return resultString
     }
 
+    @objc public func stateEventsAuthToken(vaultName: String) -> String {
+        uniffiMobileStateEventsAuthToken(vaultName: vaultName)
+    }
+
     @objc public func generateUserCreds(vaultName: String) -> String {
         let resultString = uniffiMobileGenerateUserCreds(vaultName: vaultName)
         return resultString

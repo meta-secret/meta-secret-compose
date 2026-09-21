@@ -73,6 +73,21 @@ class MetaSecretCoreServiceIos(
     }
 
     @OptIn(ExperimentalForeignApi::class)
+    override fun stateEventsAuthToken(vaultName: String): String {
+        val result = swiftBridge.stateEventsAuthTokenWithVaultName(vaultName)
+        if (!result.contains("\"success\":true")) {
+            throw IllegalStateException("Failed to obtain state events authorization: $result")
+        }
+        val marker = "\"message\":\""
+        val start = result.indexOf(marker)
+        if (start < 0) throw IllegalStateException("State events authorization token is missing")
+        val tokenStart = start + marker.length
+        val tokenEnd = result.indexOf('"', tokenStart)
+        if (tokenEnd < 0) throw IllegalStateException("State events authorization token is malformed")
+        return result.substring(tokenStart, tokenEnd)
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
     override fun generateUserCreds(vaultName: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGenerateUserCreds, success = true)

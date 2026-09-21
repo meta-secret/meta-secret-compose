@@ -66,6 +66,20 @@ validation (for example, reject an empty form field) and invoke platform UI
 such as biometry or navigation. A client may choose presentation (for example
 `Recover` versus `Show`) only from the status returned by Core.
 
+### Authenticated state-events stream
+
+- `MetaSecretSocketClient` consumes `/state-events` as a signal-only SSE stream;
+  it never treats SSE data as canonical application state.
+- Core supplies a short-lived, signed subscription credential. Android, iOS, and
+  Web send it as `Authorization: Bearer ...` and obtain a fresh credential for
+  every reconnect.
+- The client-side `vaultName` and `deviceId` are connection bookkeeping only. The
+  server authorizes the signer from the credential and current Vault membership.
+- On `state_invalidated`, current members call Core `getAppState`; they do not
+  add polling loops or artificial sleeps to compensate for reconnects. A
+  pending joiner is not yet a member and may keep the existing status-refresh
+  fallback until membership is granted.
+
 ---
 
 ## 📋 Categories (Detailed Files)
@@ -194,7 +208,8 @@ such as biometry or navigation. A client may choose presentation (for example
 - ✅ DB file deleted on clearAll (including files from old master keys)
 - ✅ Biometry or PIN for operations
 - ✅ Constraint validation before coding
+- ✅ Authenticated state-event subscriptions with Core as the state source of truth
 
 ---
 
-Last updated: 2026-09-20
+Last updated: 2026-09-21

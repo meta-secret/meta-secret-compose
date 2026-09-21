@@ -35,6 +35,7 @@ interface MetaSecretSocketClient {
 data class MetaSecretSocketSubscription(
     val vaultName: String,
     val deviceId: String,
+    val authorizationTokenProvider: suspend () -> String,
 )
 
 sealed class MetaSecretSocketEvent {
@@ -91,7 +92,7 @@ class MetaSecretStateEventsClient(
         disconnect()
         connectedVaultName = nextSubscription.vaultName
         streamJob = scope.launch {
-            streamStateEvents(nextSubscription.vaultName)
+            streamStateEvents(nextSubscription)
         }
     }
 
@@ -105,11 +106,11 @@ class MetaSecretStateEventsClient(
         }
     }
 
-    private suspend fun streamStateEvents(vaultName: String) {
+    private suspend fun streamStateEvents(subscription: MetaSecretSocketSubscription) {
         var reconnectDelayMs = RECONNECT_DELAY_MS
         while (true) {
             try {
-                openStateEventsStream(vaultName)
+                openStateEventsStream(subscription)
                 reconnectDelayMs = RECONNECT_DELAY_MS
             } catch (e: CancellationException) {
                 throw e
@@ -128,7 +129,8 @@ class MetaSecretStateEventsClient(
         }
     }
 
-    private suspend fun openStateEventsStream(vaultName: String) {
+    private suspend fun openStateEventsStream(subscription: MetaSecretSocketSubscription) {
+        val vaultName = subscription.vaultName
         val url = URLBuilder(stateEventsUrl).apply {
             parameters["vaultName"] = vaultName
         }.buildString()
@@ -136,6 +138,7 @@ class MetaSecretStateEventsClient(
         httpClient.prepareGet(url) {
             header(HttpHeaders.Accept, "text/event-stream")
             header(HttpHeaders.CacheControl, "no-cache")
+            header(HttpHeaders.Authorization, "Bearer ${subscription.authorizationTokenProvider()}")
         }.execute { response ->
             if (!response.status.isSuccess()) {
                 _events.emit(MetaSecretSocketEvent.Error("state events HTTP ${response.status.value}"))

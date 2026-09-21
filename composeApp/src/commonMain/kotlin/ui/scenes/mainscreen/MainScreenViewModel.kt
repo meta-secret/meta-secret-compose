@@ -20,7 +20,6 @@ import core.BiometricAuthenticatorInterface
 import core.AlertCoordinatorInterface
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
-import models.appInternalModels.ClaimModel
 import models.appInternalModels.RestoreData
 import ui.TabStateHolder
 import ui.scenes.common.CommonViewModel
@@ -181,25 +180,6 @@ class MainScreenViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             socketHandler.socketActionType.collect { actionType ->
                 when (actionType) {
-                    is SocketActionModel.READY_TO_RECOVER -> {
-                        val restoreData = actionType.restoreData
-                        logger.log(LogTag.MainVM.Message.ReadyToRecoverSignal, "$restoreData", success = true)
-
-                        val secrets = metaSecretAppManager.getSecretsFromVault(true)
-                        val existingSecretsIds = secrets?.map { it.name }?.toSet()
-                        logger.log(LogTag.MainVM.Message.ReadyToRecoverExistingSecrets, "$existingSecretsIds", success = true)
-
-                        val secretExists = existingSecretsIds?.contains(restoreData.secretId) == true
-                        if (!secretExists) {
-                            logger.log(LogTag.MainVM.Message.ReadyToRecoverNothing, success = true)
-                            return@collect
-                        }
-
-                        withContext(Dispatchers.Main) {
-                            logger.log(LogTag.MainVM.Message.RecoveryAlertShown, "claimId=${restoreData.claimId}", success = true)
-                            alertCoordinator.showRecoveryRequest(restoreData)
-                        }
-                    }
                     is SocketActionModel.RECOVER_ACCEPTED -> {
                         _secretIdToShow.value = actionType.secretId
                         logger.log(LogTag.MainVM.Message.ReadyToShowSecret,

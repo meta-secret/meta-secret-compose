@@ -2,7 +2,7 @@
 
 Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, user) uses these terms.
 
-**Last updated:** 2026-09-20
+**Last updated:** 2026-09-21
 **Maintenance:** Monthly or when codebase grows significantly
 
 ---
@@ -16,7 +16,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **VaultSummary** | Compact view of a vault: name, secret count, member info | UI display | Devices/Profile screen summary |
 | **VaultFullInfo** | Sealed class representing vault in three states: `NotExists`, `Outsider`, `Member` | State machine | `AppStateModel.kt` |
 | **VaultMember** | Pairing of a `UserData` member with a `VaultData` | Membership | Inside `VaultFullInfo.Member` |
-| **VaultEvents** | Pending vault requests (join clusters) and state updates | Polling | `SocketActionModel` |
+| **VaultEvents** | Pending vault requests (join clusters) and state updates | State events / refresh | `SocketActionModel` |
 | **VaultRequest** | Request to join a cluster, with join request details | Membership flow | `AppStateModel.kt` |
 | **VaultAvailability** | Enum: `AVAILABLE` or `UNAVAILABLE` — whether vault can be joined | Sign-in check | `SignInScreenViewModel` |
 | **Secret** | Core entity: an encrypted piece of data with `SecretId` and `SecretName` | Core feature | `KeyValueStorageInterface.kt` |
@@ -39,6 +39,8 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **E2E (End-to-End)** | Encryption from sender to receiver; server never has access to plaintext | Feature property | All message/secret flows |
 | **MVVM** | Architecture pattern: Model–View–ViewModel used throughout the app | Technical | All `*ViewModel` classes |
 | **Coordinator** | Navigation controller managing screen transitions on iOS and Android | Technical | `AlertCoordinator`, `NotificationCoordinator` |
+| **State Events Subscription** | Short-lived Core-signed credential binding this device to a Vault for the state-invalidation stream | Synchronization auth | Sent as an HTTP Bearer token |
+| **State Invalidation** | Minimal server signal that canonical Vault state changed; the client refreshes through Core | Synchronization | `state_invalidated` SSE event |
 
 ---
 
@@ -113,13 +115,15 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 
 ---
 
-## 6. Socket & Polling
+## 6. State Events & Reconnect
 
 | Term | Definition | Context | Example |
 |------|-----------|---------|---------|
-| **SocketHandler** | Manages polling loop and emits `SocketActionModel` events to ViewModels | Core service | `MetaSecretSocketHandler.kt` |
+| **SocketHandler** | Manages the authenticated state-events stream and emits `SocketActionModel` events to ViewModels | Core service | `MetaSecretSocketHandler.kt` |
 | **SocketActionModel** | Sealed class of socket events: `NONE`, `ASK_TO_JOIN`, `JOIN_REQUEST_ACCEPTED/DECLINED/PENDING`, `UPDATE_STATE`, `READY_TO_RECOVER`, `RECOVER_SENT/DECLINED`, `DISMISS_RECOVERY_REQUEST` | Event bus | `SocketActionModel.kt` |
-| **SocketRequestModel** | Enum of polling modes: `GET_STATE`, `WAIT_FOR_JOIN_RESPONSE`, `SHOW_SECRET`, `WAIT_FOR_RECOVER_REQUEST` | Polling config | `SocketRequestModel.kt` |
+| **SocketRequestModel** | Enum of state-following modes: `GET_STATE`, `WAIT_FOR_JOIN_RESPONSE`, `SHOW_SECRET`, `WAIT_FOR_RECOVER_REQUEST` | Refresh config | `SocketRequestModel.kt` |
+| **State Events Stream** | Authenticated Server-Sent Events connection used only as an invalidation signal; it is not a state or Secret transport | Runtime | `/state-events?vaultName=...` |
+| **Reconnect Credential** | Fresh Bearer credential requested from Core for each state-events reconnect | Runtime security | Prevents stale or cross-Vault subscriptions |
 
 ---
 
@@ -164,7 +168,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **KeyChainManager** | Secure storage for sensitive credentials. iOS: Keychain (`kSecAttrSynchronizable: false`, no iCloud sync, survives reinstall). Android: AES-256-GCM encrypted files in `noBackupFilesDir`, key in Android Keystore (cleared on reinstall). `clearAll(isCleanDB=true)` also deletes all `meta-secret-*.db` files. | Security | `KeyChainInterface.kt` |
 | **BiometricAuthenticator** | Platform-specific biometric (Face ID / fingerprint) handler | Security | `BiometricAuthenticatorInterface.kt` |
 | **VaultStatsProvider** | Computes vault statistics (member count, secret count, device counts) | UI data | `VaultStatsProvider.kt` |
-| **AppStateCacheProvider** | Caches the most recent `AppStateModel` to avoid redundant polling | Performance | `AppStateCacheProvider.kt` |
+| **AppStateCacheProvider** | Caches the most recent `AppStateModel` to avoid redundant state refreshes | Performance | `AppStateCacheProvider.kt` |
 | **ErrorMapper** | Maps raw exceptions to typed `AppError` values | Error handling | `ErrorMapper.kt` |
 
 ---
@@ -268,7 +272,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 
 | Term | Definition | Context | Example |
 |------|-----------|---------|---------|
-| **Sync** | Retrieve latest state (secrets, devices, events) from the server | Feature | "Sync" triggered by polling |
+| **Sync** | Retrieve latest state (secrets, devices, events) from the server | Feature | "Sync" triggered by a state event or lifecycle transition |
 | **Block Contact** | Prevent a specific user from joining the vault | Feature | Settings → Blocked Users |
 | **Device Trust** | Verification that a device's public key matches the user's identity | Security | First-time setup |
 | **Fingerprint** | Short hash of a public key used for out-of-band identity verification | Security | "Verify fingerprint over video call" |
@@ -330,7 +334,7 @@ AppState (interface)
 MetaSecretAppManager
   ├── MetaSecretCore (Rust FFI → split/recover/keys)
   ├── MetaSecretStateResolver (API → AppState)
-  ├── MetaSecretSocketHandler (polling → SocketActionModel)
+  ├── MetaSecretSocketHandler (state events → SocketActionModel)
   ├── AlertCoordinator (join/recovery alerts)
   ├── NotificationCoordinator (in-app banners)
   ├── KeyValueStorage (local persistence)
@@ -354,7 +358,7 @@ MetaSecretAppManager
 | **Decline recovery** | `declineRecover(claimId)` | Recovery: refuse to release share |
 | **Show recovered** | `showRecovered(secretId)` | Recovery: reveal reassembled secret |
 | **Find claim** | `findClaim(secretId)` | Recovery: locate the active claim |
-| **Get state** | `getAppState()` | Polling: fetch full state from Rust/server |
+| **Get state** | `getAppState()` | Canonical refresh after a state event or lifecycle transition |
 | **Check auth** | `checkAuth()` | Startup: verify biometric auth status |
 | **Init manager** | `initAppManager(masterKey)` | Startup: bootstrap the app manager |
 

@@ -11,6 +11,7 @@ public func uniffiMobileInitAndroidWithDevice(masterKey: String, deviceName: Str
     initAndroidWithDevice(masterKey: masterKey, deviceName: deviceName, deviceType: deviceType)
 }
 public func uniffiMobileGetState() -> String { getState() }
+public func uniffiMobileStateEventsAuthToken(vaultName: String) -> String { stateEventsAuthToken(vaultName: vaultName) }
 public func uniffiMobileGenerateUserCreds(vaultName: String) -> String { generateUserCreds(vaultName: vaultName) }
 public func uniffiMobileSignUp() -> String { signUp() }
 public func uniffiMobileUpdateMembership(candidate: String, actionUpdate: String) -> String {

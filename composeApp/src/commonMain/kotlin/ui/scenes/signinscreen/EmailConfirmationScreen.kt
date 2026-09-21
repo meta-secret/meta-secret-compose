@@ -292,7 +292,9 @@ class EmailConfirmationScreen(
                                     action = {},
                                     text = appString(AppString.joining),
                                     isEnabled = false,
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("email-confirmation-joining")
                                 )
                             }
                             is EmailConfirmationScreenState.VaultExists -> {
