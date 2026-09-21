@@ -189,6 +189,7 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
         getAppStateCalls += 1
         return appStateJson
     }
+    override fun stateEventsAuthToken(vaultName: String): String = "test-token"
     override fun generateUserCreds(vaultName: String): String = vaultName
     override fun signUp(): String = "{}"
     override fun updateMembership(candidate: UserData, actionUpdate: String): String = "{}"

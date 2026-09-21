@@ -25,6 +25,10 @@ final class CaseOneJoinFromIosUITest: XCTestCase {
         tap("email-confirmation-join", timeout: 60)
         enterSimulatorPasscodeIfNeeded()
 
+        // The Compose click handler launches signUp() asynchronously. Wait for
+        // its terminal pending state before notifying the orchestrator; emitting
+        // the marker immediately after tap creates a race with the server sync.
+        waitForVisible(identifier: "email-confirmation-joining", timeout: 180)
         print("E2E: IOS_JOIN_REQUEST_SENT")
 
         waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
@@ -60,7 +64,7 @@ final class CaseOneJoinFromIosUITest: XCTestCase {
             print("E2E: IOS_RECOVERY_REQUEST_ALERT_\(cycle)")
             if approvalCycles.contains(cycle) {
                 waitForApproval(platform: "ios", cycle: cycle)
-                tap("open-recovery-request-\(secretName)")
+                tapRecoveryRequest(secretName: secretName)
                 waitForVisible(identifier: "alert-recovery-request", timeout: 30)
                 tap("alert-recovery-request-accept")
                 enterSimulatorPasscodeIfNeeded()
@@ -122,6 +126,38 @@ final class CaseOneJoinFromIosUITest: XCTestCase {
             waitUntilHittable(element, timeout: 10)
         }
         element.tap()
+    }
+
+    private func tapRecoveryRequest(secretName: String) {
+        let tagged = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
+        if tagged.waitForExistence(timeout: 30) {
+            if !tagged.isHittable {
+                dismissKeyboardIfNeeded()
+                waitUntilHittable(tagged, timeout: 10)
+            }
+            tagged.tap()
+            return
+        }
+
+        // Compose's iOS accessibility bridge can expose the Material button
+        // by its localized label while omitting the testTag from the merged
+        // semantics tree. Keep the E2E action equivalent and print the tree
+        // so a future bridge regression is diagnosable from CI logs.
+        let localized = ["Open request", "Открыть запрос"]
+        for label in localized {
+            let button = app.buttons[label]
+            if button.waitForExistence(timeout: 2) {
+                if !button.isHittable {
+                    dismissKeyboardIfNeeded()
+                    waitUntilHittable(button, timeout: 10)
+                }
+                button.tap()
+                return
+            }
+        }
+
+        print("E2E: iOS accessibility tree while opening recovery request:\n\(app.debugDescription)")
+        XCTFail("open-recovery-request-\(secretName) was not visible")
     }
 
     private func waitForVisible(

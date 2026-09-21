@@ -44,10 +44,6 @@ sealed class LogTag(val displayName: String) {
             override val tag: MainVM = MainVM
             
             object FollowResponsibleToAcceptJoin : Message("Start to follow RESPONSIBLE_TO_ACCEPT_JOIN")
-            object ReadyToRecoverSignal : Message("READY_TO_RECOVER signal has been caught")
-            object ReadyToRecoverExistingSecrets : Message("READY_TO_RECOVER existingSecretsIds")
-            object ReadyToRecoverNewRequests : Message("READY_TO_RECOVER newRequests")
-            object ReadyToRecoverNothing : Message("READY_TO_RECOVER nothing to handle")
             object ReadyToShowSecret : Message("READY_TO_SHOW secret by secretId")
             object ShowNextRecoverPrompt : Message("showNextRecoverPrompt")
             object RecoverDeclined : Message("Recover is declined")

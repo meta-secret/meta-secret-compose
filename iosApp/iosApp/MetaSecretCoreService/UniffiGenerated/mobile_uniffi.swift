@@ -611,6 +611,13 @@ public func splitSecret(secretId: String, secret: String) -> String  {
     )
 })
 }
+public func stateEventsAuthToken(vaultName: String) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_state_events_auth_token(
+        FfiConverterString.lower(vaultName),$0
+    )
+})
+}
 public func updateMembership(candidate: String, actionUpdate: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_update_membership(
@@ -690,6 +697,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_split_secret() != 48341) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_metasecret_mobile_checksum_func_state_events_auth_token() != 46662) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_update_membership() != 58489) {
