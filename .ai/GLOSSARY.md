@@ -70,6 +70,8 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **DeviceStatus** | String-valued enum for device-level status | Devices list | `AppStateModel.kt` |
 | **DeviceCellModel** | Display model for a single device row in the UI | `DevicesScreen` | `DeviceCellModel.kt` |
 | **Device Limit** | Core-enforced maximum of 3 devices in one Vault | Membership | A fourth-device join returns an error |
+| **Device Removal** | Core-authorized transition of a member to `Outsider/Declined`, invalidation of active Recovery claims, and resharing for remaining members | Vault operations | `3 → 2` needs another member's approval; `2 → 1` needs only local confirmation; self-removal is forbidden |
+| **Removal Offline Handling** | An offline target is reset to authorization after receiving `Outsider/Declined`; an offline approver leaves removal pending and no removal command is queued | Device removal | User retries after connectivity returns |
 | **DevicesQuantity** | Enum with associated amount — number of devices in a vault | Vault stats | `DevicesQuantity.kt` |
 | **ClientDeviceInfo** | Current device's own info used during registration | Sign-up | `ClientDeviceInfo.kt` |
 | **OpenBox** | Public key container with `dsaPk` (signing key) and `transportPk` (encryption key) | Cryptography | `AppStateModel.kt` |

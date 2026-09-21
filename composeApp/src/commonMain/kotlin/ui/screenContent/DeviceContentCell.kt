@@ -51,13 +51,18 @@ import models.appInternalModels.DeviceStatus
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import core.AppColors
+import core.ScreenMetricsProviderInterface
 import org.koin.compose.koinInject
+import ui.SwipeableItem
 
 @Composable
 fun DeviceContent(
     model: DeviceCellModel,
     currentDeviceId: String?,
-    onClick: ()-> Unit
+    screenMetricsProvider: ScreenMetricsProviderInterface,
+    isRemovalPending: Boolean = false,
+    onClick: ()-> Unit,
+    onRemoveRequested: () -> Unit = {},
 ) {
     val imageProvider: ImageProviderInterface = koinInject()
     val effectiveStatus = if (model.id == currentDeviceId) DeviceStatus.Current else model.status
@@ -66,19 +71,42 @@ fun DeviceContent(
         model.secretsCount in 2..4 -> appString(AppString.secrets_4)
         else -> appString(AppString.secret)
     }
-    // TODO: We don't have device deletion functionality. I'm gonna uncomment it later.
-//    SwipeableItem(
-//        itemsCount = model.devicesCount,
-//        buttonText = appString(AppString.removeDevice),
-//        isRevealed = false,
-//        screenMetricsProvider,
-//        action = {},
-//        onExpanded = { },
-//        onCollapsed = {},
-//        content = {
+    val canRemove = effectiveStatus == DeviceStatus.Member && model.id != currentDeviceId
+    if (canRemove) {
+        SwipeableItem(
+            itemsCount = model.devicesCount,
+            buttonText = appString(AppString.removeDevice),
+            isRevealed = false,
+            screenMetricsProvider = screenMetricsProvider,
+            action = { onRemoveRequested() },
+            buttonTestTag = "remove-device-${model.id}",
+            content = {
+                DeviceRow(model, effectiveStatus, imageProvider, secretText, isRemovalPending, onClick)
+            },
+        )
+    } else {
+        DeviceRow(model, effectiveStatus, imageProvider, secretText, isRemovalPending, onClick)
+    }
+}
+
+@Composable
+private fun DeviceRow(
+    model: DeviceCellModel,
+    effectiveStatus: DeviceStatus,
+    imageProvider: ImageProviderInterface,
+    secretText: String,
+    isRemovalPending: Boolean,
+    onClick: () -> Unit,
+) {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    .testTag(if (effectiveStatus == DeviceStatus.Pending) "pending-device-row" else "device-row-${model.id}")
+                    .testTag(
+                        when {
+                            isRemovalPending -> "pending-removal-device-row"
+                            effectiveStatus == DeviceStatus.Pending -> "pending-device-row"
+                            else -> "device-row-${model.id}"
+                        },
+                    )
                     .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
                     .border(1.dp, Color.White.copy(alpha = 0.07f), RoundedCornerShape(14.dp))
                     .height(88.dp)
@@ -124,8 +152,6 @@ fun DeviceContent(
                     StatusBadge(status = effectiveStatus)
                 }
             }
-//        }
-//    )
 }
 
 private fun resolveDeviceIcon(category: DeviceUiCategory?): AppImage {

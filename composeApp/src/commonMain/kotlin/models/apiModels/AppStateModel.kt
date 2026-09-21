@@ -127,9 +127,16 @@ data class JoinClusterRequest(
     val candidate: UserData
 )
 
+@Serializable
+data class RemoveMemberRequest(
+    val sender: UserDataMember,
+    val target: UserDataMember,
+)
+
 @Serializable 
 data class VaultRequest(
-    val joinCluster: JoinClusterRequest? = null
+    val joinCluster: JoinClusterRequest? = null,
+    val removeMember: RemoveMemberRequest? = null,
 )
 
 @Serializable
@@ -148,6 +155,9 @@ data class VaultEvents(
     fun getJoinRequestsCount(): Int {
         return getJoinRequests().size
     }
+
+    fun getRemoveRequests(): List<RemoveMemberRequest> =
+        requests.mapNotNull { it.removeMember }
 }
 
 @Serializable

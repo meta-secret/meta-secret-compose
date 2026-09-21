@@ -73,6 +73,14 @@ import Security
         uniffiMobileUpdateMembership(candidate: candidate, actionUpdate: actionUpdate)
     }
 
+    @objc public func removeMember(_ targetDeviceId: String) -> String {
+        uniffiMobileRemoveMember(targetDeviceId: targetDeviceId)
+    }
+
+    @objc public func approveRemoveMember(_ targetDeviceId: String) -> String {
+        uniffiMobileApproveRemoveMember(targetDeviceId: targetDeviceId)
+    }
+
     @objc public func splitSecret(_ secretName: String, _ secret: String) -> String {
         uniffiMobileSplitSecret(secretId: secretName, secret: secret)
     }

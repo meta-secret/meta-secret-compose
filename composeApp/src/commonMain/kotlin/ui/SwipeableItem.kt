@@ -32,6 +32,7 @@ fun SwipeableItem(
     action: (Boolean) -> Unit,
     onExpanded: () -> Unit = {},
     onCollapsed: () -> Unit = {},
+    buttonTestTag: String? = null,
     content: @Composable () -> Unit,
 ) {
     var deleteButtonSize by remember {
@@ -56,7 +57,8 @@ fun SwipeableItem(
             RemoveButton(
                 screenMetricsProvider,
                 {action(true)},
-                buttonText
+                buttonText,
+                testTag = buttonTestTag,
             )
         }
         if (itemsCount != 1) {  // Single device swipe behaviour

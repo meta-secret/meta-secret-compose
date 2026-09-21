@@ -122,10 +122,10 @@ such as biometry or navigation. A client may choose presentation (for example
 | 21 | Join only after approval (biometric) | Operations |
 | 22 | One approval = sufficient for join | Operations |
 | 23 | Device can't remove itself | Operations |
-| 24 | Can't remove last device | Operations |
-| 25 | One approval = sufficient for remove | Operations |
-| 26 | Resharing before removal | Operations |
-| 27 | Failed resharing blocks removal | Operations |
+| 24 | A device cannot remove itself; `2 → 1` is allowed after local confirmation and `1 → 0` is forbidden | Operations |
+| 25 | `3 → 2` removal requires approval by a different current member; `2 → 1` requires no remote approval | Operations |
+| 26 | Resharing after removal update; target receives no new share | Operations |
+| 27 | Failed resharing is retried by Core; no target share is sent | Operations |
 | 28 | Compromised device must be removed | Operations |
 | 29 | Stolen unlocked device = compromised | Operations |
 | 30 | Biometry = primary confirmation | Biometry & Auth |
@@ -191,7 +191,7 @@ such as biometry or navigation. A client may choose presentation (for example
 - ❌ Bypassing constraint validation (Stage 3.5)
 - ❌ Deviations from the k=1 / k=1 / k=2 device-count policy
 - ❌ Device removing itself
-- ❌ Removing last device
+- ❌ Removing the only remaining device (`1 → 0`)
 
 **Recovery decision ordering:**
 - ✅ If the first server-processed receiver decision is `DECLINE`, remaining pending receivers become terminally declined and the sender must not reveal the secret.
@@ -204,13 +204,14 @@ such as biometry or navigation. A client may choose presentation (for example
 - ❌ Storing DMK in external storage or plaintext
 
 **Always require:**
-- ✅ Approval for join/remove
-- ✅ Resharing before removal
+- ✅ Approval for join and `3 → 2` removal; local confirmation for `2 → 1`
+- ✅ Resharing after a removal update; target receives no new share
 - ✅ DMK saved to hardware-backed secure storage (Keychain / Android Keystore)
 - ✅ DB file deleted on clearAll (including files from old master keys)
 - ✅ Biometry or PIN for operations
 - ✅ Constraint validation before coding
 - ✅ Authenticated state-event subscriptions with Core as the state source of truth
+- ✅ No offline removal queue; a failed/offline removal is retried explicitly by the user
 
 ---
 

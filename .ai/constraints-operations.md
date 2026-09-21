@@ -8,7 +8,10 @@ See CONSTRAINTS.md for quick reference. This file has full details.
 
 ## ⚠️ CRITICAL: Approval Required for All State-Changing Operations
 
-**Rule:** All vault state-changing operations require biometric approval from OTHER device(s).
+**Rule:** Vault state-changing operations use Core authorization. JOIN and `3 → 2`
+removal require biometric approval from another current device; `2 → 1`
+removal uses local confirmation/biometry because the target cannot approve its
+own removal.
 
 ### Operations Requiring Approval:
 
@@ -34,15 +37,16 @@ See CONSTRAINTS.md for quick reference. This file has full details.
    - Initiator: Device owner requesting removal of another device
    - Approval source: Other remaining device(s) in vault
    - Approval method: Biometric (Face ID, Touch ID) or PIN fallback
-   - Quorum: For 3 devices: 1 approval from any other device
-            For 2 devices: BLOCKED by UI (cannot remove, would leave only 1 device)
-            For 1 device: Cannot delete (last device)
-   - Flow: User taps "Remove Device" → App shows "Approval needed from another device" → Other device shows biometric prompt → User approves → Resharing proceeds → Device removed
+   - Quorum: For 3 devices: 1 approval from a different current member
+            For 2 devices: no remote approval; initiator confirms locally
+            For 1 device: Cannot delete itself
+   - Flow (`3 → 2`): User taps "Remove Device" → App shows a pending request → another member authenticates → Core marks the target `Outsider/Declined` and redistributes fresh shares only to the two remaining members
+   - Flow (`2 → 1`): User confirms locally with biometry/PIN → Core removes the other member without remote approval
    - Why: Ensures all changes are consensual and witnessed
 
 ### Common Pattern:
 ```
-All three operations follow same flow:
+The join and three-device removal operations follow this flow:
   Action initiated on Device A
     ↓
   Device B receives approval request
@@ -167,34 +171,35 @@ Device Y (approver):
   ↓
 User approves via biometry/PIN on Device Y
   ↓
-Resharing BEFORE removal:
-  Same as join resharing
-  Generate new shares for the remaining devices (only supported transitions are
-  3→2 and 2→1 where the latter is blocked by the existing removal rule)
-  Distribute to remaining devices
-  ✓ Verify success
-  ↓
-If resharing failed:
-  ❌ Block removal
-  Return to vault state before removal attempt
-  ↓
-If resharing succeeded:
-  ✅ Remove device from vault
-  Device X no longer member
+  Core accepts the signed update and atomically changes Device X to
+  `Outsider/Declined`.
+  For `3 → 2`, the initiator and approver combine their existing shares and
+  Core redistributes a fresh `k=1, n=2` set only to the remaining devices.
+  For `2 → 1`, Core keeps the initiator's local full share and sends nothing.
+  Device X receives no new share.
 ```
 
-**Critical rule:** Resharing MUST succeed before device is removed.
+**Critical rule:** Removal must never send a new share to the target. After the
+signed removal update is synchronized, Core retries the required resharing until
+the remaining devices have the fresh two-member state.
+
+If the target device is offline, Core may complete the removal and marks the
+target `Outsider/Declined`; on reconnect that device is reset to authorization.
+If a required approver is offline, the request remains pending. Compose shows a
+network error and requires an explicit retry; no offline removal command is
+queued or replayed automatically.
 
 ---
 
 ## 4. Last Device Protection
 
-**Rule:** Cannot remove last device
+**Rule:** A device cannot remove itself. Therefore `1 → 0` is forbidden, while
+`2 → 1` is allowed after local confirmation.
 
 ```
-if (vault.device_count == 1) {
+if (vault.device_count == 1 || target_device_id == current_device_id) {
   removal_request → DENIED
-  reason: "Last device cannot be removed"
+  reason: "A device cannot remove itself"
 }
 ```
 
@@ -212,7 +217,8 @@ if (vault.device_count == 1) {
 Operation | Who approves | How | Sufficient?
 -----------|-------------|-----|------------
 Join device | Any existing member | Biometry/PIN | ✅ Yes (1 approval)
-Remove device | Another device | Biometry/PIN | ✅ Yes (1 approval)
+Remove device (`3 → 2`) | Another current device | Biometry/PIN | ✅ Yes (1 approval)
+Remove device (`2 → 1`) | Initiator locally | Biometry/PIN | ✅ Yes (no remote approval)
 Recover secret* | Remote device | Biometry/PIN | ✅ Yes (1 approval)
 
 *Only if current device doesn't have enough shares
@@ -254,23 +260,24 @@ Recovery:
 Step 1: Initiate removal from Device Y
   User confirms removal on Device Y (biometry)
   ↓
-Step 2: Resharing (generates NEW shares for all)
-  Old share on Device X becomes INVALID
-  Device 1, Device 2, ... get NEW shares
+Step 2: Removal update and resharing
+  Device X becomes `Outsider/Declined`
+  The initiator combines its share with the encrypted approver share
+  Core generates NEW shares only for the remaining devices
   ↓
 Step 3: Verify resharing success
   All other devices confirm they have new shares
   ↓
-Step 4: Remove Device X from vault
-  Device X formally removed
-  Its old share is useless (doesn't match new polynomial)
+Step 4: Finish removal state
+  Device X receives no new share and resets on reconnect
 ```
 
 **After removal:**
-- Device X still has OLD share from before removal
-- But it's cryptographically useless
-- Even if attacker extracts it: cannot recover secrets
-- Secrets now protected by NEW shares on trusted devices
+- Device X receives no new share and is `Outsider/Declined`.
+- During a retry window, the two remaining devices may still hold the old
+  2-of-3 shares; Core replaces them with fresh `k=1,n=2` shares after it has
+  reconstructed the Secret.
+- The removed device cannot participate in a new recovery or resharing.
 
 ---
 
@@ -355,11 +362,11 @@ Planning a remove feature? Check:
 
 - [ ] Only other devices can approve? (Can't self-remove)
 - [ ] Last device protected? (Cannot remove if count == 1)
-- [ ] Resharing happens BEFORE removal?
-- [ ] If resharing fails, removal blocked?
+- [ ] Membership update and resharing are handled by Core as one operation?
+- [ ] If resharing fails, the operation returns an error and is retried explicitly?
 - [ ] Old shares become invalid after resharing?
 - [ ] Compromised device removal = resharing + removal?
-- [ ] Offline device blocks removal? (Yes, need to reach it for resharing)
+- [ ] Offline target is reset on reconnect; no removal command is queued
 
 ---
 

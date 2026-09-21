@@ -196,6 +196,8 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
     override fun generateUserCreds(vaultName: String): String = vaultName
     override fun signUp(): String = "{}"
     override fun updateMembership(candidate: UserData, actionUpdate: String): String = "{}"
+    override fun removeMember(targetDeviceId: String): String = "{}"
+    override fun approveRemoveMember(targetDeviceId: String): String = "{}"
     override fun splitSecret(secretName: String, secret: String): String = "{}"
     override fun findClaim(secretId: String): String = findClaimJson
     override fun recover(secretId: String): String = "{}"

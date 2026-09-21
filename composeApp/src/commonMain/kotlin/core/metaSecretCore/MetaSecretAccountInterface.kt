@@ -10,4 +10,6 @@ interface MetaSecretAccountInterface {
     fun generateUserCreds(vaultName: String): String
     fun signUp(): String
     fun updateMembership(candidate: UserData, actionUpdate: String): String
+    fun removeMember(targetDeviceId: String): String
+    fun approveRemoveMember(targetDeviceId: String): String
 }

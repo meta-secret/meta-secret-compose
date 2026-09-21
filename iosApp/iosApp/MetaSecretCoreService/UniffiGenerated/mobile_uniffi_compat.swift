@@ -17,6 +17,12 @@ public func uniffiMobileSignUp() -> String { signUp() }
 public func uniffiMobileUpdateMembership(candidate: String, actionUpdate: String) -> String {
     updateMembership(candidate: candidate, actionUpdate: actionUpdate)
 }
+public func uniffiMobileRemoveMember(targetDeviceId: String) -> String {
+    removeMember(targetDeviceId: targetDeviceId)
+}
+public func uniffiMobileApproveRemoveMember(targetDeviceId: String) -> String {
+    approveRemoveMember(targetDeviceId: targetDeviceId)
+}
 public func uniffiMobileSplitSecret(secretId: String, secret: String) -> String {
     splitSecret(secretId: secretId, secret: secret)
 }

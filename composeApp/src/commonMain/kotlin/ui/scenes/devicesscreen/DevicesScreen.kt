@@ -38,6 +38,8 @@ import ui.dialogs.adddevice.AddingDevice
 import ui.dialogs.adddevice.PopUpDevice
 import ui.screenContent.CommonBackground
 import ui.screenContent.DeviceContent
+import ui.dialogs.YesNoDialog
+import core.appString
 
 class DevicesScreen : Screen {
     @Composable
@@ -45,9 +47,11 @@ class DevicesScreen : Screen {
         val viewModel: DevicesScreenViewModel = koinViewModel()
         val devices by viewModel.devicesList.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
+        val pendingRemovalTargets by viewModel.pendingRemovalTargets.collectAsState()
 
         var isDialogVisible by remember { mutableStateOf(false) }
         var isMainDialogVisible by remember { mutableStateOf(false) }
+        var removalTarget by remember { mutableStateOf<String?>(null) }
         
         LaunchedEffect(Unit) {
             viewModel.handle(DeviceViewEvents.OnAppear)
@@ -65,16 +69,40 @@ class DevicesScreen : Screen {
                         DeviceContent(
                             device,
                             viewModel.currentDeviceId,
+                            viewModel.screenMetricsProvider,
+                            isRemovalPending = pendingRemovalTargets.contains(device.id),
                             onClick = {
-                                if (device.status == DeviceStatus.Pending || device.status == DeviceStatus.Declined) {
+                                if (pendingRemovalTargets.contains(device.id)) {
+                                    removalTarget = device.id
+                                } else if (device.status == DeviceStatus.Pending || device.status == DeviceStatus.Declined) {
                                     viewModel.handle(DeviceViewEvents.SelectDevice(device.id))
                                 }
-                            }
+                            },
+                            onRemoveRequested = { removalTarget = device.id },
                         )
                     }
                 }
             }
         }
+
+        val selectedRemoval = devices.firstOrNull { it.id == removalTarget }
+        YesNoDialog(
+            title = selectedRemoval?.let { "${appString(AppString.removeDevice)} ${it.deviceName}?" }
+                ?: appString(AppString.removeDevice),
+            isVisible = selectedRemoval != null,
+            testTag = "remove-device-dialog",
+            onDismiss = { confirmed ->
+                val target = removalTarget
+                removalTarget = null
+                if (confirmed == true && target != null) {
+                    if (pendingRemovalTargets.contains(target)) {
+                        viewModel.handle(DeviceViewEvents.ApproveRemoval(target))
+                    } else {
+                        viewModel.handle(DeviceViewEvents.RemoveRequested(target))
+                    }
+                }
+            },
+        )
 
         if (isLoading) {
             Box(

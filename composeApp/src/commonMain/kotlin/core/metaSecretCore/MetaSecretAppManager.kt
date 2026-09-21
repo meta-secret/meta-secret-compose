@@ -265,6 +265,29 @@ class MetaSecretAppManager(
         }
     }
 
+    override suspend fun removeMember(targetDeviceId: String): CommonResponseModel? {
+        val response = withContext(Dispatchers.IO) {
+            metaSecretCore.removeMember(targetDeviceId)
+        }
+        return parseDeviceRemovalResponse(response)
+    }
+
+    override suspend fun approveRemoveMember(targetDeviceId: String): CommonResponseModel? {
+        val response = withContext(Dispatchers.IO) {
+            metaSecretCore.approveRemoveMember(targetDeviceId)
+        }
+        return parseDeviceRemovalResponse(response)
+    }
+
+    private fun parseDeviceRemovalResponse(response: String): CommonResponseModel? {
+        return try {
+            CommonResponseModel.fromJson(response)
+        } catch (e: Exception) {
+            logger.log(LogTag.AppManager.Message.FailedToParseUpdateCandidateJson, "${e.message}", success = false)
+            null
+        }
+    }
+
     override suspend fun getUserDataBy(deviceId: String): UserData? {
         if (!_isAppManagerInitialized) {
             return null
