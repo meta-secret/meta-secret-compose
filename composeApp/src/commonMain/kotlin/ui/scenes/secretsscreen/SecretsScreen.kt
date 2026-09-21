@@ -81,7 +81,7 @@ class SecretsScreen : Screen {
         var selectedPrimaryAction by remember { mutableStateOf(SecretPrimaryAction.Show) }
         val isRedirected by remember { mutableStateOf(false) }
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
-        val secretIdToShow by mainScreenViewModel.secretIdToShow.collectAsState()
+        val recoveredSecretTarget by mainScreenViewModel.recoveredSecretTarget.collectAsState()
         val pendingRecoveryRequests by mainScreenViewModel.pendingRecoveryRequests.collectAsState()
         
         val secretAddSuccessText = appString(AppString.secretAdded)
@@ -145,10 +145,11 @@ class SecretsScreen : Screen {
                             isShowSecretDialogVisible = true
                         },
                         onOpenRecoveryRequest = {
-                            val recoveryRequest = requestsForSecret.firstOrNull()
-                            if (recoveryRequest != null) {
-                                mainScreenViewModel.openRecoveryRequest(recoveryRequest)
-                            }
+                            // Resolve the current claim at click time. Do not
+                            // capture requestsForSecret: after a repeated
+                            // recovery the badge count can stay at one while
+                            // the claim id changes between recompositions.
+                            mainScreenViewModel.openRecoveryRequest(secret.secretName)
                         }
                     )
                 }
@@ -202,7 +203,7 @@ class SecretsScreen : Screen {
                     ShowSecret(
                         secret = secret,
                         primaryAction = selectedPrimaryAction,
-                        secretIdToShow = secretIdToShow,
+                        recoveredSecretTarget = recoveredSecretTarget,
                         onDismiss = {
                             isShowSecretDialogVisible = false
                         },

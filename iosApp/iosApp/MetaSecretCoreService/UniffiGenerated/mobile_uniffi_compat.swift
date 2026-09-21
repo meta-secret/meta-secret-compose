@@ -26,5 +26,6 @@ public func uniffiMobileRecover(secretId: String) -> String { recover(secretId: 
 public func uniffiMobileAcceptRecover(claimId: String) -> String { acceptRecover(claimId: claimId) }
 public func uniffiMobileDeclineRecover(claimId: String) -> String { declineRecover(claimId: claimId) }
 public func uniffiMobileSendDeclineCompletion(claimId: String) -> String { sendDeclineCompletion(claimId: claimId) }
-public func uniffiMobileShowRecovered(secretId: String) -> String { showRecovered(secretId: secretId) }
+public func uniffiMobileShowRecovered(claimId: String) -> String { showRecovered(claimId: claimId) }
+public func uniffiMobileShowLocalSecret(secretId: String) -> String { showLocalSecret(secretId: secretId) }
 public func uniffiMobileCleanUpDatabase() -> String { cleanUpDatabase() }

@@ -7,5 +7,6 @@ interface MetaSecretSecretOperationsInterface {
     fun acceptRecover(claimId: String): String
     fun declineRecover(claimId: String): String
     fun sendDeclineCompletion(claimId: String): String
-    fun showRecovered(secretId: String): String
+    fun showRecovered(claimId: String): String
+    fun showLocalSecret(secretId: String): String
 }

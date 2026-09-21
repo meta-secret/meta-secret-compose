@@ -102,8 +102,12 @@ import Security
         uniffiMobileSendDeclineCompletion(claimId: claimId)
     }
 
-    @objc public func showRecovered(_ secretId: String) -> String {
-        uniffiMobileShowRecovered(secretId: secretId)
+    @objc public func showRecovered(_ claimId: String) -> String {
+        uniffiMobileShowRecovered(claimId: claimId)
+    }
+
+    @objc public func showLocalSecret(_ secretId: String) -> String {
+        uniffiMobileShowLocalSecret(secretId: secretId)
     }
 
     // MARK: - KeyChain

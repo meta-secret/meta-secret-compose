@@ -82,6 +82,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import androidx.compose.ui.platform.LocalClipboardManager
 import ui.ClassicButton
+import models.appInternalModels.RecoveredSecretTarget
 import ui.scenes.secretsscreen.SecretPrimaryAction
 import ui.theme.AppTextStyles
 
@@ -89,7 +90,7 @@ import ui.theme.AppTextStyles
 fun ShowSecret(
     secret: Secret,
     primaryAction: SecretPrimaryAction,
-    secretIdToShow: String?,
+    recoveredSecretTarget: RecoveredSecretTarget?,
     onDismiss: () -> Unit,
     onClearSecretId: () -> Unit,
 ) {
@@ -102,23 +103,26 @@ fun ShowSecret(
     val revealedSecret by viewModel.revealedSecret.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    LaunchedEffect(secretIdToShow) {
-        if (secretIdToShow != null) {
-            viewModel.handle(ShowSecretEvents.SecretReadyToShow(secretIdToShow))
-            onClearSecretId()
-        }
-    }
-
     // The dialog is opened only by the card's primary Show/Recover action.
     // Start that action as soon as the dialog enters composition so the user
     // does not have to press a second, identical button inside the dialog.
-    LaunchedEffect(secret.secretName) {
+    // If an accepted recovery arrived while the dialog was closed, pass its
+    // exact claim into this first event. This avoids racing a separate
+    // SecretReadyToShow event against ShowSecretViewModel initialization.
+    LaunchedEffect(secret.secretName, primaryAction, recoveredSecretTarget) {
+        val acceptedClaimId = recoveredSecretTarget
+            ?.takeIf { it.secretId == secret.secretName }
+            ?.claimId
         viewModel.handle(
             ShowSecretEvents.ShowSecret(
                 secretName = secret.secretName,
                 forceRecovery = primaryAction == SecretPrimaryAction.Recover,
+                claimId = acceptedClaimId,
             )
         )
+        if (acceptedClaimId != null) {
+            onClearSecretId()
+        }
     }
 
     val deviceText = when {

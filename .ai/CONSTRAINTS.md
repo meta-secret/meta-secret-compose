@@ -198,6 +198,8 @@ such as biometry or navigation. A client may choose presentation (for example
 - ✅ If the first decision is `APPROVE`, the approving receiver reaches `SENT`/`DELIVERED` and a later `DECLINE` cannot revoke recovery.
 - ✅ Web, iOS, and Android render the `clientStatus`/claim state supplied by Core; UI code must not implement its own quorum or race resolution.
 - ✅ Clients may only map Core results to UI/platform behavior; they must not calculate quorum, mutate recovery status, authorize JOIN/DELETE, run resharing, or decide whether a Secret may be shown.
+- ✅ A recovery sender forwards the exact accepted `Claim ID` returned by Core to `showRecovered`; Core derives the associated `Pass ID`.
+- ✅ One- and two-device replicated vaults use `showLocalSecret(secretId)` because no recovery claim exists; clients must not emulate this split with a guessed claim ID.
 - ❌ Cloud backup/sync of any app data (DMK, DB, keys)
 - ❌ Storing DMK in external storage or plaintext
 

@@ -65,6 +65,10 @@ object MetaSecretNative {
         uniffi.mobile_uniffi.sendDeclineCompletion(claimId)
 
     @JvmStatic
-    fun showRecovered(secretId: String): String =
-        uniffi.mobile_uniffi.showRecovered(secretId)
+    fun showRecovered(claimId: String): String =
+        uniffi.mobile_uniffi.showRecovered(claimId)
+
+    @JvmStatic
+    fun showLocalSecret(secretId: String): String =
+        uniffi.mobile_uniffi.showLocalSecret(secretId)
 }

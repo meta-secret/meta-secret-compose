@@ -371,12 +371,25 @@ class CaseEightAndroidBothOfflineTest {
             marker("ANDROID_ACTION_SKIPPED_AFTER_TERMINAL_${cycle}_$step")
             return
         }
+        marker("ANDROID_OPEN_REQUEST_CLICK_START_${cycle}_$step")
         composeRule.onNodeWithTag("open-recovery-request-$secretName").performClick()
+        marker("ANDROID_OPEN_REQUEST_CLICK_RETURNED_${cycle}_$step")
         // A first terminal response can remove this receiver's alert before
         // the second runner opens it. Wait for either the dialog or the
         // terminal badge disappearance and record a skipped late response.
-        composeRule.waitUntil(30_000) {
-            hasTagNow("alert-recovery-request") || !hasTagNow("recovery-request-badge-$secretName")
+        try {
+            composeRule.waitUntil(30_000) {
+                hasTagNow("alert-recovery-request") || !hasTagNow("recovery-request-badge-$secretName")
+            }
+        } catch (error: Throwable) {
+            marker(
+                "ANDROID_OPEN_REQUEST_TIMEOUT_${cycle}_$step " +
+                    "badge=${hasTagNow("recovery-request-badge-$secretName")} " +
+                    "open=${hasTagNow("open-recovery-request-$secretName")} " +
+                    "alert=${hasTagNow("alert-recovery-request")} " +
+                    "processing=${hasTagNow("alert-recovery-request-processing")}",
+            )
+            throw error
         }
         if (!hasTagNow("alert-recovery-request")) {
             marker("ANDROID_ACTION_SKIPPED_AFTER_TERMINAL_${cycle}_$step")

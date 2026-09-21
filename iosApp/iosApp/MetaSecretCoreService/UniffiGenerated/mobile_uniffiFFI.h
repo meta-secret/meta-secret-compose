@@ -326,9 +326,14 @@ RustBuffer uniffi_metasecret_mobile_fn_func_recover(RustBuffer secret_id, RustCa
 RustBuffer uniffi_metasecret_mobile_fn_func_send_decline_completion(RustBuffer claim_id, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_SHOW_LOCAL_SECRET
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_SHOW_LOCAL_SECRET
+RustBuffer uniffi_metasecret_mobile_fn_func_show_local_secret(RustBuffer secret_id, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_SHOW_RECOVERED
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_SHOW_RECOVERED
-RustBuffer uniffi_metasecret_mobile_fn_func_show_recovered(RustBuffer secret_id, RustCallStatus *_Nonnull out_status
+RustBuffer uniffi_metasecret_mobile_fn_func_show_recovered(RustBuffer claim_id, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_SIGN_UP
@@ -705,6 +710,12 @@ uint16_t uniffi_metasecret_mobile_checksum_func_recover(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SEND_DECLINE_COMPLETION
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SEND_DECLINE_COMPLETION
 uint16_t uniffi_metasecret_mobile_checksum_func_send_decline_completion(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SHOW_LOCAL_SECRET
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_SHOW_LOCAL_SECRET
+uint16_t uniffi_metasecret_mobile_checksum_func_show_local_secret(void
     
 );
 #endif

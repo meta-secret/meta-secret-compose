@@ -21,6 +21,7 @@ import core.AlertCoordinatorInterface
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.appInternalModels.RestoreData
+import models.appInternalModels.RecoveredSecretTarget
 import ui.TabStateHolder
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
@@ -43,8 +44,8 @@ class MainScreenViewModel(
     
     private val _isWarningDismissedByUser = MutableStateFlow(false)
     
-    private val _secretIdToShow = MutableStateFlow<String?>(null)
-    val secretIdToShow: StateFlow<String?> = _secretIdToShow
+    private val _recoveredSecretTarget = MutableStateFlow<RecoveredSecretTarget?>(null)
+    val recoveredSecretTarget: StateFlow<RecoveredSecretTarget?> = _recoveredSecretTarget
     val pendingRecoveryRequests: StateFlow<List<RestoreData>> = socketHandler.pendingRecoveryRequests
 
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
@@ -56,7 +57,27 @@ class MainScreenViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
-    fun openRecoveryRequest(restoreData: RestoreData) {
+    /**
+     * Resolve the request at click time instead of closing over a list from a
+     * previous recomposition. The badge and the button can survive a claim
+     * refresh with the same count while the claim id changes; resolving from
+     * the current StateFlow keeps the alert bound to the current claim.
+     */
+    fun openRecoveryRequest(secretId: String) {
+        val restoreData = pendingRecoveryRequests.value
+            .firstOrNull { it.secretId == secretId }
+        if (restoreData == null) {
+            logger.log(
+                LogTag.MainVM.Message.RecoveryAlertShown,
+                "no pending recovery request for secretId=$secretId",
+                success = false,
+            )
+            return
+        }
+        openRecoveryRequest(restoreData)
+    }
+
+    private fun openRecoveryRequest(restoreData: RestoreData) {
         logger.log(
             LogTag.MainVM.Message.RecoveryAlertShown,
             "open recovery alert claimId=${restoreData.claimId} secretId=${restoreData.secretId} senderId=${restoreData.senderId} senderType=${restoreData.senderType}",
@@ -181,7 +202,10 @@ class MainScreenViewModel(
             socketHandler.socketActionType.collect { actionType ->
                 when (actionType) {
                     is SocketActionModel.RECOVER_ACCEPTED -> {
-                        _secretIdToShow.value = actionType.secretId
+                        _recoveredSecretTarget.value = RecoveredSecretTarget(
+                            claimId = actionType.claimId,
+                            secretId = actionType.secretId,
+                        )
                         logger.log(LogTag.MainVM.Message.ReadyToShowSecret,
                             "claimId=${actionType.claimId}, secretId=${actionType.secretId}", success = true)
                     }
@@ -195,7 +219,7 @@ class MainScreenViewModel(
                             } catch (_: Throwable) { }
                         }
                         withContext(Dispatchers.Main) {
-                            _secretIdToShow.value = null
+                            _recoveredSecretTarget.value = null
                             alertCoordinator.showRecoverDeclinedNotification()
                         }
                     }
@@ -254,7 +278,7 @@ class MainScreenViewModel(
 
     fun clearSecretIdToShow() {
         logger.log(LogTag.MainVM.Message.ClearingSecretId, success = true)
-        _secretIdToShow.value = null
+        _recoveredSecretTarget.value = null
     }
 
     private fun setTabIndex(index: Int) {

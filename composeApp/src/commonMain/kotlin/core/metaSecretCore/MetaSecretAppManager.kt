@@ -448,7 +448,11 @@ class MetaSecretAppManager(
         }
         
         val showRecoveredResult = withContext(Dispatchers.IO) {
-            metaSecretCore.showRecovered(secretModel.secretName)
+            if (secretModel.claimId != null) {
+                metaSecretCore.showRecovered(secretModel.claimId)
+            } else {
+                metaSecretCore.showLocalSecret(secretModel.secretName)
+            }
         }
         return try {
             val parsed = RecoveredSecretModel.fromJson(showRecoveredResult)

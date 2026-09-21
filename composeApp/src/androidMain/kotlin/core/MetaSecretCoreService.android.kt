@@ -340,18 +340,30 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
         }
     }
 
-    override fun showRecovered(secretId: String): String {
+    override fun showRecovered(claimId: String): String {
         try {
-            e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_START secret=$secretId")
+            e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_START claim=$claimId")
             logger.log(LogTag.MetaSecretCoreService.Message.CallingShowRecovered, success = true)
-            val result = MetaSecretNative.showRecovered(secretId)
+            val result = MetaSecretNative.showRecovered(claimId)
             logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredResult, success = true)
-            e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_RESULT secret=$secretId bytes=${result.length}")
+            e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_RESULT claim=$claimId bytes=${result.length}")
             return result
         } catch (e: Exception) {
-            e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_ERROR secret=$secretId error=${e.message}")
+            e2eLog("ANDROID_NATIVE_SHOW_RECOVERED_ERROR claim=$claimId error=${e.message}")
             logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredError, "${e.message}", success = false)
             e.printStackTrace()
+            throw e
+        }
+    }
+
+    override fun showLocalSecret(secretId: String): String {
+        try {
+            e2eLog("ANDROID_NATIVE_SHOW_LOCAL_SECRET_START secret=$secretId")
+            val result = MetaSecretNative.showLocalSecret(secretId)
+            e2eLog("ANDROID_NATIVE_SHOW_LOCAL_SECRET_RESULT secret=$secretId bytes=${result.length}")
+            return result
+        } catch (e: Exception) {
+            e2eLog("ANDROID_NATIVE_SHOW_LOCAL_SECRET_ERROR secret=$secretId error=${e.message}")
             throw e
         }
     }
