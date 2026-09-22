@@ -10,6 +10,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let approvalPlatform: String?
         let sender: String?
         let secretName: String?
+        let secretValue: String?
         let action: String?
         let expectedOutcome: String?
         let repeatApprove: Bool?
@@ -202,7 +203,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     func handleRecoveryStep() throws {
         let config = stepConfig()
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test-secret")
-        let secretValue = env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
+        let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
         let role = config.role ?? env("E2E_ROLE", defaultValue: "receiver")
         let cycle = config.cycle ?? env("E2E_CYCLE", defaultValue: "1")
         let step = config.step ?? env("E2E_STEP", defaultValue: "1")
@@ -239,7 +240,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 "iOS sender did not reveal the expected secret"
             )
             print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)_\(step)")
-            tap("show-secret-close")
+            closeShowSecretDialog()
             waitForHidden(identifier: "revealed-secret-value", timeout: 30)
             print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_\(step)")
             return
@@ -314,7 +315,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 closeShowSecretDialog()
                 waitForApproval(platform: "ios-duplicate-finish", cycle: cycle, step: step)
                 revealAcceptedSecret(secretName, cycle: cycle, step: step)
-                XCTAssertTrue(app.descendants(matching: .any)[env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")].exists)
+                XCTAssertTrue(app.descendants(matching: .any)[config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")].exists)
                 print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)_\(step)")
                 closeShowSecretDialog()
                 waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
@@ -328,7 +329,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             if expectedOutcome == "approved" {
                 waitForApproval(platform: "ios-show", cycle: cycle, step: step)
                 revealAcceptedSecret(secretName, cycle: cycle, step: step)
-                XCTAssertTrue(app.descendants(matching: .any)[env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")].exists)
+                XCTAssertTrue(app.descendants(matching: .any)[config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")].exists)
                 print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)_\(step)")
                 closeShowSecretDialog()
                 waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
@@ -675,7 +676,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             let data = FileManager.default.contents(atPath: Self.stepConfigPath),
             let config = try? JSONDecoder().decode(StepConfig.self, from: data)
         else {
-            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil, networkRole: nil, networkCycles: nil)
+            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, secretValue: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil, networkRole: nil, networkCycles: nil)
         }
         return config
     }
