@@ -205,6 +205,22 @@ class CaseEightAndroidBothOfflineTest {
     }
 
     @Test
+    fun showLocalSecret() {
+        val secretName = argument("secretName", "test-secret")
+        val cycle = argument("cycle", "1")
+        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        waitForPrimaryAction(secretName, "Show")
+        composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
+        composeRule.waitForTag("revealed-secret-value", 30_000)
+        marker("ANDROID_LOCAL_SECRET_VISIBLE_$cycle")
+        composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+        composeRule.waitForTagGone("revealed-secret-value", 30_000)
+        composeRule.waitForTagGone("show-secret-dialog", 30_000)
+        waitForPrimaryAction(secretName, "Show")
+        marker("ANDROID_LOCAL_SECRET_CLOSED_$cycle")
+    }
+
+    @Test
     fun handleRecoveryStep() {
         val secretName = argument("secretName", "test-secret")
         val role = argument("role", "receiver")
@@ -529,6 +545,10 @@ class CaseEightAndroidBothOfflineTest {
         androidx.test.platform.app.InstrumentationRegistry.getArguments().getString(name) ?: fallback
 
     private fun configuredSecretNames(): List<String> {
+        val expectedNames = argument("expectedSecretNames", "")
+            .split(',')
+            .filter { it.isNotBlank() }
+        if (expectedNames.isNotEmpty()) return expectedNames
         val raw = argument("secretConfig", "")
         if (raw.isBlank()) {
             val scalarNames = argument("secretNames", "").split(',').filter { it.isNotBlank() }

@@ -651,8 +651,13 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let baseUrl = env("E2E_APPROVAL_COORDINATOR_URL", defaultValue: "http://127.0.0.1:5180")
         if let url = URL(string: "\(baseUrl)/scenario"),
            let data = try? Data(contentsOf: url),
-           let scenario = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let raw = scenario["secretConfig"] as? [String: Any] {
+           let scenario = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            if let expected = scenario["joinExpectedSecretNames"] as? [String], !expected.isEmpty {
+                return expected
+            }
+            guard let raw = scenario["secretConfig"] as? [String: Any] else {
+                return [fallback]
+            }
             let names = raw.keys.sorted().compactMap { raw[$0] as? [String: Any] }
                 .compactMap { $0["name"] as? String }
             if !names.isEmpty { return names }
