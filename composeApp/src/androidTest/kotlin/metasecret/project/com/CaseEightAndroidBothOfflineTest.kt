@@ -208,6 +208,11 @@ class CaseEightAndroidBothOfflineTest {
     fun showLocalSecret() {
         val secretName = argument("secretName", "test-secret")
         val cycle = argument("cycle", "1")
+        // A completed JOIN leaves the app on the Devices tab. Each direct
+        // Show invocation is a fresh instrumentation process, so select the
+        // Secrets tab explicitly before waiting for the row.
+        composeRule.waitForTag("tab-secrets", 60_000)
+        composeRule.onNodeWithTag("tab-secrets").performClick()
         composeRule.waitForTag("secret-row-$secretName", 180_000)
         waitForPrimaryAction(secretName, "Show")
         composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
