@@ -30,6 +30,7 @@ import core.errors.ErrorMapper
 import models.apiModels.ClaimObject
 import models.apiModels.SearchClaimModel
 import models.apiModels.SsClaims
+import models.apiModels.State
 
 private const val PENDING_JOIN_REFRESH_INTERVAL_MS = 2_000L
 
@@ -63,6 +64,7 @@ class MetaSecretSocketHandler(
     private var isForeground = false
     private var processingSecretName: String? = null
     private var lastEmittedReadyToRecoverClaimId: String? = null
+    private var lastObservedSuccessfulState: AppStateModel? = null
 
     init {
         logger.log(core.LogTag.SocketHandler.Message.Init, success = true)
@@ -202,12 +204,23 @@ class MetaSecretSocketHandler(
             logger.log(core.LogTag.SocketHandler.Message.NoSubscriptions, success = true)
         }
 
+        val previousState = lastObservedSuccessfulState ?: appStateCacheProvider.appState.value
         val currentState = try {
             val stateJson = withContext(Dispatchers.IO) {
                 metaSecretCore.getAppState()
             }
             val parsedState = AppStateModel.fromJson(stateJson, logger, null)
+            val vaultInfo = parsedState.getVaultFullInfo()
+            logger.diagnostic(
+                "getAppState-result success=${parsedState.success} " +
+                    "isMember=${vaultInfo is VaultFullInfo.Member} isOutsider=${vaultInfo is VaultFullInfo.Outsider} " +
+                    "currentUserStatus=${parsedState.currentDeviceVaultStatus()} " +
+                    "actionsToFollow=${actionsToFollow.joinToString()}"
+            )
             appStateCacheProvider.updateCache(parsedState)
+            if (parsedState.success) {
+                lastObservedSuccessfulState = parsedState
+            }
             logger.log(core.LogTag.SocketHandler.Message.AppStateRefreshCompleted, success = true)
             parsedState
         } catch (e: CancellationException) {
@@ -225,6 +238,11 @@ class MetaSecretSocketHandler(
         }
 
         configureSocketSubscriptionSafely(currentState)
+
+        if (isCurrentDeviceRemovalTransition(previousState, currentState)) {
+            logger.log(core.LogTag.SocketHandler.Message.CurrentDeviceRemoved, success = true)
+            _socketActions.emit(SocketActionModel.CURRENT_DEVICE_REMOVED)
+        }
 
         if (actionsToFollow.contains(SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN)) {
             val memberDeviceIds = currentState.getVaultSummary()
@@ -376,6 +394,11 @@ class MetaSecretSocketHandler(
         if (vaultFullInfo is VaultFullInfo.Member) {
             val claims = vaultFullInfo.member.ssClaims?.claims
             if (claims.isNullOrEmpty()) {
+                logger.diagnostic(
+                    "claims-refresh-empty device=$currentDeviceId " +
+                        "vaultInfo=Member ssClaims=${vaultFullInfo.member.ssClaims != null} " +
+                        "claimsCount=${claims?.size ?: 0}"
+                )
                 _pendingRecoveryRequests.value = emptyList()
                 logger.log(core.LogTag.SocketHandler.Message.NoClaimsFound, success = true)
                 return
@@ -387,6 +410,10 @@ class MetaSecretSocketHandler(
                 checkRecoverSentStatus()
             }
         } else {
+            logger.diagnostic(
+                "claims-refresh-no-member device=$currentDeviceId " +
+                    "isOutsider=${vaultFullInfo is VaultFullInfo.Outsider} isNotExists=${vaultFullInfo is VaultFullInfo.NotExists}"
+            )
             _pendingRecoveryRequests.value = emptyList()
         }
     }
@@ -417,11 +444,19 @@ class MetaSecretSocketHandler(
                 success = true
             )
         }
-        val hasDoneClaim = recoverClaimsForDevice.any { it.clientStatus == ClientStatus.DONE }
-        if (hasDoneClaim) {
+        val doneClaims = recoverClaimsForDevice.filter { it.clientStatus == ClientStatus.DONE }
+        if (doneClaims.isNotEmpty()) {
             lastEmittedReadyToRecoverClaimId = null
+            logger.diagnostic(
+                "dismiss-signal-emitted reason=receiver-claim-DONE device=$currentDeviceId " +
+                    "claims=" + doneClaims.joinToString { it.distClaimId.id }
+            )
             logger.log(core.LogTag.SocketHandler.Message.DismissRecoveryRequest, success = true)
-            _socketActions.tryEmit(SocketActionModel.DISMISS_RECOVERY_REQUEST)
+            doneClaims.forEach { doneClaim ->
+                _socketActions.tryEmit(
+                    SocketActionModel.DISMISS_RECOVERY_REQUEST(doneClaim.distClaimId.id)
+                )
+            }
         }
         val pendingClaims = claims.values.filter { claim ->
             val isRecoverType = claim.distributionType == DistributionType.RECOVER
@@ -429,6 +464,15 @@ class MetaSecretSocketHandler(
             val needsApproval = claim.clientStatus == ClientStatus.NEED_APPROVE
             isRecoverType && isReceiverForThisDevice && needsApproval
         }
+        logger.diagnostic(
+            "claims-refresh device=$currentDeviceId " +
+                "recoverClaims=" + recoverClaimsForDevice.joinToString {
+                    "${it.distClaimId.id}:${it.clientStatus}"
+                } +
+                " pending=" + pendingClaims.joinToString {
+                    "${it.distClaimId.id}:${it.distClaimId.passId.name}"
+                }
+        )
         _pendingRecoveryRequests.value = pendingClaims
             .map {
                 val rawSenderType = users[it.sender]?.member?.userData?.device?.deviceType
@@ -534,4 +578,35 @@ class MetaSecretSocketHandler(
             scheduleRefresh()
         }
     }
+}
+
+internal fun isCurrentDeviceRemovalTransition(
+    previousState: AppStateModel?,
+    currentState: AppStateModel,
+): Boolean {
+    if (!currentState.success) return false
+    if (previousState?.getVaultFullInfo() !is VaultFullInfo.Member) return false
+
+    val previousDeviceId = previousState.getCurrentDeviceId() ?: return false
+    val localDeviceId = (currentState.getCurrentAppState() as? State.Local)
+        ?.local
+        ?.deviceId
+    if (localDeviceId != null) {
+        return previousDeviceId == localDeviceId
+    }
+
+    val isDeclined = currentState.getOutsiderStatus() == UserDataOutsiderStatus.DECLINED ||
+        currentState.currentDeviceVaultStatus() == UserStatus.DECLINED
+    if (!isDeclined) return false
+
+    val currentDeviceId = currentState.getCurrentDeviceId() ?: return false
+    val previousVaultName = previousState.getCurrentVaultName() ?: return false
+    val currentVaultName = currentState.getCurrentVaultName() ?: return false
+
+    return previousDeviceId == currentDeviceId && previousVaultName == currentVaultName
+}
+
+private fun AppStateModel.currentDeviceVaultStatus(): UserStatus? {
+    val currentDeviceId = getCurrentDeviceId() ?: return null
+    return getVaultSummary()?.users?.get(currentDeviceId)?.status
 }

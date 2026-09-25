@@ -47,6 +47,10 @@ object MetaSecretNative {
         uniffi.mobile_uniffi.approveRemoveMember(targetDeviceId)
 
     @JvmStatic
+    fun declineRemoveMember(targetDeviceId: String): String =
+        uniffi.mobile_uniffi.declineRemoveMember(targetDeviceId)
+
+    @JvmStatic
     fun clean_up_database(): String = uniffi.mobile_uniffi.cleanUpDatabase()
 
     @JvmStatic

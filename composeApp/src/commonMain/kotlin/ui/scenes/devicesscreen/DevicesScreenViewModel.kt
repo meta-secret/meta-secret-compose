@@ -99,8 +99,9 @@ class DevicesScreenViewModel(
                 DeviceViewEvents.OnAppear -> loadDevicesList(false)
                 DeviceViewEvents.Accept -> authenticateAndUpdateMembership(true)
                 DeviceViewEvents.Decline -> authenticateAndUpdateMembership(false)
-                is DeviceViewEvents.RemoveRequested -> authenticateAndRemove(event.deviceId, approve = false)
-                is DeviceViewEvents.ApproveRemoval -> authenticateAndRemove(event.deviceId, approve = true)
+                is DeviceViewEvents.RemoveRequested -> authenticateAndRemove(event.deviceId, RemovalAction.Request)
+                is DeviceViewEvents.ApproveRemoval -> authenticateAndRemove(event.deviceId, RemovalAction.Approve)
+                is DeviceViewEvents.DeclineRemoval -> authenticateAndRemove(event.deviceId, RemovalAction.Decline)
                 is DeviceViewEvents.SelectDevice -> {
                     selectCurrentDevice(event.deviceId)
                     event.deviceId?.let { deviceId ->
@@ -227,15 +228,18 @@ class DevicesScreenViewModel(
         _currentDeviceId.value = deviceId
     }
 
-    private fun authenticateAndRemove(deviceId: String, approve: Boolean) {
+    private fun authenticateAndRemove(deviceId: String, action: RemovalAction) {
         biometricAuthenticator.authenticate(
             onSuccess = {
                 viewModelScope.launch {
                     _isLoading.value = true
                     try {
                         val result = withContext(Dispatchers.IO) {
-                            if (approve) appManager.approveRemoveMember(deviceId)
-                            else appManager.removeMember(deviceId)
+                            when (action) {
+                                RemovalAction.Request -> appManager.removeMember(deviceId)
+                                RemovalAction.Approve -> appManager.approveRemoveMember(deviceId)
+                                RemovalAction.Decline -> appManager.declineRemoveMember(deviceId)
+                            }
                         }
                         if (result?.success == false) {
                             showNotification(result.error ?: stringProvider.errorInternal(), isError = true)
@@ -259,11 +263,18 @@ class DevicesScreenViewModel(
     }
 }
 
+private enum class RemovalAction {
+    Request,
+    Approve,
+    Decline,
+}
+
 sealed class DeviceViewEvents : CommonViewModelEventsInterface {
     data object OnAppear : DeviceViewEvents()
     data object Accept : DeviceViewEvents()
     data object Decline : DeviceViewEvents()
     data class RemoveRequested(val deviceId: String) : DeviceViewEvents()
     data class ApproveRemoval(val deviceId: String) : DeviceViewEvents()
+    data class DeclineRemoval(val deviceId: String) : DeviceViewEvents()
     data class SelectDevice(val deviceId: String?) : DeviceViewEvents()
 }

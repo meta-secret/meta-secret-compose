@@ -62,6 +62,7 @@ sealed class LogTag(val displayName: String) {
             object ClearingSecretId : Message("Clearing secretIdToShow")
             object RecoveryAlertShown : Message("Recovery alert shown")
             object RecoveryAlertDismissed : Message("Recovery alert dismissed")
+            object CurrentDeviceRemovalReset : Message("Current Device removal session reset")
         }
     }
 
@@ -208,6 +209,7 @@ sealed class LogTag(val displayName: String) {
             object BackgroundSocketSuspend : Message("App background socket suspend")
             object RefreshSkippedWhilePaused : Message("Refresh skipped while paused")
             object SocketError : Message("Socket error")
+            object CurrentDeviceRemoved : Message("Current Device changed from Member to Outsider/Declined")
         }
     }
 
@@ -416,6 +418,9 @@ data class CriticalComponentsState(
 
 interface DebugLoggerInterface {
     fun <T : LogTag> log(message: LogTag.Message<T>, extra: String? = null, success: Boolean? = null)
+
+    /** Diagnostic-only trace; platform implementations may route this to native debug logs. */
+    fun diagnostic(message: String) {}
 
     fun setLoggerVisibility()
     fun testInfo()

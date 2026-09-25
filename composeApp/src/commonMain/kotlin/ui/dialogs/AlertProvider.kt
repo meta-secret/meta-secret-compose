@@ -85,7 +85,10 @@ fun AlertProvider(
             if (canDismiss) {
                 when (alertType) {
                     AlertType.JoinRequest -> alertCoordinator.dismissJoinRequest()
-                    AlertType.RecoveryRequest -> alertCoordinator.dismissRecoveryRequest()
+                    AlertType.RecoveryRequest -> {
+                        alertCoordinator.diagnostic("dismiss-origin=ui-backdrop")
+                        alertCoordinator.dismissRecoveryRequest()
+                    }
                     null -> {}
                 }
             }
@@ -111,7 +114,10 @@ fun AlertProvider(
                 } else {
                     when (alertType) {
                         AlertType.JoinRequest -> alertCoordinator.dismissJoinRequest()
-                        AlertType.RecoveryRequest -> alertCoordinator.dismissRecoveryRequest()
+                        AlertType.RecoveryRequest -> {
+                            alertCoordinator.diagnostic("dismiss-origin=ui-dialog-cancel")
+                            alertCoordinator.dismissRecoveryRequest()
+                        }
                         null -> {}
                     }
                 }

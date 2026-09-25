@@ -24,6 +24,7 @@ class MetaSecretCoreInterfaceSegregationTest {
         override fun updateMembership(candidate: UserData, actionUpdate: String): String = actionUpdate
         override fun removeMember(targetDeviceId: String): String = targetDeviceId
         override fun approveRemoveMember(targetDeviceId: String): String = targetDeviceId
+        override fun declineRemoveMember(targetDeviceId: String): String = targetDeviceId
         override fun splitSecret(secretName: String, secret: String): String = "$secretName:$secret"
         override fun findClaim(secretId: String): String = secretId
         override fun recover(secretId: String): String = secretId

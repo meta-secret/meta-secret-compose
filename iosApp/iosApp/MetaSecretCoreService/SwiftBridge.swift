@@ -81,6 +81,10 @@ import Security
         uniffiMobileApproveRemoveMember(targetDeviceId: targetDeviceId)
     }
 
+    @objc public func declineRemoveMember(_ targetDeviceId: String) -> String {
+        uniffiMobileDeclineRemoveMember(targetDeviceId: targetDeviceId)
+    }
+
     @objc public func splitSecret(_ secretName: String, _ secret: String) -> String {
         uniffiMobileSplitSecret(secretId: secretName, secret: secret)
     }
@@ -116,6 +120,27 @@ import Security
 
     @objc public func showLocalSecret(_ secretId: String) -> String {
         uniffiMobileShowLocalSecret(secretId: secretId)
+    }
+
+    /// Emits a diagnostic line into the simulator/device unified log.
+    /// This is intentionally UI-test-only and carries no secret contents.
+    @objc public func logE2eDiagnostic(_ message: String) {
+        guard ProcessInfo.processInfo.environment["METASECRET_UI_TEST_MODE"] == "true" else {
+            return
+        }
+        let line = "\(Date().timeIntervalSince1970) \(message)\n"
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("metasecret-e2e-diagnostics.log")
+        if let data = line.data(using: .utf8) {
+            if let handle = try? FileHandle(forWritingTo: url) {
+                try? handle.seekToEnd()
+                try? handle.write(contentsOf: data)
+                try? handle.close()
+            } else {
+                try? data.write(to: url, options: .atomic)
+            }
+        }
+        NSLog("E2E_DIAG %@", message)
     }
 
     // MARK: - KeyChain

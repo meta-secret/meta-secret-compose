@@ -12,4 +12,5 @@ interface MetaSecretAccountInterface {
     fun updateMembership(candidate: UserData, actionUpdate: String): String
     fun removeMember(targetDeviceId: String): String
     fun approveRemoveMember(targetDeviceId: String): String
+    fun declineRemoveMember(targetDeviceId: String): String
 }

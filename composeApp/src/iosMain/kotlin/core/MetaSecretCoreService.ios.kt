@@ -155,6 +155,9 @@ class MetaSecretCoreServiceIos(
     override fun approveRemoveMember(targetDeviceId: String): String =
         swiftBridge.approveRemoveMember(targetDeviceId)
 
+    override fun declineRemoveMember(targetDeviceId: String): String =
+        swiftBridge.declineRemoveMember(targetDeviceId)
+
     override fun splitSecret(secretName: String, secret: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingSplitSecret, "with: $secretName", success = true)

@@ -261,6 +261,10 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
         return MetaSecretNative.approveRemoveMember(targetDeviceId)
     }
 
+    override fun declineRemoveMember(targetDeviceId: String): String {
+        return MetaSecretNative.declineRemoveMember(targetDeviceId)
+    }
+
     override fun splitSecret(secretName: String, secret: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingSplitSecret, success = true)

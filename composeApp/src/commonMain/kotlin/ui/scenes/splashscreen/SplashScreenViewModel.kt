@@ -37,6 +37,8 @@ class SplashScreenViewModel(
     private val _biometricState = MutableStateFlow<BiometricState>(BiometricState.Idle)
     val biometricState: StateFlow<BiometricState> = _biometricState
 
+    private var isNavigationInProgressOrCompleted = false
+
     init {
         logger.setLoggerVisibility()
     }
@@ -70,8 +72,22 @@ class SplashScreenViewModel(
     }
 
     private fun biometricSucceeded() {
+        if (isNavigationInProgressOrCompleted || _navigationEvent.value !is SplashNavigationEvent.Idle) {
+            return
+        }
+
+        isNavigationInProgressOrCompleted = true
         viewModelScope.launch {
-            proceedWithNavigation()
+            try {
+                proceedWithNavigation()
+            } finally {
+                // A failed/cancelled attempt that never selected a destination may be retried.
+                // Once a destination is selected, duplicate biometric events must not start a
+                // second checkAuth/getState transaction or competing navigation.
+                if (_navigationEvent.value is SplashNavigationEvent.Idle) {
+                    isNavigationInProgressOrCompleted = false
+                }
+            }
         }
     }
 

@@ -41,6 +41,7 @@ own removal.
             For 2 devices: no remote approval; initiator confirms locally
             For 1 device: Cannot delete itself
    - Flow (`3 → 2`): User taps "Remove Device" → App shows a pending request → another member authenticates → Core marks the target `Outsider/Declined` and redistributes fresh shares only to the two remaining members
+   - Decline: another member authenticates and sends Core's signed `Declined` response; the request closes, membership and Key Shares remain unchanged, and no resharing runs
    - Flow (`2 → 1`): User confirms locally with biometry/PIN → Core removes the other member without remote approval
    - Why: Ensures all changes are consensual and witnessed
 
@@ -55,9 +56,11 @@ The join and three-device removal operations follow this flow:
     ↓
   B sends cryptographic approval signature
     ↓
-  A verifies signature and proceeds with operation
+  Core verifies the signed action; for `3 → 2` removal B combines its own Key
+  Share with A's Encrypted Key Share from the request
     ↓
-  Resharing/recovery protocol executes
+  B executes reverse resharing and distributes fresh `k=1` Key Shares to A
+  and B only
     ↓
   All devices confirm completion
 ```
@@ -173,15 +176,29 @@ User approves via biometry/PIN on Device Y
   ↓
   Core accepts the signed update and atomically changes Device X to
   `Outsider/Declined`.
-  For `3 → 2`, the initiator and approver combine their existing shares and
-  Core redistributes a fresh `k=1, n=2` set only to the remaining devices.
-  For `2 → 1`, Core keeps the initiator's local full share and sends nothing.
+  For `3 → 2`, the approver combines its own Key Share with the initiator's
+  Encrypted Key Share from the request. Core on the approver redistributes a
+  fresh `k=1, n=2` set only to the remaining devices.
+  For `2 → 1`, Core keeps the initiator's local full share, makes the sole
+  remaining device the canonical sender for every surviving `Split` claim,
+  clears removed receivers/statuses, and sends nothing. A later Join can then
+  redistribute every Secret regardless of its original creator.
   Device X receives no new share.
+
+Decline branch:
+  User declines via biometry/PIN on Device Y
+  ↓
+  Core sends a signed terminal `Declined` response for the exact request
+  ↓
+  The request closes; membership, Key Shares, and active Recovery claims remain
+  unchanged. A late or duplicate response is ignored because the first valid
+  response is final.
 ```
 
-**Critical rule:** Removal must never send a new share to the target. After the
-signed removal update is synchronized, Core retries the required resharing until
-the remaining devices have the fresh two-member state.
+**Critical rule:** Removal must never send a new share to the target. The
+approver must create the fresh two-member state before its accepted removal
+workflow can synchronize as complete. A failed Core/sync workflow remains
+retryable; the client does not queue a separate removal command.
 
 If the target device is offline, Core may complete the removal and marks the
 target `Outsider/Declined`; on reconnect that device is reset to authorization.
@@ -262,8 +279,8 @@ Step 1: Initiate removal from Device Y
   ↓
 Step 2: Removal update and resharing
   Device X becomes `Outsider/Declined`
-  The initiator combines its share with the encrypted approver share
-  Core generates NEW shares only for the remaining devices
+  The approver combines its share with the initiator's Encrypted Key Share
+  Core on the approver generates NEW shares only for the remaining devices
   ↓
 Step 3: Verify resharing success
   All other devices confirm they have new shares
@@ -274,9 +291,8 @@ Step 4: Finish removal state
 
 **After removal:**
 - Device X receives no new share and is `Outsider/Declined`.
-- During a retry window, the two remaining devices may still hold the old
-  2-of-3 shares; Core replaces them with fresh `k=1,n=2` shares after it has
-  reconstructed the Secret.
+- The accepted workflow is not complete until Core on the approver has
+  reconstructed the Secret in memory and created fresh `k=1,n=2` shares.
 - The removed device cannot participate in a new recovery or resharing.
 
 ---
@@ -370,4 +386,4 @@ Planning a remove feature? Check:
 
 ---
 
-Last updated: 2026-06-10
+Last updated: 2026-09-25

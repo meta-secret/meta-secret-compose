@@ -11,7 +11,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -85,6 +89,7 @@ class MetaSecretSocketHandlerInvalidationTest {
         claims: Map<String, ClaimObject> = emptyMap(),
         hasJoinRequest: Boolean = false,
         candidateIsMember: Boolean = false,
+        currentMembershipStatus: UserDataOutsiderStatus? = null,
     ): AppStateModel {
         fun device(id: String) = DeviceData(
             deviceId = id,
@@ -94,7 +99,10 @@ class MetaSecretSocketHandlerInvalidationTest {
         )
 
         val currentUserData = UserData(device = device(currentDeviceId), vaultName = vaultName)
-        val users = mutableMapOf(currentDeviceId to UserMembership(member = UserDataMember(currentUserData)))
+        val currentMembership = currentMembershipStatus?.let { status ->
+            UserMembership(outsider = UserDataOutsider(currentUserData, status))
+        } ?: UserMembership(member = UserDataMember(currentUserData))
+        val users = mutableMapOf(currentDeviceId to currentMembership)
         if (candidateIsMember) {
             val candidateData = UserData(device = device("candidateDevice"), vaultName = vaultName)
             users[candidateData.device.deviceId] = UserMembership(member = UserDataMember(candidateData))
@@ -158,6 +166,22 @@ class MetaSecretSocketHandlerInvalidationTest {
             success = true
         )
     }
+
+    private fun buildLocalAppState(
+        currentDeviceId: String = "receiverDevice",
+    ): AppStateModel = AppStateModel(
+        message = Message(
+            state = State.Local(
+                local = DeviceData(
+                    deviceId = currentDeviceId,
+                    deviceName = currentDeviceId,
+                    deviceType = "Android",
+                    keys = OpenBox(dsaPk = "d", transportPk = "t"),
+                )
+            )
+        ),
+        success = true,
+    )
 
     private fun recoverClaim(
         claimId: String,
@@ -545,6 +569,207 @@ class MetaSecretSocketHandlerInvalidationTest {
     }
 
     @Test
+    fun testMemberToDeclinedOutsiderEmitsCurrentDeviceRemovedExactlyOnce() = runBlocking {
+        val core = FakeMetaSecretCore().apply {
+            appStateJson = JsonConfig.json.encodeToString(
+                AppStateModel.serializer(),
+                buildAppState(currentDeviceId = "removedDevice", vaultName = "vault1")
+            )
+        }
+        val (handler, socketClient) = newHandler(core)
+        handler.onAppForeground()
+        waitUntil { core.getAppStateCalls == 1 }
+
+        var removalEvents = 0
+        val collector = launch {
+            handler.socketActions
+                .filter { it == SocketActionModel.CURRENT_DEVICE_REMOVED }
+                .collect { removalEvents += 1 }
+        }
+        core.appStateJson = JsonConfig.json.encodeToString(
+            AppStateModel.serializer(),
+            buildOutsiderAppState(
+                currentDeviceId = "removedDevice",
+                vaultName = "vault1",
+                status = UserDataOutsiderStatus.DECLINED,
+            )
+        )
+
+        socketClient.emit(MetaSecretSocketEvent.StateInvalidated())
+        waitUntil { removalEvents == 1 }
+        socketClient.emit(MetaSecretSocketEvent.StateInvalidated())
+        waitUntil { core.getAppStateCalls >= 3 }
+        delay(100)
+
+        assertEquals(1, removalEvents)
+        collector.cancel()
+    }
+
+    @Test
+    fun testMemberToLocalEmitsCurrentDeviceRemoved() = runBlocking {
+        val core = FakeMetaSecretCore().apply {
+            appStateJson = JsonConfig.json.encodeToString(
+                AppStateModel.serializer(),
+                buildAppState(currentDeviceId = "removedDevice", vaultName = "vault1")
+            )
+        }
+        val (handler, socketClient) = newHandler(core)
+        handler.onAppForeground()
+        waitUntil { core.getAppStateCalls == 1 }
+        val removalEvent = async(start = CoroutineStart.UNDISPATCHED) {
+            handler.socketActions.first { it == SocketActionModel.CURRENT_DEVICE_REMOVED }
+        }
+
+        core.appStateJson = JsonConfig.json.encodeToString(
+            AppStateModel.serializer(),
+            buildLocalAppState(currentDeviceId = "removedDevice")
+        )
+        socketClient.emit(MetaSecretSocketEvent.StateInvalidated())
+
+        assertEquals(
+            SocketActionModel.CURRENT_DEVICE_REMOVED,
+            withTimeout(2_000) { removalEvent.await() },
+        )
+        handler.onAppBackground()
+    }
+
+    @Test
+    fun testMemberToDifferentLocalDeviceDoesNotEmitCurrentDeviceRemoved() = runBlocking {
+        val previousState = buildAppState(currentDeviceId = "memberDevice", vaultName = "vault1")
+        val currentState = buildLocalAppState(currentDeviceId = "differentDevice")
+
+        assertEquals(false, isCurrentDeviceRemovalTransition(previousState, currentState))
+    }
+
+    @Test
+    fun testMemberToDeclinedOwnVaultEntryEmitsCurrentDeviceRemoved() = runBlocking {
+        val core = FakeMetaSecretCore().apply {
+            appStateJson = JsonConfig.json.encodeToString(
+                AppStateModel.serializer(),
+                buildAppState(currentDeviceId = "removedDevice", vaultName = "vault1")
+            )
+        }
+        val (handler, socketClient) = newHandler(core)
+        handler.onAppForeground()
+        waitUntil { core.getAppStateCalls == 1 }
+        val removalEvent = async(start = CoroutineStart.UNDISPATCHED) {
+            handler.socketActions.first { it == SocketActionModel.CURRENT_DEVICE_REMOVED }
+        }
+
+        core.appStateJson = JsonConfig.json.encodeToString(
+            AppStateModel.serializer(),
+            buildAppState(
+                currentDeviceId = "removedDevice",
+                vaultName = "vault1",
+                currentMembershipStatus = UserDataOutsiderStatus.DECLINED,
+            )
+        )
+        socketClient.emit(MetaSecretSocketEvent.StateInvalidated())
+
+        assertEquals(
+            SocketActionModel.CURRENT_DEVICE_REMOVED,
+            withTimeout(2_000) { removalEvent.await() },
+        )
+        handler.onAppBackground()
+    }
+
+    @Test
+    fun testMemberToPendingOwnVaultEntryDoesNotEmitCurrentDeviceRemoved() = runBlocking {
+        val core = FakeMetaSecretCore().apply {
+            appStateJson = JsonConfig.json.encodeToString(
+                AppStateModel.serializer(),
+                buildAppState(currentDeviceId = "candidateDevice", vaultName = "vault1")
+            )
+        }
+        val (handler, socketClient) = newHandler(core)
+        handler.onAppForeground()
+        waitUntil { core.getAppStateCalls == 1 }
+        var removalEvents = 0
+        val collector = launch {
+            handler.socketActions
+                .filter { it == SocketActionModel.CURRENT_DEVICE_REMOVED }
+                .collect { removalEvents += 1 }
+        }
+
+        core.appStateJson = JsonConfig.json.encodeToString(
+            AppStateModel.serializer(),
+            buildAppState(
+                currentDeviceId = "candidateDevice",
+                vaultName = "vault1",
+                currentMembershipStatus = UserDataOutsiderStatus.PENDING,
+            )
+        )
+        socketClient.emit(MetaSecretSocketEvent.StateInvalidated())
+        waitUntil { core.getAppStateCalls == 2 }
+        delay(100)
+
+        assertEquals(0, removalEvents)
+        collector.cancel()
+        handler.onAppBackground()
+    }
+
+    @Test
+    fun testInitialOrPendingOutsiderDoesNotEmitCurrentDeviceRemoved() = runBlocking {
+        for (status in listOf(UserDataOutsiderStatus.PENDING, UserDataOutsiderStatus.DECLINED)) {
+            val core = FakeMetaSecretCore().apply {
+                appStateJson = JsonConfig.json.encodeToString(
+                    AppStateModel.serializer(),
+                    buildOutsiderAppState(status = status)
+                )
+            }
+            val (handler, _) = newHandler(core)
+            var removalEvents = 0
+            val collector = launch {
+                handler.socketActions
+                    .filter { it == SocketActionModel.CURRENT_DEVICE_REMOVED }
+                    .collect { removalEvents += 1 }
+            }
+
+            handler.onAppForeground()
+            waitUntil { core.getAppStateCalls == 1 }
+            delay(100)
+
+            assertEquals(0, removalEvents, "initial outsider status=$status must not reset a join flow")
+            collector.cancel()
+            handler.onAppBackground()
+        }
+    }
+
+    @Test
+    fun testMemberToPendingOutsiderDoesNotEmitCurrentDeviceRemoved() = runBlocking {
+        val core = FakeMetaSecretCore().apply {
+            appStateJson = JsonConfig.json.encodeToString(
+                AppStateModel.serializer(),
+                buildAppState(currentDeviceId = "candidateDevice", vaultName = "vault1")
+            )
+        }
+        val (handler, socketClient) = newHandler(core)
+        handler.onAppForeground()
+        waitUntil { core.getAppStateCalls == 1 }
+        var removalEvents = 0
+        val collector = launch {
+            handler.socketActions
+                .filter { it == SocketActionModel.CURRENT_DEVICE_REMOVED }
+                .collect { removalEvents += 1 }
+        }
+
+        core.appStateJson = JsonConfig.json.encodeToString(
+            AppStateModel.serializer(),
+            buildOutsiderAppState(
+                currentDeviceId = "candidateDevice",
+                vaultName = "vault1",
+                status = UserDataOutsiderStatus.PENDING,
+            )
+        )
+        socketClient.emit(MetaSecretSocketEvent.StateInvalidated())
+        waitUntil { core.getAppStateCalls == 2 }
+        delay(100)
+
+        assertEquals(0, removalEvents)
+        collector.cancel()
+    }
+
+    @Test
     fun testDoneRecoveryClaimDismissesVisibleClaimAfterInvalidationRefresh() = runBlocking {
         val core = FakeMetaSecretCore().apply {
             appStateJson = JsonConfig.json.encodeToString(
@@ -566,12 +791,12 @@ class MetaSecretSocketHandlerInvalidationTest {
         }
         socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = "claim1"))
 
-        val action = withTimeout(2000) { dismissAction.await() }
-        assertEquals(SocketActionModel.DISMISS_RECOVERY_REQUEST, action)
+        val action = withTimeout(2000) { dismissAction.await() } as SocketActionModel.DISMISS_RECOVERY_REQUEST
+        assertEquals("claim1", action.claimId)
     }
 
     @Test
-    fun testMultipleDoneRecoveryClaimsEmitSingleDismissAction() = runBlocking {
+    fun testMultipleDoneRecoveryClaimsEmitClaimSpecificDismissActions() = runBlocking {
         val oldClaim = recoverClaim("claim1", "secret1", ClientStatus.DONE)
         val currentClaim = recoverClaim("claim2", "secret1", ClientStatus.DONE)
         val core = FakeMetaSecretCore().apply {
@@ -584,12 +809,16 @@ class MetaSecretSocketHandlerInvalidationTest {
         handler.onAppForeground()
         delay(100)
 
-        val dismissAction = async(start = CoroutineStart.UNDISPATCHED) {
-            handler.socketActions.first { it is SocketActionModel.DISMISS_RECOVERY_REQUEST }
+        val dismissActions = async(start = CoroutineStart.UNDISPATCHED) {
+            handler.socketActions
+                .filterIsInstance<SocketActionModel.DISMISS_RECOVERY_REQUEST>()
+                .take(2)
+                .toList()
         }
         socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = null))
 
-        assertEquals(SocketActionModel.DISMISS_RECOVERY_REQUEST, withTimeout(2000) { dismissAction.await() })
+        val claimIds = withTimeout(2000) { dismissActions.await() }.map { it.claimId }.toSet()
+        assertEquals(setOf("claim1", "claim2"), claimIds)
     }
 
     @Test

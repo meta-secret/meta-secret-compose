@@ -121,6 +121,12 @@ abstract class CompileSwiftTask @Inject constructor(
             it.executable = "xcrun"
             it.workingDir = swiftBuildDir
             it.args = args
+            // Xcode sets SDKROOT to the iOS SDK for its build phase. SwiftPM also
+            // uses that environment value while compiling its host macOS manifest,
+            // which makes Swift 6 try to load the macOS stdlib from the iOS SDK.
+            // Keep the manifest on the host SDK; --triple/--sdk above still select
+            // the iOS target for the actual SwiftBridge library.
+            it.environment("SDKROOT", readHostSdkPath())
             it.standardOutput = StringReplacingOutputStream(
                 delegate = System.out,
                 replacements = sourceFilePathReplacements

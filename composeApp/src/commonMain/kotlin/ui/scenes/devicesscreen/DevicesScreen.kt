@@ -93,12 +93,16 @@ class DevicesScreen : Screen {
             testTag = "remove-device-dialog",
             onDismiss = { confirmed ->
                 val target = removalTarget
+                val pending = target != null && pendingRemovalTargets.contains(target)
                 removalTarget = null
-                if (confirmed == true && target != null) {
-                    if (pendingRemovalTargets.contains(target)) {
-                        viewModel.handle(DeviceViewEvents.ApproveRemoval(target))
-                    } else {
-                        viewModel.handle(DeviceViewEvents.RemoveRequested(target))
+                if (target != null) {
+                    when {
+                        confirmed == true && pending ->
+                            viewModel.handle(DeviceViewEvents.ApproveRemoval(target))
+                        confirmed == true ->
+                            viewModel.handle(DeviceViewEvents.RemoveRequested(target))
+                        confirmed == false && pending ->
+                            viewModel.handle(DeviceViewEvents.DeclineRemoval(target))
                     }
                 }
             },

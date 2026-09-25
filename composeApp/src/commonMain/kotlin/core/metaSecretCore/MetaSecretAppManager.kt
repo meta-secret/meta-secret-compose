@@ -279,6 +279,13 @@ class MetaSecretAppManager(
         return parseDeviceRemovalResponse(response)
     }
 
+    override suspend fun declineRemoveMember(targetDeviceId: String): CommonResponseModel? {
+        val response = withContext(Dispatchers.IO) {
+            metaSecretCore.declineRemoveMember(targetDeviceId)
+        }
+        return parseDeviceRemovalResponse(response)
+    }
+
     private fun parseDeviceRemovalResponse(response: String): CommonResponseModel? {
         return try {
             CommonResponseModel.fromJson(response)

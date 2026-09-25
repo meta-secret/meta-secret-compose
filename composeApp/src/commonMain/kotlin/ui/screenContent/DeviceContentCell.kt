@@ -71,7 +71,12 @@ fun DeviceContent(
         model.secretsCount in 2..4 -> appString(AppString.secrets_4)
         else -> appString(AppString.secret)
     }
-    val canRemove = effectiveStatus == DeviceStatus.Member && model.id != currentDeviceId
+    val canRemove = shouldEnableDeviceRemovalSwipe(
+        modelId = model.id,
+        currentDeviceId = currentDeviceId,
+        effectiveStatus = effectiveStatus,
+        isRemovalPending = isRemovalPending,
+    )
     if (canRemove) {
         SwipeableItem(
             itemsCount = model.devicesCount,
@@ -88,6 +93,16 @@ fun DeviceContent(
         DeviceRow(model, effectiveStatus, imageProvider, secretText, isRemovalPending, onClick)
     }
 }
+
+internal fun shouldEnableDeviceRemovalSwipe(
+    modelId: String,
+    currentDeviceId: String?,
+    effectiveStatus: DeviceStatus,
+    isRemovalPending: Boolean,
+): Boolean =
+    !isRemovalPending &&
+        effectiveStatus == DeviceStatus.Member &&
+        modelId != currentDeviceId
 
 @Composable
 private fun DeviceRow(

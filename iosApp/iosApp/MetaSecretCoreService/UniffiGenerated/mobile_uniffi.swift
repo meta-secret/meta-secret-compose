@@ -511,6 +511,13 @@ public func declineRecover(claimId: String) -> String  {
     )
 })
 }
+public func declineRemoveMember(targetDeviceId: String) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_decline_remove_member(
+        FfiConverterString.lower(targetDeviceId),$0
+    )
+})
+}
 public func deviceUiCategoryDiscriminant(deviceType: String) -> Int32  {
     return try!  FfiConverterInt32.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_device_ui_category_discriminant(
@@ -676,6 +683,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_decline_recover() != 6398) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_metasecret_mobile_checksum_func_decline_remove_member() != 47039) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_device_ui_category_discriminant() != 50183) {

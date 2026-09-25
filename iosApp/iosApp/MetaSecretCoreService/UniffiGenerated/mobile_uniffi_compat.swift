@@ -23,6 +23,9 @@ public func uniffiMobileRemoveMember(targetDeviceId: String) -> String {
 public func uniffiMobileApproveRemoveMember(targetDeviceId: String) -> String {
     approveRemoveMember(targetDeviceId: targetDeviceId)
 }
+public func uniffiMobileDeclineRemoveMember(targetDeviceId: String) -> String {
+    declineRemoveMember(targetDeviceId: targetDeviceId)
+}
 public func uniffiMobileSplitSecret(secretId: String, secret: String) -> String {
     splitSecret(secretId: secretId, secret: secret)
 }

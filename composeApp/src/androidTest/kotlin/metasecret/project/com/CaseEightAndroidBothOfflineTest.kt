@@ -3,7 +3,9 @@ package metasecret.project.com
 import android.util.Log
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -42,6 +44,181 @@ class CaseEightAndroidBothOfflineTest {
         marker("ANDROID_SECRETS_READY")
     }
 
+    /** Test #40 joins the Web-owned Vault with run-specific readiness markers. */
+    @Test
+    fun joinWebInitiatedVaultForTest40() {
+        val vaultName = argument("vaultName", "test40@test.ru")
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("email-confirmation-join", 60_000)
+        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        marker("ANDROID_TEST40_JOIN_REQUEST_SENT")
+        configuredSecretNames().forEach { name ->
+            composeRule.waitForTag("secret-row-$name", 180_000)
+        }
+        marker("ANDROID_TEST40_JOIN_READY")
+        marker("ANDROID_TEST40_SECRETS_READY")
+    }
+
+    /** Test #43 joins the Web-owned Vault before Android creates Secret2. */
+    @Test
+    fun joinWebInitiatedVaultForTest43() {
+        val vaultName = argument("vaultName", "test43@test.ru")
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("email-confirmation-join", 60_000)
+        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        marker("ANDROID_TEST43_JOIN_REQUEST_SENT")
+        configuredSecretNames().forEach { name ->
+            composeRule.waitForTag("secret-row-$name", 180_000)
+        }
+        marker("ANDROID_TEST43_JOIN_READY")
+        marker("ANDROID_TEST43_SECRETS_READY")
+    }
+
+    /** Test #46 joins the Web-owned Vault before Android creates Secret2. */
+    @Test
+    fun joinWebInitiatedVaultForTest46() {
+        val vaultName = argument("vaultName", "test46@test.ru")
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("email-confirmation-join", 60_000)
+        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        marker("ANDROID_TEST46_INITIAL_JOIN_REQUEST_SENT")
+        configuredSecretNames().forEach { name ->
+            composeRule.waitForTag("secret-row-$name", 180_000)
+        }
+        marker("ANDROID_TEST46_INITIAL_JOIN_READY")
+        marker("ANDROID_TEST46_INITIAL_SECRETS_READY")
+    }
+
+    /** Test #47 joins the Web-owned Vault before Android creates Secret2. */
+    @Test
+    fun joinWebInitiatedVaultForTest47() {
+        val vaultName = argument("vaultName", "test47@test.ru")
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("email-confirmation-join", 60_000)
+        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        marker("ANDROID_TEST47_INITIAL_JOIN_REQUEST_SENT")
+        configuredSecretNames().forEach { name ->
+            composeRule.waitForTag("secret-row-$name", 180_000)
+        }
+        marker("ANDROID_TEST47_INITIAL_JOIN_READY")
+        marker("ANDROID_TEST47_INITIAL_SECRETS_READY")
+    }
+
+    @Test
+    fun joinIosInitiatedVaultForTest39() {
+        val vaultName = argument("vaultName", "test39@test.ru")
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("email-confirmation-join", 60_000)
+        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        marker("ANDROID_TEST39_JOIN_REQUEST_SENT")
+        configuredSecretNames().forEach { name ->
+            composeRule.waitForTag("secret-row-$name", 180_000)
+        }
+        marker("ANDROID_TEST39_JOIN_READY")
+        marker("ANDROID_TEST39_SECRETS_READY")
+    }
+
+    /** Test #42 joins the iOS-owned Vault after Web has created Secret2. */
+    @Test
+    fun joinIosInitiatedVaultForTest42() {
+        val vaultName = argument("vaultName", "test42@test.ru")
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("email-confirmation-join", 60_000)
+        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        marker("ANDROID_TEST42_JOIN_REQUEST_SENT")
+        configuredSecretNames().forEach { name ->
+            composeRule.waitForTag("secret-row-$name", 180_000)
+        }
+        marker("ANDROID_TEST42_JOIN_READY")
+        marker("ANDROID_TEST42_SECRETS_READY")
+    }
+
+    /** Test #45 joins the iOS-owned Vault after Web has created Secret2. */
+    @Test
+    fun joinIosInitiatedVaultForTest45() {
+        val vaultName = argument("vaultName", "test45@test.ru")
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("email-confirmation-join", 60_000)
+        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        marker("ANDROID_TEST45_JOIN_REQUEST_SENT")
+        configuredSecretNames().forEach { name ->
+            composeRule.waitForTag("secret-row-$name", 180_000)
+        }
+        marker("ANDROID_TEST45_JOIN_READY")
+        marker("ANDROID_TEST45_SECRETS_READY")
+    }
+
+    /** Test #49 joins the iOS-owned Vault after Web has created Secret2. */
+    @Test
+    fun joinIosInitiatedVaultForTest49() {
+        val vaultName = argument("vaultName", "test49@test.ru")
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("email-confirmation-join", 60_000)
+        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        marker("ANDROID_TEST49_JOIN_REQUEST_SENT")
+        configuredSecretNames().forEach { name ->
+            composeRule.waitForTag("secret-row-$name", 180_000)
+        }
+        marker("ANDROID_TEST49_JOIN_READY")
+        marker("ANDROID_TEST49_SECRETS_READY")
+    }
+
     @Test
     fun joinAndShowLocalSecrets() {
         val vaultName = argument("vaultName", "test22@test.ru")
@@ -73,6 +250,19 @@ class CaseEightAndroidBothOfflineTest {
         waitForApproval(coordinator, "android-direct-show-start", "10")
         showLocalSecretBatch(secondSecret, listOf("10", "11", "12"))
         marker("ANDROID_DIRECT_SHOW_DONE")
+    }
+
+    /** Test #33 redistribution boundary: Android must render Secret3 before cycle 19. */
+    @Test
+    fun assertSecretVisibleForTest33() {
+        val secretName = argument("secretName", "test33-secret3")
+        val cycle = argument("cycle", "18")
+
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("tab-secrets", 60_000)
+        composeRule.onNodeWithTag("tab-secrets").performClick()
+        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        marker("ANDROID_TEST33_SECRET_VISIBLE_$cycle")
     }
 
     @Test
@@ -305,21 +495,32 @@ class CaseEightAndroidBothOfflineTest {
     @Test
     fun handleRecoveryStep() {
         val secretName = argument("secretName", "test-secret")
+        val secretValue = argument("secretValue", "")
         val role = argument("role", "receiver")
         val cycle = argument("cycle", "1")
         val step = argument("step", "1")
         val approvalPlatform = argument("approvalPlatform", "")
+        val verifyReceiverAlert = argument("verifyReceiverAlert", "false") == "true"
         val coordinator = argument("approvalCoordinatorUrl", "http://10.0.2.2:5180")
-        marker("ANDROID_STEP_CONFIG role=$role cycle=$cycle step=$step approval=$approvalPlatform")
         composeRule.waitForTag("secret-row-$secretName", 180_000)
 
         if (role == "sender") {
-            waitForApproval(coordinator, "android-sender-$step", cycle)
             // An earlier receiver approval can leave this sender with an
             // accepted claim and therefore a Show action. Reveal and close it
             // before waiting for Recover and creating the next request.
             showAcceptedSecretIfNeeded(secretName, cycle, step)
-            waitForPrimaryAction(secretName, "Recover")
+            waitForPrimaryActionExact(secretName, "Recover")
+            composeRule.waitUntil(30_000) {
+                !hasTagNow("show-secret-dialog") &&
+                    !hasTagNow("revealed-secret-value") &&
+                    !hasTagNow("recovery-request-badge-$secretName") &&
+                    !hasTagNow("open-recovery-request-$secretName") &&
+                    !hasTagNow("alert-recovery-request") &&
+                    !hasTagNow("alert-recovery-request-processing")
+            }
+            marker("ANDROID_SENDER_UI_READY_${cycle}_$step")
+            marker("ANDROID_STEP_CONFIG role=$role cycle=$cycle step=$step approval=$approvalPlatform")
+            waitForApproval(coordinator, "android-sender-$step", cycle)
             composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
             composeRule.waitForTag("show-secret-dialog", 30_000)
             marker("ANDROID_RECOVERY_REQUEST_SENT_${cycle}_$step")
@@ -332,7 +533,7 @@ class CaseEightAndroidBothOfflineTest {
                 return
             }
             waitForApproval(coordinator, "android-show-$step", cycle)
-            revealAcceptedSecret(secretName, cycle, step)
+            revealAcceptedSecret(secretName, cycle, step, secretValue.ifBlank { null })
             marker("ANDROID_RECOVERY_SECRET_VISIBLE_${cycle}_$step")
             composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
             composeRule.waitForTagGone("revealed-secret-value", 30_000)
@@ -341,6 +542,16 @@ class CaseEightAndroidBothOfflineTest {
             marker("ANDROID_RECOVERY_CLOSED_${cycle}_$step")
             return
         }
+
+        composeRule.waitUntil(30_000) {
+            val badgeVisible = hasTagNow("recovery-request-badge-$secretName")
+            val openVisible = hasTagNow("open-recovery-request-$secretName")
+            val alertVisible = hasTagNow("alert-recovery-request")
+            val processingVisible = hasTagNow("alert-recovery-request-processing")
+            !badgeVisible && !openVisible && !alertVisible && !processingVisible
+        }
+        marker("ANDROID_RECEIVER_UI_READY_${cycle}_$step")
+        marker("ANDROID_STEP_CONFIG role=$role cycle=$cycle step=$step approval=$approvalPlatform")
 
         composeRule.waitForTag("recovery-request-badge-$secretName", 180_000)
         // The first responder can close this receiver's request before the
@@ -358,18 +569,45 @@ class CaseEightAndroidBothOfflineTest {
             throw AssertionError("Android recovery request button did not appear while the request remained pending")
         }
         marker("ANDROID_INCOMING_VISIBLE_${cycle}_$step")
-        if (approvalPlatform == "android") {
-            waitForApproval(coordinator, "android-approve-$step", cycle)
+        if (approvalPlatform == "android" || verifyReceiverAlert) {
             openRecoveryRequestAlert(secretName, cycle, step)
-            composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
-            composeRule.waitUntil(120_000) {
-                composeRule.onAllNodes(hasTestTag("alert-recovery-request"), useUnmergedTree = true)
-                    .fetchSemanticsNodes().isEmpty() && composeRule.onAllNodes(
-                        hasTestTag("alert-recovery-request-processing"), useUnmergedTree = true,
-                    ).fetchSemanticsNodes().isEmpty()
+            composeRule.waitUntil(10_000) {
+                composeRule.onAllNodes(
+                    hasTestTag("alert-recovery-request").and(
+                        hasAnyDescendant(hasText(secretName, substring = true)),
+                    ),
+                    useUnmergedTree = true,
+                ).fetchSemanticsNodes().isNotEmpty()
             }
-            awaitNativeAcceptCompletion(cycle, step)
-            marker("ANDROID_APPROVED_INCOMING_${cycle}_$step")
+            marker("ANDROID_INCOMING_ALERT_VISIBLE_${cycle}_$step")
+            if (approvalPlatform == "android") {
+                waitForApproval(coordinator, "android-approve-$step", cycle)
+                composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
+                composeRule.waitUntil(120_000) {
+                    composeRule.onAllNodes(hasTestTag("alert-recovery-request"), useUnmergedTree = true)
+                        .fetchSemanticsNodes().isEmpty() && composeRule.onAllNodes(
+                            hasTestTag("alert-recovery-request-processing"), useUnmergedTree = true,
+                        ).fetchSemanticsNodes().isEmpty()
+                }
+                awaitNativeAcceptCompletion(cycle, step)
+                marker("ANDROID_APPROVED_INCOMING_${cycle}_$step")
+            } else {
+                composeRule.onNodeWithTag("alert-dismiss", useUnmergedTree = true).performClick()
+                composeRule.waitForTagGone("alert-recovery-request", 30_000)
+                composeRule.waitForTagGone("alert-recovery-request-processing", 30_000)
+                if (!hasTagNow("recovery-request-badge-$secretName") ||
+                    !hasTagNow("open-recovery-request-$secretName")
+                ) {
+                    throw AssertionError(
+                        "Android observer request disappeared after local alert dismissal",
+                    )
+                }
+                marker("ANDROID_INCOMING_ALERT_DISMISSED_WITHOUT_DECISION_${cycle}_$step")
+                waitForApproval(coordinator, "android-dismiss-$step", cycle)
+                composeRule.waitForTagGone("recovery-request-badge-$secretName", 120_000)
+                composeRule.waitForTagGone("open-recovery-request-$secretName", 120_000)
+                marker("ANDROID_DISMISSED_INCOMING_${cycle}_$step")
+            }
         } else {
             waitForApproval(coordinator, "android-dismiss-$step", cycle)
             composeRule.waitForTagGone("recovery-request-badge-$secretName", 120_000)
@@ -579,7 +817,12 @@ class CaseEightAndroidBothOfflineTest {
         stateResult.getOrElse { throw it }
     }
 
-    private fun revealAcceptedSecret(secretName: String, cycle: String, step: String) {
+    private fun revealAcceptedSecret(
+        secretName: String,
+        cycle: String,
+        step: String,
+        expectedSecretValue: String? = null,
+    ) {
         var showClicked = false
         composeRule.waitUntil(180_000) {
             if (runCatching {
@@ -607,6 +850,11 @@ class CaseEightAndroidBothOfflineTest {
             false
         }
         composeRule.waitForTag("revealed-secret-value", 180_000)
+        if (expectedSecretValue != null) {
+            composeRule.onNodeWithTag("revealed-secret-value", useUnmergedTree = true)
+                .assertTextEquals(expectedSecretValue)
+            marker("ANDROID_RECOVERY_SECRET_VALUE_VERIFIED_${cycle}_$step")
+        }
     }
 
     private fun waitForPrimaryAction(secretName: String, expected: String) {
@@ -614,6 +862,15 @@ class CaseEightAndroidBothOfflineTest {
             runCatching {
                 composeRule.onNodeWithTag("secret-primary-action-$secretName")
                     .assertTextContains(expected, substring = true)
+            }.isSuccess
+        }
+    }
+
+    private fun waitForPrimaryActionExact(secretName: String, expected: String) {
+        composeRule.waitUntil(180_000) {
+            runCatching {
+                composeRule.onNodeWithTag("secret-primary-action-$secretName")
+                    .assertTextEquals(expected)
             }.isSuccess
         }
     }

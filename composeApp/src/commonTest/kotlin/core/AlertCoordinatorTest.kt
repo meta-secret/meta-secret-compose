@@ -6,12 +6,14 @@ import kotlin.test.assertTrue
 import models.appInternalModels.RestoreData
 import testutils.FakeNotificationCoordinator
 import testutils.FakeStringProvider
+import testutils.FakeDebugLogger
 
 class AlertCoordinatorTest {
 
     private fun newCoordinator() = AlertCoordinator(
         notificationCoordinator = FakeNotificationCoordinator(),
-        stringProvider = FakeStringProvider()
+        stringProvider = FakeStringProvider(),
+        logger = FakeDebugLogger(),
     )
 
     @Test
