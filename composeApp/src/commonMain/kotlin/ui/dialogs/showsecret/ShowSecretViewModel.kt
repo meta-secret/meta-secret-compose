@@ -134,12 +134,26 @@ class ShowSecretViewModel(
                     // the secret after another device has approved it must
                     // still complete that sender's own claim.
                     ClientStatus.ACCEPTED -> {
-                        logger.log(
-                            LogTag.ShowSecretVM.Message.StartShowingRecovered,
-                            "resuming accepted claimId=${existingClaim.claimId}",
-                            success = true,
-                        )
-                        showRecoveredSecret(secretName, existingClaim?.claimId)
+                        val acceptedClaimId = existingClaim.claimId
+                        if (acceptedClaimId.isNullOrBlank()) {
+                            logger.log(
+                                LogTag.ShowSecretVM.Message.FailedToRecoverSecret,
+                                "accepted recovery has no claim id; refusing local reveal",
+                                success = false,
+                            )
+                            _isLoading.value = false
+                            socketHandler.actionsToFollow(
+                                add = null,
+                                exclude = listOf(SocketRequestModel.SHOW_SECRET),
+                            )
+                        } else {
+                            logger.log(
+                                LogTag.ShowSecretVM.Message.StartShowingRecovered,
+                                "resuming accepted claimId=$acceptedClaimId",
+                                success = true,
+                            )
+                            showRecoveredSecret(secretName, acceptedClaimId)
+                        }
                         socketHandler.resumeRefreshes()
                     }
 

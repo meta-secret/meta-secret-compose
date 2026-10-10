@@ -139,6 +139,15 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
 
             for (index, approval) in cycle.approvals.enumerated() where approval.platform == "ios" {
                 let step = index + 1
+                waitForIncomingRecovery(
+                    secretName: approval.secret,
+                    cycle: cycle.number,
+                    request: step,
+                    senderPlatforms: cycle.senderSecrets.keys.sorted().joined(separator: "+"),
+                    approvalPlatforms: cycle.approvals.map(\.platform).joined(separator: ","),
+                    timeout: 180
+                )
+                print("E2E: IOS_INCOMING_VISIBLE_\(cycle.number)_\(step)")
                 waitForApproval(platform: "ios-approve-\(step)", cycle: cycle.number)
                 approveIncomingRecovery(approval.secret, cycle: cycle.number, request: step)
                 print("E2E: IOS_APPROVED_INCOMING_\(cycle.number)_\(step)")
@@ -494,7 +503,22 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
             if close.exists && close.isHittable {
                 tapAttempts += 1
                 print("E2E: IOS_SHOW_SECRET_CLOSE_ATTEMPT_\(tapAttempts)")
-                close.tap()
+                do {
+                    close.tap()
+                } catch {
+                    // A concurrent recovery update can remove and recreate
+                    // this accessibility element between the hittable check
+                    // and tap. Re-read the modal state and retry while it is
+                    // still present instead of failing on the stale handle.
+                    print(
+                        "E2E: IOS_SHOW_SECRET_CLOSE_STALE_\(tapAttempts) " +
+                            "dialogExists=\(dialog.exists)"
+                    )
+                    if !dialog.exists {
+                        return
+                    }
+                    continue
+                }
                 if dialog.waitForNonExistence(timeout: 5) {
                     return
                 }
@@ -656,6 +680,41 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
             element.waitForExistence(timeout: timeout),
             failureMessage ?? "\(identifier) was not visible"
         )
+    }
+
+    private func waitForIncomingRecovery(
+        secretName: String,
+        cycle: Int,
+        request: Int,
+        senderPlatforms: String,
+        approvalPlatforms: String,
+        timeout: TimeInterval
+    ) {
+        let open = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
+        guard open.waitForExistence(timeout: timeout) else {
+            let row = app.descendants(matching: .any)["secret-row-\(secretName)"]
+            let badge = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
+            let alert = app.descendants(matching: .any)["alert-recovery-request"]
+            let processing = app.descendants(matching: .any)["alert-recovery-request-processing"]
+            let showDialog = app.descendants(matching: .any)["show-secret-dialog"]
+            print(
+                "E2E: IOS_INCOMING_GATE_DIAGNOSTIC cycle=\(cycle) request=\(request) "
+                    + "platform=ios role=approver senders=\(senderPlatforms) "
+                    + "approvalPlatforms=\(approvalPlatforms) "
+                    + "secretRowExists=\(row.exists) secretRowHittable=\(row.isHittable) "
+                    + "openExists=\(open.exists) openHittable=\(open.isHittable) "
+                    + "badgeExists=\(badge.exists) badgeHittable=\(badge.isHittable) "
+                    + "recoveryAlertExists=\(alert.exists) recoveryAlertHittable=\(alert.isHittable) "
+                    + "processingExists=\(processing.exists) processingHittable=\(processing.isHittable) "
+                    + "showSecretDialogExists=\(showDialog.exists) "
+                    + "showSecretDialogHittable=\(showDialog.isHittable)"
+            )
+            XCTFail(
+                "recovery cycle \(cycle), request \(request): "
+                    + "incoming request was not visible before approval"
+            )
+            return
+        }
     }
 
     private func waitForSecretAfterJoin(_ secretName: String, timeout: TimeInterval) {

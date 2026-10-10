@@ -39,8 +39,8 @@ class SecretsScreenViewModel(
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val secrets: StateFlow<List<Secret>> = secretsList
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
-    private val _primaryActions = MutableStateFlow<Map<String, SecretPrimaryAction>>(emptyMap())
-    val primaryActions: StateFlow<Map<String, SecretPrimaryAction>> = _primaryActions
+    private val _primaryActions = MutableStateFlow<Map<String, SecretPrimaryActionState>>(emptyMap())
+    val primaryActions: StateFlow<Map<String, SecretPrimaryActionState>> = _primaryActions
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -108,11 +108,7 @@ class SecretsScreenViewModel(
     private suspend fun refreshPrimaryActions(secrets: List<SecretApiModel>) {
         val actions = secrets.associate { secret ->
             val claim = metaSecretAppManager.findClaim(secret.name)
-            secret.name to if (claim?.clientStatus == ClientStatus.ACCEPTED) {
-                SecretPrimaryAction.Show
-            } else {
-                SecretPrimaryAction.Recover
-            }
+            secret.name to secretPrimaryActionState(claim?.clientStatus, claim?.claimId)
         }
         _primaryActions.value = actions
         logger.log(LogTag.SecretsVM.Message.NewStateForSecrets, "recovery primary actions=$actions", success = true)
@@ -138,6 +134,20 @@ class SecretsScreenViewModel(
 }
 
 enum class SecretPrimaryAction { Show, Recover }
+
+data class SecretPrimaryActionState(
+    val action: SecretPrimaryAction,
+    val acceptedClaimId: String? = null,
+)
+
+internal fun secretPrimaryActionState(
+    clientStatus: ClientStatus?,
+    claimId: String?,
+): SecretPrimaryActionState = if (clientStatus == ClientStatus.ACCEPTED && !claimId.isNullOrBlank()) {
+    SecretPrimaryActionState(SecretPrimaryAction.Show, claimId)
+} else {
+    SecretPrimaryActionState(SecretPrimaryAction.Recover)
+}
 
 sealed class SecretsEvents : CommonViewModelEventsInterface {
     data class GetSecret(val index: Int) : SecretsEvents()

@@ -60,6 +60,10 @@ import Security
         uniffiMobileStateEventsAuthToken(vaultName: vaultName)
     }
 
+    @objc public func joinResultAuthToken() -> String {
+        uniffiMobileJoinResultAuthToken()
+    }
+
     @objc public func generateUserCreds(vaultName: String) -> String {
         let resultString = uniffiMobileGenerateUserCreds(vaultName: vaultName)
         return resultString

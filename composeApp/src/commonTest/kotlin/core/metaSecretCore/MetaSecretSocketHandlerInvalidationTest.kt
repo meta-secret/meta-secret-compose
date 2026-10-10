@@ -6,6 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -19,6 +20,8 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
@@ -64,6 +67,11 @@ class MetaSecretSocketHandlerInvalidationTest {
         var disconnectCalls = 0
         var latestSubscription: MetaSecretSocketSubscription? = null
         var failConnect = false
+        var latestJoinResultSubscription: MetaSecretJoinResultSubscription? = null
+        var joinResultConnectCalls = 0
+        var joinResultDisconnectCalls = 0
+        private val _joinResultEvents = MutableSharedFlow<MetaSecretJoinResultEvent>(replay = 8, extraBufferCapacity = 8)
+        override val joinResultEvents = _joinResultEvents
 
         override fun configure(subscription: MetaSecretSocketSubscription?) {
             latestSubscription = subscription
@@ -78,8 +86,24 @@ class MetaSecretSocketHandlerInvalidationTest {
             disconnectCalls += 1
         }
 
+        override fun configureJoinResult(subscription: MetaSecretJoinResultSubscription?) {
+            latestJoinResultSubscription = subscription
+        }
+
+        override fun connectJoinResult() {
+            joinResultConnectCalls += 1
+        }
+
+        override fun disconnectJoinResult() {
+            joinResultDisconnectCalls += 1
+        }
+
         fun emit(event: MetaSecretSocketEvent) {
             _events.tryEmit(event)
+        }
+
+        fun emitJoinResult(event: MetaSecretJoinResultEvent) {
+            _joinResultEvents.tryEmit(event)
         }
     }
 
@@ -200,7 +224,8 @@ class MetaSecretSocketHandlerInvalidationTest {
 
     private fun newHandler(
         core: FakeMetaSecretCore,
-        socketClient: FakeSocketClient = FakeSocketClient()
+        socketClient: FakeSocketClient = FakeSocketClient(),
+        uiDispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
     ): Pair<MetaSecretSocketHandler, FakeSocketClient> {
         val stringProvider = FakeStringProvider()
         val handler = MetaSecretSocketHandler(
@@ -210,7 +235,8 @@ class MetaSecretSocketHandlerInvalidationTest {
             errorMapper = ErrorMapper(stringProvider),
             appStateCacheProvider = FakeAppStateCacheProvider(),
             stringProvider = stringProvider,
-            socketClient = socketClient
+            socketClient = socketClient,
+            uiDispatcher = uiDispatcher,
         )
         return handler to socketClient
     }
@@ -303,7 +329,7 @@ class MetaSecretSocketHandlerInvalidationTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun testWaitingForJoinApproveRefreshesWithoutSocketForPendingOutsider() = runBlocking {
+    fun testPendingJoinUsesDedicatedSseWithoutPollingAndRefreshesOnceOnAccepted() = runBlocking {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         try {
             val core = FakeMetaSecretCore().apply {
@@ -325,8 +351,13 @@ class MetaSecretSocketHandlerInvalidationTest {
             waitUntil { core.getAppStateCalls == 1 }
             waitUntil { handler.socketActionType.value == SocketActionModel.JOIN_REQUEST_PENDING }
 
-            assertNull(socketClient.latestSubscription)
+            assertEquals("vault1", socketClient.latestJoinResultSubscription?.vaultName)
+            assertEquals(1, socketClient.joinResultConnectCalls)
             assertEquals(0, socketClient.connectCalls)
+
+            // The former implementation performed getAppState() every 2 seconds.
+            delay(2_200)
+            assertEquals(1, core.getAppStateCalls, "pending join must not poll Core state")
 
             core.appStateJson = JsonConfig.json.encodeToString(
                 AppStateModel.serializer(),
@@ -337,10 +368,52 @@ class MetaSecretSocketHandlerInvalidationTest {
                     handler.socketActions.first { it == SocketActionModel.JOIN_REQUEST_ACCEPTED }
                 }
             }
-            handler.refreshAppState()
+            socketClient.emitJoinResult(MetaSecretJoinResultEvent.Resolved(MetaSecretJoinResultOutcome.ACCEPTED))
 
             val action = actionDeferred.await()
             assertEquals(SocketActionModel.JOIN_REQUEST_ACCEPTED, action)
+            assertEquals(2, core.getAppStateCalls, "one terminal SSE result causes one canonical refresh")
+            handler.onAppBackground()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun testPendingJoinRefreshesCanonicalStateOnceAfterDeclinedEvent() = runBlocking {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        try {
+            val core = FakeMetaSecretCore().apply {
+                appStateJson = JsonConfig.json.encodeToString(
+                    AppStateModel.serializer(),
+                    buildOutsiderAppState(currentDeviceId = "webDevice", status = UserDataOutsiderStatus.PENDING),
+                )
+            }
+            val (handler, socketClient) = newHandler(core)
+            handler.onAppForeground()
+            waitUntil { core.getAppStateCalls == 1 }
+            core.getAppStateCalls = 0
+            handler.actionsToFollow(add = listOf(SocketRequestModel.WAIT_FOR_JOIN_APPROVE), exclude = null)
+            waitUntil { handler.socketActionType.value == SocketActionModel.JOIN_REQUEST_PENDING }
+            // Allow the initial foreground refresh job to finish before swapping
+            // the fake Core response used by the terminal-result refresh.
+            delay(50)
+
+            core.appStateJson = JsonConfig.json.encodeToString(
+                AppStateModel.serializer(),
+                buildOutsiderAppState(currentDeviceId = "webDevice", status = UserDataOutsiderStatus.DECLINED),
+            )
+            val declined = async(start = CoroutineStart.UNDISPATCHED) {
+                withTimeout(2_000) {
+                    handler.socketActions.first { it == SocketActionModel.JOIN_REQUEST_DECLINED }
+                }
+            }
+            socketClient.emitJoinResult(MetaSecretJoinResultEvent.Resolved(MetaSecretJoinResultOutcome.DECLINED))
+
+            assertEquals(SocketActionModel.JOIN_REQUEST_DECLINED, declined.await())
+            assertEquals(2, core.getAppStateCalls, "the terminal SSE event should trigger one canonical refresh")
+            assertNull(socketClient.latestJoinResultSubscription)
             handler.onAppBackground()
         } finally {
             Dispatchers.resetMain()
@@ -378,7 +451,7 @@ class MetaSecretSocketHandlerInvalidationTest {
                     handler.socketActions.first { it == SocketActionModel.JOIN_REQUEST_ACCEPTED }
                 }
             }
-            socketClient.emit(MetaSecretSocketEvent.StateInvalidated())
+            socketClient.emitJoinResult(MetaSecretJoinResultEvent.Resolved(MetaSecretJoinResultOutcome.ACCEPTED))
             assertEquals(SocketActionModel.JOIN_REQUEST_ACCEPTED, acceptedDeferred.await())
             assertEquals(SocketActionModel.NONE, handler.socketActionType.value)
 
@@ -429,7 +502,7 @@ class MetaSecretSocketHandlerInvalidationTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun testWaitingForJoinApprovePollsUntilAcceptedWithoutSocket() = runBlocking {
+    fun testWaitingForJoinApproveRefreshesAfterSseAcceptedWithoutMemberSocket() = runBlocking {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         try {
             val core = FakeMetaSecretCore().apply {
@@ -459,7 +532,7 @@ class MetaSecretSocketHandlerInvalidationTest {
                 }
             }
 
-            handler.refreshAppState()
+            socketClient.emitJoinResult(MetaSecretJoinResultEvent.Resolved(MetaSecretJoinResultOutcome.ACCEPTED))
 
             val action = actionDeferred.await()
             assertEquals(SocketActionModel.JOIN_REQUEST_ACCEPTED, action)
@@ -551,6 +624,35 @@ class MetaSecretSocketHandlerInvalidationTest {
         } as SocketActionModel.READY_TO_RECOVER
         assertEquals("claim1", action.restoreData.claimId)
         assertEquals("secret1", action.restoreData.secretId)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun testRecoveryUiStateIsPublishedOnMainDispatcher() = runBlocking {
+        val mainDispatcher = StandardTestDispatcher()
+        val claim = recoverClaim("claim-main", "secret1", ClientStatus.NEED_APPROVE)
+        val core = FakeMetaSecretCore().apply {
+            appStateJson = JsonConfig.json.encodeToString(
+                AppStateModel.serializer(),
+                buildAppState(claims = mapOf(claim.distClaimId.id to claim)),
+            )
+        }
+        val (handler) = newHandler(core, uiDispatcher = mainDispatcher)
+
+        handler.onAppForeground()
+        waitUntil { core.getAppStateCalls == 1 }
+        delay(100)
+
+        // The socket worker has received and parsed the claim, but Compose
+        // state remains untouched until the Main dispatcher processes it.
+        assertTrue(handler.pendingRecoveryRequests.value.isEmpty())
+        assertEquals(SocketActionModel.NONE, handler.socketActionType.value)
+
+        mainDispatcher.scheduler.advanceUntilIdle()
+        waitUntil {
+            handler.pendingRecoveryRequests.value.any { it.claimId == claim.distClaimId.id }
+        }
+        assertTrue(handler.socketActionType.value is SocketActionModel.READY_TO_RECOVER)
     }
 
     @Test

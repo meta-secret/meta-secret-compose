@@ -93,7 +93,13 @@ class MainScreen : Screen {
 
         TabNavigator(tabs[selectedTabIndex]) {
             val tabNavigator = LocalTabNavigator.current
-            tabNavigator.current = tabs[selectedTabIndex]
+            // Keep Voyager's tab selection in sync after composition. Writing
+            // to tabNavigator.current during composition can invalidate the
+            // tree while Compose is laying it out after an asynchronous state
+            // update (for example, a recovery claim refresh).
+            LaunchedEffect(selectedTabIndex) {
+                tabNavigator.current = tabs[selectedTabIndex]
+            }
             Scaffold(
                 modifier = Modifier
                     .fillMaxSize(),

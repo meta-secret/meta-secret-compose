@@ -28,6 +28,9 @@ object MetaSecretNative {
         uniffi.mobile_uniffi.stateEventsAuthToken(vaultName)
 
     @JvmStatic
+    fun joinResultAuthToken(): String = uniffi.mobile_uniffi.joinResultAuthToken()
+
+    @JvmStatic
     fun generate_user_creds(vaultName: String): String =
         uniffi.mobile_uniffi.generateUserCreds(vaultName)
 

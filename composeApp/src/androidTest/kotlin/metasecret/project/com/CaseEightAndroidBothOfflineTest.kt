@@ -500,9 +500,12 @@ class CaseEightAndroidBothOfflineTest {
         val cycle = argument("cycle", "1")
         val step = argument("step", "1")
         val approvalPlatform = argument("approvalPlatform", "")
+        val expectedOutcome = argument("expectedOutcome", "")
         val verifyReceiverAlert = argument("verifyReceiverAlert", "false") == "true"
+        val receiverRequestAlreadySent = argument("receiverRequestAlreadySent", "false") == "true"
         val coordinator = argument("approvalCoordinatorUrl", "http://10.0.2.2:5180")
         composeRule.waitForTag("secret-row-$secretName", 180_000)
+        val recoveryUiProbe = if (role == "sender") null else RecoveryUiDiagnosticProbe(secretName)
 
         if (role == "sender") {
             // An earlier receiver approval can leave this sender with an
@@ -525,8 +528,15 @@ class CaseEightAndroidBothOfflineTest {
             composeRule.waitForTag("show-secret-dialog", 30_000)
             marker("ANDROID_RECOVERY_REQUEST_SENT_${cycle}_$step")
             if (approvalPlatform == "cli") {
+                if (expectedOutcome == "membership-removal") {
+                    waitForApproval(coordinator, "android-request-committed-$step", cycle)
+                }
                 composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
                 composeRule.waitForTagGone("show-secret-dialog", 30_000)
+                if (expectedOutcome == "membership-removal") {
+                    marker("ANDROID_RECOVERY_REQUEST_READY_FOR_REMOVAL_${cycle}_$step")
+                    return
+                }
                 waitForApproval(coordinator, "android-invalidated-$step", cycle)
                 waitForPrimaryAction(secretName, "Recover")
                 marker("ANDROID_RECOVERY_INVALIDATED_${cycle}_$step")
@@ -543,17 +553,20 @@ class CaseEightAndroidBothOfflineTest {
             return
         }
 
-        composeRule.waitUntil(30_000) {
-            val badgeVisible = hasTagNow("recovery-request-badge-$secretName")
-            val openVisible = hasTagNow("open-recovery-request-$secretName")
-            val alertVisible = hasTagNow("alert-recovery-request")
-            val processingVisible = hasTagNow("alert-recovery-request-processing")
-            !badgeVisible && !openVisible && !alertVisible && !processingVisible
+        if (!receiverRequestAlreadySent) {
+            composeRule.waitUntil(30_000) {
+                val badgeVisible = hasTagNow("recovery-request-badge-$secretName")
+                val openVisible = hasTagNow("open-recovery-request-$secretName")
+                val alertVisible = hasTagNow("alert-recovery-request")
+                val processingVisible = hasTagNow("alert-recovery-request-processing")
+                !badgeVisible && !openVisible && !alertVisible && !processingVisible
+            }
         }
+        recoveryUiProbe?.capture(composeRule, "receiver-ready", cycle, step)
         marker("ANDROID_RECEIVER_UI_READY_${cycle}_$step")
         marker("ANDROID_STEP_CONFIG role=$role cycle=$cycle step=$step approval=$approvalPlatform")
 
-        composeRule.waitForTag("recovery-request-badge-$secretName", 180_000)
+        composeRule.waitForRecoveryBadgeWithDiagnostics(secretName, 180_000, cycle, step, requireNotNull(recoveryUiProbe))
         // The first responder can close this receiver's request before the
         // second runner reaches the open button. Wait for either the button
         // or the terminal badge disappearance instead of asserting the
@@ -569,6 +582,10 @@ class CaseEightAndroidBothOfflineTest {
             throw AssertionError("Android recovery request button did not appear while the request remained pending")
         }
         marker("ANDROID_INCOMING_VISIBLE_${cycle}_$step")
+        if (expectedOutcome == "membership-removal") {
+            marker("ANDROID_RECOVERY_READY_FOR_REMOVAL_${cycle}_$step")
+            return
+        }
         if (approvalPlatform == "android" || verifyReceiverAlert) {
             openRecoveryRequestAlert(secretName, cycle, step)
             composeRule.waitUntil(10_000) {

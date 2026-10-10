@@ -12,7 +12,7 @@ final class CaseThreeIosJoinUITest: XCTestCase {
     }
 
     func testJoinAndroidInitiatedVaultAndHandleRecovery() throws {
-        let vaultName = env("E2E_VAULT_NAME", defaultValue: "test@test.ru")
+        let vaultName = env("E2E_VAULT_NAME", defaultValue: "test3@test.ru")
         let secretName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
 
         skipOnboardingIfNeeded()
@@ -52,7 +52,7 @@ final class CaseThreeIosJoinUITest: XCTestCase {
             waitForVisible(
                 identifier: "recovery-request-badge-\(secretName)",
                 timeout: 45,
-                failureMessage: "recovery cycle \(cycle): incoming recovery badge was not visible"
+                failureMessage: "recovery cycle \(cycle): incoming recovery badge was not visible in the Secrets list"
             )
             print("E2E: IOS_RECOVERY_REQUEST_ALERT_\(cycle)")
             if approvalCycles.contains(cycle) {

@@ -422,6 +422,9 @@ interface DebugLoggerInterface {
     /** Diagnostic-only trace; platform implementations may route this to native debug logs. */
     fun diagnostic(message: String) {}
 
+    /** Safe, payload-free diagnostics reserved for local UI E2E failure analysis. */
+    fun e2eDiagnostic(message: String) {}
+
     fun setLoggerVisibility()
     fun testInfo()
     fun setAppManagerCreated(created: Boolean)
@@ -449,6 +452,10 @@ open class DebugLogger(
 
         val logMessage = "$preMessage ${message.tag.displayName}: $fullMessage"
         println(logFormatter.formatLogMessage(logMessage))
+    }
+
+    override fun e2eDiagnostic(message: String) {
+        logFormatter.logE2eDiagnostic(message)
     }
 
     override fun setAppManagerCreated(created: Boolean) {

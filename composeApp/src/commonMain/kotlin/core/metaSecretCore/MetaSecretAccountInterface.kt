@@ -7,6 +7,7 @@ interface MetaSecretAccountInterface {
     fun initAppManager(masterKey: String): String
     fun getAppState(): String
     fun stateEventsAuthToken(vaultName: String): String
+    fun joinResultAuthToken(): String
     fun generateUserCreds(vaultName: String): String
     fun signUp(): String
     fun updateMembership(candidate: UserData, actionUpdate: String): String

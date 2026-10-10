@@ -191,6 +191,20 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
         return result.substring(tokenStart, tokenEnd)
     }
 
+    override fun joinResultAuthToken(): String {
+        val result = MetaSecretNative.joinResultAuthToken()
+        if (!result.contains("\"success\":true")) {
+            throw IllegalStateException("Failed to obtain JOIN result authorization")
+        }
+        val marker = "\"message\":\""
+        val start = result.indexOf(marker)
+        if (start < 0) throw IllegalStateException("JOIN result authorization token is missing")
+        val tokenStart = start + marker.length
+        val tokenEnd = result.indexOf('"', tokenStart)
+        if (tokenEnd < 0) throw IllegalStateException("JOIN result authorization token is malformed")
+        return result.substring(tokenStart, tokenEnd)
+    }
+
     override fun generateUserCreds(vaultName: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGenerateUserCreds, success = true)

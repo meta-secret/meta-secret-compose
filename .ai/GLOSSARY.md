@@ -97,6 +97,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **DistClaimId** | Claim id paired with a `PassId` | Claim identity | `AppStateModel.kt` |
 | **PassId** | Identifier + name for a password/secret reference | Claims | `AppStateModel.kt` |
 | **RestoreData** | `ClaimId` + `SecretId` pair used to trigger recovery | Recovery flow | `SocketActionModel.kt` |
+| **Accepted recovery after relaunch** | Re-read the accepted claim from Core after app restart and pass its exact `ClaimId` to `showRecovered`; transient socket events are optional hints, not durable state | Recovery reveal | The client does not persist the reconstructed secret or rely on an in-memory event |
 | **RecoveryRequestAlertState** | Sealed UI state for recovery alerts: `Hidden`, `Visible(RestoreData)`, `Processing(RestoreData)` | Alert dialog | `AlertProvider.kt` |
 
 ---
@@ -128,6 +129,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **SocketRequestModel** | Enum of state-following modes: `GET_STATE`, `WAIT_FOR_JOIN_RESPONSE`, `SHOW_SECRET`, `WAIT_FOR_RECOVER_REQUEST` | Refresh config | `SocketRequestModel.kt` |
 | **State Events Stream** | Authenticated Server-Sent Events connection used only as an invalidation signal; it is not a state or Secret transport | Runtime | `/state-events?vaultName=...` |
 | **Reconnect Credential** | Fresh Bearer credential requested from Core for each state-events reconnect | Runtime security | Prevents stale or cross-Vault subscriptions |
+| **Join Result Stream** | Separate SSE subscription authorized for one exact JOIN request; emits accepted/declined once, then the client reads canonical state from Core | Pending join | `/join-events?vaultName=...` with Bearer header |
 
 ---
 

@@ -2,6 +2,8 @@ package metasecret.project.com
 
 import android.util.Log
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -94,6 +96,8 @@ class CaseFourAndroidConcurrentRecoveryTest {
             cycle.approvals.forEachIndexed { index, approval ->
                 if (approval.platform == "android") {
                     val step = index + 1
+                    waitForIncomingRecoveryUi(approval.secret)
+                    marker("ANDROID_INCOMING_VISIBLE_${cycle.number}_$step")
                     waitForApproval(approvalCoordinatorUrl, "android-approve-$step", cycle.number)
                     approveIncomingRecovery(
                         approval.secret,
@@ -595,22 +599,30 @@ class CaseFourAndroidConcurrentRecoveryTest {
         composeRule.onNodeWithTag("tab-devices").performClick()
         marker("ANDROID_DEVICES_TAB_OPENED_$marker")
         composeRule.waitForTag("pending-device-row", 180_000)
+        val joiningDeviceName = composeRule.onNodeWithTag(
+            "pending-device-name",
+            useUnmergedTree = true,
+        ).fetchSemanticsNode().config[SemanticsProperties.Text].single().text
         composeRule.onNodeWithTag("pending-device-row").performClick()
         composeRule.waitForTag("alert-join-request", 30_000)
         composeRule.onNodeWithTag("alert-join-request-accept").performClick()
         composeRule.waitUntil(120_000) {
             composeRule.onAllNodes(hasTestTag("alert-join-request")).fetchSemanticsNodes().isEmpty()
         }
-        // Closing the dialog only means that the UI dispatched the request.
-        // Do not tell the orchestrator that approval succeeded until Android
-        // has received the server state where this candidate is no longer
-        // pending. This distinguishes a real membership-write failure from a
-        // joiner's missed update.
+        // Closing the dialog only means that Android dispatched the request.
+        // Wait until this exact candidate appears as a Member in Core-backed
+        // device state before telling the orchestrator the join succeeded.
         marker("ANDROID_JOIN_APPROVAL_DISPATCHED_$marker")
-        composeRule.waitUntil(120_000) {
-            composeRule.onAllNodes(hasTestTag("pending-device-row")).fetchSemanticsNodes().isEmpty()
+        composeRule.waitUntil(180_000) {
+            val exactMemberRows = composeRule.onAllNodes(
+                deviceRowMatcher()
+                    .and(hasAnyDescendant(hasText(joiningDeviceName, substring = false)))
+                    .and(hasAnyDescendant(hasText("Member", substring = false))),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes()
+            exactMemberRows.size == 1
         }
-        marker(marker)
+        marker("$marker deviceName=$joiningDeviceName status=Member")
     }
 
     private fun waitForApproval(coordinatorUrl: String, platform: String, cycle: Int) {
@@ -644,6 +656,13 @@ class CaseFourAndroidConcurrentRecoveryTest {
             }.getOrDefault(false)
         }
     }
+
+    private fun deviceRowMatcher(): androidx.compose.ui.test.SemanticsMatcher =
+        androidx.compose.ui.test.SemanticsMatcher("TestTag starts with device-row-") { node ->
+            runCatching { node.config[SemanticsProperties.TestTag] }
+                .getOrNull()
+                ?.startsWith("device-row-") == true
+        }
 
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitForTagGone(
         tag: String,

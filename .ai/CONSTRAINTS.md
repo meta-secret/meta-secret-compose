@@ -76,9 +76,13 @@ such as biometry or navigation. A client may choose presentation (for example
 - The client-side `vaultName` and `deviceId` are connection bookkeeping only. The
   server authorizes the signer from the credential and current Vault membership.
 - On `state_invalidated`, current members call Core `getAppState`; they do not
-  add polling loops or artificial sleeps to compensate for reconnects. A
-  pending joiner is not yet a member and may keep the existing status-refresh
-  fallback until membership is granted.
+  add polling loops or artificial sleeps to compensate for reconnects.
+- A pending joiner is not yet a member and listens on the separate request-scoped
+  `/join-events` SSE stream. There is no polling fallback. After `accepted` or
+  `declined`, the client performs one canonical Core `getAppState` refresh.
+- `/join-events` credentials are short-lived and bound to the exact JOIN request;
+  send them only in the `Authorization` header, never in the URL. Web uses
+  `fetch` streaming because native `EventSource` cannot set that header.
 
 ---
 
@@ -199,6 +203,8 @@ such as biometry or navigation. A client may choose presentation (for example
 - ✅ Web, iOS, and Android render the `clientStatus`/claim state supplied by Core; UI code must not implement its own quorum or race resolution.
 - ✅ Clients may only map Core results to UI/platform behavior; they must not calculate quorum, mutate recovery status, authorize JOIN/DELETE, run resharing, or decide whether a Secret may be shown.
 - ✅ A recovery sender forwards the exact accepted `Claim ID` returned by Core to `showRecovered`; Core derives the associated `Pass ID`.
+- ✅ After app restart, an accepted recovery is reconstructed from Core's current claim state (`findClaim`); the UI must carry that same exact `Claim ID` with the `Show` action into `showRecovered`. A transient socket event may accelerate an in-session update but is not the source of truth and must not be required for recovery after relaunch.
+- ✅ An accepted claim without a usable `Claim ID` must never fall through to `showLocalSecret`; resolve the claim from Core before showing. The client stores no recovered plaintext to make restart work.
 - ✅ One- and two-device replicated vaults use `showLocalSecret(secretId)` because no recovery claim exists; clients must not emulate this split with a guessed claim ID.
 - ❌ Cloud backup/sync of any app data (DMK, DB, keys)
 - ❌ Storing DMK in external storage or plaintext

@@ -590,6 +590,12 @@ public func initIosWithDevice(masterKey: String, deviceName: String, deviceType:
     )
 })
 }
+public func joinResultAuthToken() -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_join_result_auth_token($0
+    )
+})
+}
 public func recover(secretId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_recover(
@@ -716,6 +722,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_init_ios_with_device() != 63540) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_metasecret_mobile_checksum_func_join_result_auth_token() != 27009) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_recover() != 36000) {

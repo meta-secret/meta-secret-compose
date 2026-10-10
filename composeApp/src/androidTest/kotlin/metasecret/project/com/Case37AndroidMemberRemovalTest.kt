@@ -101,6 +101,56 @@ class Case37AndroidMemberRemovalTest {
         marker("ANDROID_TEST37_IOS_REMOVAL_APPROVED")
     }
 
+    /** Test #15 approves removal while a Recover claim is pending. */
+    @Test
+    fun approveRemovalDuringRecoveryForTest15() {
+        val coordinator = argument("approvalCoordinatorUrl", "http://10.0.2.2:5180")
+        val cycle = argument("cycle", "1")
+        val targetDeviceName = argument("joinTarget", "")
+            .also { check(it.isNotBlank()) { "Test #15 requires the exact device name being removed" } }
+        val secretNames = expectedSecretNames()
+
+        openSecretsAndWaitFor(secretNames)
+        openDevices()
+        waitForMemberBadges(expectedMembers = 3)
+        val targetId = exactDeviceId(targetDeviceName, "Member")
+        assertTrue("Removal target must expose a Remove action", hasTag("remove-device-$targetId"))
+        marker("ANDROID_TEST15_REMOVAL_APPROVER_READY")
+
+        composeRule.waitForTag("pending-removal-device-row", 180_000)
+        composeRule.onNodeWithTag("pending-removal-device-row", useUnmergedTree = true).performClick()
+        composeRule.waitForTag("remove-device-dialog", 30_000)
+        val localizedRemoveDevice = StringProviderAndroid(composeRule.activity)
+            .getString(AppString.removeDevice)
+        val exactRemovalTitle = "$localizedRemoveDevice $targetDeviceName?"
+        val exactTargetInDialog = composeRule.onAllNodes(
+            hasText(exactRemovalTitle, substring = false)
+                .and(hasAnyAncestor(hasTestTag("remove-device-dialog"))),
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes()
+        assertEquals("Test #15 removal dialog must name the exact target", 1, exactTargetInDialog.size)
+        marker("ANDROID_TEST15_REMOVAL_REQUEST_VISIBLE")
+
+        waitForApproval(coordinator, "test15-remove-approve", cycle)
+        composeRule.onNodeWithTag("remove-device-dialog-accept", useUnmergedTree = true).performClick()
+        composeRule.waitForTagGone("remove-device-dialog", 120_000)
+        composeRule.waitForTagGone("pending-removal-device-row", 180_000)
+        composeRule.waitUntil(180_000) { deviceRowCount() == 2 }
+        assertDeviceRowAbsent(targetDeviceName)
+
+        openSecretsAndWaitFor(secretNames)
+        secretNames.forEach { secretName ->
+            assertTagAbsent("recovery-request-badge-$secretName")
+            assertTagAbsent("open-recovery-request-$secretName")
+        }
+        marker("ANDROID_TEST15_REMOVAL_APPROVED_RECOVERY_CLEARED")
+        waitForApproval(coordinator, "test15-cli-member-accepted", cycle)
+        openDevices()
+        openSecretsAndWaitFor(secretNames)
+        marker("ANDROID_TEST15_CLI_STATE_REFRESHED")
+        waitForApproval(coordinator, "test15-cli-redistribution-observed", cycle)
+    }
+
     /** Android is Test #42's sole approver and reverse resharer for Web removal. */
     @Test
     fun approveWebRemovalForTest42() {

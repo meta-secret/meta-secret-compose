@@ -79,6 +79,7 @@ class SecretsScreen : Screen {
         var isShowSecretDialogVisible by remember { mutableStateOf(false) }
         var selectedSecret: core.Secret? by remember { mutableStateOf(null) }
         var selectedPrimaryAction by remember { mutableStateOf(SecretPrimaryAction.Show) }
+        var selectedAcceptedClaimId by remember { mutableStateOf<String?>(null) }
         val isRedirected by remember { mutableStateOf(false) }
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
         val recoveredSecretTarget by mainScreenViewModel.recoveredSecretTarget.collectAsState()
@@ -132,7 +133,7 @@ class SecretsScreen : Screen {
                         primaryAction = if (devicesCount <= 2) {
                             SecretPrimaryAction.Show
                         } else {
-                            primaryActions[secret.secretName] ?: SecretPrimaryAction.Recover
+                            primaryActions[secret.secretName]?.action ?: SecretPrimaryAction.Recover
                         },
                         pendingRequestSender = requestsForSecret.firstOrNull()?.senderType,
                         onPrimaryAction = {
@@ -140,7 +141,12 @@ class SecretsScreen : Screen {
                             selectedPrimaryAction = if (devicesCount <= 2) {
                                 SecretPrimaryAction.Show
                             } else {
-                                primaryActions[secret.secretName] ?: SecretPrimaryAction.Recover
+                                primaryActions[secret.secretName]?.action ?: SecretPrimaryAction.Recover
+                            }
+                            selectedAcceptedClaimId = if (devicesCount <= 2) {
+                                null
+                            } else {
+                                primaryActions[secret.secretName]?.acceptedClaimId
                             }
                             isShowSecretDialogVisible = true
                         },
@@ -203,6 +209,7 @@ class SecretsScreen : Screen {
                     ShowSecret(
                         secret = secret,
                         primaryAction = selectedPrimaryAction,
+                        acceptedClaimId = selectedAcceptedClaimId,
                         recoveredSecretTarget = recoveredSecretTarget,
                         onDismiss = {
                             isShowSecretDialogVisible = false

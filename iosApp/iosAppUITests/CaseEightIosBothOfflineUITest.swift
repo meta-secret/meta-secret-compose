@@ -16,11 +16,13 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let repeatApprove: Bool?
         let duplicateRecovery: Bool?
         let verifyReceiverAlert: Bool?
+        let receiverRequestAlreadySent: Bool?
         let networkRole: String?
         let networkCycles: String?
         let expectedWebDeviceName: String?
         let expectedAndroidDeviceName: String?
         let expectedIosDeviceName: String?
+        let joinTarget: String?
     }
 
     private static let stepConfigPath = "/tmp/metasecret-e2e-ios-step.json"
@@ -1332,6 +1334,87 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
         }
         print("E2E: IOS_TEST40_ANDROID_REMOVAL_APPROVED")
+    }
+
+    /// Test #15 approves a membership change while a Recover claim is pending.
+    /// The membership update is expected to terminalize that old claim.
+    func approveRemovalDuringRecoveryForTest15() throws {
+        let config = stepConfig()
+        guard let targetDeviceName = config.joinTarget, !targetDeviceName.isEmpty else {
+            XCTFail("Test #15 requires the exact device name being removed")
+            return
+        }
+        let cycle = config.cycle ?? "1"
+
+        enterSimulatorPasscodeIfNeeded()
+        waitForVisible(identifier: "tab-secrets", timeout: 60)
+        tap("tab-secrets")
+        waitForVisible(identifier: "secret-row-\(config.secretName ?? "test-secret")", timeout: 180)
+        tap("tab-devices")
+
+        let deviceRows = app.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
+        )
+        let targetRowReady = NSPredicate { _, _ in
+            deviceRows.count == 3
+                && self.exactDeviceRowIdentifier(name: targetDeviceName, status: "Member") != nil
+        }
+        let targetRowExpectation = XCTNSPredicateExpectation(predicate: targetRowReady, object: nil)
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [targetRowExpectation], timeout: 120),
+            .completed,
+            "Test #15 did not render the exact three-member removal target: \(targetDeviceName)"
+        )
+        let targetId = exactDeviceRowIdentifier(name: targetDeviceName, status: "Member")
+        XCTAssertNotNil(targetId, "Test #15 removal target is not one exact current member")
+        guard let targetId else { return }
+        let targetRow = app.descendants(matching: .any)["device-row-\(targetId)"]
+        XCTAssertTrue(targetRow.waitForExistence(timeout: 30))
+        XCTAssertEqual(
+            app.descendants(matching: .any).matching(
+                NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
+            ).count,
+            3,
+            "Test #15 removal starts from exactly three current members"
+        )
+        print("E2E: IOS_TEST15_REMOVAL_APPROVER_READY")
+
+        waitForVisible(identifier: "pending-removal-device-row", timeout: 180)
+        tap("pending-removal-device-row")
+        waitForVisible(identifier: "remove-device-dialog", timeout: 30)
+        let exactTitles = [
+            "Remove device \(targetDeviceName)?",
+            "Удалить устройство \(targetDeviceName)?",
+        ]
+        XCTAssertEqual(
+            exactTitles.filter { exactVisibleText($0, belongsTo: app.descendants(matching: .any)["remove-device-dialog"]) }.count,
+            1,
+            "Test #15 removal dialog must name the exact target"
+        )
+        print("E2E: IOS_TEST15_REMOVAL_REQUEST_VISIBLE")
+        waitForApproval(platform: "test15-remove-approve", cycle: cycle)
+        tap("remove-device-dialog-accept")
+        waitForHidden(identifier: "remove-device-dialog", timeout: 120)
+        let targetRemoved = NSPredicate { _, _ in
+            !self.app.descendants(matching: .any)["device-row-\(targetId)"].exists
+                && self.app.descendants(matching: .any).matching(
+                    NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
+                ).count == 2
+        }
+        let removedWait = XCTNSPredicateExpectation(predicate: targetRemoved, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [removedWait], timeout: 180), .completed)
+        tap("tab-secrets")
+        let secretName = config.secretName ?? "test-secret"
+        waitForVisible(identifier: "secret-row-\(secretName)", timeout: 60)
+        XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+        print("E2E: IOS_TEST15_REMOVAL_APPROVED_RECOVERY_CLEARED")
+        waitForApproval(platform: "test15-cli-member-accepted", cycle: cycle)
+        tap("tab-devices")
+        tap("tab-secrets")
+        waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
+        print("E2E: IOS_TEST15_CLI_STATE_REFRESHED")
+        waitForApproval(platform: "test15-cli-redistribution-observed", cycle: cycle)
     }
 
     /// Test #40's second removal is the local two-to-one iOS -> Web path.
@@ -3529,6 +3612,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let sender = config.sender ?? env("E2E_SENDER", defaultValue: "")
         let verifyReceiverAlert = config.verifyReceiverAlert
             ?? (env("E2E_VERIFY_RECEIVER_ALERT", defaultValue: "0") == "1")
+        let receiverRequestAlreadySent = config.receiverRequestAlreadySent ?? false
 
         enterSimulatorPasscodeIfNeeded()
         waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
@@ -3548,7 +3632,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             waitForVisible(identifier: "show-secret-dialog", timeout: 30)
             print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)_\(step)")
             if approvalPlatform == "cli" {
+                if config.expectedOutcome == "membership-removal" {
+                    waitForApproval(platform: "ios-request-committed", cycle: cycle, step: step)
+                }
                 closeShowSecretDialog()
+                if config.expectedOutcome == "membership-removal" {
+                    print("E2E: IOS_RECOVERY_REQUEST_READY_FOR_REMOVAL_\(cycle)_\(step)")
+                    return
+                }
                 waitForApproval(platform: "ios-invalidated", cycle: cycle, step: step)
                 waitForPrimaryAction(secretName, expected: "Recover", timeout: 180)
                 print("E2E: IOS_RECOVERY_INVALIDATED_\(cycle)_\(step)")
@@ -3575,11 +3666,13 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             !readyBadge.exists && !readyOpen.exists && !readyAlert.exists && !readyProcessing.exists
         }
         let receiverReadyWait = XCTNSPredicateExpectation(predicate: receiverReady, object: nil)
-        XCTAssertEqual(
-            XCTWaiter.wait(for: [receiverReadyWait], timeout: 30),
-            .completed,
-            "iOS receiver did not reach a clean pre-request recovery UI state"
-        )
+        if !receiverRequestAlreadySent {
+            XCTAssertEqual(
+                XCTWaiter.wait(for: [receiverReadyWait], timeout: 30),
+                .completed,
+                "iOS receiver did not reach a clean pre-request recovery UI state"
+            )
+        }
         print("E2E: IOS_RECEIVER_UI_READY_\(cycle)_\(step)")
         print("E2E: IOS_STEP_CONFIG role=\(role) cycle=\(cycle) step=\(step) approval=\(approvalPlatform)")
 
@@ -3602,6 +3695,10 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             return
         }
         print("E2E: IOS_INCOMING_VISIBLE_\(cycle)_\(step)")
+        if config.expectedOutcome == "membership-removal" {
+            print("E2E: IOS_RECOVERY_READY_FOR_REMOVAL_\(cycle)_\(step)")
+            return
+        }
         if approvalPlatform == "ios" || verifyReceiverAlert {
             let alert = app.descendants(matching: .any)["alert-recovery-request"]
             let badge = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
@@ -4186,7 +4283,21 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             if close.exists && close.isHittable {
                 tapAttempts += 1
                 print("E2E: IOS_SHOW_SECRET_CLOSE_ATTEMPT_\(tapAttempts)")
-                close.tap()
+                do {
+                    close.tap()
+                } catch {
+                    // A live recovery update can invalidate the accessibility
+                    // element after the hittable check. Re-read the dialog
+                    // and retry only while that dialog remains on screen.
+                    print(
+                        "E2E: IOS_SHOW_SECRET_CLOSE_STALE_\(tapAttempts) " +
+                            "dialogExists=\(dialog.exists)"
+                    )
+                    if !dialog.exists {
+                        return
+                    }
+                    continue
+                }
                 if dialog.waitForNonExistence(timeout: 5) {
                     return
                 }
@@ -4602,7 +4713,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             let data = FileManager.default.contents(atPath: Self.stepConfigPath),
             let config = try? JSONDecoder().decode(StepConfig.self, from: data)
         else {
-            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, secretValue: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil, verifyReceiverAlert: nil, networkRole: nil, networkCycles: nil, expectedWebDeviceName: nil, expectedAndroidDeviceName: nil, expectedIosDeviceName: nil)
+            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, secretValue: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil, verifyReceiverAlert: nil, receiverRequestAlreadySent: nil, networkRole: nil, networkCycles: nil, expectedWebDeviceName: nil, expectedAndroidDeviceName: nil, expectedIosDeviceName: nil, joinTarget: nil)
         }
         return config
     }

@@ -157,7 +157,12 @@ private fun DeviceRow(
                         )
                         Text(
                             text = model.deviceName.ifBlank { appString(resolveDeviceCategoryLabel(model.deviceUiCategory)) },
-                            style = AppTextStyles.Tiny().copy(color = Color(0xFF7A9ABF))
+                            style = AppTextStyles.Tiny().copy(color = Color(0xFF7A9ABF)),
+                            modifier = if (effectiveStatus == DeviceStatus.Pending) {
+                                Modifier.testTag("pending-device-name")
+                            } else {
+                                Modifier
+                            }
                         )
                         Text(
                             text = "${model.secretsCount} $secretText",

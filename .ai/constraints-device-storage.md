@@ -59,6 +59,8 @@ Ready to use ✅
 
 **One-time per session:** DMK loaded → AppManager created → used for all FFI calls.
 
+**Recovery reveal after process restart:** the client re-reads the current claim from Core and carries the exact accepted `ClaimId` into `showRecovered`. An in-memory socket event can accelerate an update while the process is alive, but it is not durable state. Do not persist reconstructed plaintext to make recovery survive a restart; local storage continues to hold only this device's share.
+
 ---
 
 ## 4. App Reinstall Scenario
