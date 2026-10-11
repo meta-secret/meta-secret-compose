@@ -90,6 +90,7 @@ import ui.theme.AppTextStyles
 fun ShowSecret(
     secret: Secret,
     primaryAction: SecretPrimaryAction,
+    acceptedClaimId: String?,
     recoveredSecretTarget: RecoveredSecretTarget?,
     onDismiss: () -> Unit,
     onClearSecretId: () -> Unit,
@@ -106,21 +107,22 @@ fun ShowSecret(
     // The dialog is opened only by the card's primary Show/Recover action.
     // Start that action as soon as the dialog enters composition so the user
     // does not have to press a second, identical button inside the dialog.
-    // If an accepted recovery arrived while the dialog was closed, pass its
-    // exact claim into this first event. This avoids racing a separate
+    // Carry the exact accepted claim from Core into the first show event,
+    // including after process restart. The transient socket target remains a
+    // fallback for an in-session approval. This avoids racing a separate
     // SecretReadyToShow event against ShowSecretViewModel initialization.
-    LaunchedEffect(secret.secretName, primaryAction, recoveredSecretTarget) {
-        val acceptedClaimId = recoveredSecretTarget
+    LaunchedEffect(secret.secretName, primaryAction, acceptedClaimId, recoveredSecretTarget) {
+        val claimIdToShow = acceptedClaimId ?: recoveredSecretTarget
             ?.takeIf { it.secretId == secret.secretName }
             ?.claimId
         viewModel.handle(
             ShowSecretEvents.ShowSecret(
                 secretName = secret.secretName,
                 forceRecovery = primaryAction == SecretPrimaryAction.Recover,
-                claimId = acceptedClaimId,
+                claimId = claimIdToShow,
             )
         )
-        if (acceptedClaimId != null) {
+        if (claimIdToShow != null && recoveredSecretTarget?.claimId == claimIdToShow) {
             onClearSecretId()
         }
     }
@@ -220,6 +222,9 @@ fun ShowSecret(
                                         ShowSecretEvents.ShowSecret(
                                             secretName = secret.secretName,
                                             forceRecovery = primaryAction == SecretPrimaryAction.Recover,
+                                            claimId = acceptedClaimId ?: recoveredSecretTarget
+                                                ?.takeIf { it.secretId == secret.secretName }
+                                                ?.claimId,
                                         )
                                     )
                                 }

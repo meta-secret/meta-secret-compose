@@ -88,6 +88,21 @@ class MetaSecretCoreServiceIos(
     }
 
     @OptIn(ExperimentalForeignApi::class)
+    override fun joinResultAuthToken(): String {
+        val result = swiftBridge.joinResultAuthToken()
+        if (!result.contains("\"success\":true")) {
+            throw IllegalStateException("Failed to obtain JOIN result authorization")
+        }
+        val marker = "\"message\":\""
+        val start = result.indexOf(marker)
+        if (start < 0) throw IllegalStateException("JOIN result authorization token is missing")
+        val tokenStart = start + marker.length
+        val tokenEnd = result.indexOf('"', tokenStart)
+        if (tokenEnd < 0) throw IllegalStateException("JOIN result authorization token is malformed")
+        return result.substring(tokenStart, tokenEnd)
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
     override fun generateUserCreds(vaultName: String): String {
         try {
             logger.log(LogTag.MetaSecretCoreService.Message.CallingGenerateUserCreds, success = true)
@@ -148,6 +163,15 @@ class MetaSecretCoreServiceIos(
             throw e
         }
     }
+
+    override fun removeMember(targetDeviceId: String): String =
+        swiftBridge.removeMember(targetDeviceId)
+
+    override fun approveRemoveMember(targetDeviceId: String): String =
+        swiftBridge.approveRemoveMember(targetDeviceId)
+
+    override fun declineRemoveMember(targetDeviceId: String): String =
+        swiftBridge.declineRemoveMember(targetDeviceId)
 
     override fun splitSecret(secretName: String, secret: String): String {
         try {

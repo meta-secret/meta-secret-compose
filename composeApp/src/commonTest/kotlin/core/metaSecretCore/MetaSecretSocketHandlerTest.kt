@@ -147,7 +147,7 @@ class MetaSecretSocketHandlerTest {
         }
         handler.refreshAppState()
         val action = actionDeferred.await()
-        assertEquals(SocketActionModel.DISMISS_RECOVERY_REQUEST, action)
+        assertEquals("claim1", action.claimId)
     }
 
     @Test

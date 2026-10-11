@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.sp
 import core.AppColors
 import core.ScreenMetricsProviderInterface
@@ -29,7 +30,8 @@ import ui.theme.AppTextStyles
 fun RemoveButton(
     screenMetricsProvider: ScreenMetricsProviderInterface,
     action: (Boolean) -> Unit,
-    description: String
+    description: String,
+    testTag: String? = null,
 ) {
     val imageProvider: ImageProviderInterface = koinInject()
     Box(
@@ -37,6 +39,7 @@ fun RemoveButton(
             .width((screenMetricsProvider.widthFactor() * 80).dp)
             .height(96.dp)
             .background(AppColors.RedError, RoundedCornerShape(12.dp))
+            .then(testTag?.let { Modifier.testTag(it) } ?: Modifier)
             .clickable { action(true) },
         Alignment.Center
     ) {

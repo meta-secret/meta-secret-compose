@@ -20,6 +20,9 @@ interface MetaSecretAppManagerInterface {
     suspend fun getJoinRequestsCount(): Int?
     suspend fun getVaultSummary(isSocketAction: Boolean): VaultSummary?
     suspend fun updateMember(candidate: UserData, actionUpdate: String): CommonResponseModel?
+    suspend fun removeMember(targetDeviceId: String): CommonResponseModel?
+    suspend fun approveRemoveMember(targetDeviceId: String): CommonResponseModel?
+    suspend fun declineRemoveMember(targetDeviceId: String): CommonResponseModel?
     suspend fun getUserDataBy(deviceId: String): UserData?
     suspend fun splitSecret(secretModel: SecretModel): CommonResponseModel?
     suspend fun findClaim(secretId: String): ClaimModel?

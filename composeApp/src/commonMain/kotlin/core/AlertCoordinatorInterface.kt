@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.StateFlow
 import models.appInternalModels.RestoreData
 
 interface AlertCoordinatorInterface {
+    fun diagnostic(message: String) {}
     val joinRequestAlert: StateFlow<JoinRequestAlertState>
     val recoveryRequestAlert: StateFlow<RecoveryRequestAlertState>
     

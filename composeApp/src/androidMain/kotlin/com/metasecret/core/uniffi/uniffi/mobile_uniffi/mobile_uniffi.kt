@@ -637,11 +637,15 @@ internal object IntegrityCheckingUniffiLib {
     }
     external fun uniffi_metasecret_mobile_checksum_func_accept_recover(
     ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_approve_remove_member(
+    ): Int
     external fun uniffi_metasecret_mobile_checksum_func_clean_up_database(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_database_file_name(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_decline_recover(
+    ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_decline_remove_member(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_device_ui_category_discriminant(
     ): Int
@@ -663,7 +667,11 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_init_ios_with_device(
     ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_join_result_auth_token(
+    ): Int
     external fun uniffi_metasecret_mobile_checksum_func_recover(
+    ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_remove_member(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_send_decline_completion(
     ): Int
@@ -694,11 +702,15 @@ internal object UniffiLib {
     }
     external fun uniffi_metasecret_mobile_fn_func_accept_recover(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_metasecret_mobile_fn_func_approve_remove_member(`targetDeviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_metasecret_mobile_fn_func_clean_up_database(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_metasecret_mobile_fn_func_database_file_name(`masterKey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_metasecret_mobile_fn_func_decline_recover(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_metasecret_mobile_fn_func_decline_remove_member(`targetDeviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_metasecret_mobile_fn_func_device_ui_category_discriminant(`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
@@ -720,7 +732,11 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_metasecret_mobile_fn_func_init_ios_with_device(`masterKey`: RustBuffer.ByValue,`deviceName`: RustBuffer.ByValue,`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    external fun uniffi_metasecret_mobile_fn_func_join_result_auth_token(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_metasecret_mobile_fn_func_recover(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_metasecret_mobile_fn_func_remove_member(`targetDeviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_metasecret_mobile_fn_func_send_decline_completion(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -858,6 +874,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_metasecret_mobile_checksum_func_accept_recover() != 27303) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_metasecret_mobile_checksum_func_approve_remove_member() != 40457) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_metasecret_mobile_checksum_func_clean_up_database() != 5094) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -865,6 +884,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_decline_recover() != 6398) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_metasecret_mobile_checksum_func_decline_remove_member() != 47039) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_device_ui_category_discriminant() != 50183) {
@@ -897,7 +919,13 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_metasecret_mobile_checksum_func_init_ios_with_device() != 63540) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_metasecret_mobile_checksum_func_join_result_auth_token() != 27009) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_metasecret_mobile_checksum_func_recover() != 36000) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_metasecret_mobile_checksum_func_remove_member() != 57358) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_send_decline_completion() != 48010) {
@@ -1102,6 +1130,16 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     )
     }
     
+ fun `approveRemoveMember`(`targetDeviceId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_approve_remove_member(
+    
+        FfiConverterString.lower(`targetDeviceId`),_status)
+}
+    )
+    }
+    
  fun `cleanUpDatabase`(): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
@@ -1128,6 +1166,16 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     UniffiLib.uniffi_metasecret_mobile_fn_func_decline_recover(
     
         FfiConverterString.lower(`claimId`),_status)
+}
+    )
+    }
+    
+ fun `declineRemoveMember`(`targetDeviceId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_decline_remove_member(
+    
+        FfiConverterString.lower(`targetDeviceId`),_status)
 }
     )
     }
@@ -1232,12 +1280,32 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     )
     }
     
+ fun `joinResultAuthToken`(): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_join_result_auth_token(
+    
+        _status)
+}
+    )
+    }
+    
  fun `recover`(`secretId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_recover(
     
         FfiConverterString.lower(`secretId`),_status)
+}
+    )
+    }
+    
+ fun `removeMember`(`targetDeviceId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_remove_member(
+    
+        FfiConverterString.lower(`targetDeviceId`),_status)
 }
     )
     }

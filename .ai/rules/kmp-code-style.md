@@ -145,6 +145,21 @@ fun VaultScreen(viewModel: VaultViewModel) {
 }
 ```
 
+- Background socket/network workers may fetch and compute on IO, but any
+  `StateFlow` or `SharedFlow` observed by Compose/ViewModels must publish on
+  `Dispatchers.Main.immediate`. Keep related state and event emissions ordered
+  on that dispatcher; cancellation of a refresh must cancel its queued publish.
+
+### Composition purity:
+
+- A Composable render must not write observable application state or trigger
+  navigation as a side effect of being recomposed.
+- Perform state changes from user callbacks or lifecycle-aware effects such as
+  `LaunchedEffect` keyed to the relevant state. Keep derived values local to
+  composition; do not mutate state while computing them.
+- Add or retain a Compose UI regression test when moving a mutation out of
+  composition so the action still occurs once at the intended lifecycle point.
+
 ---
 
 ## Naming Conventions

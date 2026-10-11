@@ -45,6 +45,9 @@ class DevicesScreenViewModel(
     val currentDeviceId: String?
         get() = keyValueStorage.cachedDeviceId
 
+    private val _pendingRemovalTargets = MutableStateFlow<Set<String>>(emptySet())
+    val pendingRemovalTargets = _pendingRemovalTargets.asStateFlow()
+
     val vaultName = vaultStatsProvider.vaultName
     
     init {
@@ -96,6 +99,9 @@ class DevicesScreenViewModel(
                 DeviceViewEvents.OnAppear -> loadDevicesList(false)
                 DeviceViewEvents.Accept -> authenticateAndUpdateMembership(true)
                 DeviceViewEvents.Decline -> authenticateAndUpdateMembership(false)
+                is DeviceViewEvents.RemoveRequested -> authenticateAndRemove(event.deviceId, RemovalAction.Request)
+                is DeviceViewEvents.ApproveRemoval -> authenticateAndRemove(event.deviceId, RemovalAction.Approve)
+                is DeviceViewEvents.DeclineRemoval -> authenticateAndRemove(event.deviceId, RemovalAction.Decline)
                 is DeviceViewEvents.SelectDevice -> {
                     selectCurrentDevice(event.deviceId)
                     event.deviceId?.let { deviceId ->
@@ -186,6 +192,16 @@ class DevicesScreenViewModel(
             appManager.getVaultSummary(isSocketAction)
         }
         val currentId = keyValueStorage.cachedDeviceId
+        _pendingRemovalTargets.value = appManager.getStateModel()
+            ?.getVaultEvents()
+            ?.getRemoveRequests()
+            ?.filter { request ->
+                request.sender.userData.device.deviceId != currentId &&
+                    request.target.userData.device.deviceId != currentId
+            }
+            ?.map { it.target.userData.device.deviceId }
+            ?.toSet()
+            ?: emptySet()
 
         return vaultSummary?.users?.map { (_, userInfo) ->
             val baseStatus = when (userInfo.status) {
@@ -211,11 +227,54 @@ class DevicesScreenViewModel(
         logger.log(LogTag.DevicesVM.Message.SelectDevice, "$deviceId", success = true)
         _currentDeviceId.value = deviceId
     }
+
+    private fun authenticateAndRemove(deviceId: String, action: RemovalAction) {
+        biometricAuthenticator.authenticate(
+            onSuccess = {
+                viewModelScope.launch {
+                    _isLoading.value = true
+                    try {
+                        val result = withContext(Dispatchers.IO) {
+                            when (action) {
+                                RemovalAction.Request -> appManager.removeMember(deviceId)
+                                RemovalAction.Approve -> appManager.approveRemoveMember(deviceId)
+                                RemovalAction.Decline -> appManager.declineRemoveMember(deviceId)
+                            }
+                        }
+                        if (result?.success == false) {
+                            showNotification(result.error ?: stringProvider.errorInternal(), isError = true)
+                        }
+                        withContext(Dispatchers.IO) { appManager.getStateModel() }
+                        _devicesList.value = fetchDevicesList(false)
+                    } catch (error: Exception) {
+                        showNotification(error.message ?: stringProvider.errorInternal(), isError = true)
+                    } finally {
+                        _isLoading.value = false
+                    }
+                }
+            },
+            onError = { error ->
+                showNotification(error.ifEmpty { stringProvider.errorBiometricAuthFailed() }, isError = true)
+            },
+            onFallback = {
+                showNotification(stringProvider.errorBiometricAuthFailed(), isError = true)
+            },
+        )
+    }
+}
+
+private enum class RemovalAction {
+    Request,
+    Approve,
+    Decline,
 }
 
 sealed class DeviceViewEvents : CommonViewModelEventsInterface {
     data object OnAppear : DeviceViewEvents()
     data object Accept : DeviceViewEvents()
     data object Decline : DeviceViewEvents()
+    data class RemoveRequested(val deviceId: String) : DeviceViewEvents()
+    data class ApproveRemoval(val deviceId: String) : DeviceViewEvents()
+    data class DeclineRemoval(val deviceId: String) : DeviceViewEvents()
     data class SelectDevice(val deviceId: String?) : DeviceViewEvents()
 }

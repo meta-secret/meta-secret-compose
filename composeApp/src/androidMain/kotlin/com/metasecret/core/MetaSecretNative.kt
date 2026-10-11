@@ -28,6 +28,9 @@ object MetaSecretNative {
         uniffi.mobile_uniffi.stateEventsAuthToken(vaultName)
 
     @JvmStatic
+    fun joinResultAuthToken(): String = uniffi.mobile_uniffi.joinResultAuthToken()
+
+    @JvmStatic
     fun generate_user_creds(vaultName: String): String =
         uniffi.mobile_uniffi.generateUserCreds(vaultName)
 
@@ -37,6 +40,18 @@ object MetaSecretNative {
     @JvmStatic
     fun update_membership(candidate: String, actionUpdate: String): String =
         uniffi.mobile_uniffi.updateMembership(candidate, actionUpdate)
+
+    @JvmStatic
+    fun removeMember(targetDeviceId: String): String =
+        uniffi.mobile_uniffi.removeMember(targetDeviceId)
+
+    @JvmStatic
+    fun approveRemoveMember(targetDeviceId: String): String =
+        uniffi.mobile_uniffi.approveRemoveMember(targetDeviceId)
+
+    @JvmStatic
+    fun declineRemoveMember(targetDeviceId: String): String =
+        uniffi.mobile_uniffi.declineRemoveMember(targetDeviceId)
 
     @JvmStatic
     fun clean_up_database(): String = uniffi.mobile_uniffi.cleanUpDatabase()

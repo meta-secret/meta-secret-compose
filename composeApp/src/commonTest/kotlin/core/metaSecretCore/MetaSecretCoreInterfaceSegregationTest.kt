@@ -19,9 +19,13 @@ class MetaSecretCoreInterfaceSegregationTest {
         override fun initAppManager(masterKey: String): String = "init:$masterKey"
         override fun getAppState(): String = "state"
         override fun stateEventsAuthToken(vaultName: String): String = "token"
+        override fun joinResultAuthToken(): String = "join-result-token"
         override fun generateUserCreds(vaultName: String): String = vaultName
         override fun signUp(): String = "signup"
         override fun updateMembership(candidate: UserData, actionUpdate: String): String = actionUpdate
+        override fun removeMember(targetDeviceId: String): String = targetDeviceId
+        override fun approveRemoveMember(targetDeviceId: String): String = targetDeviceId
+        override fun declineRemoveMember(targetDeviceId: String): String = targetDeviceId
         override fun splitSecret(secretName: String, secret: String): String = "$secretName:$secret"
         override fun findClaim(secretId: String): String = secretId
         override fun recover(secretId: String): String = secretId

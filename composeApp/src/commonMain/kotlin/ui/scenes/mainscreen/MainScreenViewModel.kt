@@ -18,6 +18,8 @@ import core.ScreenMetricsProviderInterface
 import core.VaultStatsProviderInterface
 import core.BiometricAuthenticatorInterface
 import core.AlertCoordinatorInterface
+import core.AppStateCacheProviderInterface
+import core.KeyChainInterface
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.appInternalModels.RestoreData
@@ -33,6 +35,8 @@ class MainScreenViewModel(
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
     private val alertCoordinator: AlertCoordinatorInterface,
+    private val keyChainManager: KeyChainInterface,
+    private val appStateCacheProvider: AppStateCacheProviderInterface,
 ) : CommonViewModel() {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -51,6 +55,9 @@ class MainScreenViewModel(
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
 
     private val _isJoinBadgeDismissed = MutableStateFlow(false)
+    private val _navigationEvent = MutableStateFlow<MainNavigationEvent>(MainNavigationEvent.Idle)
+    val navigationEvent: StateFlow<MainNavigationEvent> = _navigationEvent
+    private var isCurrentDeviceRemovalResetInProgress = false
     val hasJoinRequestsBadge: StateFlow<Boolean> = vaultStatsProvider.joinRequestsCount
         .combine(_isJoinBadgeDismissed) { count, dismissed ->
             (count ?: 0) > 0 && !dismissed
@@ -64,13 +71,23 @@ class MainScreenViewModel(
      * the current StateFlow keeps the alert bound to the current claim.
      */
     fun openRecoveryRequest(secretId: String) {
-        val restoreData = pendingRecoveryRequests.value
+        val pendingRequests = pendingRecoveryRequests.value
+        val stateBefore = recoveryAlertStateDescription()
+        logger.e2eDiagnostic(
+            "recovery-open-click secretId=$secretId " +
+                "pendingCount=${pendingRequests.size} " +
+                "pending=${pendingRequests.joinToString { "${it.claimId}:${it.secretId}" }} " +
+                "alertBefore=$stateBefore",
+        )
+
+        val restoreData = pendingRequests
             .firstOrNull { it.secretId == secretId }
         if (restoreData == null) {
-            logger.log(
-                LogTag.MainVM.Message.RecoveryAlertShown,
-                "no pending recovery request for secretId=$secretId",
-                success = false,
+            logger.e2eDiagnostic(
+                "recovery-open-no-match secretId=$secretId " +
+                    "pendingCount=${pendingRequests.size} " +
+                    "pending=${pendingRequests.joinToString { "${it.claimId}:${it.secretId}" }} " +
+                    "alertState=$stateBefore",
             )
             return
         }
@@ -78,12 +95,27 @@ class MainScreenViewModel(
     }
 
     private fun openRecoveryRequest(restoreData: RestoreData) {
-        logger.log(
-            LogTag.MainVM.Message.RecoveryAlertShown,
-            "open recovery alert claimId=${restoreData.claimId} secretId=${restoreData.secretId} senderId=${restoreData.senderId} senderType=${restoreData.senderType}",
-            success = true
+        val stateBefore = recoveryAlertStateDescription()
+        logger.e2eDiagnostic(
+            "recovery-open-call claimId=${restoreData.claimId} " +
+                "secretId=${restoreData.secretId} senderType=${restoreData.senderType} " +
+                "alertBefore=$stateBefore",
         )
         alertCoordinator.showRecoveryRequest(restoreData)
+        logger.e2eDiagnostic(
+            "recovery-open-result claimId=${restoreData.claimId} " +
+                "alertAfter=${recoveryAlertStateDescription()}",
+        )
+    }
+
+    private fun recoveryAlertStateDescription(): String = when (
+        val state = alertCoordinator.recoveryRequestAlert.value
+    ) {
+        is core.RecoveryRequestAlertState.Hidden -> "Hidden"
+        is core.RecoveryRequestAlertState.Visible ->
+            "Visible(${state.restoreData.claimId}:${state.restoreData.secretId})"
+        is core.RecoveryRequestAlertState.Processing ->
+            "Processing(${state.restoreData.claimId}:${state.restoreData.secretId})"
     }
 
     init {
@@ -174,9 +206,19 @@ class MainScreenViewModel(
                     as? core.RecoveryRequestAlertState.Visible)
                     ?.restoreData
                     ?.claimId
-                    ?: return@collect
+                alertCoordinator.diagnostic(
+                    "pending-collector pending=" +
+                        pendingRequests.joinToString { "${it.claimId}:${it.secretId}" } +
+                        " visibleClaim=${visibleClaimId ?: "none"} " +
+                        "alert=${recoveryAlertStateDescription()}"
+                )
+                if (visibleClaimId == null) return@collect
 
                 if (pendingRequests.none { it.claimId == visibleClaimId }) {
+                    alertCoordinator.diagnostic(
+                        "dismiss-origin=pending-list-collector visibleClaim=$visibleClaimId " +
+                            "reason=claim-not-in-pending pending=" + pendingRequests.joinToString { it.claimId }
+                    )
                     logger.log(
                         LogTag.MainVM.Message.RecoveryAlertDismissed,
                         "claimId=$visibleClaimId is no longer pending",
@@ -189,11 +231,29 @@ class MainScreenViewModel(
 
         viewModelScope.launch(Dispatchers.IO) {
             socketHandler.socketActions.collect { action ->
-                if (action is SocketActionModel.DISMISS_RECOVERY_REQUEST) {
-                    withContext(Dispatchers.Main) {
-                        logger.log(LogTag.MainVM.Message.RecoveryAlertDismissed, success = true)
-                        alertCoordinator.dismissRecoveryRequest()
+                when (action) {
+                    is SocketActionModel.DISMISS_RECOVERY_REQUEST -> {
+                        withContext(Dispatchers.Main) {
+                            val alertState = alertCoordinator.recoveryRequestAlert.value
+                            val shouldDismiss = shouldDismissRecoveryRequest(alertState, action.claimId)
+                            alertCoordinator.diagnostic(
+                                "dismiss-origin=socket-action-DISMISS_RECOVERY_REQUEST " +
+                                    "completedClaim=${action.claimId} " +
+                                    "visible=${recoveryAlertStateDescription()} matched=$shouldDismiss"
+                            )
+                            if (shouldDismiss) {
+                                logger.log(
+                                    LogTag.MainVM.Message.RecoveryAlertDismissed,
+                                    "claimId=${action.claimId}",
+                                    success = true,
+                                )
+                                alertCoordinator.dismissRecoveryRequest()
+                            }
+                        }
                     }
+
+                    SocketActionModel.CURRENT_DEVICE_REMOVED -> resetRemovedDeviceSession()
+                    else -> Unit
                 }
             }
         }
@@ -281,6 +341,42 @@ class MainScreenViewModel(
         _recoveredSecretTarget.value = null
     }
 
+    fun consumeNavigationEvent() {
+        _navigationEvent.value = MainNavigationEvent.Idle
+        isCurrentDeviceRemovalResetInProgress = false
+    }
+
+    private suspend fun resetRemovedDeviceSession() {
+        if (isCurrentDeviceRemovalResetInProgress) return
+        isCurrentDeviceRemovalResetInProgress = true
+
+        logger.log(LogTag.MainVM.Message.CurrentDeviceRemovalReset, "started", success = true)
+        var localDataCleared = false
+        try {
+            socketHandler.onAppBackground()
+            alertCoordinator.dismissJoinRequest()
+            alertCoordinator.dismissRecoveryRequest()
+            appStateCacheProvider.clearCache()
+            _recoveredSecretTarget.value = null
+            localDataCleared = keyChainManager.clearAll(isCleanDB = true)
+        } catch (t: Throwable) {
+            logger.log(
+                LogTag.MainVM.Message.CurrentDeviceRemovalReset,
+                "local cleanup failed: ${t.message}",
+                success = false,
+            )
+        } finally {
+            logger.log(
+                LogTag.MainVM.Message.CurrentDeviceRemovalReset,
+                "completed localDataCleared=$localDataCleared",
+                success = localDataCleared,
+            )
+            withContext(Dispatchers.Main) {
+                _navigationEvent.value = MainNavigationEvent.NavigateToSignIn
+            }
+        }
+    }
+
     private fun setTabIndex(index: Int) {
         TabStateHolder.setTabIndex(index)
         if (index == 1) {
@@ -305,7 +401,24 @@ class MainScreenViewModel(
     }
 }
 
+internal fun shouldDismissRecoveryRequest(
+    alertState: core.RecoveryRequestAlertState,
+    completedClaimId: String,
+): Boolean {
+    val activeClaimId = when (alertState) {
+        is core.RecoveryRequestAlertState.Visible -> alertState.restoreData.claimId
+        is core.RecoveryRequestAlertState.Processing -> alertState.restoreData.claimId
+        is core.RecoveryRequestAlertState.Hidden -> null
+    }
+    return activeClaimId == completedClaimId
+}
+
 sealed class MainViewEvents : CommonViewModelEventsInterface {
     data class SetTabIndex(val index: Int) : MainViewEvents()
     data class ShowWarning(val isToShow: Boolean) : MainViewEvents()
+}
+
+sealed class MainNavigationEvent {
+    data object Idle : MainNavigationEvent()
+    data object NavigateToSignIn : MainNavigationEvent()
 }

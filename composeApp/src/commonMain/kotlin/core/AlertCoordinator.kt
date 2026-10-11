@@ -7,8 +7,13 @@ import models.appInternalModels.RestoreData
 
 class AlertCoordinator(
     private val notificationCoordinator: NotificationCoordinatorInterface,
-    private val stringProvider: StringProviderInterface
+    private val stringProvider: StringProviderInterface,
+    private val logger: DebugLoggerInterface,
 ) : AlertCoordinatorInterface {
+
+    override fun diagnostic(message: String) {
+        logger.diagnostic(message)
+    }
     private val _joinRequestAlert = MutableStateFlow<JoinRequestAlertState>(JoinRequestAlertState.Hidden)
     override val joinRequestAlert: StateFlow<JoinRequestAlertState> = _joinRequestAlert.asStateFlow()
     
@@ -41,21 +46,33 @@ class AlertCoordinator(
     
     override fun showRecoveryRequest(restoreData: RestoreData) {
         val current = _recoveryRequestAlert.value
+        logger.diagnostic(
+            "alert-show incomingClaim=${restoreData.claimId} " +
+                "incomingSecret=${restoreData.secretId} current=${recoveryStateDescription(current)}"
+        )
         val currentClaimId = when (current) {
             is RecoveryRequestAlertState.Visible -> current.restoreData.claimId
             is RecoveryRequestAlertState.Processing -> current.restoreData.claimId
             else -> null
         }
         if (currentClaimId == restoreData.claimId) {
+            logger.diagnostic("alert-show-ignored reason=same-claim claim=${restoreData.claimId}")
             return
         }
         if (current is RecoveryRequestAlertState.Hidden) {
             _recoveryRequestAlert.value = RecoveryRequestAlertState.Visible(restoreData)
+            logger.diagnostic("alert-show-state state=${recoveryStateDescription(_recoveryRequestAlert.value)}")
+        } else {
+            logger.diagnostic(
+                "alert-show-ignored reason=another-alert-visible " +
+                    "incomingClaim=${restoreData.claimId} current=${recoveryStateDescription(current)}"
+            )
         }
     }
     
     override fun dismissRecoveryRequest() {
         val current = _recoveryRequestAlert.value
+        logger.diagnostic("alert-dismiss-entry current=${recoveryStateDescription(current)}")
         val restoreData = when (current) {
             is RecoveryRequestAlertState.Visible -> current.restoreData
             is RecoveryRequestAlertState.Processing -> current.restoreData
@@ -65,10 +82,15 @@ class AlertCoordinator(
             recoveryRequestDismissHandler?.invoke(restoreData)
         }
         _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
+        logger.diagnostic("alert-dismiss-state state=Hidden")
     }
 
     override fun onRecoveryRequestDecision(isAccepted: Boolean) {
         val currentState = _recoveryRequestAlert.value
+        logger.diagnostic(
+            "alert-decision accepted=$isAccepted " +
+                "current=${recoveryStateDescription(currentState)}"
+        )
         if (currentState is RecoveryRequestAlertState.Visible) {
             _recoveryRequestAlert.value = RecoveryRequestAlertState.Processing(currentState.restoreData)
             recoveryRequestHandler?.invoke(isAccepted)
@@ -84,7 +106,19 @@ class AlertCoordinator(
     }
     
     override fun onRecoveryRequestProcessingComplete() {
+        logger.diagnostic(
+            "alert-processing-complete " +
+                "current=${recoveryStateDescription(_recoveryRequestAlert.value)}"
+        )
         _recoveryRequestAlert.value = RecoveryRequestAlertState.Hidden
+    }
+
+    private fun recoveryStateDescription(state: RecoveryRequestAlertState): String = when (state) {
+        is RecoveryRequestAlertState.Hidden -> "Hidden"
+        is RecoveryRequestAlertState.Visible ->
+            "Visible(${state.restoreData.claimId}:${state.restoreData.secretId})"
+        is RecoveryRequestAlertState.Processing ->
+            "Processing(${state.restoreData.claimId}:${state.restoreData.secretId})"
     }
     
     override fun showRecoverDeclinedNotification() {

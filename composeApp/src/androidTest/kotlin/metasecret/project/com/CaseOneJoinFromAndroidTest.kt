@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.metasecret.core.MetaSecretNative
+import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,9 +50,28 @@ class CaseOneJoinFromAndroidTest {
             "approvalCoordinatorUrl",
             "http://10.0.2.2:5180",
         )
+        val stateDrivenRecoveryWait = instrumentationArgument("stateDrivenRecoveryWait", "false") == "true"
 
         for (cycle in 1..recoveryCycles) {
-            composeRule.waitForTag("recovery-request-badge-$secretName", 45_000)
+            if (stateDrivenRecoveryWait) {
+                waitForApproval(approvalCoordinatorUrl, "android-state", cycle)
+                marker("ANDROID_RECOVERY_STATE_PENDING_$cycle")
+            }
+            try {
+                composeRule.waitForTag("recovery-request-badge-$secretName", 45_000)
+            } catch (failure: Throwable) {
+                val secretRowCount = composeRule.onAllNodes(hasTestTag("secret-row-$secretName"), useUnmergedTree = true)
+                    .fetchSemanticsNodes().size
+                val badgeCount = composeRule.onAllNodes(hasTestTag("recovery-request-badge-$secretName"), useUnmergedTree = true)
+                    .fetchSemanticsNodes().size
+                val openActionCount = composeRule.onAllNodes(hasTestTag("open-recovery-request-$secretName"), useUnmergedTree = true)
+                    .fetchSemanticsNodes().size
+                marker(
+                    "ANDROID_RECOVERY_BADGE_DIAGNOSTIC_$cycle " +
+                        "secretRowCount=$secretRowCount badgeCount=$badgeCount openActionCount=$openActionCount"
+                )
+                throw failure
+            }
             marker("ANDROID_RECOVERY_REQUEST_ALERT_$cycle")
             if (cycle in approvalCycles) {
                 waitForApproval(approvalCoordinatorUrl, "android", cycle)
@@ -67,6 +88,8 @@ class CaseOneJoinFromAndroidTest {
                 }
                 marker("ANDROID_RECOVERY_APPROVE_SUCCESS_$cycle")
             }
+            val completedRecoveryClaims = waitForCoreRecoveryCompletion(secretName, cycle)
+            marker("ANDROID_RECOVERY_CORE_DONE_$cycle completedRecoveryClaims=$completedRecoveryClaims")
             composeRule.waitUntil(180_000) {
                 composeRule.onAllNodes(hasTestTag("recovery-request-badge-$secretName"), useUnmergedTree = true)
                     .fetchSemanticsNodes().isEmpty()
@@ -87,6 +110,56 @@ class CaseOneJoinFromAndroidTest {
     private fun instrumentationArgument(name: String, fallback: String): String =
         androidx.test.platform.app.InstrumentationRegistry.getArguments().getString(name) ?: fallback
 
+    /**
+     * Wait for an authoritative Core state transition before inspecting Compose
+     * semantics. A Core read is serialized with the preceding FFI accept call;
+     * the cycle-indexed count also ensures an older completed claim cannot
+     * satisfy this cycle's barrier.
+     */
+    private fun waitForCoreRecoveryCompletion(secretName: String, cycle: Int): Int {
+        var completedRecoveryClaims = 0
+        composeRule.waitUntil(180_000) {
+            val response = MetaSecretNative.getState()
+            val state = JSONObject(response)
+            check(state.getBoolean("success")) {
+                "Core getState failed while waiting for Android recovery cycle $cycle"
+            }
+            completedRecoveryClaims = completedReceiverRecoveryCount(state, secretName)
+            completedRecoveryClaims >= cycle
+        }
+        return completedRecoveryClaims
+    }
+
+    private fun completedReceiverRecoveryCount(state: JSONObject, secretName: String): Int {
+        val message = state.getJSONObject("message")
+        val appState = message.getJSONObject("state")
+        val userMemberInfo = appState.getJSONObject("vault")
+            .getJSONObject("member")
+        val deviceId = userMemberInfo.getJSONObject("member")
+            .getJSONObject("member")
+            .getJSONObject("userData")
+            .getJSONObject("device")
+            .getString("deviceId")
+        val claims = userMemberInfo.optJSONObject("ssClaims")?.optJSONObject("claims")
+            ?: return 0
+
+        var completed = 0
+        val claimIds = claims.keys()
+        while (claimIds.hasNext()) {
+            val claim = claims.getJSONObject(claimIds.next())
+            if (claim.optString("distributionType") != "recover" ||
+                claim.optString("clientStatus") != "done" ||
+                claim.optJSONObject("distClaimId")?.optJSONObject("passId")?.optString("name") != secretName
+            ) continue
+
+            val receivers = claim.optJSONArray("receivers") ?: continue
+            if ((0 until receivers.length()).any { receivers.optString(it) == deviceId }) {
+                completed += 1
+            }
+        }
+        return completed
+    }
+
     private fun marker(message: String) = Log.i("MetaSecretE2E", "E2E: $message")
 
     private fun waitForApproval(coordinatorUrl: String, platform: String, cycle: Int) {
@@ -106,8 +179,23 @@ class CaseOneJoinFromAndroidTest {
     }
 
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitForTag(tag: String, timeoutMillis: Long) {
-        waitUntil(timeoutMillis) {
-            onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+        var layoutRaceRetries = 0
+        while (true) {
+            try {
+                waitUntil(timeoutMillis) {
+                    onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+                }
+                return
+            } catch (failure: Throwable) {
+                if (layoutRaceRetries >= 2 || !failure.hasComposeMeasureLayoutRace()) throw failure
+                layoutRaceRetries += 1
+            }
         }
     }
+
+    private fun Throwable.hasComposeMeasureLayoutRace(): Boolean =
+        generateSequence(this) { it.cause }.any {
+            it is IllegalArgumentException &&
+                it.message?.contains("performMeasureAndLayout called during measure layout") == true
+        }
 }

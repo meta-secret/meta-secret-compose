@@ -484,6 +484,13 @@ public func acceptRecover(claimId: String) -> String  {
     )
 })
 }
+public func approveRemoveMember(targetDeviceId: String) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_approve_remove_member(
+        FfiConverterString.lower(targetDeviceId),$0
+    )
+})
+}
 public func cleanUpDatabase() -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_clean_up_database($0
@@ -501,6 +508,13 @@ public func declineRecover(claimId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_decline_recover(
         FfiConverterString.lower(claimId),$0
+    )
+})
+}
+public func declineRemoveMember(targetDeviceId: String) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_decline_remove_member(
+        FfiConverterString.lower(targetDeviceId),$0
     )
 })
 }
@@ -576,10 +590,23 @@ public func initIosWithDevice(masterKey: String, deviceName: String, deviceType:
     )
 })
 }
+public func joinResultAuthToken() -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_join_result_auth_token($0
+    )
+})
+}
 public func recover(secretId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_recover(
         FfiConverterString.lower(secretId),$0
+    )
+})
+}
+public func removeMember(targetDeviceId: String) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_remove_member(
+        FfiConverterString.lower(targetDeviceId),$0
     )
 })
 }
@@ -652,6 +679,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_metasecret_mobile_checksum_func_accept_recover() != 27303) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_metasecret_mobile_checksum_func_approve_remove_member() != 40457) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_metasecret_mobile_checksum_func_clean_up_database() != 5094) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -659,6 +689,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_decline_recover() != 6398) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_metasecret_mobile_checksum_func_decline_remove_member() != 47039) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_device_ui_category_discriminant() != 50183) {
@@ -691,7 +724,13 @@ private let initializationResult: InitializationResult = {
     if (uniffi_metasecret_mobile_checksum_func_init_ios_with_device() != 63540) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_metasecret_mobile_checksum_func_join_result_auth_token() != 27009) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_metasecret_mobile_checksum_func_recover() != 36000) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_metasecret_mobile_checksum_func_remove_member() != 57358) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_send_decline_completion() != 48010) {

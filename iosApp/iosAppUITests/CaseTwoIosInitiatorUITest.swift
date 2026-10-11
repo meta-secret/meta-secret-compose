@@ -81,7 +81,10 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
         }
         print("E2E: IOS_INITIATOR_READY")
         approvePendingJoin(marker: "IOS_WEB_JOIN_APPROVED")
-        approvePendingJoin(marker: "IOS_ANDROID_JOIN_APPROVED")
+        let joinPlatforms = Set(env("E2E_JOIN_PLATFORMS", defaultValue: "web,android").split(separator: ",").map(String.init))
+        if joinPlatforms.contains("android") {
+            approvePendingJoin(marker: "IOS_ANDROID_JOIN_APPROVED")
+        }
         // Join approval leaves the app on the Devices tab. Return to Secrets
         // before asserting that the owner's secret rows remain available.
         tap("tab-secrets")
@@ -201,6 +204,7 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
         tap("alert-join-request-accept")
         enterSimulatorPasscodeIfNeeded()
         waitForHidden(identifier: "alert-join-request", timeout: 120)
+        waitForHidden(identifier: "pending-device-row", timeout: 120)
         print("E2E: \(marker)")
     }
 

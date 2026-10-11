@@ -127,9 +127,16 @@ data class JoinClusterRequest(
     val candidate: UserData
 )
 
+@Serializable
+data class RemoveMemberRequest(
+    val sender: UserDataMember,
+    val target: UserDataMember,
+)
+
 @Serializable 
 data class VaultRequest(
-    val joinCluster: JoinClusterRequest? = null
+    val joinCluster: JoinClusterRequest? = null,
+    val removeMember: RemoveMemberRequest? = null,
 )
 
 @Serializable
@@ -148,6 +155,9 @@ data class VaultEvents(
     fun getJoinRequestsCount(): Int {
         return getJoinRequests().size
     }
+
+    fun getRemoveRequests(): List<RemoveMemberRequest> =
+        requests.mapNotNull { it.removeMember }
 }
 
 @Serializable
@@ -442,13 +452,12 @@ data class AppStateModel(
             return try {
                 JsonConfig.json.decodeFromString<AppStateModel>(jsonResponse)
             } catch (e: Exception) {
+                val failure = "Failed to parse app state (${e::class.simpleName ?: "Exception"})"
                 logger?.log(
                     core.LogTag.AppManager.Message.FailedToParseStateJson,
-                    "jsonResponse: $jsonResponse, error: ${e.message}",
+                    failure,
                     success = false
-                ) ?: println(logFormatter?.formatLogMessage("⛔ Failed to parse JSON: $jsonResponse, error: ${e.message}")
-                    ?: "⛔ Failed to parse JSON: $jsonResponse, error: ${e.message}")
-                e.printStackTrace()
+                ) ?: println(logFormatter?.formatLogMessage(failure) ?: failure)
                 AppStateModel(message = null, success = false)
             }
         }

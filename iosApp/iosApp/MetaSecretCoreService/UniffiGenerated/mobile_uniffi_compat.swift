@@ -12,10 +12,20 @@ public func uniffiMobileInitAndroidWithDevice(masterKey: String, deviceName: Str
 }
 public func uniffiMobileGetState() -> String { getState() }
 public func uniffiMobileStateEventsAuthToken(vaultName: String) -> String { stateEventsAuthToken(vaultName: vaultName) }
+public func uniffiMobileJoinResultAuthToken() -> String { joinResultAuthToken() }
 public func uniffiMobileGenerateUserCreds(vaultName: String) -> String { generateUserCreds(vaultName: vaultName) }
 public func uniffiMobileSignUp() -> String { signUp() }
 public func uniffiMobileUpdateMembership(candidate: String, actionUpdate: String) -> String {
     updateMembership(candidate: candidate, actionUpdate: actionUpdate)
+}
+public func uniffiMobileRemoveMember(targetDeviceId: String) -> String {
+    removeMember(targetDeviceId: targetDeviceId)
+}
+public func uniffiMobileApproveRemoveMember(targetDeviceId: String) -> String {
+    approveRemoveMember(targetDeviceId: targetDeviceId)
+}
+public func uniffiMobileDeclineRemoveMember(targetDeviceId: String) -> String {
+    declineRemoveMember(targetDeviceId: targetDeviceId)
 }
 public func uniffiMobileSplitSecret(secretId: String, secret: String) -> String {
     splitSecret(secretId: secretId, secret: secret)

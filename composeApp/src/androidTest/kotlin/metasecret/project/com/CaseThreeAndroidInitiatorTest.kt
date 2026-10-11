@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -22,7 +23,7 @@ class CaseThreeAndroidInitiatorTest {
 
     @Test
     fun createVaultThenApproveWebAndIos() {
-        val vaultName = instrumentationArgument("vaultName", "test@test.ru")
+        val vaultName = instrumentationArgument("vaultName", "test3@test.ru")
         val secretName = instrumentationArgument("secretName", "test-secret")
 
         clickIfPresent("onboarding-skip", timeoutMillis = 10_000)
@@ -33,13 +34,29 @@ class CaseThreeAndroidInitiatorTest {
         composeRule.onNodeWithTag("manual-signin-continue").performClick()
         composeRule.waitForTag("email-confirmation-continue", 30_000)
         composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("add-secret-fab", 180_000)
+        composeRule.waitUntil(120_000) {
+            composeRule.onAllNodes(hasTestTag("add-secret-fab"), useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodes(hasTestTag("email-confirmation-join"), useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty() ||
+                composeRule.onAllNodes(hasTestTag("email-confirmation-error"), useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty()
+        }
+        if (composeRule.onAllNodes(hasTestTag("email-confirmation-join"), useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        ) {
+            error("Test #3 requires a new vault, but ${vaultName} already exists; check E2E server isolation")
+        }
+        composeRule.waitForTag("add-secret-fab", 30_000)
         composeRule.onNodeWithTag("add-secret-fab").performClick()
         composeRule.waitForTag("secret-name-input", 30_000)
         composeRule.onNodeWithTag("secret-name-input").performTextInput(secretName)
         composeRule.onNodeWithTag("secret-value-input").performTextInput("test-secret-value")
         composeRule.onNodeWithTag("add-secret-submit").performClick()
         composeRule.waitForTag("secret-row-$secretName", 180_000)
+        // Match Test #2's one-secret owner setup: reveal and close once so the
+        // owner's claim is initialized before Android sends recovery cycles.
+        showCreatedSecret(secretName)
         marker("ANDROID_INITIATOR_READY")
 
         approvePendingJoin("ANDROID_WEB_JOIN_APPROVED")
@@ -55,7 +72,20 @@ class CaseThreeAndroidInitiatorTest {
         composeRule.onNodeWithTag("tab-secrets").performClick()
         for (cycle in 1..recoveryCycles) {
             waitForApproval(approvalCoordinatorUrl, "android-sender", cycle)
-            composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
+            val actionTag = "secret-primary-action-$secretName"
+            composeRule.waitForTag(actionTag, 45_000)
+            val action = composeRule.onNodeWithTag(actionTag)
+            val recoverActionReady = runCatching {
+                composeRule.waitUntil(45_000) {
+                    runCatching { action.assertTextContains("Recover", substring = true) }.isSuccess
+                }
+            }.isSuccess
+            action.printToLog("E2E_PRIMARY_ACTION_CYCLE_$cycle")
+            check(recoverActionReady) {
+                "Test #3 cycle $cycle: Android did not expose Recover for the same secret " +
+                    "within 45 seconds after the prior recovery was closed"
+            }
+            action.performClick()
             marker("ANDROID_RECOVERY_REQUEST_SENT_$cycle")
             composeRule.waitForTag("revealed-secret-value", 180_000)
             marker("ANDROID_RECOVERY_SECRET_VISIBLE_$cycle")
@@ -72,7 +102,7 @@ class CaseThreeAndroidInitiatorTest {
 
     @Test
     fun createVaultAndWaitForJoins() {
-        val vaultName = instrumentationArgument("vaultName", "test@test.ru")
+        val vaultName = instrumentationArgument("vaultName", "test3@test.ru")
         clickIfPresent("onboarding-skip", timeoutMillis = 10_000)
         composeRule.waitForTag("signin-email-manual", 30_000)
         composeRule.onNodeWithTag("signin-email-manual").performClick()
@@ -109,7 +139,10 @@ class CaseThreeAndroidInitiatorTest {
         }
         marker("ANDROID_INITIATOR_READY")
         approvePendingJoin("ANDROID_WEB_JOIN_APPROVED")
-        approvePendingJoin("ANDROID_IOS_JOIN_APPROVED")
+        val joinPlatforms = instrumentationArgument("joinPlatforms", "web,ios").split(',').toSet()
+        if (joinPlatforms.contains("ios")) {
+            approvePendingJoin("ANDROID_IOS_JOIN_APPROVED")
+        }
         // Join approval leaves the owner on Devices. Switch back to Secrets
         // before asserting that all configured secret rows are visible.
         composeRule.onNodeWithTag("tab-secrets").performClick()

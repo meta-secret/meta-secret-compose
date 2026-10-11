@@ -248,6 +248,11 @@ typedef void (*UniffiForeignFutureCompleteVoid)(uint64_t, UniffiForeignFutureRes
 RustBuffer uniffi_metasecret_mobile_fn_func_accept_recover(RustBuffer claim_id, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_APPROVE_REMOVE_MEMBER
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_APPROVE_REMOVE_MEMBER
+RustBuffer uniffi_metasecret_mobile_fn_func_approve_remove_member(RustBuffer target_device_id, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_CLEAN_UP_DATABASE
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_CLEAN_UP_DATABASE
 RustBuffer uniffi_metasecret_mobile_fn_func_clean_up_database(RustCallStatus *_Nonnull out_status
@@ -262,6 +267,11 @@ RustBuffer uniffi_metasecret_mobile_fn_func_database_file_name(RustBuffer master
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECLINE_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECLINE_RECOVER
 RustBuffer uniffi_metasecret_mobile_fn_func_decline_recover(RustBuffer claim_id, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECLINE_REMOVE_MEMBER
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECLINE_REMOVE_MEMBER
+RustBuffer uniffi_metasecret_mobile_fn_func_decline_remove_member(RustBuffer target_device_id, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DEVICE_UI_CATEGORY_DISCRIMINANT
@@ -316,9 +326,20 @@ RustBuffer uniffi_metasecret_mobile_fn_func_init_ios(RustBuffer master_key, Rust
 RustBuffer uniffi_metasecret_mobile_fn_func_init_ios_with_device(RustBuffer master_key, RustBuffer device_name, RustBuffer device_type, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_JOIN_RESULT_AUTH_TOKEN
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_JOIN_RESULT_AUTH_TOKEN
+RustBuffer uniffi_metasecret_mobile_fn_func_join_result_auth_token(RustCallStatus *_Nonnull out_status
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_RECOVER
 RustBuffer uniffi_metasecret_mobile_fn_func_recover(RustBuffer secret_id, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_REMOVE_MEMBER
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_REMOVE_MEMBER
+RustBuffer uniffi_metasecret_mobile_fn_func_remove_member(RustBuffer target_device_id, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_SEND_DECLINE_COMPLETION
@@ -623,6 +644,12 @@ uint16_t uniffi_metasecret_mobile_checksum_func_accept_recover(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_APPROVE_REMOVE_MEMBER
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_APPROVE_REMOVE_MEMBER
+uint16_t uniffi_metasecret_mobile_checksum_func_approve_remove_member(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_CLEAN_UP_DATABASE
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_CLEAN_UP_DATABASE
 uint16_t uniffi_metasecret_mobile_checksum_func_clean_up_database(void
@@ -638,6 +665,12 @@ uint16_t uniffi_metasecret_mobile_checksum_func_database_file_name(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECLINE_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECLINE_RECOVER
 uint16_t uniffi_metasecret_mobile_checksum_func_decline_recover(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECLINE_REMOVE_MEMBER
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECLINE_REMOVE_MEMBER
+uint16_t uniffi_metasecret_mobile_checksum_func_decline_remove_member(void
     
 );
 #endif
@@ -701,9 +734,21 @@ uint16_t uniffi_metasecret_mobile_checksum_func_init_ios_with_device(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_JOIN_RESULT_AUTH_TOKEN
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_JOIN_RESULT_AUTH_TOKEN
+uint16_t uniffi_metasecret_mobile_checksum_func_join_result_auth_token(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_RECOVER
 uint16_t uniffi_metasecret_mobile_checksum_func_recover(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_REMOVE_MEMBER
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_REMOVE_MEMBER
+uint16_t uniffi_metasecret_mobile_checksum_func_remove_member(void
     
 );
 #endif

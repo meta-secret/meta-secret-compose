@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -37,6 +38,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabNavigator
@@ -58,6 +62,7 @@ import ui.dialogs.AlertProvider
 import ui.notifications.NotificationProvider
 import ui.notifications.WarningBubble
 import ui.theme.AppTextStyles
+import ui.scenes.signinscreen.SignInScreen
 
 class MainScreen : Screen {
     @Composable
@@ -65,6 +70,7 @@ class MainScreen : Screen {
         val viewModel: MainScreenViewModel = koinViewModel()
         val alertCoordinator: AlertCoordinatorInterface = koinInject()
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
+        val navigator = LocalNavigator.currentOrThrow
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         val selectedTabIndex by TabStateHolder.selectedTabIndex
         val tabSize = viewModel.screenMetricsProvider.screenWidth() / tabs.size
@@ -72,10 +78,28 @@ class MainScreen : Screen {
         val hasJoinRequestsBadge by viewModel.hasJoinRequestsBadge.collectAsState()
         val devicesCount by viewModel.devicesCount.collectAsState()
         val isWarningShown by viewModel.isWarningShown.collectAsState()
+        val navigationEvent by viewModel.navigationEvent.collectAsState()
+
+        LaunchedEffect(navigationEvent) {
+            when (navigationEvent) {
+                MainNavigationEvent.NavigateToSignIn -> {
+                    navigator.rootNavigator().replaceAll(SignInScreen())
+                    viewModel.consumeNavigationEvent()
+                }
+
+                MainNavigationEvent.Idle -> Unit
+            }
+        }
 
         TabNavigator(tabs[selectedTabIndex]) {
             val tabNavigator = LocalTabNavigator.current
-            tabNavigator.current = tabs[selectedTabIndex]
+            // Keep Voyager's tab selection in sync after composition. Writing
+            // to tabNavigator.current during composition can invalidate the
+            // tree while Compose is laying it out after an asynchronous state
+            // update (for example, a recovery claim refresh).
+            LaunchedEffect(selectedTabIndex) {
+                tabNavigator.current = tabs[selectedTabIndex]
+            }
             Scaffold(
                 modifier = Modifier
                     .fillMaxSize(),
@@ -218,3 +242,6 @@ class MainScreen : Screen {
         }
     }
 }
+
+private fun Navigator.rootNavigator(): Navigator =
+    generateSequence(this) { it.parent }.last()

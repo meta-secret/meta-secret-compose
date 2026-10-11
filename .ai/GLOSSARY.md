@@ -33,7 +33,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **Encrypted Key Share** | A Key Share encrypted for the recipient Device's Transport Public Key before delivery. The server may temporarily queue it, but must not be able to decrypt it. | Share delivery | Recovery sends an Encrypted Key Share through the server |
 | **Threshold (k)** | Minimum number of Key Shares needed to recover a Secret | Secret sharing | `n=1: k=1`; `n=2: k=1`; `n=3: k=2` |
 | **K-of-N Policy** | Supported device-count policy: one-device whole Secret, two-device full replication, and three-device 2-of-3 sharing. A Vault cannot exceed 3 devices | Vault architecture | A 3-device Vault needs any 2 Key Shares |
-| **Resharing** | Recreating the current Key Shares after a membership change. In the supported 2→3 transition, each device receives one new Key Share and the sender removes temporary remote copies. | Vault operations | A 3-device Vault remains 2-of-3 |
+| **Resharing** | Recreating the current Key Shares after a membership change. In 2→3, each device receives one new Key Share. In 3→2, the removal approver combines its Key Share with the initiator's Encrypted Key Share and creates two full replicas. Temporary remote copies are removed after delivery. | Vault operations | Every remaining Device keeps only its own new Key Share |
 | **Device** | Registered hardware endpoint: `DeviceMake` + username | Core entity | `KeyValueStorageInterface.kt` |
 | **UniFFI** | Interface layer bridging Kotlin/Swift to the Rust cryptography library | Technical | `MetaSecretCoreService` |
 | **E2E (End-to-End)** | Encryption from sender to receiver; server never has access to plaintext | Feature property | All message/secret flows |
@@ -70,6 +70,10 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **DeviceStatus** | String-valued enum for device-level status | Devices list | `AppStateModel.kt` |
 | **DeviceCellModel** | Display model for a single device row in the UI | `DevicesScreen` | `DeviceCellModel.kt` |
 | **Device Limit** | Core-enforced maximum of 3 devices in one Vault | Membership | A fourth-device join returns an error |
+| **Device Removal** | Core-authorized transition of a member to `Outsider/Declined`, invalidation of active Recovery claims, and resharing for remaining members | Vault operations | `3 → 2` needs another member's approval; `2 → 1` needs only local confirmation; self-removal is forbidden |
+| **Removal Decision** | Signed terminal Core response to a pending Device Removal request: `Accepted` removes the target; `Declined` closes the request without changing membership or Key Shares | Vault operations | First valid response wins; clients only invoke Core and render the result |
+| **Single-device Claim Canonicalization** | Core behavior after `2 → 1`: every surviving `Split` claim belongs to the sole remaining device, while its local `k=1` Key Share stays unchanged | Membership redistribution | A later Join receives every Secret even if a removed device originally created it |
+| **Removal Offline Handling** | An offline target is reset to authorization after receiving `Outsider/Declined`; an offline approver leaves removal pending and no removal command is queued | Device removal | User retries after connectivity returns |
 | **DevicesQuantity** | Enum with associated amount — number of devices in a vault | Vault stats | `DevicesQuantity.kt` |
 | **ClientDeviceInfo** | Current device's own info used during registration | Sign-up | `ClientDeviceInfo.kt` |
 | **OpenBox** | Public key container with `dsaPk` (signing key) and `transportPk` (encryption key) | Cryptography | `AppStateModel.kt` |
@@ -93,6 +97,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **DistClaimId** | Claim id paired with a `PassId` | Claim identity | `AppStateModel.kt` |
 | **PassId** | Identifier + name for a password/secret reference | Claims | `AppStateModel.kt` |
 | **RestoreData** | `ClaimId` + `SecretId` pair used to trigger recovery | Recovery flow | `SocketActionModel.kt` |
+| **Accepted recovery after relaunch** | Re-read the accepted claim from Core after app restart and pass its exact `ClaimId` to `showRecovered`; transient socket events are optional hints, not durable state | Recovery reveal | The client does not persist the reconstructed secret or rely on an in-memory event |
 | **RecoveryRequestAlertState** | Sealed UI state for recovery alerts: `Hidden`, `Visible(RestoreData)`, `Processing(RestoreData)` | Alert dialog | `AlertProvider.kt` |
 
 ---
@@ -124,6 +129,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **SocketRequestModel** | Enum of state-following modes: `GET_STATE`, `WAIT_FOR_JOIN_RESPONSE`, `SHOW_SECRET`, `WAIT_FOR_RECOVER_REQUEST` | Refresh config | `SocketRequestModel.kt` |
 | **State Events Stream** | Authenticated Server-Sent Events connection used only as an invalidation signal; it is not a state or Secret transport | Runtime | `/state-events?vaultName=...` |
 | **Reconnect Credential** | Fresh Bearer credential requested from Core for each state-events reconnect | Runtime security | Prevents stale or cross-Vault subscriptions |
+| **Join Result Stream** | Separate SSE subscription authorized for one exact JOIN request; emits accepted/declined once, then the client reads canonical state from Core | Pending join | `/join-events?vaultName=...` with Bearer header |
 
 ---
 

@@ -62,6 +62,7 @@ sealed class LogTag(val displayName: String) {
             object ClearingSecretId : Message("Clearing secretIdToShow")
             object RecoveryAlertShown : Message("Recovery alert shown")
             object RecoveryAlertDismissed : Message("Recovery alert dismissed")
+            object CurrentDeviceRemovalReset : Message("Current Device removal session reset")
         }
     }
 
@@ -208,6 +209,7 @@ sealed class LogTag(val displayName: String) {
             object BackgroundSocketSuspend : Message("App background socket suspend")
             object RefreshSkippedWhilePaused : Message("Refresh skipped while paused")
             object SocketError : Message("Socket error")
+            object CurrentDeviceRemoved : Message("Current Device changed from Member to Outsider/Declined")
         }
     }
 
@@ -417,6 +419,12 @@ data class CriticalComponentsState(
 interface DebugLoggerInterface {
     fun <T : LogTag> log(message: LogTag.Message<T>, extra: String? = null, success: Boolean? = null)
 
+    /** Diagnostic-only trace; platform implementations may route this to native debug logs. */
+    fun diagnostic(message: String) {}
+
+    /** Safe, payload-free diagnostics reserved for local UI E2E failure analysis. */
+    fun e2eDiagnostic(message: String) {}
+
     fun setLoggerVisibility()
     fun testInfo()
     fun setAppManagerCreated(created: Boolean)
@@ -444,6 +452,10 @@ open class DebugLogger(
 
         val logMessage = "$preMessage ${message.tag.displayName}: $fullMessage"
         println(logFormatter.formatLogMessage(logMessage))
+    }
+
+    override fun e2eDiagnostic(message: String) {
+        logFormatter.logE2eDiagnostic(message)
     }
 
     override fun setAppManagerCreated(created: Boolean) {
