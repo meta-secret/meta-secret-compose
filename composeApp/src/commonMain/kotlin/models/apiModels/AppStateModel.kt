@@ -452,13 +452,12 @@ data class AppStateModel(
             return try {
                 JsonConfig.json.decodeFromString<AppStateModel>(jsonResponse)
             } catch (e: Exception) {
+                val failure = "Failed to parse app state (${e::class.simpleName ?: "Exception"})"
                 logger?.log(
                     core.LogTag.AppManager.Message.FailedToParseStateJson,
-                    "jsonResponse: $jsonResponse, error: ${e.message}",
+                    failure,
                     success = false
-                ) ?: println(logFormatter?.formatLogMessage("⛔ Failed to parse JSON: $jsonResponse, error: ${e.message}")
-                    ?: "⛔ Failed to parse JSON: $jsonResponse, error: ${e.message}")
-                e.printStackTrace()
+                ) ?: println(logFormatter?.formatLogMessage(failure) ?: failure)
                 AppStateModel(message = null, success = false)
             }
         }

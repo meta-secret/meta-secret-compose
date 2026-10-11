@@ -547,14 +547,12 @@ class MetaSecretSocketHandler(
                 "targeted=${recoverClaimsForDevice.size} pendingApproval=${pendingClaims.size} done=${doneClaims.size}"
         )
         if (recoverClaimsForDevice.isNotEmpty()) {
-            logger.log(
-                core.LogTag.SocketHandler.Message.ReceiverClaimStatuses,
-                "E2E_DIAG recovery claims for device=$currentDeviceId: " +
+            logger.e2eDiagnostic(
+                "recovery claims for device=$currentDeviceId: " +
                     recoverClaimsForDevice.joinToString { claim ->
                         "claim=${claim.distClaimId.id},sender=${claim.sender},client=${claim.clientStatus}," +
                             "receivers=${claim.receivers.joinToString()}"
                     },
-                success = true
             )
         }
         if (recoverClaimsForDevice.isNotEmpty()) {

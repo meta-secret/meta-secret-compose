@@ -61,6 +61,8 @@ Ready to use ✅
 
 **Recovery reveal after process restart:** the client re-reads the current claim from Core and carries the exact accepted `ClaimId` into `showRecovered`. An in-memory socket event can accelerate an update while the process is alive, but it is not durable state. Do not persist reconstructed plaintext to make recovery survive a restart; local storage continues to hold only this device's share.
 
+**Diagnostic logging:** Android E2E diagnostics require both a Debug build and `META_SECRET_ENV=local`; production Release/remote builds do not emit them. Core diagnostic sinks require a compiled `Local` environment, including native release libraries used by E2E. App-state JSON parsing failures log only a payload-free error class, never the JSON input, exception message or stack trace. iOS E2E diagnostics remain gated by the explicit UI-test mode.
+
 ---
 
 ## 4. App Reinstall Scenario

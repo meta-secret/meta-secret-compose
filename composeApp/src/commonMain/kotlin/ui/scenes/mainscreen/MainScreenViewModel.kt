@@ -73,25 +73,21 @@ class MainScreenViewModel(
     fun openRecoveryRequest(secretId: String) {
         val pendingRequests = pendingRecoveryRequests.value
         val stateBefore = recoveryAlertStateDescription()
-        logger.log(
-            LogTag.MainVM.Message.RecoveryAlertShown,
-            "E2E_DIAG recovery-open-click secretId=$secretId " +
+        logger.e2eDiagnostic(
+            "recovery-open-click secretId=$secretId " +
                 "pendingCount=${pendingRequests.size} " +
                 "pending=${pendingRequests.joinToString { "${it.claimId}:${it.secretId}" }} " +
                 "alertBefore=$stateBefore",
-            success = true,
         )
 
         val restoreData = pendingRequests
             .firstOrNull { it.secretId == secretId }
         if (restoreData == null) {
-            logger.log(
-                LogTag.MainVM.Message.RecoveryAlertShown,
-                "E2E_DIAG recovery-open-no-match secretId=$secretId " +
+            logger.e2eDiagnostic(
+                "recovery-open-no-match secretId=$secretId " +
                     "pendingCount=${pendingRequests.size} " +
                     "pending=${pendingRequests.joinToString { "${it.claimId}:${it.secretId}" }} " +
                     "alertState=$stateBefore",
-                success = false,
             )
             return
         }
@@ -100,19 +96,15 @@ class MainScreenViewModel(
 
     private fun openRecoveryRequest(restoreData: RestoreData) {
         val stateBefore = recoveryAlertStateDescription()
-        logger.log(
-            LogTag.MainVM.Message.RecoveryAlertShown,
-            "E2E_DIAG recovery-open-call claimId=${restoreData.claimId} " +
+        logger.e2eDiagnostic(
+            "recovery-open-call claimId=${restoreData.claimId} " +
                 "secretId=${restoreData.secretId} senderType=${restoreData.senderType} " +
                 "alertBefore=$stateBefore",
-            success = true
         )
         alertCoordinator.showRecoveryRequest(restoreData)
-        logger.log(
-            LogTag.MainVM.Message.RecoveryAlertShown,
-            "E2E_DIAG recovery-open-result claimId=${restoreData.claimId} " +
+        logger.e2eDiagnostic(
+            "recovery-open-result claimId=${restoreData.claimId} " +
                 "alertAfter=${recoveryAlertStateDescription()}",
-            success = true,
         )
     }
 

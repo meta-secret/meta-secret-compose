@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import android.util.Log
+import metasecret.project.com.BuildConfig
 
 class LogFormatterAndroid : LogFormatterInterface {
     override fun formatLogMessage(message: String): String {
@@ -13,6 +14,7 @@ class LogFormatterAndroid : LogFormatterInterface {
     }
 
     override fun logE2eDiagnostic(message: String) {
+        if (!BuildConfig.DEBUG || BuildConfig.META_SECRET_ENV != "local") return
         Log.i("MetaSecretE2E", "E2E_DIAG $message")
     }
 }
