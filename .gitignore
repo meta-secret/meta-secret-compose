@@ -47,3 +47,6 @@ libmetasecret_mobile.so
 design/
 
 # Maestro test artifacts
+
+# JVM crash heap dumps
+*.hprof
