@@ -152,4 +152,12 @@
     <string name = "device_ui_category_web">Веб</string>
     <string name = "device_ui_category_other">Другое</string>
     <string name = "device_ui_category_unknown">Неизвестное устройство</string>
+    <string name="deletionPending">Ожидается подтверждение удаления</string>
+    <string name="deletionDeclined">Удаление отклонено</string>
+    <string name="deletionApproval">Подтвердить удаление со всех устройств?</string>
+    <string name="deletionRemoteRequired">Удаление должно подтвердить другое устройство.</string>
+    <string name="vaultSynchronizing">Синхронизация Vault…</string>
+    <string name="vaultSyncFailed">Не удалось синхронизировать Vault. Повторите попытку.</string>
+    <string name="deletionFailed">Не удалось удалить секрет. Повторите попытку.</string>
+    <string name="retrySync">Повторить</string>
 </resources>

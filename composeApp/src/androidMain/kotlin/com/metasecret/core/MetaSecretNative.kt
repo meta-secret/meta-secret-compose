@@ -84,6 +84,12 @@ object MetaSecretNative {
         uniffi.mobile_uniffi.showRecovered(claimId)
 
     @JvmStatic
+    fun deleteSecret(secretId: String): String = uniffi.mobile_uniffi.deleteSecret(secretId)
+
+    @JvmStatic
+    fun decideDeleteSecret(requestJson: String): String = uniffi.mobile_uniffi.decideDeleteSecret(requestJson)
+
+    @JvmStatic
     fun showLocalSecret(secretId: String): String =
         uniffi.mobile_uniffi.showLocalSecret(secretId)
 }

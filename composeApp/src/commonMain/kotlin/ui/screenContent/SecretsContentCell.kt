@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -48,16 +49,24 @@ import org.koin.compose.koinInject
 import ui.ClassicButton
 import ui.scenes.secretsscreen.SecretPrimaryAction
 
+data class SecretCardState(
+    val secret: Secret,
+    val devicesCount: Int,
+    val primaryAction: SecretPrimaryAction,
+    val pendingRecoveryRequests: Int = 0,
+    val pendingRequestSender: String? = null,
+    val deletionState: models.apiModels.SecretDeletionState? = null,
+)
+
 @Composable
 fun SecretsContent(
-    secret: Secret,
-    devicesCount: Int,
-    pendingRecoveryRequests: Int = 0,
-    primaryAction: SecretPrimaryAction,
-    pendingRequestSender: String? = null,
+    state: SecretCardState,
     onPrimaryAction: () -> Unit,
     onOpenRecoveryRequest: () -> Unit,
+    onDelete: () -> Unit,
+    onOpenDeletionRequest: () -> Unit,
 ) {
+    val (secret, devicesCount, primaryAction, pendingRecoveryRequests, pendingRequestSender, deletionState) = state
     val imageProvider: ImageProviderInterface = koinInject()
     val deviceText = when {
         devicesCount == 0 || devicesCount > 4 -> appString(AppString.devices_5)
@@ -84,20 +93,10 @@ fun SecretsContent(
             protectionLevelText = appString(AppString.level_3)
         }
     }
-    // TODO: We don't have secret deletion functionality. I'm gonna uncomment it later.
-//    SwipeableItem(
-//        itemsCount = -1,
-//        buttonText = appString(AppString.removeSecret),
-//        isRevealed = false,
-//        screenMetricsProvider,
-//        action = {},
-//        onExpanded = {},
-//        onCollapsed = {},
-//        content = {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     .testTag("secret-row-${secret.secretName}")
-                    .background(AppColors.White5, RoundedCornerShape(12.dp)).height(150.dp)
+                    .background(AppColors.White5, RoundedCornerShape(12.dp)).height(205.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 12.dp),
@@ -171,6 +170,25 @@ fun SecretsContent(
                             modifier = Modifier.testTag("recovery-request-notice-${secret.secretName}"),
                         )
                     }
+                    when (deletionState?.clientStatus) {
+                        models.apiModels.SecretDeletionStatus.Pending -> Text(
+                            appString(AppString.deletionPending), style = AppTextStyles.Micro(), color = AppColors.White75,
+                            modifier = Modifier.testTag("deletion-pending-${secret.secretName}"))
+                        models.apiModels.SecretDeletionStatus.NeedApprove -> TextButton(
+                            onClick = onOpenDeletionRequest,
+                            modifier = Modifier.testTag("open-deletion-request-${secret.secretName}")) {
+                            Text(appString(AppString.deletionApproval), style = AppTextStyles.BodyStrong(), color = AppColors.RedError)
+                        }
+                        else -> TextButton(
+                            enabled = deletionState != null,
+                            onClick = onDelete,
+                            modifier = Modifier.testTag("delete-secret-${secret.secretName}")) {
+                            Text(appString(AppString.removeSecret), style = AppTextStyles.BodyStrong(), color = AppColors.RedError)
+                        }
+                    }
+                    if (deletionState?.clientStatus == models.apiModels.SecretDeletionStatus.Declined) {
+                        Text(appString(AppString.deletionDeclined), style = AppTextStyles.Micro(), color = AppColors.White75)
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (pendingRecoveryRequests > 0) {
                             ClassicButton(
@@ -192,6 +210,4 @@ fun SecretsContent(
                     }
                 }
             }
-//        }
-//    )
 }

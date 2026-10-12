@@ -112,6 +112,8 @@ class SplashScreenViewModelTest {
         override suspend fun approveRemoveMember(targetDeviceId: String): CommonResponseModel? = null
         override suspend fun declineRemoveMember(targetDeviceId: String): CommonResponseModel? = null
         override suspend fun getUserDataBy(deviceId: String): UserData? = null
+        override suspend fun deleteSecret(secretId: String): CommonResponseModel? = null
+        override suspend fun decideDeleteSecret(requestId: String, accepted: Boolean): CommonResponseModel? = null
         override suspend fun splitSecret(secretModel: SecretModel): CommonResponseModel? = null
         override suspend fun findClaim(secretId: String): ClaimModel? = null
         override suspend fun recover(secretModel: SecretModel): CommonResponseModel? = null

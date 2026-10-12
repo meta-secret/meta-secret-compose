@@ -122,6 +122,14 @@ import Security
         uniffiMobileShowRecovered(claimId: claimId)
     }
 
+    @objc public func deleteSecret(_ secretId: String) -> String {
+        uniffiMobileDeleteSecret(secretId: secretId)
+    }
+
+    @objc public func decideDeleteSecret(_ requestJson: String) -> String {
+        uniffiMobileDecideDeleteSecret(requestJson: requestJson)
+    }
+
     @objc public func showLocalSecret(_ secretId: String) -> String {
         uniffiMobileShowLocalSecret(secretId: secretId)
     }

@@ -96,6 +96,16 @@ class MetaSecretAppManager(
     }
 
     override suspend fun getStateModel(): AppStateModel? {
+        appStateCacheProvider.beginSynchronization()
+        var successful = false
+        return try {
+            getStateModelInternal().also { successful = it?.success == true }
+        } finally {
+            appStateCacheProvider.finishSynchronization(successful)
+        }
+    }
+
+    private suspend fun getStateModelInternal(): AppStateModel? {
         if (!_isAppManagerInitialized) {
             return null
         }
@@ -231,9 +241,10 @@ class MetaSecretAppManager(
             AppStateModel.fromJson(stateJson, logger, logFormatter)
         }
         
-        if (currentState == null) {
+        if (currentState == null || !currentState.success) {
             return null
         }
+        appStateCacheProvider.updateCache(currentState)
         
         return try {
             val vaultSummary = currentState.getVaultSummary()
@@ -262,6 +273,34 @@ class MetaSecretAppManager(
             val userMessage = errorMapper.getUserFriendlyMessage(appError)
             notificationCoordinator.showError(userMessage)
             null
+        }
+    }
+
+    override suspend fun deleteSecret(secretId: String): CommonResponseModel? =
+        deletionOperation { metaSecretCore.deleteSecret(secretId) }
+
+    override suspend fun decideDeleteSecret(requestId: String, accepted: Boolean): CommonResponseModel? =
+        deletionOperation {
+            metaSecretCore.decideDeleteSecret(kotlinx.serialization.json.Json.encodeToString(
+                models.apiModels.SecretDeletionDecision.serializer(),
+                models.apiModels.SecretDeletionDecision(requestId, accepted)))
+        }
+
+    private suspend fun deletionOperation(operation: () -> String): CommonResponseModel? {
+        appStateCacheProvider.beginSynchronization()
+        var synchronized = false
+        return try {
+            val result = withContext(Dispatchers.IO) { CommonResponseModel.fromJson(operation()) }
+            // Even an error can follow an applied request: always reconcile from Core.
+            val state = getStateModel()
+            synchronized = state?.success == true
+            result
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            CommonResponseModel(success = false)
+        } finally {
+            appStateCacheProvider.finishSynchronization(synchronized)
         }
     }
 
@@ -511,9 +550,10 @@ class MetaSecretAppManager(
             AppStateModel.fromJson(stateJson, logger, logFormatter)
         }
         
-        if (currentState == null) {
+        if (currentState == null || !currentState.success) {
             return null
         }
+        appStateCacheProvider.updateCache(currentState)
         
         return try {
             val secrets = when (val vaultInfo = currentState.getVaultFullInfo()) {

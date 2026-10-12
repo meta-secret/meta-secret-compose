@@ -166,3 +166,7 @@ validation and before release. The shared contract is
 - `.codex/INDEX.md` — Codex CLI entry (→ read `.ai/INDEX.md`)
 
 Last updated: 2026-06-10
+
+## Secret deletion integration
+
+See [mobile contract](../docs/secret-deletion.md) for Core-owned deletion instructions, string-only FFI, current-policy selection, biometric confirmation and synchronization/reveal presentation. Protocol details live in `../meta-secret-core/docs/secret-deletion.md`.

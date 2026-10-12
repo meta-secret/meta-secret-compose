@@ -34,6 +34,7 @@ class ShowSecretViewModel(
     private val _revealedSecret = MutableStateFlow<RevealedSecretContent?>(null)
     val revealedSecret: StateFlow<RevealedSecretContent?> = _revealedSecret
 
+    private var revealGeneration = 0L
     private var currentSecretName: String? = null
     private var userRequestedRecovery = false
 
@@ -56,13 +57,14 @@ class ShowSecretViewModel(
             when (event) {
                 is ShowSecretEvents.ShowSecret -> {
                     logger.log(LogTag.ShowSecretVM.Message.RecoverSecretId, event.secretName, success = true)
+                    revealGeneration += 1
                     currentSecretName = event.secretName
                     userRequestedRecovery = true
                     socketHandler.pauseRefreshes()
                     if (event.forceRecovery) {
                         findClaim(event.secretName)
                     } else {
-                        showRecoveredSecret(event.secretName, event.claimId)
+                        showRecoveredSecret(event.secretId ?: event.secretName, event.claimId)
                         socketHandler.resumeRefreshes()
                     }
                 }
@@ -84,6 +86,7 @@ class ShowSecretViewModel(
 
                 ShowSecretEvents.HideSecret -> {
                     logger.log(LogTag.ShowSecretVM.Message.HideSecret, success = true)
+                    revealGeneration += 1
                     _revealedSecret.value = null
                     currentSecretName = null
                     userRequestedRecovery = false
@@ -186,6 +189,7 @@ class ShowSecretViewModel(
     }
 
     private fun showRecoveredSecret(secretId: String, claimId: String? = null) {
+        val generation = revealGeneration
         _isLoading.value = true
         logger.log(LogTag.ShowSecretVM.Message.StartShowingRecovered, success = true)
         viewModelScope.launch {
@@ -193,7 +197,7 @@ class ShowSecretViewModel(
                 val recoveredSecretValue = withContext(Dispatchers.IO) {
                     metaSecretAppManager.showRecovered(SecretModel(secretId, null, claimId))
                 }
-                if (!recoveredSecretValue.isNullOrBlank()) {
+                if (generation == revealGeneration && userRequestedRecovery && !recoveredSecretValue.isNullOrBlank()) {
                     val parsed = parseSecretValue(recoveredSecretValue)
                     _revealedSecret.value = when (parsed.type) {
                         SecretValueType.PASSWORD -> RevealedSecretContent.Password(recoveredSecretValue)
@@ -224,6 +228,7 @@ sealed class ShowSecretEvents : CommonViewModelEventsInterface {
     data class ShowSecret(
         val secretName: String,
         val forceRecovery: Boolean = true,
+        val secretId: String? = null,
         val claimId: String? = null,
     ) : ShowSecretEvents()
     data class SecretReadyToShow(

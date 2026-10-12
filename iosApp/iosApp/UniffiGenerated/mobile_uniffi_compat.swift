@@ -39,3 +39,6 @@ public func uniffiMobileSendDeclineCompletion(claimId: String) -> String { sendD
 public func uniffiMobileShowRecovered(claimId: String) -> String { showRecovered(claimId: claimId) }
 public func uniffiMobileShowLocalSecret(secretId: String) -> String { showLocalSecret(secretId: secretId) }
 public func uniffiMobileCleanUpDatabase() -> String { cleanUpDatabase() }
+
+public func uniffiMobileDeleteSecret(secretId: String) -> String { deleteSecret(secretId: secretId) }
+public func uniffiMobileDecideDeleteSecret(requestJson: String) -> String { decideDeleteSecret(requestJson: requestJson) }

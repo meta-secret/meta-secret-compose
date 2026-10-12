@@ -33,6 +33,8 @@ class MetaSecretCoreInterfaceSegregationTest {
         override fun declineRecover(claimId: String): String = claimId
         override fun sendDeclineCompletion(claimId: String): String = claimId
         override fun showRecovered(claimId: String): String = claimId
+        override fun deleteSecret(secretId: String): String = "{\"success\":true}"
+        override fun decideDeleteSecret(requestJson: String): String = "{\"success\":true}"
         override fun showLocalSecret(secretId: String): String = secretId
     }
 }

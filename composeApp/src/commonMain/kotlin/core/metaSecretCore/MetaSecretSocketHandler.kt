@@ -39,7 +39,8 @@ class MetaSecretSocketHandler(
     private val appStateCacheProvider: AppStateCacheProviderInterface,
     private val stringProvider: StringProviderInterface,
     private val socketClient: MetaSecretSocketClient = NoopMetaSecretSocketClient(),
-    private val uiDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
+    private val uiDispatcher: CoroutineDispatcher = Dispatchers.Main.immediate,
+    socketDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : MetaSecretSocketHandlerInterface {
     private val _socketActionType = MutableStateFlow<SocketActionModel>(SocketActionModel.NONE)
     override val socketActionType: StateFlow<SocketActionModel> = _socketActionType
@@ -54,7 +55,7 @@ class MetaSecretSocketHandler(
     override val pendingRecoveryRequests: StateFlow<List<RestoreData>> = _pendingRecoveryRequests
 
     private var actionsToFollow = mutableSetOf<SocketRequestModel>()
-    private val socketScope = CoroutineScope(Dispatchers.IO)
+    private val socketScope = CoroutineScope(socketDispatcher)
     private var refreshJob: Job? = null
     private var pendingRefresh = false
     private var isPaused = false
@@ -244,12 +245,17 @@ class MetaSecretSocketHandler(
             return
         }
 
+        appStateCacheProvider.beginSynchronization()
         refreshJob = socketScope.launch {
-            do {
-                pendingRefresh = false
-                searchRequest()
-            } while (pendingRefresh)
-            refreshJob = null
+            try {
+                do {
+                    pendingRefresh = false
+                    searchRequest()
+                } while (pendingRefresh)
+            } finally {
+                refreshJob = null
+                appStateCacheProvider.finishSynchronization(!isPaused && appStateCacheProvider.appState.value?.success == true)
+            }
         }
     }
 
@@ -289,6 +295,7 @@ class MetaSecretSocketHandler(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            appStateCacheProvider.updateCache(AppStateModel(success = false))
             logger.e2eDiagnostic("recovery-refresh-finished success=false reason=exception")
             logger.log(core.LogTag.SocketHandler.Message.ErrorGettingState, "${e.message}", success = false)
             val appError = errorMapper.mapExceptionToAppError(e)

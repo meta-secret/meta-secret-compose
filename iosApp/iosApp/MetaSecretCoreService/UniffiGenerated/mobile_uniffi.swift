@@ -504,6 +504,13 @@ public func databaseFileName(masterKey: String) -> String  {
     )
 })
 }
+public func decideDeleteSecret(requestJson: String) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_decide_delete_secret(
+        FfiConverterString.lower(requestJson),$0
+    )
+})
+}
 public func declineRecover(claimId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_decline_recover(
@@ -515,6 +522,13 @@ public func declineRemoveMember(targetDeviceId: String) -> String  {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_metasecret_mobile_fn_func_decline_remove_member(
         FfiConverterString.lower(targetDeviceId),$0
+    )
+})
+}
+public func deleteSecret(secretId: String) -> String  {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_metasecret_mobile_fn_func_delete_secret(
+        FfiConverterString.lower(secretId),$0
     )
 })
 }
@@ -688,10 +702,16 @@ private let initializationResult: InitializationResult = {
     if (uniffi_metasecret_mobile_checksum_func_database_file_name() != 39011) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_metasecret_mobile_checksum_func_decide_delete_secret() != 31608) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_metasecret_mobile_checksum_func_decline_recover() != 6398) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_decline_remove_member() != 47039) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_metasecret_mobile_checksum_func_delete_secret() != 43863) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_metasecret_mobile_checksum_func_device_ui_category_discriminant() != 50183) {

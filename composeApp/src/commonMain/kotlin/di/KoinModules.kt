@@ -43,7 +43,7 @@ val appModule = module {
     single<ErrorMapper> { ErrorMapper(get()) }
     single<NotificationCoordinatorInterface> { NotificationCoordinator() }
     single<DebugLoggerInterface> { DebugLogger(get()) }
-    single<AppStateCacheProviderInterface> { AppStateCacheProvider(get()) }
+    single<AppStateCacheProviderInterface> { AppStateCacheProvider(get(), get()) }
     single<MetaSecretAppManagerInterface> { MetaSecretAppManager(get(), get(), get(), get(), get(), get(), get(), get()) }
     single<MetaSecretStateResolverInterface> { MetaSecretStateResolver(get(), get()) }
     single<MetaSecretSocketHandlerInterface> { MetaSecretSocketHandler(get(), get(), get(), get(), get(), get(), get()) }
@@ -74,7 +74,7 @@ val appModule = module {
     factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { SecretsScreenViewModel(get(), get(), get(), get(), get()) }
     factory { AddSecretViewModel(get(), get(), get(), get()) }
-    factory { RemoveSecretViewModel(get()) }
+    factory { RemoveSecretViewModel(get(), get(), get()) }
     factory { AddDeviceViewModel() }
     factory { ShowSecretViewModel(get(), get(), get(), get()) }
 }

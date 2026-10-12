@@ -70,6 +70,8 @@ class MainScreen : Screen {
         val viewModel: MainScreenViewModel = koinViewModel()
         val alertCoordinator: AlertCoordinatorInterface = koinInject()
         val notificationCoordinator: NotificationCoordinatorInterface = koinInject()
+        val stateCache: core.AppStateCacheProviderInterface = koinInject()
+        val synchronization by stateCache.synchronization.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
         val tabs = listOf(SecretsTab, DevicesTab, ProfileTab)
         val selectedTabIndex by TabStateHolder.selectedTabIndex
@@ -208,7 +210,7 @@ class MainScreen : Screen {
             }
         }
 
-        AlertProvider(
+        if (!synchronization.loading && !synchronization.failed) AlertProvider(
             alertCoordinator = alertCoordinator
         )
 

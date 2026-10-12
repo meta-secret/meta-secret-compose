@@ -263,6 +263,10 @@ class MetaSecretCoreServiceIos(
         }
     }
 
+    override fun deleteSecret(secretId: String): String = swiftBridge.deleteSecret(secretId)
+
+    override fun decideDeleteSecret(requestJson: String): String = swiftBridge.decideDeleteSecret(requestJson)
+
     override fun showLocalSecret(secretId: String): String {
         try {
             val result = swiftBridge.showLocalSecret(secretId)

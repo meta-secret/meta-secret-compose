@@ -1,137 +1,65 @@
 package ui.dialogs.removesecret
 
-import core.AppString
-
-import core.appString
-
-import core.AppImage
-import core.ImageProviderInterface
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.cancel
-import kotlinproject.composeapp.generated.resources.close
-import kotlinproject.composeapp.generated.resources.manrope_regular
-import kotlinproject.composeapp.generated.resources.manrope_semi_bold
-import kotlinproject.composeapp.generated.resources.remove
-import kotlinproject.composeapp.generated.resources.removeSecret
-import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.koinInject
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
-import core.ScreenMetricsProviderInterface
+import core.AppString
 import core.Secret
-import ui.ClassicButton
-import ui.theme.AppTextStyles
+import core.appString
+import models.apiModels.SecretDeletionState
+import org.koin.compose.viewmodel.koinViewModel
+
+data class SecretDeletionDialogInput(
+    val secret: Secret,
+    val text: AnnotatedString,
+    val deletionState: SecretDeletionState,
+    val incoming: Boolean = false,
+)
 
 @Composable
-fun RemoveSecret(
-    screenMetricsProvider: ScreenMetricsProviderInterface,
-    text: AnnotatedString,
-    secret: Secret,
-    buttonVisibility: (Boolean) -> Unit,
-    dialogVisibility: (Boolean) -> Unit,
-) {
+fun RemoveSecret(input: SecretDeletionDialogInput, onDismiss: () -> Unit) {
+    val (secret, text, deletionState, incoming) = input
     val viewModel: RemoveSecretViewModel = koinViewModel()
-    val imageProvider: ImageProviderInterface = koinInject()
-
-    Dialog(
-        onDismissRequest = {},
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable { dialogVisibility(false); buttonVisibility(false) }
-                .padding(horizontal = 16.dp)
-                .background(AppColors.Black30),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .height((screenMetricsProvider.heightFactor() * 280).dp)
-                    .background(AppColors.PopUp, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 16.dp)
-                    .clickable(onClick = {}, enabled = false),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp)
-                ) {
-                    Image(
-                        painter = imageProvider.getPainter(AppImage.Close),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .clickable {
-                                buttonVisibility(false)
-                                dialogVisibility(false)
-                            }
-                    )
-                }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy((screenMetricsProvider.heightFactor() * 14).dp),
-                    modifier = Modifier.padding(top = 20.dp, bottom = 30.dp)
-                ) {
-                    Text(
-                        text = appString(AppString.removeSecret) + "?",
-                        style = AppTextStyles.SectionTitle(),
-                        color = AppColors.White,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(bottom = 10.dp)
-                    )
-                    Text(
-                        text = text,
-                        style = AppTextStyles.Paragraph(),
-                        color = AppColors.White75,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(bottom = 10.dp)
-                    )
-                    ClassicButton(
-                        {
-                            viewModel.removeSecret(secret)
-                            buttonVisibility(false)
-                            dialogVisibility(false)
-                        },
-                        appString(AppString.remove),
-                        color = AppColors.RedError
-                    )
-                    ClassicButton(
-                        {
-                            buttonVisibility(false)
-                            dialogVisibility(false)
-                        },
-                        appString(AppString.cancel),
-                        color = Color.Transparent,
-                        borderColor = AppColors.White50
-                    )
-                }
+    val busy by viewModel.busy.collectAsState()
+    val failed by viewModel.failed.collectAsState()
+    val close = onDismiss
+    AlertDialog(
+        modifier = Modifier.testTag("secret-deletion-dialog"),
+        containerColor = AppColors.PopUp,
+        titleContentColor = AppColors.White,
+        textContentColor = AppColors.White75,
+        onDismissRequest = { if (!busy) close() },
+        title = { Text(appString(if (incoming) AppString.deletionApproval else AppString.removeSecret) + "?", style = ui.theme.AppTextStyles.SectionTitle()) },
+        text = {
+            Column {
+                Text(text, style = ui.theme.AppTextStyles.Paragraph())
+                if (!incoming && deletionState.requiresApproval) Text(appString(AppString.deletionRemoteRequired), style = ui.theme.AppTextStyles.Paragraph())
+                if (busy) CircularProgressIndicator()
+                if (failed) Text(appString(AppString.deletionFailed), style = ui.theme.AppTextStyles.Paragraph(), color = AppColors.RedError)
             }
-        }
-    }
+        },
+        confirmButton = {
+            TextButton(enabled = !busy, modifier = Modifier.testTag("confirm-secret-deletion"), onClick = {
+                if (incoming) viewModel.decide(deletionState, true, close)
+                else viewModel.removeSecret(secret, close)
+            }) { Text(appString(if (incoming) AppString.accept else AppString.remove), style = ui.theme.AppTextStyles.BodyStrong(), color = AppColors.RedError) }
+        },
+        dismissButton = {
+            Column {
+                if (incoming) TextButton(enabled = !busy, modifier = Modifier.testTag("decline-secret-deletion"), onClick = {
+                    viewModel.decide(deletionState, false, close)
+                }) { Text(appString(AppString.decline), style = ui.theme.AppTextStyles.BodyStrong()) }
+                TextButton(enabled = !busy, onClick = close) { Text(appString(AppString.cancel), style = ui.theme.AppTextStyles.BodyStrong()) }
+            }
+        },
+    )
 }

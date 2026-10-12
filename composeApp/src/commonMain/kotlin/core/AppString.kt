@@ -6,6 +6,15 @@ import org.koin.compose.koinInject
 import kotlinproject.composeapp.generated.resources.*
 
 enum class AppString {
+    deletionPending,
+    deletionDeclined,
+    deletionApproval,
+    deletionRemoteRequired,
+    vaultSynchronizing,
+    vaultSyncFailed,
+    deletionFailed,
+    retrySync,
+
     accept,
     accept_request_on_other_device,
     addDevice,
@@ -285,6 +294,15 @@ fun AppString.resource(): StringResource = when (this) {
     AppString.wanna_recover -> Res.string.wanna_recover
     AppString.wordPlaceholder -> Res.string.wordPlaceholder
     AppString.biometric_error -> Res.string.biometric_error
+    AppString.deletionPending -> Res.string.deletionPending
+    AppString.deletionDeclined -> Res.string.deletionDeclined
+    AppString.deletionApproval -> Res.string.deletionApproval
+    AppString.deletionRemoteRequired -> Res.string.deletionRemoteRequired
+    AppString.vaultSynchronizing -> Res.string.vaultSynchronizing
+    AppString.vaultSyncFailed -> Res.string.vaultSyncFailed
+    AppString.deletionFailed -> Res.string.deletionFailed
+    AppString.retrySync -> Res.string.retrySync
+
 }
 
 fun StringProviderInterface.string(key: AppString): String = getString(key)

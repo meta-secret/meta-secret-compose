@@ -1,66 +1,54 @@
 package ui.scenes.secretsscreen
 
-import core.AppString
-
-import core.appString
-
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
 import core.KeyValueStorageInterface
 import core.ScreenMetricsProviderInterface
 import core.Secret
-import core.LogTag
-import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.VaultStatsProviderInterface
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
-import models.appInternalModels.SocketActionModel
 import models.appInternalModels.SocketRequestModel
 import ui.TabStateHolder
 import ui.scenes.common.CommonViewModel
 import ui.scenes.common.CommonViewModelEventsInterface
 import models.apiModels.ClientStatus
-import models.apiModels.SecretApiModel
+import models.apiModels.AppStateModel
+import models.apiModels.DistributionType
+import models.apiModels.VaultFullInfo
 
 class SecretsScreenViewModel(
     private val keyValueStorage: KeyValueStorageInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
-    private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
+    private val stateCache: core.AppStateCacheProviderInterface,
 ) : CommonViewModel() {
 
     private val secretsList: StateFlow<List<Secret>> = keyValueStorage.secretData
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val secrets: StateFlow<List<Secret>> = secretsList
+    val synchronization = stateCache.synchronization
+    val deletionStates = stateCache.appState.map { state ->
+        (state?.getVaultFullInfo() as? models.apiModels.VaultFullInfo.Member)?.member?.deletionStates.orEmpty()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    fun retrySynchronization() = socketHandler.refreshAppState()
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
-    private val _primaryActions = MutableStateFlow<Map<String, SecretPrimaryActionState>>(emptyMap())
-    val primaryActions: StateFlow<Map<String, SecretPrimaryActionState>> = _primaryActions
+    val primaryActions: StateFlow<Map<String, SecretPrimaryActionState>> = stateCache.appState
+        .map(::secretPrimaryActionsFromState)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            logger.log(LogTag.SecretsVM.Message.FollowUpdateState, success = true)
+        viewModelScope.launch {
             socketHandler.actionsToFollow(
                 add = listOf(SocketRequestModel.GET_STATE),
                 exclude = null
             )
         }
 
-        viewModelScope.launch {
-            socketHandler.socketActions.collect { actionType ->
-                if (actionType == SocketActionModel.UPDATE_STATE) {
-                    logger.log(LogTag.SecretsVM.Message.NewStateForSecrets, success = true)
-                    loadSecretsFromVault(true)
-                }
-            }
-        }
-        
-        loadSecretsFromVault(false)
     }
 
     override fun handle(event: CommonViewModelEventsInterface) {
@@ -85,52 +73,24 @@ class SecretsScreenViewModel(
         TabStateHolder.setTabIndex(index)
     }
 
-    private fun loadSecretsFromVault(isSocketAction: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                logger.log(LogTag.SecretsVM.Message.LoadingSecretsFromVault, success = true)
-                val secretsFromVault = metaSecretAppManager.getSecretsFromVault(isSocketAction)
-                if (secretsFromVault != null) {
-                    keyValueStorage.syncSecretsFromVault(secretsFromVault)
-                    refreshPrimaryActions(secretsFromVault)
-                    logger.log(LogTag.SecretsVM.Message.SecretsSyncedSuccess, success = true)
-                } else {
-                    logger.log(LogTag.SecretsVM.Message.FailedToGetSecrets, success = false)
-                }
-                
-                vaultStatsProvider.refresh()
-            } catch (e: Exception) {
-                logger.log(LogTag.SecretsVM.Message.ErrorLoadingSecrets, "${e.message}", success = false)
-            }
-        }
-    }
+}
 
-    private suspend fun refreshPrimaryActions(secrets: List<SecretApiModel>) {
-        val actions = secrets.associate { secret ->
-            val claim = metaSecretAppManager.findClaim(secret.name)
-            secret.name to secretPrimaryActionState(claim?.clientStatus, claim?.claimId)
-        }
-        _primaryActions.value = actions
-        logger.log(LogTag.SecretsVM.Message.NewStateForSecrets, "recovery primary actions=$actions", success = true)
+/** Presentation of Core-projected statuses from one reconciled canonical snapshot. */
+internal fun secretPrimaryActionsFromState(state: AppStateModel?): Map<String, SecretPrimaryActionState> {
+    val member = (state?.takeIf { it.success }?.getVaultFullInfo() as? VaultFullInfo.Member)?.member
+        ?: return emptyMap()
+    val sender = member.member.member.userData.device.deviceId
+    val vault = member.member.vault
+    val claims = member.ssClaims?.claims?.values.orEmpty()
+    return vault.secrets.associate { secret ->
+        val active = claims.filter { claim ->
+            claim.distributionType == DistributionType.RECOVER && claim.sender == sender &&
+                claim.vaultName == vault.vaultName && claim.distClaimId.passId.id == secret.id &&
+                claim.distClaimId.passId.name == secret.name &&
+                claim.clientStatus != ClientStatus.DECLINED && claim.clientStatus != ClientStatus.DONE
+        }.singleOrNull()
+        secret.id to secretPrimaryActionState(active?.clientStatus, active?.id)
     }
-
-    // TODO: For the future
-//    @Composable
-//    fun deleteSecretText(secretName: String): AnnotatedString {
-//        return buildAnnotatedString {
-//            append(appString(AppString.removeSecretConfirmation))
-//            withStyle(
-//                style = SpanStyle(
-//                    fontFamily = FontFamily(Font(Res.font.manrope_bold)),
-//                    fontSize = 18.sp,
-//                    color = AppColors.White
-//                )
-//            ) {
-//                append(secretName)
-//            }
-//            append(appString(AppString.fromAllDevices))
-//        }
-//    }
 }
 
 enum class SecretPrimaryAction { Show, Recover }

@@ -154,4 +154,12 @@
     <string name = "device_ui_category_web">Web</string>
     <string name = "device_ui_category_other">Other</string>
     <string name = "device_ui_category_unknown">Unknown device</string>
+    <string name="deletionPending">Waiting for deletion approval</string>
+    <string name="deletionDeclined">Deletion declined</string>
+    <string name="deletionApproval">Approve deletion from all devices?</string>
+    <string name="deletionRemoteRequired">Another device must approve this deletion.</string>
+    <string name="vaultSynchronizing">Synchronizing Vault…</string>
+    <string name="vaultSyncFailed">Unable to synchronize Vault. Retry to continue.</string>
+    <string name="deletionFailed">Unable to delete the secret. Please retry.</string>
+    <string name="retrySync">Retry</string>
 </resources>
