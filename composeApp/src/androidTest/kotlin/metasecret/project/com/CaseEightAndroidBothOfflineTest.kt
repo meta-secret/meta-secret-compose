@@ -1,8 +1,19 @@
 package metasecret.project.com
 
 import android.util.Log
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.graphics.Rect
+import android.os.SystemClock
+import android.view.MotionEvent
+import android.accessibilityservice.AccessibilityServiceInfo
+import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import org.koin.core.context.GlobalContext
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -10,8 +21,16 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import core.AppString
+import core.StringProviderInterface
+import core.AppStateCacheProviderInterface
+import models.apiModels.VaultFullInfo
+import models.apiModels.SecretDeletionStatus
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.metasecret.core.MetaSecretNative
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,6 +42,15 @@ import java.net.URL
 class CaseEightAndroidBothOfflineTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun requireTest50CoreRoutingBeforeBusiness() {
+        val required = argument("requiredE2eServerUrl", "")
+        if (required.isNotBlank()) {
+            check(BuildConfig.META_SECRET_E2E_SERVER_URL == required) { "Test50 APK lost its required Core HTTP proxy configuration" }
+            check(android.system.Os.getenv("METASECRET_E2E_SERVER_URL") == required) { "Test50 Core HTTP override was not configured before business startup" }
+        }
+    }
 
     @Test
     fun joinWebInitiatedVault() {
@@ -809,6 +837,521 @@ class CaseEightAndroidBothOfflineTest {
             }
             marker("ANDROID_APPROVED_INCOMING_${cycle}_$step")
         }
+    }
+
+    /** Test50 actors share the proven instrumentation lifecycle and coordinator barrier. */
+    @Test
+    fun handleSecretDeletionStep() {
+        val name = argument("secretName", "")
+        val value = argument("secretValue", "")
+        val cycle = argument("cycle", "1")
+        val step = argument("step", "1")
+        val role = argument("role", "observe")
+        val outcome = argument("expectedOutcome", "accepted")
+        val coordinator = argument("approvalCoordinatorUrl", "http://10.0.2.2:5180")
+        require(name.isNotBlank()) { "Test50 requires a Secret selector" }
+        require(role in setOf("requester", "approve", "decline", "observe", "cancel", "show", "sync-observe", "startup-gone"))
+        require(outcome in setOf("accepted", "declined", "pending"))
+        fun emit(action: String) = marker("ANDROID_DELETION_${action}_${cycle}_$step")
+        fun barrier(action: String) = waitForApproval(coordinator, "android-deletion-$action-$step", cycle)
+        val readinessStarted = SystemClock.elapsedRealtime()
+        var readinessCheckpoint = 0
+        fun readiness(stage: String) {
+            val cache = GlobalContext.get().get<AppStateCacheProviderInterface>()
+            val sync = cache.synchronization.value
+            val member = deletionCachedMember()
+            val selectors = member?.member?.vault?.secrets.orEmpty()
+            val checkpoint = ++readinessCheckpoint
+            val elapsed = SystemClock.elapsedRealtime() - readinessStarted
+            // Log before semantics lookup: a blocked Compose idle query must retain the stage boundary.
+            marker("ANDROID_TEST50_READINESS_DIAG cycle=$cycle step=$step role=$role " +
+                "checkpoint=$checkpoint stage=$stage elapsedMs=$elapsed phase=enter " +
+                "activeRefreshes=${sync.activeRefreshes} loading=${sync.loading} failed=${sync.failed} " +
+                "canonicalCount=${selectors.size} canonicalTargetPresent=${selectors.any { it.name == name }}")
+            val tabVisible = hasTagNow("tab-secrets")
+            val blockerVisible = hasTagNow("vault-sync-blocker")
+            val targetRowComposed = hasTagNow("secret-row-$name")
+            marker("ANDROID_TEST50_READINESS_DIAG cycle=$cycle step=$step role=$role " +
+                "checkpoint=$checkpoint stage=$stage elapsedMs=${SystemClock.elapsedRealtime() - readinessStarted} phase=ui " +
+                "tabVisible=$tabVisible blockerVisible=$blockerVisible targetRowComposed=$targetRowComposed")
+        }
+        if (role == "startup-gone") {
+            // Canonical auth can hold on Splash before the main synchronization dialog exists.
+            // Pair this UI boundary with the runner's independently observed held HTTP request.
+            composeRule.waitUntil(180_000) {
+                val sync = GlobalContext.get().get<AppStateCacheProviderInterface>().synchronization.value
+                sync.activeRefreshes > 0 && (hasTagNow("vault-sync-blocker") ||
+                    (!hasTagNow("tab-secrets") && !hasTagNow("secret-row-$name") &&
+                        !hasTagNow("show-secret-dialog") && !hasTagNow("revealed-secret-value")))
+            }
+            check(!hasTagNow("show-secret-dialog") && !hasTagNow("revealed-secret-value")) {
+                "Cold startup retained ephemeral reveal UI"
+            }
+            emit("READY")
+            barrier("action")
+            barrier("terminal")
+            composeRule.waitForTag("tab-secrets", 180_000)
+            composeRule.onNodeWithTag("tab-secrets").performClick()
+            composeRule.waitForTagGone("vault-sync-blocker", 180_000)
+            assertDeletionTagAbsent("secret-row-$name")
+            check(deletionCachedMember()?.member?.vault?.secrets?.none { it.name == name } == true) { "Deleted ID remains in the current cached canonical Secret list" }
+            check(!hasTagNow("show-secret-dialog") && !hasTagNow("revealed-secret-value")) {
+                "Deleted Secret retained reveal UI after restart"
+            }
+            emit("TERMINAL")
+            return
+        }
+        readiness("before-tab-visible")
+        composeRule.waitForTag("tab-secrets", 60_000)
+        readiness("after-tab-visible")
+        readiness("before-tab-click")
+        composeRule.onNodeWithTag("tab-secrets").performClick()
+        readiness("after-tab-click")
+        readiness("before-loader-gone")
+        composeRule.waitForTagGone("vault-sync-blocker", 180_000)
+        readiness("after-loader-gone")
+        readiness("before-target-row-ready")
+        waitForDeletionRow(name, 180_000)
+        readiness("after-target-row-ready")
+        readiness("before-canonical-target-present")
+        val secretId = deletionCachedMember()?.member?.vault?.secrets?.singleOrNull { it.name == name }?.id
+        check(!secretId.isNullOrBlank()) { "Secret selector lacks an unambiguous opaque ID" }
+        readiness("after-canonical-target-present")
+        readiness("before-id-marker")
+        marker("ANDROID_DELETION_ID_${cycle}_$step:$secretId")
+        readiness("after-id-marker")
+        composeRule.waitForTagGone("secret-deletion-dialog", 30_000)
+        composeRule.waitForTagGone("show-secret-dialog", 30_000)
+        assertDeletionTagAbsent("deletion-pending-$name")
+        assertDeletionTagAbsent("open-deletion-request-$name")
+        if (role == "sync-observe") {
+            prepareDeletionAccessibility()
+            deletionAccessibilityRoot(copyBaseline = false, blockerRequired = false, anchorText = name)
+        }
+        var baselineCopyBounds: Rect? = null
+        if (role == "show" || role == "sync-observe") {
+            require(value.isNotBlank()) { "Test50 Show requires an expected value" }
+            waitForPrimaryAction(name, "Show")
+            composeRule.onNodeWithTag("secret-primary-action-$name").performClick()
+            verifyDeletionReveal(value)
+            if (role == "sync-observe") baselineCopyBounds = captureDeletionCopyBounds()
+        }
+        emit("READY")
+        if (role == "approve" || role == "decline" ||
+            (role == "observe" && argument("expectRequest", "true") == "true")) {
+            ensureDeletionTag("open-deletion-request-$name", 180_000)
+            emit("REQUEST_VISIBLE")
+        }
+        if (role != "observe") barrier("action")
+        when (role) {
+            "requester", "cancel" -> {
+                ensureDeletionTag("delete-secret-$name", 30_000)
+                composeRule.onNodeWithTag("delete-secret-$name", useUnmergedTree = true).performClick()
+                composeRule.waitForTag("secret-deletion-dialog", 30_000)
+                if (role == "cancel") {
+                    // Cancel currently has no testTag; resolve its shared AppString within this dialog.
+                    composeRule.onNode(hasText(GlobalContext.get().get<StringProviderInterface>().getString(AppString.cancel)), useUnmergedTree = true).performClick()
+                    composeRule.waitForTagGone("secret-deletion-dialog", 30_000)
+                    waitForDeletionRow(name, 30_000)
+                    check(!hasTagNow("deletion-pending-$name") && !hasTagNow("open-deletion-request-$name")) {
+                        "Cancelled deletion changed visible request state"
+                    }
+                    emit("CANCELLED")
+                    return
+                }
+                composeRule.onNodeWithTag("confirm-secret-deletion", useUnmergedTree = true).performClick()
+                composeRule.waitForTagGone("secret-deletion-dialog", 180_000)
+                // Local policy removes immediately; remote policy persists Pending before dismissing.
+                composeRule.waitUntil(180_000) {
+                    !hasTagNow("secret-row-$name") || hasTagNow("deletion-pending-$name") ||
+                        deletionCachedMember()?.deletionStates?.any {
+                            it.secretId == secretId && it.clientStatus == SecretDeletionStatus.Declined
+                        } == true
+                }
+                emit("SUBMITTED")
+            }
+            "approve", "decline" -> {
+                composeRule.onNodeWithTag("open-deletion-request-$name", useUnmergedTree = true).performClick()
+                composeRule.waitForTag("secret-deletion-dialog", 30_000)
+                composeRule.onNodeWithTag(
+                    if (role == "approve") "confirm-secret-deletion" else "decline-secret-deletion",
+                    useUnmergedTree = true,
+                ).performClick()
+                composeRule.waitForTagGone("secret-deletion-dialog", 180_000)
+                composeRule.waitUntil(180_000) {
+                    deletionCachedMember()?.deletionStates?.any {
+                        it.secretId == secretId && it.clientStatus ==
+                            (if (role == "approve") SecretDeletionStatus.Done else SecretDeletionStatus.Declined)
+                    } == true || (role == "approve" && !hasTagNow("secret-row-$name"))
+                }
+                emit("SUBMITTED")
+            }
+            "observe" -> Unit
+            "sync-observe" -> {
+                // Runner drives Home/activate; actual onStop/onStart synchronization owns this transition.
+                composeRule.waitForTag("vault-sync-blocker", 180_000)
+                val overlay = composeRule.onNodeWithTag("vault-sync-blocker", useUnmergedTree = true)
+                    .fetchSemanticsNode().boundsInRoot
+                val reveal = composeRule.onNodeWithTag("revealed-secret-value", useUnmergedTree = true)
+                    .fetchSemanticsNode().boundsInRoot
+                check(overlay.width >= reveal.width && overlay.height >= reveal.height) {
+                    "Synchronization dialog does not cover the reveal"
+                }
+                check(hasTagNow("vault-sync-loader") || hasTagNow("retry-vault-sync")) {
+                    "Synchronization blocker has neither loader nor retry"
+                }
+                verifyDeletionOverlayBlocksCopy(value, checkNotNull(baselineCopyBounds) { "Verified Copy baseline was not captured before synchronization" })
+                emit("SYNC_BLOCKED")
+                barrier("sync-release")
+                if (hasTagNow("retry-vault-sync")) {
+                    composeRule.onNodeWithTag("retry-vault-sync", useUnmergedTree = true).performClick()
+                }
+                composeRule.waitForTagGone("vault-sync-blocker", 180_000)
+            }
+            "show" -> {
+                // Separate own-refresh probe; passive lifecycle/deletion actors never inject refresh.
+                composeRule.runOnIdle { GlobalContext.get().get<MetaSecretSocketHandlerInterface>().refreshAppState() }
+                composeRule.waitUntil(180_000) {
+                    val sync = GlobalContext.get().get<AppStateCacheProviderInterface>().synchronization.value
+                    !sync.loading && sync.activeRefreshes == 0
+                }
+                check(!GlobalContext.get().get<AppStateCacheProviderInterface>().synchronization.value.failed) {
+                    "Own-refresh failed during valid Show"
+                }
+                composeRule.waitForTagGone("vault-sync-blocker", 180_000)
+                verifyDeletionReveal(value)
+                composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
+                composeRule.waitForTagGone("show-secret-dialog", 30_000)
+                composeRule.waitForTagGone("revealed-secret-value", 30_000)
+                emit("SHOW_VALID")
+                return
+            }
+        }
+        barrier("terminal")
+        if (outcome == "accepted") {
+            assertDeletionTagAbsent("secret-row-$name")
+            check(deletionCachedMember()?.member?.vault?.secrets?.none { it.name == name } == true) { "Deleted ID remains in the current cached canonical Secret list" }
+            composeRule.waitForTagGone("show-secret-dialog", 30_000)
+            composeRule.waitForTagGone("revealed-secret-value", 30_000)
+        } else {
+            waitForDeletionRow(name, 30_000)
+            if (role == "show" || role == "sync-observe") verifyDeletionReveal(value)
+        }
+        if (outcome != "pending") {
+            assertDeletionTagAbsent("deletion-pending-$name")
+            assertDeletionTagAbsent("open-deletion-request-$name")
+            composeRule.waitForTagGone("secret-deletion-dialog", 30_000)
+        }
+        emit("TERMINAL")
+    }
+
+    /** Test50 growing-list navigation; do not change legacy fixed-list helpers. */
+    private fun deletionScrollContainer(): androidx.compose.ui.test.SemanticsNodeInteraction {
+        val containers = composeRule.onAllNodes(hasScrollToNodeAction(), useUnmergedTree = true).fetchSemanticsNodes()
+        check(containers.size == 1) { "Test50 expects one semantic Secret list; containers=${containers.size}" }
+        return composeRule.onNode(hasScrollToNodeAction(), useUnmergedTree = true)
+    }
+
+    private fun ensureDeletionTag(tag: String, timeoutMillis: Long) {
+        composeRule.waitForTagGone("vault-sync-blocker", timeoutMillis)
+        try {
+            composeRule.waitUntil(timeoutMillis) {
+                try { deletionScrollContainer().performScrollToNode(hasTestTag(tag)); hasTagNow(tag) }
+                catch (missing: AssertionError) {
+                    if (missing.message?.startsWith("No node found that matches") == true) false else throw missing
+                }
+            }
+        } catch (failure: Throwable) {
+            marker("ANDROID_TEST50_LIST_DIAGNOSTIC containers=" + composeRule.onAllNodes(hasScrollToNodeAction(), useUnmergedTree = true).fetchSemanticsNodes().size + " targetComposed=" + hasTagNow(tag))
+            throw failure
+        }
+    }
+
+    private fun waitForDeletionRow(name: String, timeoutMillis: Long) {
+        composeRule.waitUntil(timeoutMillis) { deletionCachedMember()?.member?.vault?.secrets?.any { it.name == name } == true }
+        ensureDeletionTag("secret-row-$name", timeoutMillis)
+    }
+
+    private fun assertDeletionTagAbsent(tag: String) {
+        composeRule.waitForTagGone("vault-sync-blocker", 180_000)
+        val found = try { deletionScrollContainer().performScrollToNode(hasTestTag(tag)); true }
+        catch (missing: AssertionError) {
+            if (missing.message?.startsWith("No node found that matches") == true) false else throw missing
+        }
+        check(!found) { "Test50 stale Secret/request control remains in the complete semantic list" }
+    }
+
+    private fun deletionCachedMember() =
+        (GlobalContext.get().get<AppStateCacheProviderInterface>().appState.value?.getVaultFullInfo()
+            as? VaultFullInfo.Member)?.member
+
+    /** F3 OS/UI capability probe: no Vault action or explicit Core request. */
+    @Test
+    fun verifyTest50AccessibilityReady() {
+        prepareDeletionAccessibility()
+        var anchor = ""
+        composeRule.waitUntil(30_000) {
+            val tag = listOf("onboarding-skip", "signin-email-manual").firstOrNull { hasTagNow(it) }
+            if (tag != null) {
+                val node = composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode()
+                anchor = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }
+                    ?: node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString(" ") ?: ""
+            }
+            anchor.isNotBlank()
+        }
+        deletionAccessibilityRoot(copyBaseline = false, blockerRequired = false, anchorText = anchor, allowKnownCompatibility = true)
+        marker("ANDROID_TEST50_ACCESSIBILITY_READY")
+    }
+
+    private fun deletionAccessibilityNodes(root: android.view.accessibility.AccessibilityNodeInfo?): List<android.view.accessibility.AccessibilityNodeInfo> {
+        if (root == null) return emptyList()
+        val nodes = mutableListOf(root)
+        var index = 0
+        while (index < nodes.size) {
+            val node = nodes[index++]
+            for (child in 0 until node.childCount) node.getChild(child)?.let {
+                check(nodes.size < 512) { "Test50 accessibility traversal exceeded its complete-tree bound" }
+                nodes.add(it)
+            }
+        }
+        return nodes
+    }
+
+    private fun deletionAccessibilityMatches(nodes: List<android.view.accessibility.AccessibilityNodeInfo>, expected: String) =
+        nodes.filter { it.text?.toString() == expected || it.contentDescription?.toString() == expected || it.viewIdResourceName == expected }
+
+    /** Enable the test accessibility service before opening Show so its window events are observed. */
+    private fun prepareDeletionAccessibility(): android.app.UiAutomation {
+        val automation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation
+        val info = automation.serviceInfo
+        info.flags = info.flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
+            AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
+        automation.serviceInfo = info
+        return automation
+    }
+
+    private fun deletionAccessibilityRoot(copyBaseline: Boolean, blockerRequired: Boolean = true, anchorText: String = "", allowKnownCompatibility: Boolean = false): android.view.accessibility.AccessibilityNodeInfo {
+        val instrumentation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+        val automation = prepareDeletionAccessibility()
+        val strings = GlobalContext.get().get<StringProviderInterface>()
+        val copyLabel = strings.getString(AppString.copySecret)
+        val blockerLabels = listOf(strings.getString(AppString.vaultSynchronizing), strings.getString(AppString.vaultSyncFailed))
+        var root: android.view.accessibility.AccessibilityNodeInfo? = null
+        var compatibilityDismissed = false
+        try {
+            composeRule.waitUntil(15_000) {
+                val candidate = automation.rootInActiveWindow
+                val nodes = deletionAccessibilityNodes(candidate)
+                val ownVisible = nodes.filter { it.packageName?.toString() == instrumentation.targetContext.packageName && it.isVisibleToUser }
+                val ownWindow = automation.windows.any { it.id == candidate?.windowId && it.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION && it.isActive && it.isFocused } && ownVisible.isNotEmpty()
+                if (allowKnownCompatibility && !compatibilityDismissed && candidate?.packageName?.toString() == "android" &&
+                    automation.windows.any { it.id == candidate.windowId && it.type == android.view.accessibility.AccessibilityWindowInfo.TYPE_SYSTEM && it.isActive && it.isFocused }) {
+                    val knownBody = nodes.any { it.isVisibleToUser && it.text?.toString()?.startsWith("This app isn’t 16 KB compatible. ELF alignment check failed.") == true }
+                    val knownTitle = deletionAccessibilityMatches(nodes, "MetaSecret").any { it.isVisibleToUser }
+                    if (knownBody && knownTitle) {
+                        check(argument("role", "") == "accessibility-probe" && !hasTagNow("tab-secrets") && deletionCachedMember() == null) { "Compatibility handling is restricted to unauthenticated F3" }
+                        val ok = deletionAccessibilityMatches(nodes, "OK").filter { it.isVisibleToUser && it.isEnabled &&
+                            (it.isClickable || it.actionList.any { action -> action.id == android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK }) }
+                        check(ok.size == 1) { "Known compatibility dialog must expose exactly one actionable OK" }
+                        check(ok.single().performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)) { "Known compatibility dialog OK action failed" }
+                        compatibilityDismissed = true
+                        return@waitUntil false
+                    }
+                }
+                val meaningful = candidate != null && if (copyBaseline) {
+                    deletionAccessibilityMatches(nodes, copyLabel).any { it.isVisibleToUser && it.isEnabled }
+                } else if (!blockerRequired) {
+                    anchorText.isNotBlank() && deletionAccessibilityMatches(nodes, anchorText).any {
+                        it.packageName?.toString() == instrumentation.targetContext.packageName && it.isVisibleToUser
+                    }
+                } else {
+                    hasTagNow("vault-sync-blocker") && blockerLabels.any { deletionAccessibilityMatches(ownVisible, it).isNotEmpty() }
+                }
+                if (ownWindow && meaningful) root = candidate
+                ownWindow && meaningful
+            }
+        } catch (failure: Throwable) {
+            val windows = automation.windows
+            val diagnosticRoot = automation.rootInActiveWindow
+            val diagnosticNodes = deletionAccessibilityNodes(diagnosticRoot)
+            val ownNodes = diagnosticNodes.filter { it.packageName?.toString() == instrumentation.targetContext.packageName }
+            val rootPackage = diagnosticRoot?.packageName?.toString()
+            val rootOwner = when (rootPackage) {
+                instrumentation.targetContext.packageName -> "own"
+                "android" -> "android"
+                "com.android.systemui" -> "systemui"
+                "com.android.permissioncontroller", "com.google.android.permissioncontroller" -> "permissioncontroller"
+                "com.android.launcher3", "com.google.android.apps.nexuslauncher" -> "launcher"
+                "com.android.settings" -> "settings"
+                null -> "missing"
+                else -> "other"
+            }
+            fun knownLabel(expected: String) = deletionAccessibilityMatches(diagnosticNodes, expected).isNotEmpty()
+            val knownPermission = listOf("Allow", "Don't allow", "While using the app", "Only this time").any { knownLabel(it) }
+            val knownAnr = listOf("Wait", "Close app").all { knownLabel(it) }
+            val knownCrash = listOf("App info", "Close app").all { knownLabel(it) }
+            val keyguard = instrumentation.targetContext.getSystemService(Context.KEYGUARD_SERVICE) as android.app.KeyguardManager
+            val power = instrumentation.targetContext.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            fun classKind(node: android.view.accessibility.AccessibilityNodeInfo?) = when (node?.className?.toString()) {
+                "android.widget.FrameLayout" -> "frame"
+                "android.widget.LinearLayout" -> "linear"
+                "android.widget.TextView" -> "text"
+                "android.widget.Button" -> "button"
+                "android.widget.EditText" -> "edit"
+                "android.view.View" -> "view"
+                null -> "missing"
+                else -> "other"
+            }
+            val rootBounds = Rect()
+            diagnosticRoot?.getBoundsInScreen(rootBounds)
+            val metrics = instrumentation.targetContext.resources.displayMetrics
+            val fullScreen = rootBounds.left <= 0 && rootBounds.top <= 0 && rootBounds.right >= metrics.widthPixels && rootBounds.bottom >= metrics.heightPixels
+            val knownCompatibility = listOf("This app was built for an older version of Android", "Check for update", "OK").any { knownLabel(it) }
+            if (argument("role", "") == "accessibility-probe" &&
+                (hasTagNow("onboarding-skip") || hasTagNow("signin-email-manual")) &&
+                !hasTagNow("tab-secrets") && deletionCachedMember() == null) {
+                try {
+                    val screenshot = checkNotNull(automation.takeScreenshot()) { "F3 screenshot unavailable" }
+                    val file = java.io.File(checkNotNull(instrumentation.targetContext.getExternalFilesDir(null)), "test50-f3-window.png")
+                    java.io.FileOutputStream(file).use { check(screenshot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)) }
+                    screenshot.recycle()
+                    marker("ANDROID_TEST50_F3_FAILURE_SCREENSHOT_READY")
+                } catch (_: Throwable) { marker("ANDROID_TEST50_F3_FAILURE_SCREENSHOT_UNAVAILABLE") }
+            }
+            val info = automation.serviceInfo
+            marker("ANDROID_TEST50_A11Y_READINESS_FAILED rootOwner=$rootOwner rootClass=${classKind(diagnosticRoot)} descendantClasses=${diagnosticNodes.groupingBy { classKind(it) }.eachCount()} fullScreen=$fullScreen knownCompatibility=$knownCompatibility screenInteractive=${power.isInteractive} keyguardLocked=${keyguard.isKeyguardLocked} deviceLocked=${keyguard.isDeviceLocked} knownPermission=$knownPermission knownAnr=$knownAnr knownCrash=$knownCrash capabilities=${info.capabilities} flags=${info.flags} rootPresent=${diagnosticRoot != null} rootPackageMatch=${diagnosticRoot?.packageName?.toString() == instrumentation.targetContext.packageName} rootVisible=${diagnosticRoot?.isVisibleToUser == true} childCount=${diagnosticRoot?.childCount ?: 0} ownDescendants=${ownNodes.size} visibleOwnDescendants=${ownNodes.count { it.isVisibleToUser }} copyVisibleCount=${deletionAccessibilityMatches(diagnosticNodes, copyLabel).count { it.isVisibleToUser && it.isEnabled }} anchorNonblank=${anchorText.isNotBlank()} anchorManualText=${diagnosticNodes.count { anchorText.isNotBlank() && it.text?.toString() == anchorText }} anchorManualDescription=${diagnosticNodes.count { anchorText.isNotBlank() && it.contentDescription?.toString() == anchorText }} anchorManualResource=${diagnosticNodes.count { anchorText.isNotBlank() && it.viewIdResourceName == anchorText }} anchorProviderCount=${if (anchorText.isNotBlank()) diagnosticRoot?.findAccessibilityNodeInfosByText(anchorText)?.size ?: 0 else 0} windows=${windows.size} state=${windows.take(16).map { 'i' + it.id.toString() + 't' + it.type + 'a' + it.isActive + 'f' + it.isFocused + 'r' + (it.root != null) }.joinToString(",")}")
+            throw failure
+        }
+        return checkNotNull(root) { "Meaningful native accessibility window did not become ready" }
+    }
+
+    /** Capture from this actor's visible Show before a modal hides background accessibility. */
+    private fun captureDeletionCopyBounds(): Rect {
+        val automation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation
+        val foreground = deletionAccessibilityRoot(copyBaseline = true)
+        val copyLabel = GlobalContext.get().get<StringProviderInterface>().getString(AppString.copySecret)
+        val targetPackage = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.packageName
+        val labels = deletionAccessibilityMatches(deletionAccessibilityNodes(foreground), copyLabel).filter {
+            it.isVisibleToUser && it.isEnabled && it.packageName?.toString() == targetPackage
+        }
+        val depths = mutableListOf<Int>()
+        val actionable = labels.mapNotNull { label ->
+            val labelBounds = Rect().also { label.getBoundsInScreen(it) }
+            check(!labelBounds.isEmpty) { "Visible Copy label has empty screen bounds" }
+            var candidate: android.view.accessibility.AccessibilityNodeInfo? = label
+            var found: android.view.accessibility.AccessibilityNodeInfo? = null
+            for (depth in 0..8) {
+                val node = candidate ?: break
+                if (node.windowId != foreground.windowId || node.packageName?.toString() != targetPackage) break
+                val actionBounds = Rect().also { node.getBoundsInScreen(it) }
+                if (node.isVisibleToUser && node.isEnabled && !actionBounds.isEmpty && actionBounds.contains(labelBounds) &&
+                    (node.isClickable || node.actionList.any { action -> action.id == android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK })) {
+                    found = node
+                    depths.add(depth)
+                    break
+                }
+                candidate = node.parent
+            }
+            found
+        }.distinct()
+        if (actionable.size != 1) marker("ANDROID_TEST50_COPY_TARGET_FAILED labelCount=${labels.size} actionableCount=${actionable.size} actionDepths=${depths.joinToString(",")}")
+        check(actionable.size == 1) { "Visible Show must expose exactly one actionable Copy baseline; count=${actionable.size}" }
+        val bounds = Rect()
+        actionable.single().getBoundsInScreen(bounds)
+        check(!bounds.isEmpty) { "Visible Copy baseline has empty screen bounds" }
+        return Rect(bounds)
+    }
+
+    /** Physical touch uses the verified baseline selector bounds, never a hidden semantics action. */
+    private fun verifyDeletionOverlayBlocksCopy(secretValue: String, bounds: Rect) {
+        val instrumentation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+        val automation = instrumentation.uiAutomation
+        val copyLabel = GlobalContext.get().get<StringProviderInterface>().getString(AppString.copySecret)
+        val foreground = deletionAccessibilityRoot(copyBaseline = false)
+        val foregroundBounds = Rect()
+        foreground.getBoundsInScreen(foregroundBounds)
+        check(foregroundBounds.contains(bounds.centerX(), bounds.centerY())) { "Verified synchronization foreground does not cover the captured Copy point" }
+        val foregroundNodes = deletionAccessibilityNodes(foreground)
+        check(foregroundNodes.none { it.text?.toString()?.contains(secretValue) == true || it.contentDescription?.toString()?.contains(secretValue) == true }) {
+            "Synchronization foreground exposes plaintext (redacted)"
+        }
+        check(deletionAccessibilityMatches(foregroundNodes, copyLabel).isEmpty()) {
+            "Synchronization foreground exposes Copy control"
+        }
+        val clipboard = instrumentation.targetContext.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val sentinel = "test50-blocked-copy-sentinel"
+        instrumentation.runOnMainSync { clipboard.setPrimaryClip(ClipData.newPlainText("Test50", sentinel)) }
+        val now = SystemClock.uptimeMillis()
+        val down = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, bounds.exactCenterX(), bounds.exactCenterY(), 0)
+        val up = MotionEvent.obtain(now, now, MotionEvent.ACTION_UP, bounds.exactCenterX(), bounds.exactCenterY(), 0)
+        try {
+            check(automation.injectInputEvent(down, true) && automation.injectInputEvent(up, true)) {
+                "Could not inject Copy-blocking window touch"
+            }
+        } finally { down.recycle(); up.recycle() }
+        instrumentation.waitForIdleSync()
+        var unchanged = false
+        instrumentation.runOnMainSync { unchanged = clipboard.primaryClip?.getItemAt(0)?.text?.toString() == sentinel }
+        check(unchanged) { "Synchronization blocker allowed Copy (redacted)" }
+        check(hasTagNow("vault-sync-blocker")) { "Synchronization blocker disappeared during Copy probe" }
+    }
+
+    private fun verifyDeletionReveal(expected: String) {
+        composeRule.waitForTag("revealed-secret-value", 30_000)
+        val actual = composeRule.onNodeWithTag("revealed-secret-value", useUnmergedTree = true)
+            .fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.joinToString("") { it.text }
+        check(actual == expected) { "Test50 revealed value differs from expected (redacted)" }
+    }
+
+    @Test
+    fun createVaultForTest50() {
+        clickIfPresent("onboarding-skip", 10_000)
+        composeRule.waitForTag("signin-email-manual", 30_000)
+        composeRule.onNodeWithTag("signin-email-manual").performClick()
+        composeRule.waitForTag("email-input", 30_000)
+        composeRule.onNodeWithTag("email-input").performTextInput(argument("vaultName", ""))
+        composeRule.onNodeWithTag("manual-signin-continue").performClick()
+        composeRule.waitForTag("email-confirmation-continue", 30_000)
+        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.waitForTag("add-secret-fab", 180_000)
+        createDeletionSecret()
+        marker("ANDROID_TEST50_SECRET1_READY")
+        marker("ANDROID_TEST50_INITIATOR_SETUP_READY")
+    }
+
+    @Test
+    fun createSecretForTest50() {
+        composeRule.waitForTag("tab-secrets", 60_000)
+        composeRule.onNodeWithTag("tab-secrets").performClick()
+        createDeletionSecret()
+        marker("ANDROID_TEST50_SECRET_CREATED_${argument("cycle", "0")}_${argument("step", "create")}")
+    }
+
+    private fun createDeletionSecret() {
+        val name = argument("secretName", "")
+        val value = argument("secretValue", "")
+        require(name.isNotBlank() && value.isNotBlank()) { "Test50 requires Secret inputs" }
+        composeRule.waitForTag("add-secret-fab", 120_000)
+        composeRule.onNodeWithTag("add-secret-fab").performClick()
+        composeRule.waitForTag("secret-name-input", 30_000)
+        composeRule.onNodeWithTag("secret-name-input").performTextInput(name)
+        composeRule.onNodeWithTag("secret-value-input").performTextInput(value)
+        composeRule.onNodeWithTag("add-secret-submit").performClick()
+        composeRule.waitForTagGone("secret-name-input", 30_000)
+        waitForDeletionRow(name, 180_000)
+    }
+
+    @Test
+    fun approveJoinForTest50() {
+        composeRule.waitForTag("tab-devices", 60_000)
+        composeRule.onNodeWithTag("tab-devices").performClick()
+        composeRule.waitForTag("pending-device-row", 180_000)
+        composeRule.onNodeWithTag("pending-device-row").performClick()
+        composeRule.waitForTag("alert-join-request", 30_000)
+        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
+        composeRule.waitForTagGone("alert-join-request", 120_000)
+        composeRule.waitForTagGone("pending-device-row", 120_000)
+        marker("ANDROID_TEST50_JOIN_APPROVED_${argument("joinTarget", "ios").uppercase()}")
     }
 
     private fun hasTagNow(tag: String): Boolean = runCatching {

@@ -1,5 +1,7 @@
 package core.metaSecretCore
 
+import core.AppStateCacheProviderInterface
+import core.AppStateCacheProvider
 import core.errors.ErrorMapper
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,6 +10,7 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -226,6 +229,8 @@ class MetaSecretSocketHandlerInvalidationTest {
         core: FakeMetaSecretCore,
         socketClient: FakeSocketClient = FakeSocketClient(),
         uiDispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
+        socketDispatcher: CoroutineDispatcher = Dispatchers.IO,
+        stateCache: core.AppStateCacheProviderInterface = FakeAppStateCacheProvider(),
     ): Pair<MetaSecretSocketHandler, FakeSocketClient> {
         val stringProvider = FakeStringProvider()
         val handler = MetaSecretSocketHandler(
@@ -233,10 +238,11 @@ class MetaSecretSocketHandlerInvalidationTest {
             logger = FakeDebugLogger(),
             notificationCoordinator = FakeNotificationCoordinator(),
             errorMapper = ErrorMapper(stringProvider),
-            appStateCacheProvider = FakeAppStateCacheProvider(),
+            appStateCacheProvider = stateCache,
             stringProvider = stringProvider,
             socketClient = socketClient,
             uiDispatcher = uiDispatcher,
+            socketDispatcher = socketDispatcher,
         )
         return handler to socketClient
     }
@@ -556,21 +562,35 @@ class MetaSecretSocketHandlerInvalidationTest {
     }
 
     @Test
-    fun testStateInvalidatedEventsAreCoalescedIntoOneRefresh() = runBlocking {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun testStateInvalidatedEventsAreCoalescedIntoOneRefresh() = kotlinx.coroutines.test.runTest {
         val core = FakeMetaSecretCore().apply {
             appStateJson = JsonConfig.json.encodeToString(AppStateModel.serializer(), buildAppState())
         }
-        val (handler, socketClient) = newHandler(core)
-
-        handler.onAppForeground()
-        delay(100)
-        core.getAppStateCalls = 0
-        socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = "claim1"))
-        socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = "claim1"))
-        socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = "claim1"))
-        delay(400)
-
-        assertEquals(1, core.getAppStateCalls)
+        val cache = AppStateCacheProvider(FakeDebugLogger(), testutils.FakeKeyValueStorage(), Dispatchers.Unconfined)
+        val stateCache = object : AppStateCacheProviderInterface by cache {
+            var completion = kotlinx.coroutines.CompletableDeferred<Unit>()
+            override fun finishSynchronization(success: Boolean) {
+                cache.finishSynchronization(success)
+                completion.complete(Unit)
+            }
+        }
+        val (handler, socketClient) = newHandler(core,
+            socketDispatcher = StandardTestDispatcher(testScheduler), stateCache = stateCache)
+        try {
+            handler.onAppForeground()
+            stateCache.completion.await()
+            core.getAppStateCalls = 0
+            // A one-shot completion cannot lose a fast start/finish transition
+            // through StateFlow conflation. The controlled dispatcher consumes
+            // all three queued signals before starting their refresh.
+            stateCache.completion = kotlinx.coroutines.CompletableDeferred()
+            socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = "claim1"))
+            socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = "claim1"))
+            socketClient.emit(MetaSecretSocketEvent.StateInvalidated(claimId = "claim1"))
+            stateCache.completion.await()
+            assertEquals(1, core.getAppStateCalls)
+        } finally { handler.onAppBackground() }
     }
 
     @Test

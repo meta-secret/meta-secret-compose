@@ -24,6 +24,8 @@ interface MetaSecretAppManagerInterface {
     suspend fun approveRemoveMember(targetDeviceId: String): CommonResponseModel?
     suspend fun declineRemoveMember(targetDeviceId: String): CommonResponseModel?
     suspend fun getUserDataBy(deviceId: String): UserData?
+    suspend fun deleteSecret(secretId: String): CommonResponseModel?
+    suspend fun decideDeleteSecret(requestId: String, accepted: Boolean): CommonResponseModel?
     suspend fun splitSecret(secretModel: SecretModel): CommonResponseModel?
     suspend fun findClaim(secretId: String): ClaimModel?
     suspend fun recover(secretModel: SecretModel): CommonResponseModel?

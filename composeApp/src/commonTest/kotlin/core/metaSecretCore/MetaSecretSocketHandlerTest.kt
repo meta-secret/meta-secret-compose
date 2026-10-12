@@ -93,7 +93,8 @@ class MetaSecretSocketHandlerTest {
             notificationCoordinator = FakeNotificationCoordinator(),
             errorMapper = ErrorMapper(stringProvider),
             appStateCacheProvider = FakeAppStateCacheProvider(),
-            stringProvider = stringProvider
+            stringProvider = stringProvider,
+            uiDispatcher = kotlinx.coroutines.Dispatchers.Unconfined
         )
     }
 

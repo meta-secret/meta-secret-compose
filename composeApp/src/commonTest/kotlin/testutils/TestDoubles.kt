@@ -179,6 +179,8 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
     var findClaimJson: String = "{}"
     var getAppStateCalls: Int = 0
     var showRecoveredJson: String = "{\"success\":true,\"message\":{\"secret\":\"test-secret\"}}"
+    val deletionCalls = mutableListOf<String>()
+    val deletionDecisions = mutableListOf<String>()
     val showRecoveredCalls = mutableListOf<String>()
     val showLocalSecretCalls = mutableListOf<String>()
 
@@ -210,6 +212,8 @@ class FakeMetaSecretCore : MetaSecretCoreInterface {
         showRecoveredCalls += claimId
         return showRecoveredJson
     }
+    override fun deleteSecret(secretId: String): String { deletionCalls.add(secretId); return "{\"success\":true}" }
+    override fun decideDeleteSecret(requestJson: String): String { deletionDecisions.add(requestJson); return "{\"success\":true}" }
     override fun showLocalSecret(secretId: String): String {
         showLocalSecretCalls += secretId
         return showRecoveredJson

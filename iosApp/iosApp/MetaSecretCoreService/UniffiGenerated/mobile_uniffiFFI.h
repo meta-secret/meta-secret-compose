@@ -264,6 +264,11 @@ RustBuffer uniffi_metasecret_mobile_fn_func_clean_up_database(RustCallStatus *_N
 RustBuffer uniffi_metasecret_mobile_fn_func_database_file_name(RustBuffer master_key, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECIDE_DELETE_SECRET
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECIDE_DELETE_SECRET
+RustBuffer uniffi_metasecret_mobile_fn_func_decide_delete_secret(RustBuffer request_json, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECLINE_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECLINE_RECOVER
 RustBuffer uniffi_metasecret_mobile_fn_func_decline_recover(RustBuffer claim_id, RustCallStatus *_Nonnull out_status
@@ -272,6 +277,11 @@ RustBuffer uniffi_metasecret_mobile_fn_func_decline_recover(RustBuffer claim_id,
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECLINE_REMOVE_MEMBER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECLINE_REMOVE_MEMBER
 RustBuffer uniffi_metasecret_mobile_fn_func_decline_remove_member(RustBuffer target_device_id, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DELETE_SECRET
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DELETE_SECRET
+RustBuffer uniffi_metasecret_mobile_fn_func_delete_secret(RustBuffer secret_id, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DEVICE_UI_CATEGORY_DISCRIMINANT
@@ -662,6 +672,12 @@ uint16_t uniffi_metasecret_mobile_checksum_func_database_file_name(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECIDE_DELETE_SECRET
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECIDE_DELETE_SECRET
+uint16_t uniffi_metasecret_mobile_checksum_func_decide_delete_secret(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECLINE_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECLINE_RECOVER
 uint16_t uniffi_metasecret_mobile_checksum_func_decline_recover(void
@@ -671,6 +687,12 @@ uint16_t uniffi_metasecret_mobile_checksum_func_decline_recover(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECLINE_REMOVE_MEMBER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECLINE_REMOVE_MEMBER
 uint16_t uniffi_metasecret_mobile_checksum_func_decline_remove_member(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DELETE_SECRET
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DELETE_SECRET
+uint16_t uniffi_metasecret_mobile_checksum_func_delete_secret(void
     
 );
 #endif

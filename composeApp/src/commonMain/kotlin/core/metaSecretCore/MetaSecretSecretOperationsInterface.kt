@@ -1,6 +1,8 @@
 package core.metaSecretCore
 
 interface MetaSecretSecretOperationsInterface {
+    fun deleteSecret(secretId: String): String
+    fun decideDeleteSecret(requestJson: String): String
     fun splitSecret(secretName: String, secret: String): String
     fun findClaim(secretId: String): String
     fun recover(secretId: String): String

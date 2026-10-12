@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -71,8 +72,10 @@ class SecretsScreen : Screen {
         val mainScreenViewModel: MainScreenViewModel = koinInject()
         val imageProvider: ImageProviderInterface = koinInject()
         val secretsList by viewModel.secrets.collectAsState()
-        val previousCount = remember { mutableStateOf(secretsList.size) }
-        val isInitialized = remember { mutableStateOf(false) }
+        val synchronization by viewModel.synchronization.collectAsState()
+        val deletionStates by viewModel.deletionStates.collectAsState()
+        var deletionTarget by remember { mutableStateOf<core.Secret?>(null) }
+        var deletionIncoming by remember { mutableStateOf(false) }
         val devicesCount by viewModel.devicesCount.collectAsState()
         val primaryActions by viewModel.primaryActions.collectAsState()
         var isAddSecretDialogVisible by remember { mutableStateOf(false) }
@@ -87,31 +90,38 @@ class SecretsScreen : Screen {
         
         val secretAddSuccessText = appString(AppString.secretAdded)
         val secretAddFailedText = appString(AppString.secretAddFailed)
-        val secretRemovedText = appString(AppString.secretRemoved)
-
-        LaunchedEffect(Unit) {
-            delay(3000)
-            previousCount.value = secretsList.size
-            isInitialized.value = true
-        }
-
-        LaunchedEffect(secretsList.size) {
-            if (!isInitialized.value) {
-                previousCount.value = secretsList.size
-                return@LaunchedEffect
-            }
-            if (previousCount.value != secretsList.size) {
-                val isRemoval = previousCount.value > secretsList.size
-                if (isRemoval) {
-                    notificationCoordinator.showSuccess(secretRemovedText)
-                }
-                previousCount.value = secretsList.size
-            }
-        }
 
         if (isRedirected) {
             LocalTabNavigator.current.current = DevicesTab
             viewModel.handle(SecretsEvents.SetTabIndex(index = 1))
+        }
+
+        val blocked = synchronization.loading || synchronization.failed
+        LaunchedEffect(secretsList, blocked) {
+            if (selectedSecret != null && secretsList.none { it.secretId == selectedSecret?.secretId }) {
+                selectedSecret = null
+                isShowSecretDialogVisible = false
+                mainScreenViewModel.clearSecretIdToShow()
+            }
+        }
+        val deletionInstruction = deletionTarget?.let { target ->
+            if (deletionIncoming) {
+                models.apiModels.currentDeletionState(deletionStates, target.secretId)?.takeIf {
+                    it.clientStatus == models.apiModels.SecretDeletionStatus.NeedApprove
+                }
+            } else models.apiModels.deletionPolicyState(deletionStates, target.secretId)
+        }
+        if (deletionInstruction != null) {
+            deletionTarget?.let { target ->
+                ui.dialogs.removesecret.RemoveSecret(
+                    input = ui.dialogs.removesecret.SecretDeletionDialogInput(
+                        secret = target,
+                        text = androidx.compose.ui.text.AnnotatedString(target.secretName + " — " + appString(AppString.fromAllDevices)),
+                        deletionState = deletionInstruction, incoming = deletionIncoming,
+                    ),
+                    onDismiss = { deletionTarget = null },
+                )
+            }
         }
 
         CommonBackground(AppString.secretsHeader) {
@@ -124,29 +134,28 @@ class SecretsScreen : Screen {
                 itemsIndexed(secretsList.sortedBy { it.secretName }) { _, secret ->
                     val requestsForSecret = pendingRecoveryRequests.filter { it.secretId == secret.secretName }
                     SecretsContent(
-                        secret = secret,
-                        devicesCount = devicesCount,
-                        pendingRecoveryRequests = requestsForSecret.size,
-                        // In replicated (one/two-device) vaults recovery is
-                        // never needed, even if the asynchronous claim map
-                        // has not arrived yet.
-                        primaryAction = if (devicesCount <= 2) {
-                            SecretPrimaryAction.Show
-                        } else {
-                            primaryActions[secret.secretName]?.action ?: SecretPrimaryAction.Recover
-                        },
-                        pendingRequestSender = requestsForSecret.firstOrNull()?.senderType,
+                        state = ui.screenContent.SecretCardState(
+                            secret = secret,
+                            devicesCount = devicesCount,
+                            deletionState = models.apiModels.currentDeletionState(deletionStates, secret.secretId),
+                            pendingRecoveryRequests = requestsForSecret.size,
+                            primaryAction = if (devicesCount <= 2) SecretPrimaryAction.Show
+                                else primaryActions[secret.secretId]?.action ?: SecretPrimaryAction.Recover,
+                            pendingRequestSender = requestsForSecret.firstOrNull()?.senderType,
+                        ),
+                        onDelete = { deletionTarget = secret; deletionIncoming = false },
+                        onOpenDeletionRequest = { deletionTarget = secret; deletionIncoming = true },
                         onPrimaryAction = {
                             selectedSecret = secret
                             selectedPrimaryAction = if (devicesCount <= 2) {
                                 SecretPrimaryAction.Show
                             } else {
-                                primaryActions[secret.secretName]?.action ?: SecretPrimaryAction.Recover
+                                primaryActions[secret.secretId]?.action ?: SecretPrimaryAction.Recover
                             }
                             selectedAcceptedClaimId = if (devicesCount <= 2) {
                                 null
                             } else {
-                                primaryActions[secret.secretName]?.acceptedClaimId
+                                primaryActions[secret.secretId]?.acceptedClaimId
                             }
                             isShowSecretDialogVisible = true
                         },
@@ -193,7 +202,7 @@ class SecretsScreen : Screen {
             )
         }
 
-        if (isShowSecretDialogVisible && selectedSecret != null) {
+        if (isShowSecretDialogVisible && selectedSecret != null && secretsList.any { it.secretId == selectedSecret?.secretId }) {
             AnimatedVisibility(
                 visible = true,
                 enter = slideInVertically(
@@ -264,5 +273,7 @@ class SecretsScreen : Screen {
                 }
             }
         }
+        if (blocked) VaultSynchronizationOverlay(synchronization) { viewModel.retrySynchronization() }
+
     }
 }

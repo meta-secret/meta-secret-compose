@@ -96,6 +96,9 @@ fun ShowSecret(
     onClearSecretId: () -> Unit,
 ) {
     val viewModel: ShowSecretViewModel = koinViewModel()
+    androidx.compose.runtime.DisposableEffect(secret.secretId) {
+        onDispose { viewModel.handle(ShowSecretEvents.HideSecret) }
+    }
     val screenMetricsProvider: ScreenMetricsProviderInterface = koinInject()
     val imageProvider: ImageProviderInterface = koinInject()
     val clipboardManager = LocalClipboardManager.current
@@ -118,6 +121,7 @@ fun ShowSecret(
         viewModel.handle(
             ShowSecretEvents.ShowSecret(
                 secretName = secret.secretName,
+                secretId = secret.secretId,
                 forceRecovery = primaryAction == SecretPrimaryAction.Recover,
                 claimId = claimIdToShow,
             )

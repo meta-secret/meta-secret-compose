@@ -15,6 +15,19 @@ import testutils.FakeStringProvider
 import models.appInternalModels.SecretModel
 
 class MetaSecretAppManagerTest {
+    @Test
+    fun `delete and decline forward opaque id and exact UUID to Core`() = kotlinx.coroutines.test.runTest {
+        val core = FakeMetaSecretCore()
+        core.appStateJson = "{\"success\":true}"
+        val manager = createManager(core = core, keyChain = FakeKeyChain(mutableMapOf("master_key" to "mk")))
+        assertIs<InitResult.Success>(manager.initWithSavedKey())
+        assertEquals(true, manager.deleteSecret("opaque-current-id")?.success)
+        assertEquals(true, manager.decideDeleteSecret("exact-uuid", false)?.success)
+        assertEquals(listOf("opaque-current-id"), core.deletionCalls)
+        assertEquals(listOf("{\"requestId\":\"exact-uuid\",\"accepted\":false}"), core.deletionDecisions)
+        assertEquals(2, core.getAppStateCalls)
+    }
+
 
     @Test
     fun `showRecovered forwards the exact claim id`() = kotlinx.coroutines.test.runTest {

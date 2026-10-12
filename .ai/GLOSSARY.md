@@ -379,3 +379,8 @@ MetaSecretAppManager
 4. **In AI communication:** all AI responses must use these terms.
 5. **When unsure:** check this glossary before inventing new terminology.
 6. **When adding features:** run `only-glossary-update <feature-description>` to extend this file.
+
+## Secret deletion contract
+
+- `SecretDeletionState`: Core projection with opaque Secret ID, exact request UUID, `requiresApproval` and Pending/NeedApprove/Done/Declined status.
+- `VaultSynchronization`: client presentation state that covers stale cached Secrets during refresh and failed synchronization; it does not authorize deletion.

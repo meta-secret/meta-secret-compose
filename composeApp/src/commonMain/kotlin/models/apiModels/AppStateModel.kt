@@ -235,6 +235,7 @@ data class UserMemberFullInfo(
     val member: VaultMember,
     val ssClaims: SsClaims? = null,
     val vaultEvents: VaultEvents? = null,
+    val deletionStates: List<SecretDeletionState> = emptyList(),
 )
 
 @Serializable

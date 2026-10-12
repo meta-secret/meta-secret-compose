@@ -3,7 +3,10 @@ import Foundation
 
 @MainActor
 final class CaseEightIosBothOfflineUITest: XCTestCase {
-    private struct StepConfig: Decodable {
+    private struct StepConfig: Decodable, Sendable {
+        let coreServerUrl: String?
+        let requireCoreRouting: Bool?
+        let expectRequest: Bool?
         let role: String?
         let cycle: String?
         let step: String?
@@ -25,7 +28,15 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let joinTarget: String?
     }
 
-    private static let stepConfigPath = "/tmp/metasecret-e2e-ios-step.json"
+    private struct Test50GeometryFixture: Codable, Sendable {
+        let cycle: String
+        let sourceStep: String
+        let secretName: String
+        let window: [Double]
+        let privateRects: [String: [Double]]
+    }
+
+    nonisolated private static let stepConfigPath = "/tmp/metasecret-e2e-ios-step.json"
     private var app: XCUIApplication!
     private var test37DeviceTopologyDiagnosticsEmitted = false
 
@@ -33,8 +44,17 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["METASECRET_UI_TEST_MODE"] = "true"
-        let e2eServerUrl = (ProcessInfo.processInfo.environment["E2E_CORE_SERVER_URL"] ?? "")
+        let routing = Self.readStepConfig()
+        let e2eServerUrl = (routing.coreServerUrl
+            ?? ProcessInfo.processInfo.environment["E2E_CORE_SERVER_URL"] ?? "")
             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if routing.requireCoreRouting == true {
+            guard e2eServerUrl == "http://127.0.0.1:5202" else {
+                throw NSError(domain: "MetaSecretTest50Routing", code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Test50 requires its verified local iOS Core proxy before app launch"])
+            }
+            print("E2E: IOS_TEST50_CORE_ROUTING_VERIFIED")
+        }
         if !e2eServerUrl.isEmpty {
             app.launchEnvironment["METASECRET_E2E_SERVER_URL"] = e2eServerUrl
         }
@@ -2937,6 +2957,386 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     }
 
     /// Test #49 starts the final declined-removal role rotation on iOS.
+    // Test50 uses the same persisted actor configuration and coordinator gates as
+    // the passing recovery/removal tests. Never print plaintext in diagnostics.
+    func createVaultForTest50() throws {
+        let config = stepConfig()
+        guard let name = config.secretName, let value = config.secretValue else {
+            XCTFail("Test50 requires explicit Secret selectors"); return
+        }
+        skipOnboardingIfNeeded()
+        openManualEmailSignIn()
+        typeEmail(coordinatorVaultName(defaultValue: "test50@test.ru"))
+        tap("manual-signin-continue")
+        tap("email-confirmation-continue")
+        enterSimulatorPasscodeIfNeeded()
+        waitForVisible(identifier: "add-secret-fab", timeout: 180)
+        createSecretForTest24Ui(name: name, value: value, scrollForTest50: true)
+        print("E2E: IOS_TEST50_SECRET1_READY")
+        print("E2E: IOS_TEST50_INITIATOR_SETUP_READY")
+    }
+
+    func createSecretForTest50() throws {
+        let config = stepConfig()
+        guard let name = config.secretName, let value = config.secretValue else {
+            XCTFail("Test50 requires explicit Secret selectors"); return
+        }
+        enterSimulatorPasscodeIfNeeded()
+        tap("tab-secrets", timeout: 60)
+        createSecretForTest24Ui(name: name, value: value, scrollForTest50: true)
+        print("E2E: IOS_TEST50_SECRET_CREATED_\(config.cycle ?? "missing")_\(config.step ?? "missing")")
+    }
+
+    func approveJoinForTest50() throws {
+        let config = stepConfig()
+        enterSimulatorPasscodeIfNeeded()
+        tap("tab-devices", timeout: 60)
+        tap("pending-device-row", timeout: 180)
+        tap("alert-join-request-accept")
+        enterSimulatorPasscodeIfNeeded()
+        waitForHidden(identifier: "alert-join-request", timeout: 120)
+        waitForHidden(identifier: "pending-device-row", timeout: 120)
+        print("E2E: IOS_TEST50_JOIN_APPROVED_\((config.joinTarget ?? config.sender ?? "device").uppercased())")
+    }
+
+    func joinVaultForTest50() throws {
+        skipOnboardingIfNeeded()
+        openManualEmailSignIn()
+        typeEmail(coordinatorVaultName(defaultValue: "test50@test.ru"))
+        tap("manual-signin-continue")
+        tap("email-confirmation-continue")
+        enterSimulatorPasscodeIfNeeded()
+        tap("email-confirmation-join", timeout: 60)
+        enterSimulatorPasscodeIfNeeded()
+        print("E2E: IOS_JOIN_REQUEST_SENT")
+        // Request submission precedes membership acceptance. Pending Join has
+        // unrelated scroll containers; only search after Main/Secrets is ready.
+        waitForVisible(identifier: "tab-secrets", timeout: 180)
+        tap("tab-secrets")
+        waitForVisible(identifier: "add-secret-fab", timeout: 180)
+        waitForHidden(identifier: "vault-sync-blocker", timeout: 180)
+        for name in configuredSecretNames() {
+            test50RequireVisible("secret-row-\(name)")
+        }
+        print("E2E: IOS_JOIN_READY")
+        print("E2E: IOS_SECRETS_READY")
+    }
+
+    func handleSecretDeletionStep() throws {
+        let config = stepConfig()
+        guard let role = config.role, let cycle = config.cycle, let step = config.step,
+              let name = config.secretName, let value = config.secretValue,
+              let outcome = config.expectedOutcome,
+              ["accepted", "declined", "pending"].contains(outcome) else {
+            XCTFail("Test50 actor configuration is incomplete"); return
+        }
+        func marker(_ action: String) { print("E2E: IOS_DELETION_\(action)_\(cycle)_\(step)") }
+        func gate(_ phase: String) {
+            waitForApproval(platform: "ios-deletion-\(phase)", cycle: cycle, step: step)
+        }
+        let row = "secret-row-\(name)"
+        let request = "open-deletion-request-\(name)"
+        let pending = "deletion-pending-\(name)"
+        var baselineGeometry: [String: CGRect] = [:]
+        if role == "startup-gone" {
+            XCTAssertEqual(app.state, .runningForeground, "Cold app is not foreground")
+            XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 30), "Cold app window missing")
+            XCTAssertFalse(app.descendants(matching: .any)[row].exists, "Cached deleted row rendered before canonical sync")
+            XCTAssertFalse(app.descendants(matching: .any)["show-secret-dialog"].exists, "Cold startup retained Show")
+            XCTAssertFalse(app.descendants(matching: .any)["revealed-secret-value"].exists, "Cold startup retained plaintext")
+            let tab = app.descendants(matching: .any)["tab-secrets"]
+            let blocker = app.descendants(matching: .any)["vault-sync-blocker"]
+            XCTAssertTrue(!tab.exists || blocker.exists, "Cold startup exposed Main without canonical guard")
+            let fixtureData = try Data(contentsOf: URL(fileURLWithPath: Self.stepConfigPath + ".test50-geometry.json"))
+            let fixture = try JSONDecoder().decode(Test50GeometryFixture.self, from: fixtureData)
+            XCTAssertTrue(step.hasSuffix("-startup"), "Cold geometry fixture actor scope invalid")
+            let expectedSourceStep = String(step.dropLast("-startup".count)) + "-main"
+            XCTAssertTrue(fixture.cycle == cycle && fixture.sourceStep == expectedSourceStep && fixture.secretName == name,
+                "Cold geometry fixture scope mismatch")
+            XCTAssertTrue(fixture.window == test50RectNumbers(app.windows.firstMatch.frame), "Cold geometry window changed")
+            let storedGeometry = fixture.privateRects.mapValues { values -> CGRect in
+                guard values.count == 4 else { return .zero }
+                return CGRect(x: values[0], y: values[1], width: values[2], height: values[3])
+            }
+            for key in ["show", "value", "copy"] {
+                XCTAssertTrue(storedGeometry[key].map { !$0.isEmpty } ?? false, "Cold private-content geometry missing")
+            }
+            if blocker.exists {
+                test50AssertOverlayCoverage(blocker.frame, window: app.windows.firstMatch.frame, baseline: storedGeometry)
+            }
+            let coldCopy = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Copy secret", "Copy phrase")).firstMatch
+            XCTAssertFalse(coldCopy.exists, "Cold startup exposed private Copy control")
+            marker("READY")
+            gate("action")
+            gate("terminal")
+            enterSimulatorPasscodeIfNeeded()
+            waitForVisible(identifier: "tab-secrets", timeout: 180)
+            waitForHidden(identifier: "vault-sync-blocker", timeout: 120)
+            XCTAssertFalse(test50FindInList(row), "Deleted Secret row remains in list")
+            waitForHidden(identifier: "show-secret-dialog", timeout: 30)
+            waitForHidden(identifier: "revealed-secret-value", timeout: 30)
+            marker("TERMINAL")
+            return
+        }
+        enterSimulatorPasscodeIfNeeded()
+        tap("tab-secrets", timeout: 60)
+        waitForHidden(identifier: "vault-sync-blocker", timeout: 180)
+        test50RequireVisible(row)
+        waitForHidden(identifier: "secret-deletion-dialog", timeout: 30)
+
+        if role == "sync-observe" {
+            test50RequireVisible("secret-primary-action-\(name)")
+            waitForPrimaryAction(name, expected: "Show", timeout: 180)
+            test50Tap("secret-primary-action-\(name)")
+            enterSimulatorPasscodeIfNeeded()
+            assertTest50Plaintext(value)
+            if role == "sync-observe" {
+                let copy = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Copy secret", "Copy phrase")).firstMatch
+                XCTAssertTrue(copy.waitForExistence(timeout: 30), "Copy control unavailable before sync")
+                XCTAssertTrue(copy.isHittable, "Copy control blocked before sync")
+                baselineGeometry = test50SyncGeometry(phase: "baseline", baseline: [:])
+                let fixture = Test50GeometryFixture(cycle: cycle, sourceStep: step, secretName: name,
+                    window: test50RectNumbers(app.windows.firstMatch.frame),
+                    privateRects: baselineGeometry.filter { ["show", "value", "copy"].contains($0.key) }.mapValues(test50RectNumbers))
+                try JSONEncoder().encode(fixture).write(to: URL(fileURLWithPath: Self.stepConfigPath + ".test50-geometry.json"), options: .atomic)
+            }
+        }
+        marker("READY")
+        switch role {
+        case "requester", "cancel":
+            gate("action")
+            test50Tap("delete-secret-\(name)")
+            waitForVisible(identifier: "secret-deletion-dialog", timeout: 30)
+            if role == "cancel" {
+                // Cancel has no stable identifier in the production dialog.
+                let cancel = app.buttons["Cancel"]
+                XCTAssertTrue(cancel.waitForExistence(timeout: 30), "Deletion Cancel unavailable")
+                cancel.tap()
+                waitForHidden(identifier: "secret-deletion-dialog", timeout: 30)
+                test50RequireVisible(row)
+                XCTAssertFalse(app.descendants(matching: .any)[pending].exists)
+                XCTAssertFalse(app.descendants(matching: .any)[request].exists)
+                marker("CANCELLED")
+                return
+            }
+            tap("confirm-secret-deletion")
+            enterSimulatorPasscodeIfNeeded()
+            waitForHidden(identifier: "secret-deletion-dialog", timeout: 120)
+            if outcome == "pending" {
+                test50RequireVisible(pending)
+            } else if outcome == "accepted" {
+                // For N=3 the request is pending until the peer decision; for
+                // N=1/2 it is already gone. The coordinator supplies action.
+                let settled = NSPredicate { _, _ in
+                    !self.app.descendants(matching: .any)[row].exists ||
+                    self.app.descendants(matching: .any)[pending].exists
+                }
+                XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: settled, object: nil)], timeout: 120), .completed)
+            } else {
+                test50RequireVisible(pending)
+            }
+            marker("SUBMITTED")
+        case "approve", "decline", "observe":
+            if config.expectRequest != false {
+                test50RequireVisible(request)
+                marker("REQUEST_VISIBLE")
+            }
+            if role != "observe" {
+                gate("action")
+                test50Tap(request)
+                tap(role == "approve" ? "confirm-secret-deletion" : "decline-secret-deletion")
+                enterSimulatorPasscodeIfNeeded()
+                waitForHidden(identifier: "secret-deletion-dialog", timeout: 120)
+                XCTAssertFalse(test50FindInList(request), "Incoming deletion request remains in list")
+                marker("SUBMITTED")
+            }
+        case "show":
+            gate("action")
+            test50RequireVisible("secret-primary-action-\(name)")
+            waitForPrimaryAction(name, expected: "Show", timeout: 180)
+            test50Tap("secret-primary-action-\(name)")
+            enterSimulatorPasscodeIfNeeded()
+            assertTest50Plaintext(value)
+            closeShowSecretDialog()
+            marker("SHOW_VALID")
+            return
+        case "sync-observe":
+            gate("action")
+            XCUIDevice.shared.press(.home)
+            app.activate() // Hot foreground refresh retains the composed Show.
+            waitForVisible(identifier: "vault-sync-blocker", timeout: 120)
+            let blocker = app.descendants(matching: .any)["vault-sync-blocker"]
+            let window = app.windows.firstMatch.frame
+            _ = test50SyncGeometry(phase: "blocked", baseline: baselineGeometry)
+            test50AssertOverlayCoverage(blocker.frame, window: window, baseline: baselineGeometry)
+            let plaintext = app.descendants(matching: .any)["revealed-secret-value"]
+            XCTAssertFalse(plaintext.exists, "Plaintext remains accessible under sync overlay")
+            let copy = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Copy secret", "Copy phrase")).firstMatch
+            XCTAssertFalse(copy.exists, "Copy remains accessible under sync overlay")
+            marker("SYNC_BLOCKED")
+            gate("sync-release")
+            let retry = app.descendants(matching: .any)["retry-vault-sync"]
+            if retry.exists { retry.tap() }
+        default:
+            XCTFail("Unsupported Test50 role"); return
+        }
+        gate("terminal")
+        waitForHidden(identifier: "vault-sync-blocker", timeout: 120)
+        XCTAssertFalse(test50FindInList(request), "Incoming deletion request remains in list")
+        waitForHidden(identifier: "secret-deletion-dialog", timeout: 120)
+        if outcome == "accepted" {
+            XCTAssertFalse(test50FindInList(row), "Deleted Secret row remains in list")
+            waitForHidden(identifier: "show-secret-dialog", timeout: 30)
+            waitForHidden(identifier: "revealed-secret-value", timeout: 30)
+        } else {
+            test50RequireVisible(row)
+            if outcome == "declined" { XCTAssertFalse(test50FindInList(pending), "Pending deletion remains in list") }
+        }
+        marker("TERMINAL")
+    }
+
+    // Search only rendered accessibility metadata. Reaching a stable viewport
+    // at both ends establishes absence across the LazyColumn, not just offscreen.
+    private func test50RectNumbers(_ rect: CGRect) -> [Double] {
+        [Double(rect.minX), Double(rect.minY), Double(rect.width), Double(rect.height)]
+    }
+
+    private func test50AssertOverlayCoverage(_ blocker: CGRect, window: CGRect, baseline: [String: CGRect]) {
+        XCTAssertTrue(!blocker.isEmpty, "Opaque synchronization surface missing geometry")
+        XCTAssertTrue(blocker.minX <= window.minX && blocker.maxX >= window.maxX, "Sync overlay misses application width")
+        XCTAssertTrue(blocker.contains(CGPoint(x: window.midX, y: window.midY)), "Sync overlay misses application center")
+        for key in ["show", "value", "copy"] {
+            guard let frame = baseline[key], !frame.isEmpty else {
+                XCTFail("Measured private-content geometry missing"); return
+            }
+            XCTAssertTrue(blocker.contains(frame), "Sync overlay fails full measured private-content coverage")
+        }
+    }
+
+    // Geometry only: never emit accessibility labels or Secret payloads.
+    private func test50SyncGeometry(phase: String, baseline: [String: CGRect]) -> [String: CGRect] {
+        let blocker = app.descendants(matching: .any)["vault-sync-blocker"]
+        let show = app.descendants(matching: .any)["show-secret-dialog"]
+        let value = app.descendants(matching: .any)["revealed-secret-value"]
+        let copy = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Copy secret", "Copy phrase")).firstMatch
+        var geometry: [String: CGRect] = [:]
+        for (key, element) in [("blocker", blocker), ("show", show), ("value", value), ("copy", copy)] {
+            if element.exists { geometry[key] = element.frame }
+            print("E2E: IOS_TEST50_GEOMETRY phase=\(phase) node=\(key) exists=\(element.exists) hittable=\(element.exists && element.isHittable) frame=\(element.exists ? diagnosticFrame(element.frame) : "absent")")
+        }
+        for (index, window) in app.windows.allElementsBoundByIndex.enumerated() {
+            let frame = window.frame
+            let widthRatio = blocker.exists && frame.width > 0 ? blocker.frame.width / frame.width : 0
+            let heightRatio = blocker.exists && frame.height > 0 ? blocker.frame.height / frame.height : 0
+            print("E2E: IOS_TEST50_GEOMETRY phase=\(phase) window=\(index) frame=\(diagnosticFrame(frame)) widthRatio=\(widthRatio) heightRatio=\(heightRatio) covered=\(blocker.exists && blocker.frame.contains(frame))")
+        }
+        for key in ["show", "value", "copy"] {
+            if let frame = baseline[key] {
+                print("E2E: IOS_TEST50_GEOMETRY phase=\(phase) baseline=\(key) frame=\(diagnosticFrame(frame)) covered=\(blocker.exists && blocker.frame.contains(frame)) centerCovered=\(blocker.exists && blocker.frame.contains(CGPoint(x: frame.midX, y: frame.midY)))")
+            }
+            if let frame = geometry[key] {
+                print("E2E: IOS_TEST50_GEOMETRY phase=\(phase) active=\(key) covered=\(blocker.exists && blocker.frame.contains(frame))")
+            }
+        }
+        return geometry
+    }
+
+    private func test50FindInList(_ identifier: String) -> Bool {
+        waitForVisible(identifier: "tab-secrets", timeout: 180)
+        waitForVisible(identifier: "add-secret-fab", timeout: 180)
+        waitForHidden(identifier: "vault-sync-blocker", timeout: 180)
+        let target = app.descendants(matching: .any)[identifier]
+        let scrollContainers = app.scrollViews
+        XCTAssertEqual(scrollContainers.count, 1, "Test50 Secret scroll container is ambiguous")
+        let scroll = scrollContainers.firstMatch
+        if target.exists && target.isHittable { return true }
+        guard scroll.waitForExistence(timeout: 30) else {
+            XCTFail("Test50 semantic Secret scroll container missing")
+            return false
+        }
+        func viewport() -> [String]? {
+            let snapshotDeadline = Date().addingTimeInterval(15)
+            for attempt in 1...3 {
+                do {
+                    // One public immutable snapshot: canonical deletion cannot
+                    // shift live index-bound elements between property reads.
+                    let root = try scroll.snapshot()
+                    var stack: [any XCUIElementSnapshot] = [root]
+                    var visited = 0
+                    var keys: [String] = []
+                    while let node = stack.popLast() {
+                        visited += 1
+                        guard visited <= 8192 else {
+                            XCTFail("Test50 scoped snapshot exceeds metadata traversal budget")
+                            return nil
+                        }
+                        if node.identifier.hasPrefix("secret-row-"), node.frame.intersects(root.frame) {
+                            keys.append(Self.test50ViewportKey(id: node.identifier, row: node.frame, viewport: root.frame))
+                        }
+                        stack.append(contentsOf: node.children)
+                    }
+                    return keys.sorted()
+                } catch {
+                    // Error descriptions can contain accessibility content;
+                    // record only retry metadata, never the snapshot or payload.
+                    print("E2E: IOS_TEST50_VIEWPORT_SNAPSHOT_RETRY attempt=\(attempt)")
+                    if Date() >= snapshotDeadline { break }
+                }
+            }
+            XCTFail("Test50 immutable viewport snapshot unavailable within bounded retries")
+            return nil
+        }
+        var reachedBothEnds = true
+        // Seek below first: newly added sorted rows can be below the current
+        // viewport. Each direction owns its own budget, so bounce cannot starve
+        // the opposite sweep. Never infer absence unless BOTH ends are proven.
+        for upward in [true, false] {
+            let directionDeadline = Date().addingTimeInterval(60)
+            var unchanged = 0
+            for _ in 0..<64 {
+                if target.exists && target.isHittable { return true }
+                guard let before = viewport() else { return false }
+                if upward { scroll.swipeUp() } else { scroll.swipeDown() }
+                if target.exists && target.isHittable { return true }
+                guard let after = viewport() else { return false }
+                unchanged = !after.isEmpty && before == after ? unchanged + 1 : 0
+                if unchanged >= 3 { break }
+                if Date() >= directionDeadline { break }
+            }
+            reachedBothEnds = reachedBothEnds && unchanged >= 3
+        }
+        XCTAssertTrue(reachedBothEnds, "Test50 complete list absence cannot be established within bounded sweeps")
+        return false
+    }
+
+    nonisolated private static func test50ViewportKey(id: String, row: CGRect, viewport: CGRect) -> String {
+        // Discrete clipping states retain partial-row movement evidence without
+        // letting elastic bounce pixel jitter prevent an otherwise stable end.
+        let clipsTop = row.minY < viewport.minY - 8
+        let clipsBottom = row.maxY > viewport.maxY + 8
+        return "\(id):\(clipsTop):\(clipsBottom)"
+    }
+
+    private func test50RequireVisible(_ identifier: String) {
+        let deadline = Date().addingTimeInterval(180)
+        repeat {
+            if test50FindInList(identifier) { return }
+        } while Date() < deadline
+        XCTFail("Test50 target unavailable after bounded complete list searches")
+    }
+
+    private func test50Tap(_ identifier: String) {
+        test50RequireVisible(identifier)
+        tap(identifier)
+    }
+
+    private func assertTest50Plaintext(_ expected: String) {
+        let plaintext = app.descendants(matching: .any)["revealed-secret-value"]
+        XCTAssertTrue(plaintext.waitForExistence(timeout: 30), "Plaintext node missing")
+        // Compare as a Boolean: XCTest must never include values in a diff.
+        XCTAssertTrue(plaintext.label == expected, "Plaintext equality check failed")
+    }
+
     func createVaultForTest49() throws {
         let config = stepConfig()
         let vaultName = coordinatorVaultName(defaultValue: "test49@test.ru")
@@ -4067,7 +4467,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         XCTFail("iOS sender did not reveal accepted secret in cycle \(cycle), step \(step)")
     }
 
-    private func createSecretForTest24Ui(name: String, value: String) {
+    private func createSecretForTest24Ui(name: String, value: String, scrollForTest50: Bool = false) {
         tap("add-secret-fab", timeout: 180)
         let nameField = app.descendants(matching: .any)["secret-name-input"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 30), "secret-name-input was not visible")
@@ -4083,7 +4483,13 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         // the persisted Secret row rather than on an animation duration.
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.47)).tap()
         enterSimulatorPasscodeIfNeeded()
-        waitForVisible(identifier: "secret-row-\(name)", timeout: 180)
+        if scrollForTest50 {
+            waitForHidden(identifier: "secret-name-input", timeout: 30)
+            waitForHidden(identifier: "vault-sync-blocker", timeout: 180)
+            test50RequireVisible("secret-row-\(name)")
+        } else {
+            waitForVisible(identifier: "secret-row-\(name)", timeout: 180)
+        }
         waitForHidden(identifier: "secret-name-input", timeout: 30)
     }
 
@@ -4708,12 +5114,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         "{x:\(frame.origin.x),y:\(frame.origin.y),w:\(frame.size.width),h:\(frame.size.height)}"
     }
 
-    private func stepConfig() -> StepConfig {
+    private func stepConfig() -> StepConfig { Self.readStepConfig() }
+
+    nonisolated private static func readStepConfig() -> StepConfig {
         guard
             let data = FileManager.default.contents(atPath: Self.stepConfigPath),
             let config = try? JSONDecoder().decode(StepConfig.self, from: data)
         else {
-            return StepConfig(role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, secretValue: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil, verifyReceiverAlert: nil, receiverRequestAlreadySent: nil, networkRole: nil, networkCycles: nil, expectedWebDeviceName: nil, expectedAndroidDeviceName: nil, expectedIosDeviceName: nil, joinTarget: nil)
+            return StepConfig(coreServerUrl: nil, requireCoreRouting: nil, expectRequest: nil, role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, secretValue: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil, verifyReceiverAlert: nil, receiverRequestAlreadySent: nil, networkRole: nil, networkCycles: nil, expectedWebDeviceName: nil, expectedAndroidDeviceName: nil, expectedIosDeviceName: nil, joinTarget: nil)
         }
         return config
     }

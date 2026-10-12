@@ -382,6 +382,10 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
         }
     }
 
+    override fun deleteSecret(secretId: String): String = MetaSecretNative.deleteSecret(secretId)
+
+    override fun decideDeleteSecret(requestJson: String): String = MetaSecretNative.decideDeleteSecret(requestJson)
+
     override fun showLocalSecret(secretId: String): String {
         try {
             e2eLog("ANDROID_NATIVE_SHOW_LOCAL_SECRET_START secret=$secretId")

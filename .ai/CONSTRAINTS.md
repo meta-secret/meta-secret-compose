@@ -138,7 +138,7 @@ such as biometry or navigation. A client may choose presentation (for example
 | 33 | Biometry change ≠ invalidate DMK | Biometry & Auth |
 | 34 | OS handles biometry verification | Biometry & Auth |
 | 35 | JSON over UniFFI | Core & FFI |
-| 36 | Restore Secret requires approval (biometric) from other device | Operations |
+| 36 | Recovery needing another Key Share requires that device’s biometric approval; one/two-device full replicas use local confirmation | Operations |
 | 37 | All state-changing operations (JOIN, RESTORE SECRET, DELETE) require biometric approval | Operations |
 | 38 | Recovery uses first-response-wins: the first receiver decision processed by the server is authoritative | Operations |
 | 39 | Recovery receiver decisions are terminal and monotonic; stale snapshots and late opposite decisions cannot reopen or revoke them | Operations |
@@ -222,3 +222,7 @@ such as biometry or navigation. A client may choose presentation (for example
 ---
 
 Last updated: 2026-09-21
+
+## Secret deletion
+
+Core supplies deletion policy/status/identity and owns first-response-wins. One/two devices require local confirmation only; three devices require another current member's decision. Clients submit exact UUIDs, use OS authentication for destructive request/Approve, and synchronize before displaying cached Secrets. Offline devices remove tombstoned data after reconnect. See `docs/secret-deletion.md`.
