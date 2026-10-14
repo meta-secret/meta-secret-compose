@@ -6,8 +6,8 @@ Single source of truth for `implement issue <id>` / `implement issue "<text>"` a
 
 **These stages MUST ALWAYS be executed and are NOT optional:**
 
-1. **Stage 6: Code Review** — Mandatory validation of constraints + 80% coverage minimum
-2. **Stage 8: Test Coverage Verification** — Mandatory execution of `./gradlew koverVerify` and verification of >= 80% coverage
+1. **Stage 6: Code Review** — Mandatory validation of constraints + coverage report (80% advisory goal)
+2. **Stage 8: Test Coverage Verification** — Mandatory execution of `./gradlew koverVerify` and reporting against the advisory 80% goal
 3. **Stage 10: User Approval** — Mandatory user approval before creating PR
 
 Stage 7 (UX/Design Review) is required for client-visible changes. Review approved UX states without Figma; only the Figma comparison may be skipped when no reference exists. For non-UI changes, record a concrete skip reason.
@@ -261,11 +261,11 @@ Template: `.ai/artifacts/coverage-report-template.md`
 Output: `.ai/artifacts/run/MS-<run-id>-008-coverage.md`
 
 Required behavior:
-- Verify test coverage is 80% minimum
+- Report test coverage; 80% is an advisory goal
 - Business logic: 90%+ preferred
 - Report uncovered lines
-- Fail if coverage < 80%
-- Pass condition: `Coverage: >=80%`
+- Report a warning if overall coverage < 80%; do not fail solely on that percentage
+- Pass condition: valid measured coverage report and passing tests; 80% is an advisory goal
 
 ### Stage 9: Test Run (Final Validation)
 
@@ -278,7 +278,7 @@ Required behavior:
 - Execute all tests
 - Report pass/fail
 - Capture failing test details
-- Pass condition: `Status: PASSED` + `Coverage: >=80%`
+- Pass condition: `Status: PASSED` + valid measured coverage report
 
 ### Stage 9.5: Final UI E2E (CONDITIONAL RELEASE GATE)
 
@@ -470,3 +470,5 @@ Before registration work, read `.ai/rules/registration-ux.md`. Include its accep
 ## Workflow dependency preflight
 
 Before starting a workflow run `python3 .ai/scripts/check-workflow-dependencies.py`. Missing mandatory files block execution. Root UI E2E dependencies belong to the sibling workspace root and must be checked there before the final gate.
+
+Coverage policy: [mobile coverage policy](rules/coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

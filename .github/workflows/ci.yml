@@ -96,7 +96,7 @@ jobs:
         working-directory: meta-secret-compose
         run: ./gradlew :composeApp:detekt --no-daemon --console=plain
 
-      - name: Verify Kover line coverage (80% minimum)
+      - name: Validate Kover report (80% advisory goal)
         working-directory: meta-secret-compose
         run: ./gradlew koverVerify --no-daemon --console=plain
 

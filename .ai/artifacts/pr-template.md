@@ -37,7 +37,7 @@ Users need to add new devices to their Vault securely.
 - ✅ Build passing
 - ✅ All tests passing
 - ✅ Code review approved
-- ✅ Coverage >= 80%
+- ✅ valid coverage report; 80% advisory goal
 - ✅ Constraints validated
 
 ---
@@ -51,3 +51,5 @@ Assigned: @reviewer1, @reviewer2
 ## Merge Ready
 
 Status: Ready for merge after approval
+
+Coverage policy: [mobile coverage policy](../rules/coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

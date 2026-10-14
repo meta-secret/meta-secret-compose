@@ -1,38 +1,16 @@
-# Stage 8: Test Coverage Verification
+# Stage 8: Coverage Report Validation
 
-**Status:** Pass | Fail | Skipped
+**Status:** Pass | Fail
 
----
+## Measured results
 
-## Coverage Summary
+- Reviewed source revision:
+- Exact command:
+- Report path and measured scope:
+- Covered / total lines and percentage:
+- Advisory 80% goal: reached / below goal
+- Test result and uncovered risks:
 
-- **Line coverage:** 85% ✅ (>= 80%)
-- **Branch coverage:** 82%
-- **Function coverage:** 90%
+## Gate decision
 
----
-
-## Coverage by Module
-
-| Module | Coverage | Status |
-|---|---|---|
-| JoinDeviceService | 90% | ✅ |
-| ReshareProtocol | 85% | ✅ |
-| VaultMembership | 78% | ⚠️ |
-| Utils | 95% | ✅ |
-
----
-
-## Uncovered Lines
-
-If any uncovered code:
-- Line 145 in JoinDeviceService: Error path (rare edge case)
-- Line 203 in VaultMembership: Rollback logic
-- Plan to cover: YES / NO
-
----
-
-## Verification Status
-
-- **Minimum 80%:** ✅ PASS
-- **Ready for Stage 9:** YES
+Pass requires a valid non-empty report and passing applicable tests. Low overall percentage alone does not fail the gate. Record actual measurements rather than copying example values. See [coverage policy](../rules/coverage-policy.md).

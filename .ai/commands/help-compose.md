@@ -104,3 +104,5 @@ See `.ai/ORCHESTRATOR.md` for command routing.
 See `.ai/INDEX.md` for complete file structure.  
 See `.ai/rules/maestro-test-writing.md` for Maestro YAML syntax.  
 See `.ai/rules/maestro-setup-guide.md` for iOS/Android device commands.
+
+Coverage policy: [mobile coverage policy](../rules/coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

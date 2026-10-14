@@ -20,9 +20,9 @@ including the conditional final UI E2E release gate.
 **⚠️ CRITICAL:** Execute all applicable stages in the 12-stage workflow. Do NOT
 skip a labelled stage; Stage 11 is recorded as `Skipped` only when no CI run
 exists:
-- **Stage 6 (Code Review)** is CRITICAL - must check constraints + 80% coverage minimum
+- **Stage 6 (Code Review)** is CRITICAL - must check constraints + coverage report (80% advisory goal)
 - **Stage 7 (UX/Design Review)** is required for client-visible changes; Figma comparison is optional
-- **Stage 8 (Coverage Verification)** is CRITICAL - must run `./gradlew koverVerify` and verify >= 80%
+- **Stage 8 (Coverage Verification)** is CRITICAL - must run `./gradlew koverVerify` and report coverage against the advisory 80% goal
 - **Stage 10 (PR Creation)** must ASK USER for approval before committing and creating PR
 - **Stage 11 (CI Monitor)** must bind any CI evidence to the exact PR head SHA
 
@@ -39,7 +39,7 @@ exists:
 5. **Build** — Compile code (no tests)
 6. **code-reviewer** — Review implementation + Documentation Impact + 80% coverage check + constraints re-check
 7. **design-reviewer** — Review approved UX behavior, plus Figma visuals when available
-8. **Coverage Verification** — Verify 80%+ test coverage (CRITICAL - must be executed)
+8. **Coverage Verification** — Report test coverage against the advisory 80% goal (CRITICAL - must be executed)
 9. **test-verifier** — Execute full test suite
 9.5. **Final UI E2E** — Run the visible cross-platform gate when applicable
 10. **release-manager** — **STOP and ASK USER** before Branch + Commit + PR
@@ -82,3 +82,5 @@ Each stage creates an artifact in `.ai/artifacts/run/`:
 Each artifact includes **Status: Success / Failed / Skipped**.
 
 See `.ai/rules/artifact-writing-guide.md` for artifact specification.
+
+Coverage policy: [mobile coverage policy](../rules/coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

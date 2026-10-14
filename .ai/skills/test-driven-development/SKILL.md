@@ -1,3 +1,8 @@
+---
+name: test-driven-development
+description: Write behavior-driven failing tests and implement client changes through red-green-refactor, following the mobile coverage policy.
+---
+
 # Skill: Test-Driven Development (TDD)
 
 ## Overview
@@ -87,7 +92,7 @@ Process:
 Output:
   - All tests passing
   - Code refactored and clean
-  - 80%+ coverage report
+  - coverage reporting (80% advisory goal) report
   - Ready for next stage
 ```
 
@@ -289,6 +294,8 @@ class PasswordValidator {
 - ✅ Refactoring is safe
 - ✅ Bugs caught early
 - ✅ Design improves iteratively
-- ✅ 80%+ coverage guaranteed
+- ✅ coverage reporting (80% advisory goal) guaranteed
 
 Last updated: 2026-06-05
+
+Coverage policy: [mobile coverage policy](../../rules/coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

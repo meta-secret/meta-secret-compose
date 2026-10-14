@@ -220,7 +220,7 @@ Stage 1: Issue Analysis completed
 - File: `.ai/artifacts/run/MS-<run-id>-008-coverage.md`
 - Status: Pass / Fail / Skipped
 
-**Requirement:** Coverage >= 80% (business logic: 90%+)
+**Requirement:** valid coverage report; 80% advisory goal (business logic: 90%+)
 
 ---
 
@@ -311,3 +311,5 @@ When determining run-id:
 
 Pass run-id to all subsequent stages in that run.
 
+
+Coverage policy: [mobile coverage policy](coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

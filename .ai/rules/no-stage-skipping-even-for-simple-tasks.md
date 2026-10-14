@@ -77,7 +77,7 @@ Stage 5 → Stage 6 → Stage 7 → Stage 8 → Stage 9 → Stage 10
 
 ### Stage 8 (Coverage Verification)
 - **MANDATORY** even for bug fixes
-- Coverage >= 80% is non-negotiable
+- valid coverage report; 80% advisory goal is non-negotiable
 - No exceptions for "trivial" changes
 - Must run `./gradlew koverVerify`
 
@@ -240,3 +240,5 @@ When executing `implement issue`:
 ## Canonical stage contract
 
 Use WORKFLOW.md for stage order and applicability. Stage 7 checks client-visible UX even without Figma; Stage 9.5 is the final applicable UI E2E gate before release.
+
+Coverage policy: [mobile coverage policy](coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

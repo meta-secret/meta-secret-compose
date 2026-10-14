@@ -78,3 +78,5 @@ If violation:
 
 - **Status:** PASSED ✅ / FAILED ❌
 - **Ready for Stage 8:** YES / NO
+
+Coverage policy: [mobile coverage policy](../rules/coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

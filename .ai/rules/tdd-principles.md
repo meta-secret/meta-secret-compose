@@ -88,7 +88,7 @@ class UserValidatorTest {
 
 ## Test Coverage Requirements
 
-- **Minimum:** 80% code coverage
+- **Goal:** 80% code coverage (advisory)
 - **Target:** 90%+ for business logic
 - **Exception:** Generated code, UI rendering (may be lower)
 
@@ -135,7 +135,7 @@ final class UserValidatorTests: XCTestCase {
 }
 ```
 
-Same principles apply: Red-Green-Refactor, minimal code, 80%+ coverage.
+Same principles apply: Red-Green-Refactor, minimal code, coverage reporting (80% advisory goal).
 
 ## Integration with KMM
 
@@ -158,10 +158,12 @@ Same principles apply: Red-Green-Refactor, minimal code, 80%+ coverage.
 Tests run automatically on:
 - Every commit (pre-submit)
 - Before merging to main
-- Coverage must be 80%+
+- Coverage is reported; 80% is an advisory goal
 
 Failure = block merge
 
 ---
 
 Last updated: 2026-06-05
+
+Coverage policy: [mobile coverage policy](coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

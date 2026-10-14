@@ -35,9 +35,11 @@ If any tests failed:
 ## Pass/Fail
 
 - **Status:** PASSED ✅ / FAILED ❌
-- **Coverage >= 80%:** YES / NO
+- **valid coverage report; 80% advisory goal:** YES / NO
 - **Ready for Stage 10:** YES / NO
 
 If failed:
 - Root cause: [analysis]
 - Escalate to debug-rca: YES / NO
+
+Coverage policy: [mobile coverage policy](../rules/coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

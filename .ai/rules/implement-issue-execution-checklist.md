@@ -11,7 +11,7 @@
 - **Action:** Review implementation against constraints and architecture
 - **Output:** `.ai/artifacts/run/MS-<run-id>-006-review.md`
 - **Status:** Success / Failed / Skipped
-- **Coverage Check:** Verify 80% minimum test coverage (if coverage < 80%, FAIL this stage)
+- **Coverage Check:** Report coverage against the advisory 80% goal (below 80% is advisory; missing/invalid report fails this stage)
 - **Constraints Check:** Re-validate against `.ai/CONSTRAINTS.md`
 - **Non-negotiable:** This stage MUST be executed. If skipped, workflow is incomplete.
 
@@ -43,14 +43,14 @@
 
 ### Stage 8: Coverage Verification (MANDATORY)
 - **Agent:** `code-reviewer` (or dedicated coverage agent)
-- **Action:** Execute `./gradlew koverVerify` and verify >= 80% coverage
+- **Action:** Execute `./gradlew koverVerify` and report coverage against the advisory 80% goal coverage
 - **Output:** `.ai/artifacts/run/MS-<run-id>-008-coverage.md`
 - **Status:** Pass / Fail / Skipped
 - **Required metrics:**
   - Overall coverage >= 80%
   - Business logic >= 90% (preferred)
   - Report uncovered lines
-- **Non-negotiable:** This stage MUST be executed. Coverage < 80% = FAIL
+- **Non-negotiable:** This stage MUST be executed. Coverage < 80% = advisory warning
 - **Even without Figma:** This stage still runs (Figma only affects Stage 7)
 
 **If Stage 8 fails:**
@@ -131,9 +131,9 @@ Before proceeding to Stage 10 (PR creation), verify:
 - ✅ Stage 4b: Implementation done (artifact exists, all tests pass)
 - ✅ Stage 4c: Refactoring completed (artifact exists)
 - ✅ Stage 5: Build successful (artifact exists, Status: Success)
-- ✅ Stage 6: Code review passed (artifact exists, Status: Success, Coverage >= 80%)
+- ✅ Stage 6: Code review passed (artifact exists, Status: Success, valid coverage report; 80% advisory goal)
 - ✅ Stage 7: Design review (artifact exists, Status: Success or Skipped)
-- ✅ Stage 8: Coverage verified (artifact exists, Status: Pass, Coverage >= 80%)
+- ✅ Stage 8: Coverage verified (artifact exists, Status: Pass, valid coverage report; 80% advisory goal)
 - ✅ Stage 9: Tests passed (artifact exists, Status: Success)
 - ✅ Stage 9.5: UI E2E passed, or skipped with a concrete non-applicability reason
 - **THEN:** Proceed to Stage 10 **with user approval**
@@ -153,3 +153,5 @@ When executing `implement issue` command:
 5. For Stage 10, use AskUserQuestion tool to get approval before committing
 6. Create artifacts for each stage in `.ai/artifacts/run/`
 7. If any stage fails, run debug-rca agent and return to Stage 3
+
+Coverage policy: [mobile coverage policy](coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

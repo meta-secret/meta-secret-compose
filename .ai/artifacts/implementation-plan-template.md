@@ -84,3 +84,5 @@ Proceed to constraint check: YES / NO
 |---|---|---|---|
 
 For registration include every applicable row from `.ai/rules/registration-ux.md`. Record unresolved Core contract questions before implementation. OS authentication needs real-device evidence; emulator auto-success is not evidence of a real prompt.
+
+Coverage policy: [mobile coverage policy](../rules/coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

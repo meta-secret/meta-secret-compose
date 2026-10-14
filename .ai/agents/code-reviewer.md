@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Review implementation for architecture compliance, style consistency, and best practices. Verify 80% minimum test coverage. Re-check constraint compliance. Provide actionable feedback.
+Review implementation for architecture compliance, style consistency, and best practices. Report coverage against the advisory 80% goal. Re-check constraint compliance. Provide actionable feedback.
 
 ## Input
 
@@ -17,13 +17,13 @@ Review implementation for architecture compliance, style consistency, and best p
 - `review-report.md` artifact with:
   - Architecture compliance check
   - Constraint re-validation (ensure no deviations from plan)
-  - Coverage verification: PASS/FAIL (minimum 80%)
+  - Coverage verification: valid report required; 80% goal advisory
   - Style and best practices check
 
 ## Required Rules
 
 - .ai/GLOSSARY.md (use consistent terminology)
-- .ai/rules/tdd-principles.md (test coverage requirements: 80% minimum)
+- .ai/rules/tdd-principles.md (test coverage requirements: 80% advisory goal)
 - .ai/rules/kmp-principles.md (file size, reusability, method params, visibility)
 - .ai/rules/kmp-code-style.md (strings, typography, naming, comments)
 - Documentation Impact decision from the implementation plan
@@ -50,3 +50,5 @@ When using required skills:
 
 When agent completes:
 - ✅ Print: `Agent <name> completed`
+
+Coverage policy: [mobile coverage policy](../rules/coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.

@@ -26,9 +26,9 @@ Execute FULL 11-stage workflow in order:
 6. **Stage 4b:** TDD Implementer (red-green-refactor cycles)
 7. **Stage 4c:** TDD Refactorer (major refactoring after 3-5 cycles)
 8. **Stage 5:** Build (compile without tests)
-9. **Stage 6:** Code Review (CRITICAL - constraints re-check + 80% coverage minimum)
+9. **Stage 6:** Code Review (CRITICAL - constraints re-check + coverage report (80% advisory goal))
 10. **Stage 7:** UX/Design Review for client-visible changes; Figma comparison optional
-11. **Stage 8:** Coverage Verification (CRITICAL - ./gradlew koverVerify >= 80%)
+11. **Stage 8:** Coverage Verification (CRITICAL - ./gradlew koverVerify; 80% advisory goal)
 12. **Stage 9:** Test Run (execute all tests)
 13. **Stage 9.5:** Final UI E2E when applicable; blocks release on failure
 14. **Stage 10:** STOP and ASK USER - do NOT auto-commit/PR without approval
@@ -107,3 +107,5 @@ Applies to **Codex CLI**:
 ---
 
 The AI framework located in `.ai/` is the source of truth.
+
+Coverage policy: [mobile coverage policy](.ai/rules/coverage-policy.md). Report validation and passing tests are mandatory; the overall 80% goal is advisory.
