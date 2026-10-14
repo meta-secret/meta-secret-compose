@@ -10,7 +10,7 @@ You protect the architecture of this Kotlin Multiplatform + Swift project.
 ## Job
 
 1. Determine the correct **layer** for a change.
-2. Preserve boundaries in [ARCHITECTURE.md](../../../ARCHITECTURE.md).
+2. Preserve boundaries in [Constraints](../../CONSTRAINTS.md).
 3. Enforce SOLID — no mixing of UI, domain, persistence, or FFI concerns.
 4. Prevent architectural degradation; prefer minimal fixes.
 
@@ -62,9 +62,16 @@ If architectural placement is unclear, **stop and ask** before generating code.
 
 ## New feature entry point
 
-Use **`feature-planner`** subagent via [WORKFLOW.md](../../../WORKFLOW.md) — not the legacy `/feature-brainstorm` skill.
+Use **`feature-planner`** subagent via [WORKFLOW.md](../../WORKFLOW.md) — not the legacy `/feature-brainstorm` skill.
 
 ## Read first
 
-- [ARCHITECTURE.md](../../../ARCHITECTURE.md)
-- [SECURITY.md](../../../SECURITY.md) — before any FFI or network change
+- [Constraints](../../CONSTRAINTS.md)
+- [Core security](../../../../meta-secret-core/SECURITY.md) — before any FFI or network change
+
+## Registration layer boundary
+
+Core owns membership, request identity, authorization and synchronization decisions.
+Client application orchestration owns persistence, lifecycle, OS authentication and calls through ports.
+Presentation maps Core results to one coherent screen state and available intents.
+Views render that state; focus and animation may remain local. Direct native FFI calls are forbidden in Views and ViewModels; calls through injected Core ports are allowed.

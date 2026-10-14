@@ -35,7 +35,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check vault K-of-N policy documentation
-        run: bash .ai/scripts/check-vault-policy.sh
+        run: |
+          bash .ai/scripts/check-vault-policy.sh
+          python3 .ai/scripts/check-workflow-dependencies.py
 
   android:
     name: Android build, tests, lint, coverage
@@ -94,9 +96,9 @@ jobs:
         working-directory: meta-secret-compose
         run: ./gradlew :composeApp:detekt --no-daemon --console=plain
 
-      - name: Generate Kover report
+      - name: Verify Kover line coverage (80% minimum)
         working-directory: meta-secret-compose
-        run: ./gradlew koverReport --no-daemon --console=plain
+        run: ./gradlew koverVerify --no-daemon --console=plain
 
       - name: Upload Android verification artifacts
         if: always()

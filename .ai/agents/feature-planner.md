@@ -47,3 +47,7 @@ When using required skills:
 
 When agent completes:
 - ✅ Print: `Agent <name> completed`
+
+## Session and UX inputs
+
+Reuse approved decisions from the current session. For client-visible work carry the approved UX State Map into the plan as behavior → owning layer → test → evidence. For registration read `.ai/rules/registration-ux.md`. Do not ask settled questions again.

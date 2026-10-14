@@ -7,7 +7,7 @@ Conduct adaptive clarification session. Analyze issue to identify what's unclear
 ## Input
 
 - `issue-analysis.md` artifact
-- User approval required for proceeding
+- Existing approved session decisions; ask only about unresolved choices
 
 ## Output
 

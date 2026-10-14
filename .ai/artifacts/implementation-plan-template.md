@@ -77,3 +77,10 @@ Key constraints to validate (Stage 3.5):
 ## Ready for Stage 3.5 Constraint Validation
 
 Proceed to constraint check: YES / NO
+
+## UX acceptance and layer ownership
+
+| Approved behavior / transition | Responsible layer and Core response | Test level and platform | Evidence / result |
+|---|---|---|---|
+
+For registration include every applicable row from `.ai/rules/registration-ux.md`. Record unresolved Core contract questions before implementation. OS authentication needs real-device evidence; emulator auto-success is not evidence of a real prompt.

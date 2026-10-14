@@ -15,3 +15,10 @@ tasks.register("koverReport") {
     description = "Generates ComposeApp Kover XML, HTML, and log coverage reports."
     dependsOn(":composeApp:koverXmlReport", ":composeApp:koverHtmlReport", ":composeApp:koverLog")
 }
+
+// Report generation alone does not enforce the workflow coverage threshold.
+tasks.register<Exec>("koverVerify") {
+    group = "verification"
+    dependsOn("koverReport")
+    commandLine("python3", ".ai/scripts/verify-coverage.py", "composeApp/build/reports/kover/report.xml")
+}

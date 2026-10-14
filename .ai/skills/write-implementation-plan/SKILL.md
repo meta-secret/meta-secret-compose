@@ -20,10 +20,10 @@ You write implementation plans for new features after the design direction is ch
 
 ## Read first
 - CLAUDE.md
-- .claude/skills/architecture-guardian/SKILL.md
-- .claude/skills/write-implementation-plan/plan-template.md
+- .ai/skills/architecture-guardian/SKILL.md
+- .ai/skills/write-implementation-plan/plan-template.md
 
-> **Note:** This skill is a legacy entry point. The current workflow uses **`feature-planner`** subagent via `WORKFLOW.md` which references this skill's `plan-template.md` for structure.
+> **Note:** This skill is a legacy entry point. The current workflow uses **`feature-planner`** via `.ai/WORKFLOW.md` which references this skill's `plan-template.md` for structure.
 
 ## Workflow
 
@@ -71,4 +71,4 @@ Respond using exactly this structure:
 - architecture review step:
 
 ## Waiting
-Say: "Waiting for approval before code generation."
+Report remaining decisions only. Reuse explicit approval and decisions from the current session; do not ask the user to approve them again.

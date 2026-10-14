@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Implement business logic and shared code changes for Kotlin Multiplatform Mobile.
+Implement client orchestration and shared presentation code for Kotlin Multiplatform Mobile. Rust Core alone owns security and domain decisions; do not reproduce them in Kotlin.
 
 ## Input
 

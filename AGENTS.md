@@ -27,10 +27,11 @@ Execute FULL 11-stage workflow in order:
 7. **Stage 4c:** TDD Refactorer (major refactoring after 3-5 cycles)
 8. **Stage 5:** Build (compile without tests)
 9. **Stage 6:** Code Review (CRITICAL - constraints re-check + 80% coverage minimum)
-10. **Stage 7:** Design Review (if Figma link exists, else mark "Skipped")
-11. **Stage 8:** Coverage Verification (CRITICAL - ./gradlew koverReport >= 80%)
+10. **Stage 7:** UX/Design Review for client-visible changes; Figma comparison optional
+11. **Stage 8:** Coverage Verification (CRITICAL - ./gradlew koverVerify >= 80%)
 12. **Stage 9:** Test Run (execute all tests)
-13. **Stage 10:** STOP and ASK USER - do NOT auto-commit/PR without approval
+13. **Stage 9.5:** Final UI E2E when applicable; blocks release on failure
+14. **Stage 10:** STOP and ASK USER - do NOT auto-commit/PR without approval
 
 For each stage:
 - Create artifact in `.ai/artifacts/run/`
@@ -98,10 +99,10 @@ Applies to **Codex CLI**:
 - ALWAYS read `.ai/rules/implement-issue-execution-checklist.md` FIRST
 - ALWAYS read `.ai/rules/no-stage-skipping-even-for-simple-tasks.md` SECOND (ENFORCEMENT)
 - Do NOT skip stages — even if task is "trivial" or "1 line"
-- Execute all 11 stages in order: 1 → 2 → 3 → 3.5 → 4a → 4b → 4c → 5 → 6 → 7 → 8 → 9 → 10
+- Execute all 11 stages in order: 1 → 2 → 3 → 3.5 → 4a → 4b → 4c → 5 → 6 → 7 → 8 → 9 → 9.5 (when applicable) → 10 → 11 (CI when present)
 - Stages 6, 7, 8, 10 are CRITICAL — never skip
 - Ask user for approval before Stage 10 (use AskUserQuestion tool)
-- Create artifacts for ALL stages (check that all 13 artifacts exist in .ai/artifacts/run/)
+- Create artifacts for ALL stages (check that all applicable stage artifacts exist in .ai/artifacts/run/)
 
 ---
 

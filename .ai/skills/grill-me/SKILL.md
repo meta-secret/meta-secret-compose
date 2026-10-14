@@ -74,3 +74,7 @@ For each question, provide your recommended answer.
 - Confirm understanding frequently: "Is that right?"
 - Be thorough but not exhausting
 - Stop when user says "I'm satisfied"
+
+## Existing session decisions
+
+Reuse explicit decisions and approvals already present in the session. Do not restart the interview or require repeated approval for settled choices. Explore code for implementation facts.

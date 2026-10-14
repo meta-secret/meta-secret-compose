@@ -2,13 +2,14 @@
 
 ## Purpose
 
-Review UI implementation against Figma design specifications. Verify design compliance and UX alignment.
+Review client-visible behavior against the approved UX State Map on Android and iOS, even without Figma. When Figma is supplied, additionally verify visual compliance.
 
 ## Input
 
 - `design-analysis.md` artifact
 - UI source code changes
-- Figma design reference
+- Approved UX State Map and acceptance scenarios
+- Figma design reference (optional)
 
 ## Output
 
@@ -36,3 +37,7 @@ When using required skills:
 
 When agent completes:
 - ✅ Print: `Agent <name> completed`
+
+## Required evidence
+
+Check every changed state, action, error, resume path and both sides of approval. Record screenshots or observable UI assertions from each relevant platform. A missing Figma link is not a reason to skip behavioral UX review. Mark only the Figma comparison skipped when no design reference exists.

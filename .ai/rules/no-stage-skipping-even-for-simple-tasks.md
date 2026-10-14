@@ -72,14 +72,14 @@ Stage 5 → Stage 6 → Stage 7 → Stage 8 → Stage 9 → Stage 10
 
 ### Stage 7 (Design Review)
 - **MUST execute** if Figma exists
-- Or explicitly mark "Skipped" if no Figma
+- Or explicitly mark "Skipped" if no client-visible behavior
 - Not: "Skip because change is simple"
 
 ### Stage 8 (Coverage Verification)
 - **MANDATORY** even for bug fixes
 - Coverage >= 80% is non-negotiable
 - No exceptions for "trivial" changes
-- Must run `./gradlew koverReport`
+- Must run `./gradlew koverVerify`
 
 ### Stage 9 (Test Run)
 - **MUST execute** always
@@ -236,3 +236,7 @@ When executing `implement issue`:
 ---
 
 **Status:** This is a hard rule. No exceptions.
+
+## Canonical stage contract
+
+Use WORKFLOW.md for stage order and applicability. Stage 7 checks client-visible UX even without Figma; Stage 9.5 is the final applicable UI E2E gate before release.

@@ -27,7 +27,7 @@ Validate implementation plan and code against MetaSecret architecture constraint
 
 ## Required Skills
 
-- skills/constraint-checking/ (systematic validation methodology)
+- .ai/rules/constraint-checking.md (systematic validation methodology)
 
 ## Execution Logging
 

@@ -7,10 +7,10 @@ Single source of truth for `implement issue <id>` / `implement issue "<text>"` a
 **These stages MUST ALWAYS be executed and are NOT optional:**
 
 1. **Stage 6: Code Review** — Mandatory validation of constraints + 80% coverage minimum
-2. **Stage 8: Test Coverage Verification** — Mandatory execution of `./gradlew koverReport` and verification of >= 80% coverage
+2. **Stage 8: Test Coverage Verification** — Mandatory execution of `./gradlew koverVerify` and verification of >= 80% coverage
 3. **Stage 10: User Approval** — Mandatory user approval before creating PR
 
-Stage 7 (Design Review) may be skipped only if Figma link is missing; in that case, mark status as "Skipped".
+Stage 7 (UX/Design Review) is required for client-visible changes. Review approved UX states without Figma; only the Figma comparison may be skipped when no reference exists. For non-UI changes, record a concrete skip reason.
 
 The conditional **Stage 9.5 (Final UI E2E)** is mandatory for applicable
 client-visible, synchronization/recovery, FFI-consumed, or explicitly requested
@@ -70,7 +70,7 @@ root final UI E2E gate has passed. No repository is committed before that gate.
    - 4c: Major Refactor (clean up after 3-5 cycles)
 5. Stage 5: Build (no tests, max 10 minutes)
 6. Stage 6: Code Review (with 80% coverage check)
-7. Stage 7: Design Review (only if Figma link exists; may run in parallel with Stage 6)
+7. Stage 7: UX/Design Review (client-visible changes; Figma optional)
 8. Stage 8: Test Coverage Verification
 9. Stage 9: Test Run
 9.5. Stage 9.5: Final UI E2E (conditional, before release)
@@ -112,7 +112,7 @@ Required behavior:
 - Provide recommendations for each question
 - Explore codebase if questions can be answered by code
 - Identify and map decision dependencies
-- Get explicit user approval before proceeding
+- Carry forward explicit approvals and decisions from the session; ask only about unresolved decisions
 - Document all clarifications in artifact
 
 ### Stage 3: Planning
@@ -162,7 +162,7 @@ Required behavior:
 #### Stage 4a: Test Author
 
 Agent: `tdd-test-author`
-Template: `.ai/artifacts/test-template.md`
+Template: `.ai/artifacts/test-authoring-template.md`
 Input:
 - Stage 3 artifact (implementation plan with breakdown)
 - Stage 2 artifact (clarifications)
@@ -242,20 +242,21 @@ Required behavior:
 
 ### Stage 7: Design Review (conditional)
 
-Condition: run only when Stage 1 has Figma link
+Condition: run for client-visible behavior; Figma comparison is optional
 Agent: `design-reviewer`
 Template: `.ai/artifacts/design-review-report-template.md`
 Output: `.ai/artifacts/run/MS-<run-id>-007-design-review.md`
 
 Required behavior:
-- Review UI against Figma specifications
+- Review all changed states and actions against the approved UX State Map on relevant platforms
+- Compare against Figma specifications when supplied
 - Verify design constraints from Stage 2 are met
 - Pass condition: `Status: PASSED`
 
 ### Stage 8: Test Coverage Verification
 
 Agent: `code-reviewer`
-Command: `./gradlew koverReport`
+Command: `./gradlew koverVerify`
 Template: `.ai/artifacts/coverage-report-template.md`
 Output: `.ai/artifacts/run/MS-<run-id>-008-coverage.md`
 
@@ -448,7 +449,7 @@ After running `implement issue #42`:
 ├── MS-42-004c-refactored.md          ✅ Major Refactor
 ├── MS-42-005-build.md                ✅ Build Report
 ├── MS-42-006-review.md               ✅ Code Review
-├── MS-42-007-design-review.md        ✅ Design Review (if Figma)
+├── MS-42-007-design-review.md        ✅ UX Review (Figma optional)
 ├── MS-42-008-coverage.md             ✅ Coverage Check (Pass or Fail?)
 ├── MS-42-009-test-run.md             ✅ Final Tests
 ├── MS-42-0095-ui-e2e.md              ✅ Final visible UI E2E gate
@@ -461,3 +462,11 @@ Each file contains full documentation of what happened, findings, and Status.
 
 - **How to write artifacts:** See `.ai/rules/artifact-writing-guide.md`
 - **How agents integrate artifacts:** See `.ai/rules/agent-artifact-integration.md`
+
+## Approved registration baseline
+
+Before registration work, read `.ai/rules/registration-ux.md`. Include its acceptance matrix in the plan and verify each applicable row before release.
+
+## Workflow dependency preflight
+
+Before starting a workflow run `python3 .ai/scripts/check-workflow-dependencies.py`. Missing mandatory files block execution. Root UI E2E dependencies belong to the sibling workspace root and must be checked there before the final gate.

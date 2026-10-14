@@ -4,11 +4,11 @@ Use the narrowest useful command first.
 
 ## General commands
 
-### Fast shared module build
+### Fast Android compile
 
 Command:
 
-    ./gradlew :shared:assemble --stacktrace
+    ./gradlew :composeApp:compileDebugKotlinAndroid --stacktrace
 
 ### Full project build
 
@@ -21,7 +21,7 @@ Command:
 
 Prefer running:
 
-    ./gradlew :shared:assemble --stacktrace
+    ./gradlew :composeApp:compileDebugKotlinAndroid --stacktrace
 
 
 ## When the problem looks like Swift/iOS integration

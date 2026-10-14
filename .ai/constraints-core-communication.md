@@ -198,7 +198,7 @@ if (model.success) {
 **Likely:** 
 - AppManager may not be thread-safe
 - Mobile should serialize FFI calls (one at a time)
-- Or use Dispatcher.IO to ensure serial execution
+- Dispatcher.IO alone does not serialize calls; use explicit coordination where the Core contract requires it
 
 **Current:** Investigation needed.
 
@@ -288,7 +288,7 @@ val initResult = metaSecretCore.initWithSavedKey(dmk)
 assertEquals(true, initResult.success)
 ```
 
-**No mocking of Core** (talks to real Rust library in tests).
+**Test boundaries:** presentation/orchestration unit tests may use controlled Core-port responses to exercise errors and lifecycle transitions. Contract/integration and UI E2E tests must use the real Rust library; fake responses do not prove Core behavior.
 
 ---
 

@@ -21,8 +21,8 @@ including the conditional final UI E2E release gate.
 skip a labelled stage; Stage 11 is recorded as `Skipped` only when no CI run
 exists:
 - **Stage 6 (Code Review)** is CRITICAL - must check constraints + 80% coverage minimum
-- **Stage 7 (Design Review)** can be skipped only if Figma missing (mark "Skipped")
-- **Stage 8 (Coverage Verification)** is CRITICAL - must run `./gradlew koverReport` and verify >= 80%
+- **Stage 7 (UX/Design Review)** is required for client-visible changes; Figma comparison is optional
+- **Stage 8 (Coverage Verification)** is CRITICAL - must run `./gradlew koverVerify` and verify >= 80%
 - **Stage 10 (PR Creation)** must ASK USER for approval before committing and creating PR
 - **Stage 11 (CI Monitor)** must bind any CI evidence to the exact PR head SHA
 
@@ -38,7 +38,7 @@ exists:
    - 4c. **tdd-refactorer** — Major refactoring after 3-5 cycles
 5. **Build** — Compile code (no tests)
 6. **code-reviewer** — Review implementation + Documentation Impact + 80% coverage check + constraints re-check
-7. **design-reviewer** — Review design (if Figma link exists)
+7. **design-reviewer** — Review approved UX behavior, plus Figma visuals when available
 8. **Coverage Verification** — Verify 80%+ test coverage (CRITICAL - must be executed)
 9. **test-verifier** — Execute full test suite
 9.5. **Final UI E2E** — Run the visible cross-platform gate when applicable
@@ -72,7 +72,7 @@ Each stage creates an artifact in `.ai/artifacts/run/`:
 - **Stage 4c:** `MS-<run-id>-004c-refactored.md` — Refactored code
 - **Stage 5:** `MS-<run-id>-005-build.md` — Build report
 - **Stage 6:** `MS-<run-id>-006-review.md` — Code review findings
-- **Stage 7:** `MS-<run-id>-007-design-review.md` — Design review (if Figma)
+- **Stage 7:** `MS-<run-id>-007-design-review.md` — UX review (Figma optional)
 - **Stage 8:** `MS-<run-id>-008-coverage.md` — Coverage verification
 - **Stage 9:** `MS-<run-id>-009-test-run.md` — Test execution results
 - **Stage 9.5:** `MS-<run-id>-0095-ui-e2e.md` — Final visible UI E2E gate

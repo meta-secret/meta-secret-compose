@@ -25,11 +25,11 @@
 
 ### Stage 7: Design Review (CONDITIONAL)
 - **Agent:** `design-reviewer`
-- **Condition:** Only run if Stage 1 output contains Figma link
-- **Action:** Review UI against Figma specifications
+- **Condition:** Run for client-visible changes; Figma comparison is optional
+- **Action:** Review approved UX State Map; also compare Figma when supplied
 - **Output:** `.ai/artifacts/run/MS-<run-id>-007-design-review.md`
 - **Status:** Success / Failed / Skipped
-- **If Figma missing:** Mark status as "Skipped" (explicitly document why)
+- **If Figma missing:** Skip only the Figma comparison, not behavioral UX review
 - **If Figma present:** Must execute and must pass
 
 **If Stage 7 fails:**
@@ -43,7 +43,7 @@
 
 ### Stage 8: Coverage Verification (MANDATORY)
 - **Agent:** `code-reviewer` (or dedicated coverage agent)
-- **Action:** Execute `./gradlew koverReport` and verify >= 80% coverage
+- **Action:** Execute `./gradlew koverVerify` and verify >= 80% coverage
 - **Output:** `.ai/artifacts/run/MS-<run-id>-008-coverage.md`
 - **Status:** Pass / Fail / Skipped
 - **Required metrics:**
@@ -86,10 +86,11 @@
 6. Stage 5 → Build (no tests)
 7. **→ VALIDATION BRANCH:**
    - Stage 6: Code Review (**MANDATORY**)
-   - Stage 7: Design Review (if Figma, else Skipped)
+   - Stage 7: UX/Design Review (client-visible changes; Figma optional)
    - Stage 8: Coverage Verification (**MANDATORY**)
 8. Stage 9 → Test Run (full test suite)
-9. **→ USER APPROVAL GATE:**
+9. Stage 9.5 → Final UI E2E when applicable; failure blocks release
+10. **→ USER APPROVAL GATE:**
    - Stage 10: **ASK USER** before PR
    - If YES: Create PR
    - If NO: Stop
@@ -103,7 +104,7 @@ If any stage fails:
 2. Document in artifact with **Status: Failed**
 3. Return to Stage 3 (Planning)
 4. Create fix plan based on failure
-5. Re-execute stages 4a → 4b → 4c → 5 → 6 → 7 → 8 → 9 → 10
+5. Re-execute stages 4a → 4b → 4c → 5 → 6 → 7 → 8 → 9 → 9.5 (when applicable) → 10 → 11 (CI when present)
 6. Max retries: 2 full loops
 
 ---
@@ -134,6 +135,7 @@ Before proceeding to Stage 10 (PR creation), verify:
 - ✅ Stage 7: Design review (artifact exists, Status: Success or Skipped)
 - ✅ Stage 8: Coverage verified (artifact exists, Status: Pass, Coverage >= 80%)
 - ✅ Stage 9: Tests passed (artifact exists, Status: Success)
+- ✅ Stage 9.5: UI E2E passed, or skipped with a concrete non-applicability reason
 - **THEN:** Proceed to Stage 10 **with user approval**
 
 If any artifact is missing or status is Failed → return to Stage 3 (Planning).
@@ -146,7 +148,7 @@ When executing `implement issue` command:
 
 1. Read this file FIRST
 2. Read `.ai/commands/implement-issue.md` SECOND
-3. Execute stages in strict order: 1 → 2 → 3 → 3.5 → 4a → 4b → 4c → 5 → 6 → 7 → 8 → 9 → 10
+3. Execute stages in strict order: 1 → 2 → 3 → 3.5 → 4a → 4b → 4c → 5 → 6 → 7 → 8 → 9 → 9.5 (when applicable) → 10 → 11 (CI when present)
 4. Do NOT skip stages 6, 7, 8
 5. For Stage 10, use AskUserQuestion tool to get approval before committing
 6. Create artifacts for each stage in `.ai/artifacts/run/`
