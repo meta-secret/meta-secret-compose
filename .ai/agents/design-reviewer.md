@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Review client-visible behavior against the approved UX State Map on Android and iOS, even without Figma. When Figma is supplied, additionally verify visual compliance.
+Review client-visible behavior against the approved UX State Map on Android and iOS, even without Figma. Compare visuals and motion against approved HTML prototypes, screenshots and specifications; use Figma additionally when supplied.
 
 ## Input
 
@@ -40,4 +40,4 @@ When agent completes:
 
 ## Required evidence
 
-Check every changed state, action, error, resume path and both sides of approval. Record screenshots or observable UI assertions from each relevant platform. A missing Figma link is not a reason to skip behavioral UX review. Mark only the Figma comparison skipped when no design reference exists.
+Check every changed state, action, error, resume path and both sides of approval. Record screenshots or observable UI assertions from each relevant platform. A missing Figma link is not a reason to skip behavioral, visual or motion review. Capture supported sizes/orientations and reduced-motion behavior; report unsupported native effects explicitly. Mark only the Figma comparison skipped when no design reference exists.

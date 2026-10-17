@@ -4,26 +4,23 @@
 
 - **MVVM** — Model-View-ViewModel with Coordinator pattern
 - **Shared Client Logic** — `commonMain/` for FFI adapters, client models, ViewModel orchestration, and platform-independent presentation logic; security/domain decisions remain in Rust Core
-- **Platform-Specific UI** — `androidMain/` for Jetpack Compose, `iosMain/` for SwiftUI
-- **No platform code in commonMain** — Ever
+- **Shared UI** — Compose Multiplatform screens/components in `commonMain/`; Android/iOS source sets implement injected platform ports and host integration
+- **No platform SDK code in commonMain** — shared Compose UI is allowed; OS-specific APIs stay behind interfaces
 
-## Jetpack Compose (Android)
+## Compose Multiplatform (Android and iOS)
 
 - One screen = one Composable function (top-level)
 - ViewModels are injected, not created in UI
 - State flows down, events flow up
 - Modifiers for styling (no inline colors)
-- Material Design 3 tokens
+- Existing screens retain their theme. New registration uses generated, versioned shared design tokens/assets and scoped components from the approved design package.
 - Safe area: use `WindowInsets.safeDrawing`
 
-## SwiftUI (iOS)
+## iOS host integration
 
-- One screen = one View (top-level)
-- MVVM with @StateObject for ViewModels
-- @Published for reactive state
-- Environment for dependency injection
-- Always respect safe area with `.safeAreaInset()`
-- Use system colors and spacing
+- Shared Compose renders application screens; Swift/UIKit code hosts it and implements OS integration ports.
+- Keep Apple sign-in, biometry, camera permissions and safe-area handling behind existing platform interfaces.
+- Do not introduce a parallel SwiftUI registration implementation.
 
 ## Shared Kotlin
 
@@ -36,7 +33,7 @@
   remains authoritative.
 - Platform abstractions must be done via `interface + DI` (platform implementations in `androidMain/` and `iosMain/`)
 - `expect/actual` is forbidden in this project
-- No UI framework imports in commonMain
+- Compose Multiplatform UI imports are allowed in commonMain; Android/iOS-specific SDK imports are not
 - Result<T, E> for error handling
 - Sealed classes for state machines
 

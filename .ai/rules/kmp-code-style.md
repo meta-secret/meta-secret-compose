@@ -34,7 +34,9 @@ text = appString(AppString.vaultName)
 
 ## Typography & Text Styles
 
-### Rule: Use only `AppTextStyles` — No custom styles
+### Rule: Use approved typography adapters
+
+Legacy screens use `AppTextStyles`. The scoped registration adapter may define token-backed typography from the approved shared design package; no unrelated global restyling.
 
 ❌ **FORBIDDEN:**
 ```kotlin
@@ -62,7 +64,7 @@ style = AppTextStyles.BodyMedium()
 ### Available styles:
 - **Location:** `ui/theme/AppTextStyles.kt`
 - **Examples:** `ScreenTitle()`, `BodyMedium()`, `LabelSmall()`, `HeadlineLarge()`
-- **If style missing:** Don't invent one → ask to add it to `AppTextStyles.kt`
+- **If style missing:** Add the approved token-backed style through the scoped registration typography adapter or `AppTextStyles.kt`; do not ask again for a style already approved in the design reference.
 
 ### Why:
 - Consistent visual hierarchy
@@ -135,13 +137,13 @@ fun CustomButton(
 
 ### State management:
 ```kotlin
-// ✅ State lives in ViewModel, not Composable
+// ✅ Application/operation state lives in ViewModel
 @Composable
 fun VaultScreen(viewModel: VaultViewModel) {
   val vaults by viewModel.vaults.collectAsState()  // collect from ViewModel
   
-  // Never:
-  // val vaults = remember { mutableStateOf(...) }  // ❌ Don't create state here
+  // Membership, requests and loading results are not local remember state.
+  // Focus, hover and animation progress may be remembered locally.
 }
 ```
 
@@ -284,11 +286,11 @@ class VaultViewModel(
 ## Checklist for Code Review
 
 - [ ] All strings use `appString(AppString.xxx)`
-- [ ] All text styles use `AppTextStyles`
+- [ ] Legacy text styles use `AppTextStyles`; new registration uses its approved generated-token typography adapter
 - [ ] File is ≤ 400 lines
 - [ ] Methods have ≤ 5 parameters (or use Input model)
 - [ ] Default visibility is `private`
-- [ ] No custom TextStyle definitions
+- [ ] No screen-local typography constants; scoped registration styles derive from shared generated tokens
 - [ ] No inline colors (use theme)
 - [ ] Composables are at top-level or `private`
 - [ ] No commented-out code

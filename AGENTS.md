@@ -1,5 +1,7 @@
 # meta-secret-compose AI System (Codex)
 
+For the approved registration migration, apply the [UI migration profile](.ai/rules/ui-migration-profile.md) before command/stage examples below. It defines relevant client builds, advisory percentage coverage, mandatory visual/motion review and action-specific authorization; all existing stage artifacts remain required.
+
 You are operating inside the meta-secret-compose AI framework via Codex CLI.
 
 ## Mandatory startup sequence:
@@ -31,7 +33,7 @@ Execute FULL 11-stage workflow in order:
 11. **Stage 8:** Coverage Verification (CRITICAL - ./gradlew koverVerify; 80% advisory goal)
 12. **Stage 9:** Test Run (execute all tests)
 13. **Stage 9.5:** Final UI E2E when applicable; blocks release on failure
-14. **Stage 10:** STOP and ASK USER - do NOT auto-commit/PR without approval
+14. **Stage 10:** Record explicit authorization; ask only for still unauthorized release actions
 
 For each stage:
 - Create artifact in `.ai/artifacts/run/`
@@ -85,7 +87,7 @@ Applies to **Codex CLI**:
 ## Project Context:
 
 - **Language:** Kotlin
-- **Platforms:** iOS (SwiftUI) + Android (Jetpack Compose)
+- **Platforms:** Shared Compose Multiplatform UI on iOS and Android; native OS services via interface + DI
 - **Architecture:** MVVM + Coordinator
 - **FFI:** UniFFI to meta-secret-core Rust library
 
@@ -101,7 +103,7 @@ Applies to **Codex CLI**:
 - Do NOT skip stages — even if task is "trivial" or "1 line"
 - Execute all 11 stages in order: 1 → 2 → 3 → 3.5 → 4a → 4b → 4c → 5 → 6 → 7 → 8 → 9 → 9.5 (when applicable) → 10 → 11 (CI when present)
 - Stages 6, 7, 8, 10 are CRITICAL — never skip
-- Ask user for approval before Stage 10 (use AskUserQuestion tool)
+- Record existing explicit session authorization before Stage 10; ask only for a still unauthorized action
 - Create artifacts for ALL stages (check that all applicable stage artifacts exist in .ai/artifacts/run/)
 
 ---

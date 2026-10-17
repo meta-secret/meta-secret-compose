@@ -1,5 +1,7 @@
 # Automated Workflow Orchestration
 
+For the approved registration migration, apply the [UI migration profile](rules/ui-migration-profile.md) before command/stage examples below. It defines relevant client builds, advisory percentage coverage, mandatory visual/motion review and action-specific authorization; all existing stage artifacts remain required.
+
 Single source of truth for `implement issue <id>` / `implement issue "<text>"` across Claude Code, Cursor, and Codex CLI.
 
 ## ⚠️ CRITICAL: Non-Optional Stages
@@ -28,24 +30,24 @@ UI behavior. Otherwise it must be marked `Skipped` with a concrete reason.
 
 ## Root orchestration mode
 
-When started by `MetaSecret` root via `get_issue`, the root passes a normalized
-Issue context bundle containing the source repository, canonical Issue URL,
-title/body, root run ID, scope decision, and (for `core+compose`) the successful
-Core handoff. Do not assume that the source Issue number exists in this
-repository.
+When started by the MetaSecret root via `get_issue`, consume its normalized
+task bundle: Issue metadata when present, otherwise approved local brief path
+and reference commit, title/body, approval evidence, root run ID, scope/areas,
+profile and dependency handoffs. Do not fetch a fabricated Issue for local input.
 
-Compose remains responsible for every stage in this document, including its
-constraints, tests, coverage, documentation checks, and user approval before
-commit/PR. Consume Core API/FFI contracts from the handoff; do not reimplement
-cryptography or shared protocol logic in Kotlin/Swift.
-
-When root scope is `core+compose`, Compose consumes the Core pre-release
-handoff, runs through Stage 9.5, and defers Stage 10 release actions until the
-root final UI E2E gate has passed. No repository is committed before that gate.
+This repository retains all existing stage artifacts and applicable gates.
+For `core+compose`, defer application release commits until combined validation
+and the root final UI E2E gate pass. Domain/FFI-dependent Compose work consumes
+Core's successful contract handoff; UI-only Web and Compose work independently
+consume validated shared design exports. Web-only scope in Core repository
+uses the UI migration profile rather than unrelated Rust build/coverage checks.
+Explicit session authorization is recorded per release action; commit permission
+does not imply push/PR permission. Root-only resources do not start this child
+application workflow.
 
 `<run-id>` rules:
 - Numeric issue input: use issue number (`123`)
-- Free-text input: use UTC timestamp (`YYYYMMDDHHmmss`)
+- Free-text/local brief input: use UTC timestamp (`YYYYMMDDHHmmss`)
 
 ## Required Stage Logs
 
@@ -305,8 +307,9 @@ timeline, Core-driven Recover/Show decisions, receiver badge/alert assertions,
 screenshots, browser/server/device logs, cleanup, and deviations. A failure
 blocks Stage 10. Scenario-only failures may return to the author; evidence of
 a production defect returns to planning and follows the normal approval rule.
-For `core+compose`, this is the final root-owned gate after Core handoff and
-Compose validation.
+For `core+compose`, this is the final root-owned gate after both client
+validations; domain/FFI dependencies require the Core contract handoff, while
+UI-only clients consume the shared design export contract independently.
 
 ### Stage 10: Branch + Commit + PR
 
@@ -316,13 +319,12 @@ Output: `.ai/artifacts/run/MS-<run-id>-010-pr.md`
 **⚠️ CRITICAL:** This stage requires **EXPLICIT USER APPROVAL** before executing.
 
 Required behavior:
-- **STOP and ASK USER:** "Should we proceed to Stage 10 (Branch + Commit + PR)?" 
-- Wait for user YES/NO response
-- If YES: Continue with PR creation
-- If NO: Stop and wait for further instructions
+- Record existing explicit session authorization for each release action.
+- Ask only for an action still unauthorized after presenting the concrete result. Commit permission alone does not permit push or PR.
+- If the user declines an action, stop that action and retain the reviewed work.
 - Create feature branch
 - Stage and commit changes
-- Create pull request with description
+- Create a pull request with description only when separately authorized.
 
 Pass condition: `Status: Success`
 

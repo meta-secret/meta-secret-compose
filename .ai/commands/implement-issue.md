@@ -1,5 +1,7 @@
 # Command — Implement Issue
 
+For the approved registration migration, apply the [UI migration profile](../rules/ui-migration-profile.md) before command/stage examples below. It defines relevant client builds, advisory percentage coverage, mandatory visual/motion review and action-specific authorization; all existing stage artifacts remain required.
+
 ## Trigger
 
 ```
@@ -23,7 +25,7 @@ exists:
 - **Stage 6 (Code Review)** is CRITICAL - must check constraints + coverage report (80% advisory goal)
 - **Stage 7 (UX/Design Review)** is required for client-visible changes; Figma comparison is optional
 - **Stage 8 (Coverage Verification)** is CRITICAL - must run `./gradlew koverVerify` and report coverage against the advisory 80% goal
-- **Stage 10 (PR Creation)** must ASK USER for approval before committing and creating PR
+- **Stage 10 (PR Creation)** records existing explicit authorization; asks only for a still unauthorized release action
 - **Stage 11 (CI Monitor)** must bind any CI evidence to the exact PR head SHA
 
 ## Flow
@@ -37,12 +39,12 @@ exists:
    - 4b. **tdd-implementer** — Red-Green-Refactor cycles (minimal code → pass tests)
    - 4c. **tdd-refactorer** — Major refactoring after 3-5 cycles
 5. **Build** — Compile code (no tests)
-6. **code-reviewer** — Review implementation + Documentation Impact + 80% coverage check + constraints re-check
-7. **design-reviewer** — Review approved UX behavior, plus Figma visuals when available
+6. **code-reviewer** — Review implementation + Documentation Impact + measured coverage (80% advisory) + constraints re-check
+7. **design-reviewer** — Review approved UX behavior, visuals and motion against HTML/screenshots/specification; Figma when available
 8. **Coverage Verification** — Report test coverage against the advisory 80% goal (CRITICAL - must be executed)
 9. **test-verifier** — Execute full test suite
 9.5. **Final UI E2E** — Run the visible cross-platform gate when applicable
-10. **release-manager** — **STOP and ASK USER** before Branch + Commit + PR
+10. **release-manager** — Record authorization per release action; ask only if missing
 11. **ci-monitor** — Inspect the exact completed Compose CI run when present
 
 See `.ai/WORKFLOW.md` for complete 12-stage specification.
