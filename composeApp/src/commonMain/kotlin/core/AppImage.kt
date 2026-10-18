@@ -7,7 +7,6 @@ import org.jetbrains.compose.resources.DrawableResource
 enum class AppImage {
     AddButton,
     Android,
-    Apple,
     Arrow,
     BackgroundAdd,
     BackgroundLogo,
@@ -18,11 +17,8 @@ enum class AppImage {
     ComposeMultiplatform,
     Devices,
     DevicesLogo,
-    EmailReceivedCheck,
     Executioner,
-    Google,
     IconCopy,
-    IconEmail,
     IconEyeOff,
     IconLock,
     IconPaste,
@@ -46,7 +42,6 @@ enum class AppImage {
 fun AppImage.resource(): DrawableResource = when (this) {
     AppImage.AddButton -> Res.drawable.addbutton
     AppImage.Android -> Res.drawable.android
-    AppImage.Apple -> Res.drawable.apple
     AppImage.Arrow -> Res.drawable.arrow
     AppImage.BackgroundAdd -> Res.drawable.background_add
     AppImage.BackgroundLogo -> Res.drawable.background_logo
@@ -57,11 +52,8 @@ fun AppImage.resource(): DrawableResource = when (this) {
     AppImage.ComposeMultiplatform -> Res.drawable.compose_multiplatform
     AppImage.Devices -> Res.drawable.devices
     AppImage.DevicesLogo -> Res.drawable.devices_logo
-    AppImage.EmailReceivedCheck -> Res.drawable.email_received_check
     AppImage.Executioner -> Res.drawable.executioner
-    AppImage.Google -> Res.drawable.google
     AppImage.IconCopy -> Res.drawable.icon_copy
-    AppImage.IconEmail -> Res.drawable.icon_email
     AppImage.IconEyeOff -> Res.drawable.icon_eye_off
     AppImage.IconLock -> Res.drawable.icon_lock
     AppImage.IconPaste -> Res.drawable.icon_paste

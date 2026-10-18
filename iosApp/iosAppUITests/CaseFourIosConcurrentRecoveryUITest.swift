@@ -71,14 +71,8 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
                 "afterIosJoin=\(configuredSecretNames(plan: secretCreationPlan, stage: "afterIosJoin", platform: "ios"))"
         )
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
 
         print("E2E: IOS_JOIN_REQUEST_SENT")
 
@@ -604,27 +598,6 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         }.resume()
         _ = semaphore.wait(timeout: .now() + 2)
         return response.getData()
-    }
-
-    private func openManualEmailSignIn() {
-        let manual = app.descendants(matching: .any)["signin-email-manual"]
-        if manual.waitForExistence(timeout: 30) {
-            manual.tap()
-            return
-        }
-
-        let manualByText = app.buttons["Enter email manually"]
-        XCTAssertTrue(manualByText.waitForExistence(timeout: 10), "Manual email sign-in button was not visible")
-        manualByText.tap()
-    }
-
-    private func typeEmail(_ email: String) {
-        let field = app.descendants(matching: .any)["email-input"]
-        XCTAssertTrue(field.waitForExistence(timeout: 30), "Email input was not visible")
-        field.tap()
-        field.typeText(email)
-        dismissKeyboardIfNeeded()
-        waitUntilHittable(app.descendants(matching: .any)["manual-signin-continue"], timeout: 10)
     }
 
     private func typeSecretNameAndValue(name: String, value: String) {

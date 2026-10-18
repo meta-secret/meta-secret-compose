@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,13 +49,19 @@ class DevicesScreen : Screen {
         val devices by viewModel.devicesList.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
         val pendingRemovalTargets by viewModel.pendingRemovalTargets.collectAsState()
+        val vaultName by viewModel.vaultName.collectAsState()
+        val selectedQrName by viewModel.addDeviceQrName.collectAsState()
+        // Hide a stale code immediately, before the source-change collector clears selection.
+        val displayedQrName = selectedQrName?.takeIf { it == vaultName && it.isNotBlank() }
 
         var isDialogVisible by remember { mutableStateOf(false) }
-        var isMainDialogVisible by remember { mutableStateOf(false) }
         var removalTarget by remember { mutableStateOf<String?>(null) }
         
         LaunchedEffect(Unit) {
             viewModel.handle(DeviceViewEvents.OnAppear)
+        }
+        DisposableEffect(viewModel) {
+            onDispose { viewModel.handle(DeviceViewEvents.CloseAddDevice) }
         }
 
         CommonBackground(AppString.devicesList) {
@@ -122,10 +129,14 @@ class DevicesScreen : Screen {
             }
         }
 
-        AddButton { isMainDialogVisible = it }
+        AddButton(
+            label = AppString.addDeviceAction,
+            testTag = "add-device-fab",
+            enabled = !vaultName.isNullOrBlank(),
+        ) { viewModel.handle(DeviceViewEvents.OpenAddDevice) }
 
         AnimatedVisibility(
-            visible = isMainDialogVisible,
+            visible = displayedQrName != null,
             enter = slideInVertically(
                 initialOffsetY = { it },
                 animationSpec = tween(durationMillis = 350)
@@ -135,11 +146,13 @@ class DevicesScreen : Screen {
                 animationSpec = tween(durationMillis = 250)
             )
         ) {
-            AddingDevice(
-                viewModel.screenMetricsProvider,
-                mainDialogVisibility = { isMainDialogVisible = it },
-                userName = ""
-            )
+            displayedQrName?.let { name ->
+                AddingDevice(
+                    viewModel.screenMetricsProvider,
+                    mainDialogVisibility = { viewModel.handle(DeviceViewEvents.CloseAddDevice) },
+                    vaultName = name,
+                )
+            }
         }
 
         AnimatedVisibility(

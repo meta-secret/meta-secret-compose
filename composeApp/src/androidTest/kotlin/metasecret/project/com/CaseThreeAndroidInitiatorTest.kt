@@ -26,27 +26,8 @@ class CaseThreeAndroidInitiatorTest {
         val vaultName = instrumentationArgument("vaultName", "test3@test.ru")
         val secretName = instrumentationArgument("secretName", "test-secret")
 
-        clickIfPresent("onboarding-skip", timeoutMillis = 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitUntil(120_000) {
-            composeRule.onAllNodes(hasTestTag("add-secret-fab"), useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty() ||
-                composeRule.onAllNodes(hasTestTag("email-confirmation-join"), useUnmergedTree = true)
-                    .fetchSemanticsNodes().isNotEmpty() ||
-                composeRule.onAllNodes(hasTestTag("email-confirmation-error"), useUnmergedTree = true)
-                    .fetchSemanticsNodes().isNotEmpty()
-        }
-        if (composeRule.onAllNodes(hasTestTag("email-confirmation-join"), useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
-        ) {
-            error("Test #3 requires a new vault, but ${vaultName} already exists; check E2E server isolation")
-        }
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitCreateVault()
         composeRule.waitForTag("add-secret-fab", 30_000)
         composeRule.onNodeWithTag("add-secret-fab").performClick()
         composeRule.waitForTag("secret-name-input", 30_000)
@@ -103,14 +84,8 @@ class CaseThreeAndroidInitiatorTest {
     @Test
     fun createVaultAndWaitForJoins() {
         val vaultName = instrumentationArgument("vaultName", "test3@test.ru")
-        clickIfPresent("onboarding-skip", timeoutMillis = 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitCreateVault()
         composeRule.waitForTag("add-secret-fab", 180_000)
 
         val configuredNames = instrumentationArgument("secretNames", "").split(',').filter { it.isNotBlank() }

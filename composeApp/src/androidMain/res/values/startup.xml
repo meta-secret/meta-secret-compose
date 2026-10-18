@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Orbit 0.2.0 backgroundCenter; scoped to the launcher activity. -->
+    <color name="startup_background">#2C2E2F</color>
+    <style name="Theme.MetaSecret.StartupBase" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/startup_window</item>
+        <item name="android:statusBarColor">@color/startup_background</item>
+        <item name="android:navigationBarColor">@color/startup_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+    <style name="Theme.MetaSecret.Starting" parent="Theme.MetaSecret.StartupBase" />
+</resources>

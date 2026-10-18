@@ -1,0 +1,21 @@
+{
+  "package": "@meta-secret/design-system",
+  "version": "0.2.0",
+  "sourceManifestSha256": "ad8b58fee8ce55788f719ec557e76b353b5fbeef2579090b297f53c119b71526",
+  "files": {
+    "composeApp/src/commonMain/kotlin/ui/design/generated/OrbitTokens.kt": "232c915f5c717146f86f162d0bdf6b41e466f8f8cafcae3182740142c24b3418",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_apple.xml": "cf2006536abc96035d4f73246ba5dc8426cc792e6d6e67b3b47fe275f35d287c",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_approved.xml": "a0c07db798d0e19c97134aa772210437aec01325b3cb6d52a8e6eb42b1352eac",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_back.xml": "eeb59a290f247729b77ac133e58e7c7001743abf1d6100f4cff314b00fd2a227",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_cancel.xml": "6a32e8b03f7b7aadd219a3cefe96eebdcd2c58cc00ba6d28f652d24b0820e180",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_create.xml": "987b4bbe90cdca9dfbf1edf2740ed7b2a4a761739368bcfeebb1f9d476bcae07",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_enter.xml": "333430ee01fc04298a1010dca84c863798afc2eb491b716d66f68ca9d00a4713",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_fusion.xml": "181133ec27edcb6ac106107ab3dab312196c22b4fe2a72a4772ab30c304dfdbd",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_join.xml": "d9fa4faabd596b1658a78ee566478a48763f7854a39c37bcdac2f17398d78c4c",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_ok.xml": "bdb163d3073cb6629aa39a83ffb39a0be4710206ebff6bb445a867bf7ddeb423",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_qr.xml": "55289f1247482643555e77d8728084b7d61229c8a51517abcf888fdbe59dae1d",
+    "composeApp/src/commonMain/composeResources/drawable/orbit_request.xml": "0e2cf71b82d02c02c034ea7689fe007cf3ee3be2b99025aed82a509328e6c4d9",
+    "composeApp/src/commonMain/composeResources/font/orbit_manrope_regular.otf": "b40311560415d436cbfc5ca0dd44d461ab14895b38cc0a224cae613c9eea0b39",
+    "composeApp/src/commonMain/composeResources/files/orbit_manrope_license.txt": "d6a309fcfb963d329a93baf9df66fa5f3c23a4be2b5f67edf24d6cafecde12ac"
+  }
+}

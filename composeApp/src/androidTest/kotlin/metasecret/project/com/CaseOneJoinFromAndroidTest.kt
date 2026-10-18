@@ -25,16 +25,8 @@ class CaseOneJoinFromAndroidTest {
         val vaultName = instrumentationArgument("vaultName", "test@test.ru")
         val secretName = instrumentationArgument("secretName", "test-secret")
 
-        clickIfPresent("onboarding-skip", timeoutMillis = 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_JOIN_REQUEST_SENT")
 
         composeRule.waitForTag("secret-row-$secretName", 180_000)

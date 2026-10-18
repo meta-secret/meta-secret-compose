@@ -56,16 +56,8 @@ class CaseEightAndroidBothOfflineTest {
     fun joinWebInitiatedVault() {
         val vaultName = argument("vaultName", "test8@test.ru")
         val secretName = argument("secretName", "test-secret")
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_JOIN_REQUEST_SENT")
         configuredSecretNames().forEach { name -> composeRule.waitForTag("secret-row-$name", 180_000) }
         marker("ANDROID_JOIN_READY")
@@ -76,16 +68,8 @@ class CaseEightAndroidBothOfflineTest {
     @Test
     fun joinWebInitiatedVaultForTest40() {
         val vaultName = argument("vaultName", "test40@test.ru")
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_TEST40_JOIN_REQUEST_SENT")
         configuredSecretNames().forEach { name ->
             composeRule.waitForTag("secret-row-$name", 180_000)
@@ -98,16 +82,8 @@ class CaseEightAndroidBothOfflineTest {
     @Test
     fun joinWebInitiatedVaultForTest43() {
         val vaultName = argument("vaultName", "test43@test.ru")
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_TEST43_JOIN_REQUEST_SENT")
         configuredSecretNames().forEach { name ->
             composeRule.waitForTag("secret-row-$name", 180_000)
@@ -120,16 +96,8 @@ class CaseEightAndroidBothOfflineTest {
     @Test
     fun joinWebInitiatedVaultForTest46() {
         val vaultName = argument("vaultName", "test46@test.ru")
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_TEST46_INITIAL_JOIN_REQUEST_SENT")
         configuredSecretNames().forEach { name ->
             composeRule.waitForTag("secret-row-$name", 180_000)
@@ -142,16 +110,8 @@ class CaseEightAndroidBothOfflineTest {
     @Test
     fun joinWebInitiatedVaultForTest47() {
         val vaultName = argument("vaultName", "test47@test.ru")
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_TEST47_INITIAL_JOIN_REQUEST_SENT")
         configuredSecretNames().forEach { name ->
             composeRule.waitForTag("secret-row-$name", 180_000)
@@ -163,16 +123,8 @@ class CaseEightAndroidBothOfflineTest {
     @Test
     fun joinIosInitiatedVaultForTest39() {
         val vaultName = argument("vaultName", "test39@test.ru")
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_TEST39_JOIN_REQUEST_SENT")
         configuredSecretNames().forEach { name ->
             composeRule.waitForTag("secret-row-$name", 180_000)
@@ -185,16 +137,8 @@ class CaseEightAndroidBothOfflineTest {
     @Test
     fun joinIosInitiatedVaultForTest42() {
         val vaultName = argument("vaultName", "test42@test.ru")
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_TEST42_JOIN_REQUEST_SENT")
         configuredSecretNames().forEach { name ->
             composeRule.waitForTag("secret-row-$name", 180_000)
@@ -207,16 +151,8 @@ class CaseEightAndroidBothOfflineTest {
     @Test
     fun joinIosInitiatedVaultForTest45() {
         val vaultName = argument("vaultName", "test45@test.ru")
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_TEST45_JOIN_REQUEST_SENT")
         configuredSecretNames().forEach { name ->
             composeRule.waitForTag("secret-row-$name", 180_000)
@@ -229,16 +165,8 @@ class CaseEightAndroidBothOfflineTest {
     @Test
     fun joinIosInitiatedVaultForTest49() {
         val vaultName = argument("vaultName", "test49@test.ru")
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_TEST49_JOIN_REQUEST_SENT")
         configuredSecretNames().forEach { name ->
             composeRule.waitForTag("secret-row-$name", 180_000)
@@ -258,16 +186,8 @@ class CaseEightAndroidBothOfflineTest {
             ?: argument("secretName", "test-secret")
         val secondSecret = directShowSecretNames.getOrNull(1) ?: firstSecret
 
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin()
         marker("ANDROID_JOIN_REQUEST_SENT")
         configuredSecretNames().forEach { name -> composeRule.waitForTag("secret-row-$name", 180_000) }
         marker("ANDROID_JOIN_READY")
@@ -298,19 +218,11 @@ class CaseEightAndroidBothOfflineTest {
         val vaultName = argument("vaultName", "test21@test.ru")
         val retryVaultName = argument("retryVaultName", "test21-retry@test.ru")
 
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
-        composeRule.waitForTag("email-confirmation-join", 60_000)
-        composeRule.onNodeWithTag("email-confirmation-join").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitRequestJoin(awaitPending = false)
 
-        composeRule.waitForTag("email-confirmation-error", 120_000)
-        composeRule.onNodeWithTag("email-confirmation-error", useUnmergedTree = true)
+        composeRule.orbitWaitForTag("orbit-phase-error", 120_000)
+        composeRule.onNodeWithTag("orbit-status", useUnmergedTree = true)
             .assertTextEquals("This vault already has the maximum of 3 devices.")
         marker("ANDROID_FOURTH_DEVICE_REJECTED")
         waitForApproval(
@@ -319,14 +231,9 @@ class CaseEightAndroidBothOfflineTest {
             "1",
         )
 
-        composeRule.onNodeWithTag("email-confirmation-error-reset").performClick()
-        composeRule.waitForTag("signin-email-manual", 60_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(retryVaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.onNodeWithTag("orbit-back").performClick()
+        composeRule.orbitEnterVaultName(retryVaultName)
+        composeRule.orbitCreateVault()
         composeRule.waitForTag("tab-secrets", 120_000)
         marker("ANDROID_FOURTH_DEVICE_RETRY_REGISTERED")
     }
@@ -1091,7 +998,11 @@ class CaseEightAndroidBothOfflineTest {
         prepareDeletionAccessibility()
         var anchor = ""
         composeRule.waitUntil(30_000) {
-            val tag = listOf("onboarding-skip", "signin-email-manual").firstOrNull { hasTagNow(it) }
+            val tag = when {
+                hasTagNow("onboarding-skip") -> "onboarding-skip"
+                hasTagNow("orbit-enter") && hasTagNow("orbit-heading") -> "orbit-heading"
+                else -> null
+            }
             if (tag != null) {
                 val node = composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode()
                 anchor = node.config.getOrNull(SemanticsProperties.Text)?.joinToString(" ") { it.text }
@@ -1208,7 +1119,7 @@ class CaseEightAndroidBothOfflineTest {
             val fullScreen = rootBounds.left <= 0 && rootBounds.top <= 0 && rootBounds.right >= metrics.widthPixels && rootBounds.bottom >= metrics.heightPixels
             val knownCompatibility = listOf("This app was built for an older version of Android", "Check for update", "OK").any { knownLabel(it) }
             if (argument("role", "") == "accessibility-probe" &&
-                (hasTagNow("onboarding-skip") || hasTagNow("signin-email-manual")) &&
+                (hasTagNow("onboarding-skip") || hasTagNow("orbit-enter")) &&
                 !hasTagNow("tab-secrets") && deletionCachedMember() == null) {
                 try {
                     val screenshot = checkNotNull(automation.takeScreenshot()) { "F3 screenshot unavailable" }
@@ -1305,14 +1216,8 @@ class CaseEightAndroidBothOfflineTest {
 
     @Test
     fun createVaultForTest50() {
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(argument("vaultName", ""))
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.orbitEnterVaultName(argument("vaultName", ""))
+        composeRule.orbitCreateVault()
         composeRule.waitForTag("add-secret-fab", 180_000)
         createDeletionSecret()
         marker("ANDROID_TEST50_SECRET1_READY")

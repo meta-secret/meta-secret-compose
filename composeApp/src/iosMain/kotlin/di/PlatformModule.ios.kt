@@ -32,6 +32,7 @@ import platform.Foundation.NSBundle
 
 @OptIn(ExperimentalForeignApi::class)
 val iosPlatformModule = module {
+    single<core.OrbitBackdropBlur> { core.OrbitBackdropBlurIos() }
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceIos(get(), get()) }
     single<MetaSecretSocketClient> {
         IosMetaSecretSocketClient(

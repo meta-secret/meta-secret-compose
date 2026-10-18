@@ -87,10 +87,23 @@ resolver wrapper; relaunch alone does not generate another identity.
 
 ## Presentation contract
 
+The fixed mobile ruler uses symmetric -40..40 ticks and equal fade tails around
+tick0. Its local Canvas center is half the 320dp height; the matching vertical
+offset keeps tick0 and the step badge at the window's vertical center in every
+orientation. The step badge center is x37.5dp, the midpoint of tick0's major
+stroke from x32dp to x43dp. Its 13dp radius puts its left edge at 24.5dp; the
+ruler and minor ticks retain their existing geometry.
+The shared centerY130 token, Web ruler and rotating layers remain unchanged.
+
 01 offers providers/manual input without opening a system dialog automatically.
 Provider cancellation remains01. 02 checks the selected name and offers
 Create/Join/Enter. 03 manual input rotates clockwise on OK and counterclockwise
 on Back. 04 offers QR/Back/Request. Request circles merge before the loader.
+On02, Core `AVAILABLE` enables Create and disables Join; Core `EXISTS` enables
+Join and disables Create. Disabled Join keeps its existing muted appearance and
+fixed icon pose and ignores taps. Join intent is accepted only on02 while Idle
+with `EXISTS`; unknown, checking, busy and error states cannot open04. Opening04
+does not submit a request: the existing Request action still calls the Core port.
 Pending/Declined remain04 until explicit Back, which performs the guarded cleanup above. Other join errors keep their existing Back→02 path; known Create failure shows its red
 status for three seconds with no actions, then restores02. Unknown Create
 outcomes retain a working Back and require canonical reconciliation.
@@ -191,3 +204,23 @@ synthetic camera; it exercises real Compose rendering and actual blur, and makes
 no Core calls. It is not real camera/auth or final Core E2E evidence. Production
 QR uses the existing real camera scanner. Root owns the final local Core UI E2E
 gate and application release decisions.80% overall coverage remains advisory.
+
+## Phase-one closeout and obsolete registration cleanup
+
+The owner accepted phase one and local commits on 19 October 2026. The previous
+six-file signinscreen flow and its private AuthButton, NakedButton and
+CommonYesNoSheet are removed together with their unused Koin bindings. Private
+Apple/Google/email-confirmation PNGs, their four AppImage aliases, fifteen
+obsolete string keys and four unused Manrope weights are removed as one audited
+group. All active routes already enter RegistrationScreen.
+
+Shared legacy colors/typography and regular/semibold/bold fonts, StringProvider
+and log schemas, Onboarding, camera/scanner, active brand assets, launcher/startup
+resources and native inputs remain. Current Orbit geometry, motion, state and
+Core behavior are unchanged by this cleanup.
+
+Apple Android/Web activation stays disabled until the cofounder supplies the
+required Cloudflare access and the correct Apple setup can be completed. Live
+Apple/Google/camera and incomplete business Core UI E2E remain separately pending;
+owner phase acceptance is a release disposition, not a false scenario PASS.
+Local commits do not authorize push, PR or deployment.

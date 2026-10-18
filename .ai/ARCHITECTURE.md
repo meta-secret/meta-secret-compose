@@ -18,3 +18,10 @@ Read rules/ui-migration-profile.md, rules/registration-ux.md, rules/kmp-principl
 ## Evidence
 
 Keep stage artifacts in .ai/artifacts/run using WORKFLOW.md naming. Run python3 .ai/scripts/check-workflow-dependencies.py before execution. Code/constraint review, applicable design/motion review and required behavior tests remain gates. Overall 80% coverage is advisory under rules/coverage-policy.md. Preserve explicit session authorization separately for commit, push, PR and deployment.
+
+The Orbit registration module is documented in docs/registration-orbit.md.
+RegistrationViewModel is injected with a unique Voyager screen key; a LifecycleEffectOnce
+cleanup ties session lifetime to navigation, including logout. Its client session wraps
+existing Core ports and serializes unregistered local lifecycle work; it adds no
+domain membership, protocol, FFI or cryptographic rules. Scoped Compose graphics
+ports own the real captured backdrop blur; camera frames never enter that port.

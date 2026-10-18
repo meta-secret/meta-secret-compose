@@ -20,7 +20,6 @@ import ui.scenes.mainscreen.MainScreenViewModel
 import ui.scenes.onboarding.OnboardingViewModel
 import ui.scenes.profilescreen.ProfileScreenViewModel
 import ui.scenes.secretsscreen.SecretsScreenViewModel
-import ui.scenes.signinscreen.SignInScreenViewModel
 import ui.scenes.splashscreen.SplashScreenViewModel
 import core.VaultStatsProvider
 import core.VaultStatsProviderInterface
@@ -33,9 +32,6 @@ import core.DebugLoggerInterface
 import core.AppStateCacheProvider
 import core.AppStateCacheProviderInterface
 import core.errors.ErrorMapper
-import models.appInternalModels.EmailProvider
-import ui.scenes.signinscreen.EmailConfirmationScreenViewModel
-import ui.scenes.signinscreen.ManualSignInScreenViewModel
 
 val appModule = module {
     single<KeyValueStorageInterface> { KeyValueStorageImpl(get()) }
@@ -53,23 +49,14 @@ val appModule = module {
     single { MainScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { SplashScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingViewModel(get(), get()) }
-    factory { SignInScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    factory { ManualSignInScreenViewModel(get()) }
-    factory { (vaultName: String, provider: EmailProvider) ->
-        EmailConfirmationScreenViewModel(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            vaultName,
-            provider,
+    factory<core.registration.RegistrationSessionInterface> {
+        core.registration.CoreRegistrationSession(
+            core.registration.RegistrationCorePorts(get(), get(), get(), get()),
+            core.registration.RegistrationStoragePorts(get(), get(), get()),
         )
     }
+    factory { ui.scenes.registration.RegistrationProviders(get(), get()) }
+    factory { ui.scenes.registration.RegistrationViewModel(get(), get()) }
     factory { ProfileScreenViewModel(get(), get(), get(), get(), get()) }
     factory { DevicesScreenViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { SecretsScreenViewModel(get(), get(), get(), get(), get()) }

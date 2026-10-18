@@ -21,12 +21,8 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
         let secretName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
         let secretValue = env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         tap("add-secret-fab", timeout: 180)
         typeSecretNameAndValue(name: secretName, value: secretValue)
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.47)).tap()
@@ -65,12 +61,8 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
     func createVaultAndWaitForJoins() throws {
         let vaultName = coordinatorVaultName(defaultValue: "test@test.ru")
         let secrets = configuredSecrets()
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         for secret in secrets {
             tap("add-secret-fab", timeout: 180)
             typeSecretNameAndValue(name: secret.name, value: secret.value)
@@ -113,27 +105,6 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
         XCTFail("Timed out waiting for orchestrator approval for iOS recovery cycle \(cycle)")
-    }
-
-    private func openManualEmailSignIn() {
-        let manual = app.descendants(matching: .any)["signin-email-manual"]
-        if manual.waitForExistence(timeout: 30) {
-            manual.tap()
-            return
-        }
-
-        let manualByText = app.buttons["Enter email manually"]
-        XCTAssertTrue(manualByText.waitForExistence(timeout: 10), "Manual email sign-in button was not visible")
-        manualByText.tap()
-    }
-
-    private func typeEmail(_ email: String) {
-        let field = app.descendants(matching: .any)["email-input"]
-        XCTAssertTrue(field.waitForExistence(timeout: 30), "Email input was not visible")
-        field.tap()
-        field.typeText(email)
-        dismissKeyboardIfNeeded()
-        waitUntilHittable(app.descendants(matching: .any)["manual-signin-continue"], timeout: 10)
     }
 
     private func typeSecretNameAndValue(name: String, value: String) {

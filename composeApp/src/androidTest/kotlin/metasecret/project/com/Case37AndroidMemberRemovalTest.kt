@@ -1153,7 +1153,7 @@ class Case37AndroidMemberRemovalTest {
         marker("ANDROID_TEST37_REMOVAL_TARGET_READY")
 
         composeRule.waitUntil(180_000) {
-            hasTag("signin-email-manual") &&
+            hasTag("orbit-enter") &&
                 !hasTag("tab-secrets") &&
                 !hasTag("tab-devices") &&
                 secretNames.none { hasTag("secret-row-$it") } &&
@@ -1163,7 +1163,7 @@ class Case37AndroidMemberRemovalTest {
                 !hasTag("alert-recovery-request-processing") &&
                 twoMemberIds.values.none { hasTag("remove-device-$it") }
         }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("signin-email-manual"))
+        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
         assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
         assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
         assertTrue(
@@ -1194,7 +1194,7 @@ class Case37AndroidMemberRemovalTest {
         marker("ANDROID_TEST39_REMOVAL_TARGET_READY")
 
         composeRule.waitUntil(180_000) {
-            hasTag("signin-email-manual") &&
+            hasTag("orbit-enter") &&
                 !hasTag("tab-secrets") &&
                 !hasTag("tab-devices") &&
                 secretNames.none { hasTag("secret-row-$it") } &&
@@ -1207,7 +1207,7 @@ class Case37AndroidMemberRemovalTest {
                 !hasTag("alert-join-request-processing") &&
                 threeMemberIds.values.none { hasTag("remove-device-$it") }
         }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("signin-email-manual"))
+        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
         assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
         assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
         assertTrue(
@@ -1239,7 +1239,7 @@ class Case37AndroidMemberRemovalTest {
         marker("ANDROID_TEST40_REMOVAL_TARGET_READY")
 
         composeRule.waitUntil(180_000) {
-            hasTag("signin-email-manual") &&
+            hasTag("orbit-enter") &&
                 !hasTag("tab-secrets") &&
                 !hasTag("tab-devices") &&
                 secretNames.none { hasTag("secret-row-$it") } &&
@@ -1252,7 +1252,7 @@ class Case37AndroidMemberRemovalTest {
                 !hasTag("alert-join-request-processing") &&
                 threeMemberIds.values.none { hasTag("remove-device-$it") }
         }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("signin-email-manual"))
+        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
         assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
         assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
         assertTrue(
@@ -1284,7 +1284,7 @@ class Case37AndroidMemberRemovalTest {
         marker("ANDROID_TEST44_REMOVAL_TARGET_READY")
 
         composeRule.waitUntil(180_000) {
-            hasTag("signin-email-manual") &&
+            hasTag("orbit-enter") &&
                 !hasTag("tab-secrets") &&
                 !hasTag("tab-devices") &&
                 secretNames.none { hasTag("secret-row-$it") } &&
@@ -1297,7 +1297,7 @@ class Case37AndroidMemberRemovalTest {
                 !hasTag("alert-join-request-processing") &&
                 threeMemberIds.values.none { hasTag("remove-device-$it") }
         }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("signin-email-manual"))
+        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
         assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
         assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
         assertTrue(
@@ -1329,7 +1329,7 @@ class Case37AndroidMemberRemovalTest {
         marker("ANDROID_TEST41_REMOVAL_TARGET_READY")
 
         composeRule.waitUntil(180_000) {
-            hasTag("signin-email-manual") &&
+            hasTag("orbit-enter") &&
                 !hasTag("tab-secrets") &&
                 !hasTag("tab-devices") &&
                 secretNames.none { hasTag("secret-row-$it") } &&
@@ -1342,7 +1342,7 @@ class Case37AndroidMemberRemovalTest {
                 !hasTag("alert-join-request-processing") &&
                 twoMemberIds.values.none { hasTag("remove-device-$it") }
         }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("signin-email-manual"))
+        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
         assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
         assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
         assertTrue(
@@ -1374,7 +1374,7 @@ class Case37AndroidMemberRemovalTest {
         marker("ANDROID_TEST45_REMOVAL_TARGET_READY")
 
         composeRule.waitUntil(180_000) {
-            hasTag("signin-email-manual") &&
+            hasTag("orbit-enter") &&
                 !hasTag("tab-secrets") &&
                 !hasTag("tab-devices") &&
                 secretNames.none { hasTag("secret-row-$it") } &&
@@ -1387,7 +1387,7 @@ class Case37AndroidMemberRemovalTest {
                 !hasTag("alert-join-request-processing") &&
                 twoMemberIds.values.none { hasTag("remove-device-$it") }
         }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("signin-email-manual"))
+        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
         assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
         assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
         assertTrue(

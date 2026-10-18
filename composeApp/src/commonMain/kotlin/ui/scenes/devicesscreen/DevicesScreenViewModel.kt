@@ -49,6 +49,9 @@ class DevicesScreenViewModel(
     val pendingRemovalTargets = _pendingRemovalTargets.asStateFlow()
 
     val vaultName = vaultStatsProvider.vaultName
+
+    private val _addDeviceQrName = MutableStateFlow<String?>(null)
+    val addDeviceQrName = _addDeviceQrName.asStateFlow()
     
     init {
         alertCoordinator.setJoinRequestHandler { isAccepted ->
@@ -88,6 +91,7 @@ class DevicesScreenViewModel(
         }
         viewModelScope.launch {
             vaultStatsProvider.vaultName.collect { name ->
+                if (_addDeviceQrName.value != name) _addDeviceQrName.value = null
                 _devicesList.value = _devicesList.value.map { it.copy(vaultName = name ?: it.vaultName) }
             }
         }
@@ -97,6 +101,10 @@ class DevicesScreenViewModel(
         if (event is DeviceViewEvents) {
             when (event) {
                 DeviceViewEvents.OnAppear -> loadDevicesList(false)
+                DeviceViewEvents.OpenAddDevice -> {
+                    _addDeviceQrName.value = vaultName.value?.takeUnless(String::isBlank)
+                }
+                DeviceViewEvents.CloseAddDevice -> _addDeviceQrName.value = null
                 DeviceViewEvents.Accept -> authenticateAndUpdateMembership(true)
                 DeviceViewEvents.Decline -> authenticateAndUpdateMembership(false)
                 is DeviceViewEvents.RemoveRequested -> authenticateAndRemove(event.deviceId, RemovalAction.Request)
@@ -271,6 +279,8 @@ private enum class RemovalAction {
 
 sealed class DeviceViewEvents : CommonViewModelEventsInterface {
     data object OnAppear : DeviceViewEvents()
+    data object OpenAddDevice : DeviceViewEvents()
+    data object CloseAddDevice : DeviceViewEvents()
     data object Accept : DeviceViewEvents()
     data object Decline : DeviceViewEvents()
     data class RemoveRequested(val deviceId: String) : DeviceViewEvents()

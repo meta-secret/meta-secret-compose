@@ -62,7 +62,7 @@ import ui.dialogs.AlertProvider
 import ui.notifications.NotificationProvider
 import ui.notifications.WarningBubble
 import ui.theme.AppTextStyles
-import ui.scenes.signinscreen.SignInScreen
+import ui.scenes.registration.RegistrationScreen
 
 class MainScreen : Screen {
     @Composable
@@ -85,7 +85,7 @@ class MainScreen : Screen {
         LaunchedEffect(navigationEvent) {
             when (navigationEvent) {
                 MainNavigationEvent.NavigateToSignIn -> {
-                    navigator.rootNavigator().replaceAll(SignInScreen())
+                    navigator.rootNavigator().replaceAll(RegistrationScreen())
                     viewModel.consumeNavigationEvent()
                 }
 

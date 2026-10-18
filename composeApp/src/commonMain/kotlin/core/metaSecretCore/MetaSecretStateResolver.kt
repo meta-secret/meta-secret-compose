@@ -46,6 +46,11 @@ class MetaSecretStateResolver(
         return AppStateResult(memberResult.appState, null)
     }
 
+    override fun restorePreparedSignUp(): Boolean {
+        preparedVaultState = VaultState(metaSecretCore, logger)
+        return true
+    }
+
     override fun clearPreparedSignUp() {
         preparedVaultState = null
     }

@@ -11,6 +11,7 @@ interface MetaSecretSocketHandlerInterface {
     val socketActions: SharedFlow<SocketActionModel>
     val pendingRecoveryRequests: StateFlow<List<RestoreData>>
     fun actionsToFollow(add: List<SocketRequestModel>?, exclude: List<SocketRequestModel>?)
+    suspend fun pauseRefreshesAndAwait() { pauseRefreshes() }
     fun pauseRefreshes()
     fun resumeRefreshes()
     fun onAppLaunch()

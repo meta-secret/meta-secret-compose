@@ -1,5 +1,62 @@
 import XCTest
 
+/// Shared UI-only registration actions for all native XCTest actors.
+/// This source is already included in the UI test target; business markers stay
+/// in the scenario methods, after their observable completion conditions.
+@MainActor
+extension XCUIApplication {
+    func orbitEnterVaultName(_ name: String) {
+        let skip = descendants(matching: .any)["onboarding-skip"]
+        let enter = descendants(matching: .any)["orbit-enter"]
+        let landing = NSPredicate { _, _ in skip.exists || enter.exists }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: landing, object: nil)], timeout: 30), .completed,
+                       "Registration landing did not expose onboarding Skip or Orbit Enter")
+        if skip.exists { orbitTap("onboarding-skip") }
+        orbitTap("orbit-enter")
+        let field = descendants(matching: .any)["orbit-email-input"]
+        orbitWaitForTag("orbit-email-input")
+        field.tap()
+        // Back → Enter keeps the previous name; replace it instead of appending.
+        let existing = field.value as? String ?? ""
+        if !existing.isEmpty && existing != field.placeholderValue {
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count))
+        }
+        field.typeText(name)
+        orbitTap("orbit-ok")
+        orbitWaitForTag("orbit-phase-idle", timeout: 60)
+    }
+
+    func orbitCreateVault() {
+        orbitWaitForTag("orbit-transition-ready")
+        let create = descendants(matching: .any)["orbit-create"]
+        XCTAssertTrue(create.isEnabled, "Create requires a canonically available Vault name")
+        orbitTap("orbit-create")
+        orbitWaitForTag("tab-secrets", timeout: 180)
+    }
+
+    func orbitRequestJoin(awaitPending: Bool = true) {
+        orbitTap("orbit-join")
+        orbitTap("orbit-request")
+        if awaitPending { orbitWaitForTag("orbit-phase-pending", timeout: 180) }
+    }
+
+    func orbitTap(_ identifier: String) {
+        let element = descendants(matching: .any)[identifier]
+        let ready = descendants(matching: .any)["orbit-transition-ready"]
+        let actionable = NSPredicate { _, _ in
+            (identifier == "onboarding-skip" || ready.exists) && element.exists && element.isEnabled && element.isHittable
+        }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: actionable, object: nil)], timeout: 60), .completed,
+                       "Orbit control \(identifier) did not become actionable")
+        element.tap()
+    }
+
+    func orbitWaitForTag(_ identifier: String, timeout: TimeInterval = 30) {
+        XCTAssertTrue(descendants(matching: .any)[identifier].waitForExistence(timeout: timeout),
+                      "Orbit state/control \(identifier) was not observable")
+    }
+}
+
 @MainActor
 final class CaseOneJoinFromIosUITest: XCTestCase {
     private var app: XCUIApplication!
@@ -16,19 +73,13 @@ final class CaseOneJoinFromIosUITest: XCTestCase {
         let secretName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
         let secretValue = env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
 
         // The Compose click handler launches signUp() asynchronously. Wait for
         // its terminal pending state before notifying the orchestrator; emitting
         // the marker immediately after tap creates a race with the server sync.
-        waitForVisible(identifier: "email-confirmation-joining", timeout: 180)
+        waitForVisible(identifier: "orbit-phase-pending", timeout: 180)
         print("E2E: IOS_JOIN_REQUEST_SENT")
 
         waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
@@ -95,27 +146,6 @@ final class CaseOneJoinFromIosUITest: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
         XCTFail("Timed out waiting for orchestrator approval for iOS recovery cycle \(cycle)")
-    }
-
-    private func openManualEmailSignIn() {
-        let manual = app.descendants(matching: .any)["signin-email-manual"]
-        if manual.waitForExistence(timeout: 30) {
-            manual.tap()
-            return
-        }
-
-        let manualByText = app.buttons["Enter email manually"]
-        XCTAssertTrue(manualByText.waitForExistence(timeout: 10), "Manual email sign-in button was not visible")
-        manualByText.tap()
-    }
-
-    private func typeEmail(_ email: String) {
-        let field = app.descendants(matching: .any)["email-input"]
-        XCTAssertTrue(field.waitForExistence(timeout: 30), "Email input was not visible")
-        field.tap()
-        field.typeText(email)
-        dismissKeyboardIfNeeded()
-        waitUntilHittable(app.descendants(matching: .any)["manual-signin-continue"], timeout: 10)
     }
 
     private func tap(_ identifier: String, timeout: TimeInterval = 30) {

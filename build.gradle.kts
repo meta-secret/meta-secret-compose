@@ -10,6 +10,8 @@ plugins {
     id("io.github.ttypic.swiftklib") apply false
 }
 
+apply(from = "gradle/design-system.gradle.kts")
+
 tasks.register("koverReport") {
     group = "verification"
     description = "Generates ComposeApp Kover XML, HTML, and log coverage reports."

@@ -47,7 +47,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.compose.koinInject
 import ui.scenes.mainscreen.MainScreen
-import ui.scenes.signinscreen.SignInScreen
+import ui.scenes.registration.RegistrationScreen
 import core.AppColors
 import ui.theme.AppTextStyles
 import ui.ClassicButton
@@ -67,7 +67,7 @@ class OnboardingScreen : Screen {
 
         LaunchedEffect(currentPage) {
             if (currentPage == -1) {
-                navigator.push(SignInScreen())
+                navigator.push(RegistrationScreen())
             } else if (currentPage == -2) {
                 navigator.push(MainScreen())
             }

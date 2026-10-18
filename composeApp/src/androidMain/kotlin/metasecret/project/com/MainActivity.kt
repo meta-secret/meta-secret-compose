@@ -1,7 +1,13 @@
 package metasecret.project.com
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import android.os.Build
 import android.os.Bundle
+import android.content.Intent
 import android.window.OnBackInvokedDispatcher
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -20,7 +26,7 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import platform.App
 import core.AppleEmailRequesterAndroid
-import core.AppleEmailRequesterInterface
+import core.apple.AndroidAppleEmailBrowser
 import core.GoogleEmailRequesterAndroid
 import core.GoogleEmailRequesterInterface
 import core.BiometricAuthenticatorAndroid
@@ -32,6 +38,8 @@ import core.metaSecretCore.MetaSecretSocketHandlerInterface
 
 
 class MainActivity : FragmentActivity() {
+    private lateinit var appleEmailRequester: AppleEmailRequesterAndroid
+    private lateinit var appleBrowser: AndroidAppleEmailBrowser
 
     companion object {
         private var loadedActivityModule: Module? = null
@@ -55,9 +63,6 @@ class MainActivity : FragmentActivity() {
             single<GoogleEmailRequesterInterface> {
                 GoogleEmailRequesterAndroid(this@MainActivity)
             }
-            single<AppleEmailRequesterInterface> {
-                AppleEmailRequesterAndroid()
-            }
         }
 
         if (GlobalContext.getOrNull() == null) {
@@ -71,6 +76,12 @@ class MainActivity : FragmentActivity() {
             loadKoinModules(activityModule)
             loadedActivityModule = activityModule
         }
+
+        val applicationKoin = org.koin.java.KoinJavaComponent.getKoin()
+        appleEmailRequester = applicationKoin.get()
+        appleBrowser = applicationKoin.get()
+        appleEmailRequester.onHostDetached()
+        appleBrowser.attach(this)
 
         val keyValueStorage: KeyValueStorageInterface = org.koin.java.KoinJavaComponent.getKoin().get()
         keyValueStorage.resetKeyValueStorage()
@@ -93,12 +104,31 @@ class MainActivity : FragmentActivity() {
         }
 
         setContent {
-            App()
+            Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
+                App()
+            }
         }
+        appleEmailRequester.onReturn(intent?.action, intent?.dataString)
     }
 
     override fun onDestroy() {
+        if (::appleEmailRequester.isInitialized && appleBrowser.detach(this)) appleEmailRequester.onHostDetached()
         super.onDestroy()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (appleBrowser.owns(this)) appleEmailRequester.onReturn(intent.action, intent.dataString)
+    }
+
+    override fun onPause() {
+        if (::appleEmailRequester.isInitialized && appleBrowser.owns(this)) appleEmailRequester.onHostPaused()
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::appleEmailRequester.isInitialized && appleBrowser.owns(this)) appleEmailRequester.onHostResumed()
     }
 
     override fun onStart() {

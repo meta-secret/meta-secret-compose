@@ -1,5 +1,6 @@
 import XCTest
 import Foundation
+import CoreImage
 
 @MainActor
 final class CaseEightIosBothOfflineUITest: XCTestCase {
@@ -40,6 +41,245 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     private var app: XCUIApplication!
     private var test37DeviceTopologyDiagnosticsEmitted = false
 
+    private struct RegistrationCase51: Decodable {
+        let id: String
+        let runId: String
+        let actor: String
+        let platform: String
+        let provider: String
+        let vaultName: String
+        let retryVaultName: String?
+        let outcome: String?
+        let decision: String?
+        let stage: String?
+        let markerPrefix: String
+    }
+
+    /// Test51 uses the existing target-included source and persisted actor configuration.
+    /// Real provider account authorization and physical camera input are never replaced.
+    func handleRegistrationForTest51() throws {
+        struct Payload: Decodable { let registrationCase: RegistrationCase51 }
+        let config = try JSONDecoder().decode(Payload.self,
+            from: Data(contentsOf: URL(fileURLWithPath: Self.stepConfigPath))).registrationCase
+        XCTAssertEqual(config.platform, "ios")
+        XCTAssertTrue(config.markerPrefix.hasPrefix("TEST51_"))
+        XCTAssertTrue(["manual", "apple", "google"].contains(config.provider), "Unsupported registration provider")
+        switch config.actor {
+        case "create":
+            registration51ReadyInitial(config)
+            registration51EnterName(config.vaultName, available: true, provider: config.provider)
+            registration51Marker(config, "AVAILABLE")
+            app.orbitCreateVault()
+            registration51Marker(config, "CREATED")
+            try registration51GeneratedQr(config)
+        case "requester":
+            try registration51Requester(config)
+        case "responder":
+            registration51Responder(config)
+        default:
+            XCTFail("Unsupported Test51 registration actor")
+        }
+    }
+
+    private func registration51Marker(_ config: RegistrationCase51, _ action: String) {
+        print("E2E: \(config.markerPrefix)_\(action)")
+    }
+
+    private func registration51ReadyInitial(_ config: RegistrationCase51) {
+        let skip = app.descendants(matching: .any)["onboarding-skip"]
+        let enter = app.descendants(matching: .any)["orbit-enter"]
+        let landing = NSPredicate { _, _ in skip.exists || enter.exists }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: landing, object: nil)], timeout: 30), .completed,
+                       "Test51 expected initial provider screen01")
+        if skip.exists { app.orbitTap("onboarding-skip") }
+        app.orbitWaitForTag("orbit-transition-ready")
+        app.orbitWaitForTag("orbit-apple")
+        app.orbitWaitForTag("orbit-google")
+        XCTAssertEqual(app.descendants(matching: .any)["orbit-heading"].label, "MetaSecret")
+        XCTAssertFalse(app.descendants(matching: .any)["orbit-email-input"].exists)
+        XCTAssertFalse(app.descendants(matching: .any)["orbit-create"].exists)
+        registration51Marker(config, "READY")
+    }
+
+    private func registration51EnterName(_ name: String, available: Bool, provider: String = "manual") {
+        if provider == "manual" { app.orbitEnterVaultName(name) }
+        else {
+            // OS consent uses real accounts only; owner/manual handoff or preseeded account completes it.
+            app.orbitTap("orbit-\(provider)")
+            let resolved = NSPredicate { _, _ in
+                self.app.descendants(matching: .any)["orbit-phase-idle"].exists
+                    && self.app.descendants(matching: .any)["orbit-create"].exists
+                    && self.app.descendants(matching: .any)["orbit-heading"].label == name
+            }
+            XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: resolved, object: nil)], timeout: 120), .completed,
+                           "Real provider consent did not resolve the configured fixture Vault email")
+        }
+        app.orbitWaitForTag("orbit-transition-ready")
+        XCTAssertEqual(app.descendants(matching: .any)["orbit-heading"].label, name)
+        XCTAssertEqual(app.descendants(matching: .any)["orbit-create"].isEnabled, available,
+                       "Create availability must reflect Core's Vault lookup")
+        app.orbitWaitForTag("orbit-join")
+        XCTAssertEqual(app.descendants(matching: .any)["orbit-join"].isEnabled, !available,
+                       "Join must be enabled only when Core reports an existing Vault")
+    }
+
+    private func registration51Requester(_ config: RegistrationCase51) throws {
+        registration51ReadyInitial(config)
+        registration51EnterName(config.vaultName, available: false, provider: config.provider)
+        registration51Marker(config, "TAKEN")
+        app.orbitRequestJoin()
+        registration51Marker(config, "PENDING")
+        if config.outcome == "accepted" {
+            app.orbitWaitForTag("tab-secrets", timeout: 180)
+            registration51Marker(config, "MAIN")
+            return
+        }
+        XCTAssertTrue(config.outcome == "declined-retry" || config.outcome == "back-retry")
+        // Host proves positive scoped key count before allowing either incomplete-attempt Back.
+        waitForApproval(platform: "registration-\(config.id)-cleanup-presence-verified", cycle: "0")
+        if config.outcome == "declined-retry" {
+            app.orbitWaitForTag("orbit-phase-declined", timeout: 180)
+            registration51Marker(config, "DECLINED")
+        }
+        app.orbitTap("orbit-back")
+        let reset = NSPredicate { _, _ in
+            self.app.descendants(matching: .any)["orbit-transition-ready"].exists
+                && self.app.descendants(matching: .any)["orbit-apple"].exists
+                && self.app.descendants(matching: .any)["orbit-google"].exists
+                && self.app.descendants(matching: .any)["orbit-heading"].label == "MetaSecret"
+        }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: reset, object: nil)], timeout: 30), .completed,
+                       "Incomplete-attempt Back must clear registration and return to initial01")
+        // The host checks zero scoped key count before RESET01 and before another name is entered.
+        registration51Marker(config, "RESET_UI01")
+        waitForApproval(platform: "registration-\(config.id)-reset-verified", cycle: "0")
+        registration51Marker(config, "RESET01")
+        guard let retryName = config.retryVaultName, !retryName.isEmpty, retryName != config.vaultName else {
+            XCTFail("Test51 retry requires a different explicit existing Vault name"); return
+        }
+        registration51EnterName(retryName, available: false)
+        app.orbitRequestJoin()
+        registration51Marker(config, "RETRY_PENDING")
+        app.orbitWaitForTag("tab-secrets", timeout: 180)
+        registration51Marker(config, "MAIN")
+    }
+
+    private func registration51Responder(_ config: RegistrationCase51) {
+        enterSimulatorPasscodeIfNeeded()
+        tap("tab-devices", timeout: 60)
+        XCTAssertFalse(app.descendants(matching: .any)["pending-device-row"].exists, "Responder has stale pending UI")
+        XCTAssertFalse(app.descendants(matching: .any)["alert-join-request"].exists, "Responder has stale approval dialog")
+        registration51Marker(config, "READY")
+        waitForApproval(platform: "registration-\(config.id)-\(config.stage ?? "primary")", cycle: "0")
+        waitForVisible(identifier: "pending-device-row", timeout: 180)
+        let pendingRows = app.descendants(matching: .any).matching(NSPredicate(format: "identifier == %@", "pending-device-row"))
+        guard pendingRows.count == 1 else { XCTFail("Isolated Test51 requires exactly one pending candidate"); return }
+        let name = app.descendants(matching: .any)["pending-device-name"].label
+        XCTAssertFalse(name.isEmpty, "Core candidate name was empty")
+        let rows = registration51VisibleDeviceRows()
+        let currentRows = rows.filter { exactVisibleText("Current", belongsTo: $0) }
+        guard currentRows.count == 1 else { XCTFail("Receiving Current row must be uniquely visible"); return }
+        let currentRowIdentifier = currentRows[0].identifier
+        XCTAssertTrue(exactVisibleText(config.vaultName, belongsTo: pendingRows.element(boundBy: 0)))
+        XCTAssertTrue(exactVisibleText(name, belongsTo: pendingRows.element(boundBy: 0)))
+        XCTAssertFalse(rows.contains { exactVisibleText(name, belongsTo: $0) }, "Candidate name must not ambiguously match an existing device")
+        tap("pending-device-row")
+        waitForVisible(identifier: "alert-join-request", timeout: 30)
+        let accepted = config.decision == "accepted"
+        tap(accepted ? "alert-join-request-accept" : "alert-join-request-decline")
+        enterSimulatorPasscodeIfNeeded()
+        waitForHidden(identifier: "alert-join-request", timeout: 120)
+        waitForHidden(identifier: "pending-device-row", timeout: 120)
+        let terminal = NSPredicate { _, _ in
+            if accepted { return self.exactDeviceRowIdentifier(name: name, status: "Member") != nil }
+            // Core client_view filters Declined outsiders. Preserve the visible receiver as a non-empty AX witness.
+            let visibleRows = self.registration51VisibleDeviceRows()
+            return self.app.descendants(matching: .any)["tab-devices"].exists
+                && visibleRows.contains { $0.identifier == currentRowIdentifier }
+                && !visibleRows.contains { self.exactVisibleText(name, belongsTo: $0) }
+                && !self.app.descendants(matching: .any)["pending-device-row"].exists
+        }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: terminal, object: nil)], timeout: 120), .completed,
+                       "The correlated Core candidate did not reach the expected client-view postcondition")
+        registration51Marker(config, "DECIDED")
+    }
+
+    private func registration51VisibleDeviceRows() -> [XCUIElement] {
+        app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH %@", "device-row-"))
+            .allElementsBoundByIndex.filter { $0.exists && !$0.frame.isEmpty && self.app.frame.intersects($0.frame) }
+    }
+
+    private func registration51GeneratedQr(_ config: RegistrationCase51) throws {
+        tap("tab-devices", timeout: 60)
+        tap("add-device-fab")
+        waitForVisible(identifier: "add-device-dialog", timeout: 30)
+        let dialog = app.descendants(matching: .any)["add-device-dialog"]
+        let name = app.descendants(matching: .any)["vault-qr-name"]
+        let qr = app.descendants(matching: .any)["vault-name-qr"]
+        waitForVisible(identifier: "vault-qr-name", timeout: 30)
+        waitForVisible(identifier: "vault-name-qr", timeout: 30)
+        let viewport = dialog.frame.intersection(app.windows.firstMatch.frame)
+        // AddingDevice renders a fixed164dp square. AX reports only its clipped
+        // visible frame, so containment alone cannot prove the entire code is shown.
+        let expectedQrSide: CGFloat = 164
+        func fullyVisible() -> Bool {
+            guard dialog.exists, name.exists, qr.exists else { return false }
+            return !viewport.isEmpty && qr.frame.width > 0 && qr.frame.height > 0
+                && abs(qr.frame.width - expectedQrSide) <= 0.5
+                && abs(qr.frame.height - expectedQrSide) <= 0.5
+                && abs(qr.frame.width - qr.frame.height) <= 0.5
+                && name.frame.width > 0 && name.frame.height > 0
+                && viewport.contains(name.frame) && viewport.contains(qr.frame)
+        }
+        // Compose exposes the dismiss backdrop and sheet as AX siblings, without
+        // a native ScrollView. Start inside the observed QR pixels, never the backdrop.
+        for attempt in 1...8 {
+            if fullyVisible() { break }
+            let before = qr.frame
+            let visibleQr = before.intersection(viewport)
+            let visibleName = name.frame.intersection(viewport)
+            guard !visibleQr.isEmpty, !visibleName.isEmpty,
+                  visibleQr.midY > visibleName.midY + 12 else {
+                XCTFail("Clipped QR has no safe visible content anchors for an upward gesture"); return
+            }
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            let start = origin.withOffset(CGVector(dx: visibleQr.midX - app.frame.minX,
+                                                  dy: visibleQr.midY - app.frame.minY))
+            let end = origin.withOffset(CGVector(dx: visibleName.midX - app.frame.minX,
+                                                dy: visibleName.midY - app.frame.minY))
+            start.press(forDuration: 0.05, thenDragTo: end)
+            XCTAssertTrue(dialog.exists, "Content drag unexpectedly dismissed the Add-device sheet")
+            let moved = NSPredicate { _, _ in qr.exists && qr.frame.minY < before.minY - 1 }
+            let progress = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: moved, object: nil)], timeout: 5)
+            print("E2E: IOS_TEST51_QR_SCROLL attempt=\(attempt) before=\(diagnosticFrame(before)) after=\(diagnosticFrame(qr.frame)) moved=\(progress == .completed)")
+            guard progress == .completed else {
+                XCTFail("QR content did not move after its anchored drag; refusing an unchanged retry"); return
+            }
+        }
+        print("E2E: IOS_TEST51_QR_GEOMETRY viewport=\(diagnosticFrame(viewport)) name=\(diagnosticFrame(name.frame)) qr=\(diagnosticFrame(qr.frame)) fullyVisible=\(fullyVisible())")
+        XCTAssertTrue(fullyVisible(), "Generated Vault QR/name remained clipped after bounded dialog scrolling")
+        XCTAssertEqual(name.label, config.vaultName)
+        let capture = qr.screenshot()
+        let attachment = XCTAttachment(screenshot: capture)
+        attachment.name = "Test51 actual fully visible Vault QR"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        guard let image = capture.image.cgImage else { XCTFail("QR screenshot unavailable"); return }
+        // QRKit's existing iOS image-scanning path also uses CIDetector. CPU
+        // decoding is verified offline on actual QR pixels in this simulator.
+        let context = CIContext(options: [.useSoftwareRenderer: true])
+        guard let detector = CIDetector(ofType: CIDetectorTypeQRCode, context: context,
+            options: [CIDetectorAccuracy: CIDetectorAccuracyHigh]) else {
+            XCTFail("QR CPU decoder unavailable"); return
+        }
+        let decoded = detector.features(in: CIImage(cgImage: image))
+            .compactMap { ($0 as? CIQRCodeFeature)?.messageString }
+        // Boolean comparison avoids logging any unexpected decoded payload in an assertion diff.
+        XCTAssertTrue(decoded.count == 1 && decoded[0] == config.vaultName,
+                      "Real generated QR must decode to exactly the canonical Vault name")
+        registration51Marker(config, "QR_GENERATED")
+    }
+
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
@@ -64,14 +304,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     func joinWebInitiatedVault() throws {
         let vaultName = coordinatorVaultName(defaultValue: "test8@test.ru")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
         print("E2E: IOS_JOIN_REQUEST_SENT")
 
         for name in configuredSecretNames() {
@@ -85,14 +319,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     func joinWebInitiatedVaultForTest40() throws {
         let vaultName = coordinatorVaultName(defaultValue: "test40@test.ru")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
         print("E2E: IOS_TEST40_JOIN_REQUEST_SENT")
 
         for name in configuredSecretNames() {
@@ -106,14 +334,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     func joinWebInitiatedVaultForTest43() throws {
         let vaultName = coordinatorVaultName(defaultValue: "test43@test.ru")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
         print("E2E: IOS_TEST43_JOIN_REQUEST_SENT")
 
         for name in configuredSecretNames() {
@@ -136,14 +358,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     private func joinWebInitiatedVaultForTest46(markerPhase: String) throws {
         let vaultName = coordinatorVaultName(defaultValue: "test46@test.ru")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
         print("E2E: IOS_TEST46_\(markerPhase)_JOIN_REQUEST_SENT")
 
         for name in configuredSecretNames() {
@@ -157,14 +373,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     func joinWebInitiatedVaultForTest47() throws {
         let vaultName = coordinatorVaultName(defaultValue: "test47@test.ru")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
         print("E2E: IOS_TEST47_JOIN_REQUEST_SENT")
 
         for name in configuredSecretNames() {
@@ -179,14 +389,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     func joinAndroidInitiatedVaultForTest38() throws {
         let vaultName = coordinatorVaultName(defaultValue: "test38@test.ru")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
         print("E2E: IOS_TEST38_JOIN_REQUEST_SENT")
 
         for name in configuredSecretNames() {
@@ -200,14 +404,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     func joinAndroidInitiatedVaultForTest41() throws {
         let vaultName = coordinatorVaultName(defaultValue: "test41@test.ru")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
         print("E2E: IOS_TEST41_JOIN_REQUEST_SENT")
 
         for name in configuredSecretNames() {
@@ -221,14 +419,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     func joinAndroidInitiatedVaultForTest44() throws {
         let vaultName = coordinatorVaultName(defaultValue: "test44@test.ru")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
         print("E2E: IOS_TEST44_JOIN_REQUEST_SENT")
 
         for name in configuredSecretNames() {
@@ -242,14 +434,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     func joinAndroidInitiatedVaultForTest48() throws {
         let vaultName = coordinatorVaultName(defaultValue: "test48@test.ru")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
         print("E2E: IOS_TEST48_JOIN_REQUEST_SENT")
 
         for name in configuredSecretNames() {
@@ -368,7 +554,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST41_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["signin-email-manual"]
+        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
         let secretsTab = app.descendants(matching: .any)["tab-secrets"]
         let devicesTab = app.descendants(matching: .any)["tab-devices"]
         let removed = NSPredicate { _, _ in
@@ -517,7 +703,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST45_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["signin-email-manual"]
+        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
         let secretsTab = app.descendants(matching: .any)["tab-secrets"]
         let devicesTab = app.descendants(matching: .any)["tab-devices"]
         let removed = NSPredicate { _, _ in
@@ -667,7 +853,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST37_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["signin-email-manual"]
+        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
         let secretsTab = app.descendants(matching: .any)["tab-secrets"]
         let devicesTab = app.descendants(matching: .any)["tab-devices"]
         let removed = NSPredicate { _, _ in
@@ -977,7 +1163,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST38_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["signin-email-manual"]
+        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
         let secretsTab = app.descendants(matching: .any)["tab-secrets"]
         let devicesTab = app.descendants(matching: .any)["tab-devices"]
         let removed = NSPredicate { _, _ in
@@ -1054,7 +1240,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST42_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["signin-email-manual"]
+        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
         let secretsTab = app.descendants(matching: .any)["tab-secrets"]
         let devicesTab = app.descendants(matching: .any)["tab-devices"]
         let removed = NSPredicate { _, _ in
@@ -1131,7 +1317,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST43_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["signin-email-manual"]
+        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
         let secretsTab = app.descendants(matching: .any)["tab-secrets"]
         let devicesTab = app.descendants(matching: .any)["tab-devices"]
         let removed = NSPredicate { _, _ in
@@ -1217,7 +1403,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST46_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["signin-email-manual"]
+        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
         let secretsTab = app.descendants(matching: .any)["tab-secrets"]
         let devicesTab = app.descendants(matching: .any)["tab-devices"]
         let removed = NSPredicate { _, _ in
@@ -2803,12 +2989,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test24-secret1")
         let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test24-secret1-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
         createSecretForTest24Ui(name: secretName, value: secretValue)
         print("E2E: IOS_TEST24_SECRET1_READY")
@@ -2824,12 +3006,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test27-secret1")
         let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test27-secret1-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
         createSecretForTest24Ui(name: secretName, value: secretValue)
         print("E2E: IOS_TEST27_SECRET1_READY")
@@ -2844,12 +3022,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test30-secret1")
         let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test30-secret1-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
         createSecretForTest24Ui(name: secretName, value: secretValue)
         print("E2E: IOS_TEST30_SECRET1_READY")
@@ -2864,12 +3038,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test36-secret1")
         let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test36-secret1-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
         createSecretForTest24Ui(name: secretName, value: secretValue)
         print("E2E: IOS_TEST36_SECRET1_READY")
@@ -2884,12 +3054,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test33-secret1")
         let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test33-secret1-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
         createSecretForTest24Ui(name: secretName, value: secretValue)
         print("E2E: IOS_TEST33_SECRET1_READY")
@@ -2905,12 +3071,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test39-secret1")
         let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test39-secret1-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
         createSecretForTest24Ui(name: secretName, value: secretValue)
         print("E2E: IOS_TEST39_SECRET1_READY")
@@ -2924,12 +3086,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test42-secret1")
         let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test42-secret1-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
         createSecretForTest24Ui(name: secretName, value: secretValue)
         print("E2E: IOS_TEST42_SECRET1_READY")
@@ -2944,12 +3102,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test45-secret1")
         let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test45-secret1-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
         createSecretForTest24Ui(name: secretName, value: secretValue)
         print("E2E: IOS_TEST45_SECRET1_READY")
@@ -2964,12 +3118,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         guard let name = config.secretName, let value = config.secretValue else {
             XCTFail("Test50 requires explicit Secret selectors"); return
         }
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(coordinatorVaultName(defaultValue: "test50@test.ru"))
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(coordinatorVaultName(defaultValue: "test50@test.ru"))
+        app.orbitCreateVault()
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
         createSecretForTest24Ui(name: name, value: value, scrollForTest50: true)
         print("E2E: IOS_TEST50_SECRET1_READY")
@@ -3000,14 +3150,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     }
 
     func joinVaultForTest50() throws {
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(coordinatorVaultName(defaultValue: "test50@test.ru"))
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(coordinatorVaultName(defaultValue: "test50@test.ru"))
+        app.orbitRequestJoin()
         print("E2E: IOS_JOIN_REQUEST_SENT")
         // Request submission precedes membership acceptance. Pending Join has
         // unrelated scroll containers; only search after Main/Secrets is ready.
@@ -3343,12 +3487,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test49-secret1")
         let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test49-secret1-value")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitCreateVault()
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
         createSecretForTest24Ui(name: secretName, value: secretValue)
         print("E2E: IOS_TEST49_SECRET1_READY")
@@ -3857,27 +3997,18 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let vaultName = coordinatorVaultName(defaultValue: env("E2E_VAULT_NAME", defaultValue: "test21@test.ru"))
         let retryVaultName = env("E2E_RETRY_VAULT_NAME", defaultValue: "test21-retry@test.ru")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin(awaitPending: false)
 
-        waitForVisible(identifier: "email-confirmation-error", timeout: 120)
-        let error = app.descendants(matching: .any)["email-confirmation-error"]
+        app.orbitWaitForTag("orbit-phase-error", timeout: 120)
+        let error = app.descendants(matching: .any)["orbit-status"]
         XCTAssertTrue(error.label.lowercased().contains("maximum of 3 devices"), "Unexpected fourth-device error: \(error.label)")
         print("E2E: IOS_FOURTH_DEVICE_REJECTED")
         waitForApproval(platform: "ios-rejection", cycle: "1", step: "screenshot")
 
-        tap("email-confirmation-error-reset")
-        openManualEmailSignIn()
-        typeEmail(retryVaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
+        tap("orbit-back")
+        app.orbitEnterVaultName(retryVaultName)
+        app.orbitCreateVault()
         waitForVisible(identifier: "tab-secrets", timeout: 120)
         print("E2E: IOS_FOURTH_DEVICE_RETRY_REGISTERED")
     }
@@ -4603,22 +4734,6 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     private func skipOnboardingIfNeeded() {
         let skip = app.descendants(matching: .any)["onboarding-skip"]
         if skip.waitForExistence(timeout: 10) { skip.tap() }
-    }
-
-    private func openManualEmailSignIn() {
-        let manual = app.descendants(matching: .any)["signin-email-manual"]
-        if manual.waitForExistence(timeout: 30) { manual.tap(); return }
-        let manualByText = app.buttons["Enter email manually"]
-        XCTAssertTrue(manualByText.waitForExistence(timeout: 10))
-        manualByText.tap()
-    }
-
-    private func typeEmail(_ email: String) {
-        let field = app.descendants(matching: .any)["email-input"]
-        XCTAssertTrue(field.waitForExistence(timeout: 30))
-        field.tap()
-        field.typeText(email)
-        dismissKeyboardIfNeeded()
     }
 
     private func tap(_ identifier: String, timeout: TimeInterval = 30) {

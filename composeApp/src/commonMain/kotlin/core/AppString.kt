@@ -6,6 +6,37 @@ import org.koin.compose.koinInject
 import kotlinproject.composeapp.generated.resources.*
 
 enum class AppString {
+    orbitBrand,
+    orbitTagline,
+    startupTagline,
+    orbitAvailable,
+    orbitTaken,
+    orbitChecking,
+    orbitCreating,
+    orbitJoining,
+    orbitAwaiting,
+    orbitSyncing,
+    orbitDeclined,
+    orbitNetworkError,
+    orbitResetFailed,
+    orbitProviderUnavailable,
+    orbitInvalidEmail,
+    orbitInvalidQr,
+    orbitVaultNotFound,
+    orbitCreate,
+    orbitJoin,
+    orbitEnter,
+    orbitBack,
+    orbitApproved,
+    orbitRequest,
+    orbitQr,
+    orbitOk,
+    orbitEmailPlaceholder,
+    orbitApple,
+    orbitGoogle,
+    orbitCameraDenied,
+    orbitCameraError,
+
     deletionPending,
     deletionDeclined,
     deletionApproval,
@@ -18,8 +49,10 @@ enum class AppString {
     accept,
     accept_request_on_other_device,
     addDevice,
+    addDeviceAction,
     addDeviceAdvice,
     addSecret,
+    addSecretAction,
     addText,
     biometric_description,
     biometric_error_no_enrolled,
@@ -48,27 +81,15 @@ enum class AppString {
     devices_5,
     devicesList,
     downloadMetasecret,
-    emailSelectionApple,
     emailSelectionCouldNotGetEmail,
-    emailSelectionConfirmDescription,
-    emailSelectionConfirmTitle,
-    emailSelectionContinue,
-    emailSelectionDescription,
     emailSelectionErrorTitle,
-    emailSelectionGoogle,
     emailSelectionInvalidEmail,
-    emailSelectionManual,
-    emailSelectionManualDescription,
     emailSelectionManualHint,
     emailSelectionManualHintLine1,
     emailSelectionManualHintLine2,
-    emailSelectionManualTitle,
     emailSelectionPrivateRelayMessage,
     emailSelectionPrivateRelayTitle,
-    emailSelectionTitle,
     emailSelectionTryAgain,
-    emailSelectionBackToOptions,
-    emailSelectionChange,
     enable_biometric_required,
     errorBiometricAuthFailed,
     errorInternal,
@@ -83,8 +104,6 @@ enum class AppString {
     no,
     fromAllDevices,
     goto_devices_tab,
-    join,
-    joining,
     lackOfDevices,
     lackOfDevices_end,
     lackOfDevices_start,
@@ -107,7 +126,6 @@ enum class AppString {
     onBoardingTitle1,
     onBoardingTitle2,
     onBoardingTitle3,
-    orText,
     orUseQR,
     passwordType,
     pasteSeedHint,
@@ -156,11 +174,44 @@ enum class AppString {
 }
 
 fun AppString.resource(): StringResource = when (this) {
+    AppString.orbitBrand -> Res.string.orbitBrand
+    AppString.orbitTagline -> Res.string.orbitTagline
+    AppString.startupTagline -> Res.string.startupTagline
+    AppString.orbitAvailable -> Res.string.orbitAvailable
+    AppString.orbitTaken -> Res.string.orbitTaken
+    AppString.orbitChecking -> Res.string.orbitChecking
+    AppString.orbitCreating -> Res.string.orbitCreating
+    AppString.orbitJoining -> Res.string.orbitJoining
+    AppString.orbitAwaiting -> Res.string.orbitAwaiting
+    AppString.orbitSyncing -> Res.string.orbitSyncing
+    AppString.orbitDeclined -> Res.string.orbitDeclined
+    AppString.orbitNetworkError -> Res.string.orbitNetworkError
+    AppString.orbitResetFailed -> Res.string.orbitResetFailed
+    AppString.orbitProviderUnavailable -> Res.string.orbitProviderUnavailable
+    AppString.orbitInvalidEmail -> Res.string.orbitInvalidEmail
+    AppString.orbitInvalidQr -> Res.string.orbitInvalidQr
+    AppString.orbitVaultNotFound -> Res.string.orbitVaultNotFound
+    AppString.orbitCreate -> Res.string.orbitCreate
+    AppString.orbitJoin -> Res.string.orbitJoin
+    AppString.orbitEnter -> Res.string.orbitEnter
+    AppString.orbitBack -> Res.string.orbitBack
+    AppString.orbitApproved -> Res.string.orbitApproved
+    AppString.orbitRequest -> Res.string.orbitRequest
+    AppString.orbitQr -> Res.string.orbitQr
+    AppString.orbitOk -> Res.string.orbitOk
+    AppString.orbitEmailPlaceholder -> Res.string.orbitEmailPlaceholder
+    AppString.orbitApple -> Res.string.orbitApple
+    AppString.orbitGoogle -> Res.string.orbitGoogle
+    AppString.orbitCameraDenied -> Res.string.orbitCameraDenied
+    AppString.orbitCameraError -> Res.string.orbitCameraError
+
     AppString.accept -> Res.string.accept
     AppString.accept_request_on_other_device -> Res.string.accept_request_on_other_device
     AppString.addDevice -> Res.string.addDevice
+    AppString.addDeviceAction -> Res.string.addDeviceAction
     AppString.addDeviceAdvice -> Res.string.addDeviceAdvice
     AppString.addSecret -> Res.string.addSecret
+    AppString.addSecretAction -> Res.string.addSecretAction
     AppString.addText -> Res.string.addText
     AppString.biometric_description -> Res.string.biometric_description
     AppString.biometric_error_no_enrolled -> Res.string.biometric_error_no_enrolled
@@ -189,26 +240,14 @@ fun AppString.resource(): StringResource = when (this) {
     AppString.devices_5 -> Res.string.devices_5
     AppString.devicesList -> Res.string.devicesList
     AppString.downloadMetasecret -> Res.string.downloadMetasecret
-    AppString.emailSelectionApple -> Res.string.emailSelectionApple
-    AppString.emailSelectionBackToOptions -> Res.string.emailSelectionBackToOptions
-    AppString.emailSelectionChange -> Res.string.emailSelectionChange
-    AppString.emailSelectionConfirmDescription -> Res.string.emailSelectionConfirmDescription
-    AppString.emailSelectionConfirmTitle -> Res.string.emailSelectionConfirmTitle
-    AppString.emailSelectionContinue -> Res.string.emailSelectionContinue
     AppString.emailSelectionCouldNotGetEmail -> Res.string.emailSelectionCouldNotGetEmail
-    AppString.emailSelectionDescription -> Res.string.emailSelectionDescription
     AppString.emailSelectionErrorTitle -> Res.string.emailSelectionErrorTitle
-    AppString.emailSelectionGoogle -> Res.string.emailSelectionGoogle
     AppString.emailSelectionInvalidEmail -> Res.string.emailSelectionInvalidEmail
-    AppString.emailSelectionManual -> Res.string.emailSelectionManual
-    AppString.emailSelectionManualDescription -> Res.string.emailSelectionManualDescription
     AppString.emailSelectionManualHint -> Res.string.emailSelectionManualHint
     AppString.emailSelectionManualHintLine1 -> Res.string.emailSelectionManualHintLine1
     AppString.emailSelectionManualHintLine2 -> Res.string.emailSelectionManualHintLine2
-    AppString.emailSelectionManualTitle -> Res.string.emailSelectionManualTitle
     AppString.emailSelectionPrivateRelayMessage -> Res.string.emailSelectionPrivateRelayMessage
     AppString.emailSelectionPrivateRelayTitle -> Res.string.emailSelectionPrivateRelayTitle
-    AppString.emailSelectionTitle -> Res.string.emailSelectionTitle
     AppString.emailSelectionTryAgain -> Res.string.emailSelectionTryAgain
     AppString.enable_biometric_required -> Res.string.enable_biometric_required
     AppString.errorBiometricAuthFailed -> Res.string.errorBiometricAuthFailed
@@ -224,8 +263,6 @@ fun AppString.resource(): StringResource = when (this) {
     AppString.no -> Res.string.no
     AppString.fromAllDevices -> Res.string.fromAllDevices
     AppString.goto_devices_tab -> Res.string.goto_devices_tab
-    AppString.join -> Res.string.join
-    AppString.joining -> Res.string.joining
     AppString.lackOfDevices -> Res.string.lackOfDevices
     AppString.lackOfDevices_end -> Res.string.lackOfDevices_end
     AppString.lackOfDevices_start -> Res.string.lackOfDevices_start
@@ -248,7 +285,6 @@ fun AppString.resource(): StringResource = when (this) {
     AppString.onBoardingTitle1 -> Res.string.onBoardingTitle1
     AppString.onBoardingTitle2 -> Res.string.onBoardingTitle2
     AppString.onBoardingTitle3 -> Res.string.onBoardingTitle3
-    AppString.orText -> Res.string.or
     AppString.orUseQR -> Res.string.orUseQR
     AppString.passwordType -> Res.string.passwordType
     AppString.pasteSeedHint -> Res.string.pasteSeedHint

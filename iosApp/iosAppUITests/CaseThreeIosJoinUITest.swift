@@ -15,14 +15,8 @@ final class CaseThreeIosJoinUITest: XCTestCase {
         let vaultName = env("E2E_VAULT_NAME", defaultValue: "test3@test.ru")
         let secretName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
 
-        skipOnboardingIfNeeded()
-        openManualEmailSignIn()
-        typeEmail(vaultName)
-        tap("manual-signin-continue")
-        tap("email-confirmation-continue")
-        enterSimulatorPasscodeIfNeeded()
-        tap("email-confirmation-join", timeout: 60)
-        enterSimulatorPasscodeIfNeeded()
+        app.orbitEnterVaultName(vaultName)
+        app.orbitRequestJoin()
 
         print("E2E: IOS_JOIN_REQUEST_SENT")
 
@@ -91,27 +85,6 @@ final class CaseThreeIosJoinUITest: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
         XCTFail("Timed out waiting for orchestrator approval for iOS recovery cycle \(cycle)")
-    }
-
-    private func openManualEmailSignIn() {
-        let manual = app.descendants(matching: .any)["signin-email-manual"]
-        if manual.waitForExistence(timeout: 30) {
-            manual.tap()
-            return
-        }
-
-        let manualByText = app.buttons["Enter email manually"]
-        XCTAssertTrue(manualByText.waitForExistence(timeout: 10), "Manual email sign-in button was not visible")
-        manualByText.tap()
-    }
-
-    private func typeEmail(_ email: String) {
-        let field = app.descendants(matching: .any)["email-input"]
-        XCTAssertTrue(field.waitForExistence(timeout: 30), "Email input was not visible")
-        field.tap()
-        field.typeText(email)
-        dismissKeyboardIfNeeded()
-        waitUntilHittable(app.descendants(matching: .any)["manual-signin-continue"], timeout: 10)
     }
 
     private func tap(_ identifier: String, timeout: TimeInterval = 30) {

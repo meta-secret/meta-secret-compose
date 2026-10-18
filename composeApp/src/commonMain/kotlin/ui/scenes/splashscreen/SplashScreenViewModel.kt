@@ -47,9 +47,26 @@ class SplashScreenViewModel(
         if (event is SplashViewEvents) {
             when (event) {
                 SplashViewEvents.ON_APPEAR -> {
-                    authenticateWithBiometrics()
+                    checkLaunchDestination()
                 }
                 SplashViewEvents.BIOMETRIC_SUCCEEDED -> biometricSucceeded()
+            }
+        }
+    }
+
+    private fun checkLaunchDestination() {
+        viewModelScope.launch {
+            if (!keyChainManager.containsKey("master_key")) {
+                _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+            } else if (metaSecretAppManager.checkAuth() == AuthState.COMPLETED) {
+                authenticateWithBiometrics()
+            } else {
+                val snapshot = metaSecretAppManager.getStateModel()
+                if (snapshot?.success == true && snapshot.getVaultFullInfo() !is VaultFullInfo.Member) {
+                    _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                } else {
+                    _biometricState.value = BiometricState.Error(stringProvider.errorNetwork())
+                }
             }
         }
     }

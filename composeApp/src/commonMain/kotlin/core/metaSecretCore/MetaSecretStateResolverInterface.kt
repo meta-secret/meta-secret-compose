@@ -39,6 +39,8 @@ interface MetaSecretStateResolverInterface {
         vaultName: String
     ): PrepareSignUpResult
     suspend fun continueSignUp(): AppStateResult
+    /** Rebuild only the client wrapper after canonical non-member state was restored. */
+    fun restorePreparedSignUp(): Boolean = false
     fun clearPreparedSignUp()
 }
 

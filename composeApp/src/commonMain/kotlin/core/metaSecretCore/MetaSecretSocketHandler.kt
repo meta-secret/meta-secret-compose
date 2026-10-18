@@ -695,6 +695,16 @@ class MetaSecretSocketHandler(
         }
     }
 
+    override suspend fun pauseRefreshesAndAwait() {
+        isPaused = true
+        pendingRefresh = false
+        refreshJob?.let { job ->
+            job.cancel()
+            job.join()
+        }
+        refreshJob = null
+    }
+
     override fun pauseRefreshes() {
         logger.log(LogTag.SocketHandler.Message.RefreshesPaused, success = true)
         isPaused = true

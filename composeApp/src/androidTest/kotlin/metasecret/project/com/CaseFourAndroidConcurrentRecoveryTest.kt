@@ -30,14 +30,8 @@ class CaseFourAndroidConcurrentRecoveryTest {
         val vaultName = instrumentationArgument("vaultName", "test@test.ru")
         val secrets = secretDefinitions()
 
-        clickIfPresent("onboarding-skip", timeoutMillis = 10_000)
-        composeRule.waitForTag("signin-email-manual", 30_000)
-        composeRule.onNodeWithTag("signin-email-manual").performClick()
-        composeRule.waitForTag("email-input", 30_000)
-        composeRule.onNodeWithTag("email-input").performTextInput(vaultName)
-        composeRule.onNodeWithTag("manual-signin-continue").performClick()
-        composeRule.waitForTag("email-confirmation-continue", 30_000)
-        composeRule.onNodeWithTag("email-confirmation-continue").performClick()
+        composeRule.orbitEnterVaultName(vaultName)
+        composeRule.orbitCreateVault()
         composeRule.waitForTag("add-secret-fab", 180_000)
         val initialSecrets = initialSecretsToCreate(secrets)
         Log.i(

@@ -29,6 +29,7 @@ val googleServerClientId = providers.gradleProperty("GOOGLE_SERVER_CLIENT_ID").o
     ?: ""
 val appleClientId = providers.gradleProperty("APPLE_CLIENT_ID").orNull ?: ""
 val appleRedirectUri = providers.gradleProperty("APPLE_REDIRECT_URI").orNull ?: "metasecret://apple-auth"
+val appleEmailBrokerUrl = providers.gradleProperty("APPLE_EMAIL_BROKER_URL").orNull ?: ""
 val metaSecretEnvironment = providers.gradleProperty("META_SECRET_ENV").orNull ?: "remote"
 val metaSecretSocketUrl = providers.gradleProperty("META_SECRET_SOCKET_URL").orNull ?: ""
 val metaSecretE2eServerUrl = providers.gradleProperty("META_SECRET_E2E_SERVER_URL").orNull ?: ""
@@ -188,6 +189,21 @@ compose.resources {
     packageOfResClass = "kotlinproject.composeapp.generated.resources"
 }
 
+// Resources must be synced before preprocessing, not only before Kotlin compilation.
+tasks.configureEach {
+    if (
+        name.startsWith("convertXmlValueResourcesFor") ||
+        name.startsWith("copyNonXmlValueResourcesFor") ||
+        name.startsWith("generateResourceAccessorsFor") ||
+        name.startsWith("generateActualResourceCollectorsFor") ||
+        name.startsWith("generateExpectResourceCollectorsFor") ||
+        name == "generateComposeResClass" ||
+        (name.startsWith("compile") && name.contains("Kotlin"))
+    ) {
+        dependsOn(rootProject.tasks.named("prepareDesignSystem"))
+    }
+}
+
 android {
     namespace = "metasecret.project.com"
     compileSdk = 36
@@ -201,6 +217,7 @@ android {
 
     defaultConfig {
         applicationId = "metasecret.project.com"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -210,6 +227,7 @@ android {
         buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"$googleServerClientId\"")
         buildConfigField("String", "APPLE_CLIENT_ID", "\"$appleClientId\"")
         buildConfigField("String", "APPLE_REDIRECT_URI", "\"$appleRedirectUri\"")
+        buildConfigField("String", "APPLE_EMAIL_BROKER_URL", "\"${appleEmailBrokerUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
         buildConfigField("String", "META_SECRET_ENV", "\"$metaSecretEnvironment\"")
         buildConfigField("String", "META_SECRET_SOCKET_URL", "\"$metaSecretSocketUrl\"")
         buildConfigField("String", "META_SECRET_E2E_SERVER_URL", "\"$metaSecretE2eServerUrl\"")
@@ -252,7 +270,7 @@ dependencies {
 
     // Compose Testing
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    androidTestImplementation("androidx.compose.ui:ui-test-manifest")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
 }
 
