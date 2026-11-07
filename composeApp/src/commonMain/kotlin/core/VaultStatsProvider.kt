@@ -37,7 +37,8 @@ class VaultStatsProvider(
     init {
         scope.launch(Dispatchers.IO) {
             logger.log(LogTag.VaultStatsProvider.Message.StartFollow, success = true)
-            socketHandler.actionsToFollow(add = listOf(SocketRequestModel.GET_STATE, SocketRequestModel.RESPONSIBLE_TO_ACCEPT_JOIN), exclude = null)
+            socketHandler.actionsToFollow(add = listOf(SocketRequestModel.GET_STATE, SocketRequestModel
+                .RESPONSIBLE_TO_ACCEPT_JOIN), exclude = null)
         }
 
         scope.launch {

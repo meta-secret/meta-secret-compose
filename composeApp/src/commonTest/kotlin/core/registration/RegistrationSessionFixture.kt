@@ -3,6 +3,10 @@ package core.registration
 import core.KeyChainInterface
 import core.errors.ErrorMapper
 import core.metaSecretCore.*
+import core.metaSecretCore.liveboard.LegacyNativeReadComposition
+import core.metaSecretCore.liveboard.NativeManagerPorts
+import core.metaSecretCore.liveboard.NativeManagerPresentation
+import core.metaSecretCore.liveboard.NativeRegistrationLifecycle
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.serialization.encodeToString
 import models.apiModels.*
@@ -16,11 +20,15 @@ internal class RegistrationSessionFixture {
     val cache = FakeAppStateCacheProvider()
     val socket = RegistrationSocketStub()
     private val logger = FakeDebugLogger()
-    private val manager = MetaSecretAppManager(core, keys, storage, logger, FakeNotificationCoordinator(),
-        ErrorMapper(FakeStringProvider()), FakeLogFormatter(), cache)
+    private val formatter = FakeLogFormatter()
+    private val composition = LegacyNativeReadComposition(core, cache, logger, formatter)
+    private val manager = composition.manager(
+        NativeManagerPorts(core, keys, storage, logger),
+        NativeManagerPresentation(FakeNotificationCoordinator(), ErrorMapper(FakeStringProvider()), formatter, cache),
+    )
     val session = CoreRegistrationSession(
-        RegistrationCorePorts(core, manager, MetaSecretStateResolver(core, logger), socket),
-        RegistrationStoragePorts(keys, storage, cache),
+        RegistrationCorePorts(core, manager, MetaSecretStateResolver(core, logger, composition.reads, composition.operations), socket),
+        RegistrationStoragePorts(keys, storage, cache), NativeRegistrationLifecycle(composition.keyLifecycle(keys)),
     )
     suspend fun restorePending() = restoreIncomplete(UserDataOutsiderStatus.PENDING)
     suspend fun restoreDeclined() = restoreIncomplete(UserDataOutsiderStatus.DECLINED)

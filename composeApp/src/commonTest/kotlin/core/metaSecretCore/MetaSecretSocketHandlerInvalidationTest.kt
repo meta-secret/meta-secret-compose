@@ -3,6 +3,10 @@ package core.metaSecretCore
 import core.AppStateCacheProviderInterface
 import core.AppStateCacheProvider
 import core.errors.ErrorMapper
+import core.metaSecretCore.liveboard.LegacyNativeReadComposition
+import core.metaSecretCore.liveboard.NativeSocketPorts
+import core.metaSecretCore.liveboard.NativeSocketPresentation
+import core.metaSecretCore.liveboard.NativeSocketRuntime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -233,16 +237,14 @@ class MetaSecretSocketHandlerInvalidationTest {
         stateCache: core.AppStateCacheProviderInterface = FakeAppStateCacheProvider(),
     ): Pair<MetaSecretSocketHandler, FakeSocketClient> {
         val stringProvider = FakeStringProvider()
+        val logger = FakeDebugLogger()
+        val composition = LegacyNativeReadComposition(core, stateCache, logger)
+        runBlocking { composition.initializeImplicitCore() }
         val handler = MetaSecretSocketHandler(
-            metaSecretCore = core,
-            logger = FakeDebugLogger(),
-            notificationCoordinator = FakeNotificationCoordinator(),
-            errorMapper = ErrorMapper(stringProvider),
-            appStateCacheProvider = stateCache,
-            stringProvider = stringProvider,
-            socketClient = socketClient,
-            uiDispatcher = uiDispatcher,
-            socketDispatcher = socketDispatcher,
+            NativeSocketPorts(core, logger, FakeNotificationCoordinator(), ErrorMapper(stringProvider)),
+            NativeSocketPresentation(stateCache, stringProvider),
+            NativeSocketRuntime(socketClient, composition.operations, uiDispatcher, socketDispatcher),
+            composition.reads,
         )
         return handler to socketClient
     }
@@ -698,12 +700,18 @@ class MetaSecretSocketHandlerInvalidationTest {
                 buildAppState(currentDeviceId = "removedDevice", vaultName = "vault1")
             )
         }
-        val (handler, socketClient) = newHandler(core)
+        val cache = FakeAppStateCacheProvider()
+        val (handler, socketClient) = newHandler(core, stateCache = cache)
         handler.onAppForeground()
-        waitUntil { core.getAppStateCalls == 1 }
+        waitUntil {
+            val cached = cache.appState.value
+            core.getAppStateCalls == 1 && cached?.success == true &&
+                cached.getVaultFullInfo() is VaultFullInfo.Member &&
+                cached.getCurrentDeviceId() == "removedDevice"
+        }
 
         var removalEvents = 0
-        val collector = launch {
+        val collector = launch(start = CoroutineStart.UNDISPATCHED) {
             handler.socketActions
                 .filter { it == SocketActionModel.CURRENT_DEVICE_REMOVED }
                 .collect { removalEvents += 1 }

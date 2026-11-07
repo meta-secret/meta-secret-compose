@@ -7,6 +7,8 @@ final class CaseThreeIosJoinUITest: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
+        app.lbApplyTestIdentity()
+        app.lbResetSelectors()
         app.launchEnvironment["METASECRET_UI_TEST_MODE"] = "true"
         app.launch()
     }
@@ -64,7 +66,7 @@ final class CaseThreeIosJoinUITest: XCTestCase {
     }
 
     private func skipOnboardingIfNeeded() {
-        let skip = app.descendants(matching: .any)["onboarding-skip"]
+        let skip = app.lbElement("onboarding-skip")
         if skip.waitForExistence(timeout: 10) {
             // A just-launched Compose screen can report the control before it
             // is actually hittable. Go through the common resilient tap path.
@@ -88,53 +90,28 @@ final class CaseThreeIosJoinUITest: XCTestCase {
     }
 
     private func tap(_ identifier: String, timeout: TimeInterval = 30) {
-        let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(identifier) was not visible")
-        if !element.isHittable {
-            dismissKeyboardIfNeeded()
-            waitUntilHittable(element, timeout: 10)
-        }
-        element.tap()
+        app.lbTapIntent(identifier, timeout: timeout)
     }
-
     private func waitForVisible(
         identifier: String,
         timeout: TimeInterval,
         failureMessage: String? = nil
     ) {
-        let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(
-            element.waitForExistence(timeout: timeout),
-            failureMessage ?? "\(identifier) was not visible"
-        )
+        app.lbWaitIntent(identifier, timeout: timeout)
     }
-
     private func waitForSecretAfterJoin(_ secretName: String, timeout: TimeInterval) {
-        let secret = app.descendants(matching: .any)["secret-row-\(secretName)"]
-        let deadline = Date().addingTimeInterval(timeout)
         print("E2E: IOS_WAITING_FOR_JOIN_APPROVAL")
-
-        while Date() < deadline {
-            if secret.exists {
-                return
-            }
-
-            if enterSimulatorPasscodeIfNeeded() {
-                print("E2E: IOS_LATE_JOIN_PASSCODE_ENTERED")
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
-        }
-
-        XCTFail("secret-row-\(secretName) was not visible after join approval")
+        app.lbWait({
+            if self.enterSimulatorPasscodeIfNeeded() { print("E2E: IOS_LATE_JOIN_PASSCODE_ENTERED") }
+            return self.app.lbElement("lb-home").exists
+        }, timeout: timeout)
+        _ = app.lbFindSecret(secretName, timeout: timeout)
     }
-
     private func waitForHidden(identifier: String, timeout: TimeInterval) {
-        let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(element.waitForNonExistence(timeout: timeout), "\(identifier) did not disappear")
+        app.lbWaitIntent(identifier, timeout: timeout, visible: false)
     }
-
     private func waitForText(_ text: String, timeout: TimeInterval) {
-        let element = app.descendants(matching: .any)[text]
+        let element = app.lbElement(text)
         XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(text) was not visible")
     }
 
@@ -150,13 +127,8 @@ final class CaseThreeIosJoinUITest: XCTestCase {
     }
 
     private func dismissKeyboardIfNeeded() {
-        if app.keyboards.element.exists {
-            app.keyboards.buttons["Done"].tapIfExists()
-            app.keyboards.buttons["Return"].tapIfExists()
-            app.tap()
-        }
+        app.lbDismissKeyboard()
     }
-
     @discardableResult
     private func enterSimulatorPasscodeIfNeeded() -> Bool {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")

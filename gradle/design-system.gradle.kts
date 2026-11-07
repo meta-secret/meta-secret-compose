@@ -38,8 +38,37 @@ fun orbitExecutable(name: String, override: String?, path: String, workingDirect
     failure()
 }
 
+fun liveboardManagedPaths(): Set<String> {
+    val kotlin = "composeApp/src/commonMain/kotlin/ui/design/generated/"
+    val resources = "composeApp/src/commonMain/composeResources/"
+    val tokenNames = listOf(
+        "OrbitTokens", "LiveboardTokens", "LiveboardGeometry", "LiveboardMotion", "LiveboardTimelines",
+        "LiveboardMotionSchema", "LiveboardScriptedGeometry", "LiveboardMaterials", "LiveboardStyles",
+        "LiveboardGlyphs", "LiveboardDeviceArt", "LiveboardUtilityArt", "LiveboardIcons",
+        "LiveboardStyleRulesA", "LiveboardStyleRulesB",
+    )
+    val orbitIcons = listOf("apple", "approved", "back", "cancel", "create", "enter", "fusion", "join", "ok", "qr", "request")
+    val liveboardIcons = listOf(
+        "approve", "back", "bell", "brand", "cancel", "close", "copy", "create", "current", "decline",
+        "delete", "error", "hide", "lock", "paste", "pending", "pending_device", "plus", "qr", "remove",
+        "reset", "search", "seed", "show",
+    )
+    return (
+        tokenNames.map { "$kotlin$it.kt" } +
+            orbitIcons.map { "${resources}drawable/orbit_$it.xml" } +
+            liveboardIcons.map { "${resources}drawable/liveboard_$it.xml" } +
+            listOf("geometry", "motion", "materials", "styles").map { "${resources}files/liveboard_$it.json" } +
+            listOf(
+                "${resources}files/liveboard_brand.svg",
+                "${resources}font/orbit_manrope_regular.otf",
+                "${resources}files/orbit_manrope_license.txt",
+            )
+        ).toSet()
+}
+
 fun orbitManagedPath(path: String): Boolean =
     path == "composeApp/src/commonMain/kotlin/ui/design/generated/OrbitTokens.kt" ||
+        path in liveboardManagedPaths() ||
         Regex(
             "composeApp/src/commonMain/composeResources/" +
                 "(drawable/orbit_[a-z]+\\.xml|font/orbit_manrope_regular\\.otf|files/orbit_manrope_license\\.txt)",
@@ -89,6 +118,15 @@ fun readOrbitLock(file: File): OrbitDesignLock {
     )
     if (!files.keys.containsAll(required)) {
         throw GradleException("Design-system lock is missing required tokens/font/license exports.")
+    }
+    if (version == "0.3.1") {
+        val accepted = liveboardManagedPaths()
+        if (!files.keys.containsAll(accepted)) {
+            throw GradleException("Design-system lock is missing required 0.3.1 exports: ${accepted - files.keys}")
+        }
+        if (files.keys != accepted) {
+            throw GradleException("Unexpected managed 0.3.1 design exports: ${files.keys - accepted}")
+        }
     }
     return OrbitDesignLock(version, files)
 }
@@ -176,6 +214,8 @@ val syncDesign = if (workspaceDesign) {
         inputs.files(fileTree(designPackage.resolve("tokens")), fileTree(designPackage.resolve("assets")))
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files(fileTree(designPackage.resolve("scripts")))
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(fileTree(designPackage.resolve("liveboard")), designPackage.resolve("brand/metasecret-gray.svg"))
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.property("nodeExecutable", tools.map { it.node.path })
         outputs.dir(designPackage.resolve("dist"))

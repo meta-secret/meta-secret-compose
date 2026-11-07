@@ -4,10 +4,22 @@ import XCTest
 @MainActor
 final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
     private var app: XCUIApplication!
+    private struct RecoveryShowSelection {
+        let app: XCUIApplication
+        let selection: LiveboardTestSelection
+        let namespace: String
+        let cycle: Int
+        let name: String
+        let passId: String
+    }
+    private var pendingRecoveryShow: RecoveryShowSelection?
 
     override func setUpWithError() throws {
         continueAfterFailure = false
+        pendingRecoveryShow = nil
         app = XCUIApplication()
+        app.lbApplyTestIdentity()
+        app.lbResetSelectors()
         app.launchEnvironment["METASECRET_UI_TEST_MODE"] = "true"
         let e2eServerUrl = (ProcessInfo.processInfo.environment["E2E_CORE_SERVER_URL"] ?? "")
             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
@@ -15,6 +27,11 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
             app.launchEnvironment["METASECRET_E2E_SERVER_URL"] = e2eServerUrl
         }
         app.launch()
+    }
+
+    override func tearDownWithError() throws {
+        pendingRecoveryShow = nil
+        try super.tearDownWithError()
     }
 
     func testJoinAndroidInitiatedVaultAndHandleConcurrentRecovery() throws {
@@ -84,7 +101,7 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         // member, then perform the iOS-owned creation and wait for the final
         // set on every device.
         let preExistingSecrets = secretsBeforeIosJoin(secrets, plan: secretCreationPlan)
-        waitForSecretsAfterJoin(preExistingSecrets, timeout: 180)
+        guard waitForSecretsAfterJoin(preExistingSecrets, timeout: 180) else { return }
         for secretName in configuredSecretNames(
             plan: secretCreationPlan,
             stage: "afterIosJoin",
@@ -94,9 +111,9 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
                 XCTFail("secretCreationPlan.afterIosJoin.ios contains unknown secret \(secretName)")
                 continue
             }
-            createSecret(secret)
+            guard createSecret(secret) else { return }
         }
-        waitForSecretsAfterJoin(secrets, timeout: 180)
+        guard waitForSecretsAfterJoin(secrets, timeout: 180) else { return }
         print("E2E: IOS_MAIN_AFTER_APPROVE")
         print("E2E: IOS_SECRETS_READY")
 
@@ -117,6 +134,8 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
                 return
             }
 
+            let originalSteps = Set(cycle.approvals.enumerated().filter { $0.element.platform == "ios" }.map { $0.offset + 1 })
+            var submittedContext: LiveboardFifoContext? = nil
             if let ownSecret = cycle.senderSecrets["ios"] {
                 waitForApproval(platform: "ios-sender", cycle: cycle.number)
                 requestRecovery(ownSecret, cycle: cycle.number)
@@ -127,31 +146,52 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
                 // the accepted claim. Close early only when iOS also needs
                 // to approve its peer's request in this cycle.
                 if cycle.approvals.contains(where: { $0.platform == "ios" }) {
+                    if cycle.senderSecrets.count == 2 {
+                        // Keep queued Recover alive until both exact canonical submissions exist.
+                        guard let scope = coordinator?.fifoScope, !scope.values.contains(""),
+                              let context = app.lbLoadFifo(cycle: cycle.number, expected: scope,
+                                                           expectedRequestCount: cycle.senderSecrets.count) else {
+                            XCTFail("Concurrent recovery requires the startup run-scoped FIFO context"); return
+                        }
+                        submittedContext = context
+                    }
                     closeShowSecretDialog()
                 }
             }
 
-            for (index, approval) in cycle.approvals.enumerated() where approval.platform == "ios" {
-                let step = index + 1
-                waitForIncomingRecovery(
-                    secretName: approval.secret,
-                    cycle: cycle.number,
-                    request: step,
-                    senderPlatforms: cycle.senderSecrets.keys.sorted().joined(separator: "+"),
-                    approvalPlatforms: cycle.approvals.map(\.platform).joined(separator: ","),
-                    timeout: 180
-                )
-                print("E2E: IOS_INCOMING_VISIBLE_\(cycle.number)_\(step)")
-                waitForApproval(platform: "ios-approve-\(step)", cycle: cycle.number)
-                approveIncomingRecovery(approval.secret, cycle: cycle.number, request: step)
-                print("E2E: IOS_APPROVED_INCOMING_\(cycle.number)_\(step)")
+            if cycle.offlineReceiver == nil && !originalSteps.isEmpty {
+                guard let scope = coordinator?.fifoScope, !scope.values.contains(""),
+                      let context = submittedContext ?? app.lbLoadFifo(cycle: cycle.number, expected: scope,
+                                                                      expectedRequestCount: cycle.senderSecrets.count) else {
+                    XCTFail("Concurrent recovery requires the startup run-scoped FIFO context"); return
+                }
+                var remaining = originalSteps
+                var completed: Set<String> = []
+                while !remaining.isEmpty {
+                    guard let (head, step) = app.lbFifoStep(context: context, completed: completed, remaining: remaining) else { return }
+                    print("E2E: IOS_INCOMING_VISIBLE_\(cycle.number)_\(step) claimId=\(head.requestId)")
+                    waitForApproval(platform: "ios-approve-\(step)", cycle: cycle.number)
+                    app.lbDecideCurrent(approve: true)
+                    completed.insert(head.requestId); remaining.remove(step)
+                    print("E2E: IOS_RECOVERY_APPROVE_SUCCESS_\(cycle.number)_\(step)")
+                    print("E2E: IOS_APPROVED_INCOMING_\(cycle.number)_\(step)")
+                }
+            } else {
+                for (index, approval) in cycle.approvals.enumerated() where approval.platform == "ios" {
+                    let step = index + 1
+                    waitForIncomingRecovery(secretName: approval.secret, cycle: cycle.number, request: step,
+                        senderPlatforms: cycle.senderSecrets.keys.sorted().joined(separator: "+"),
+                        approvalPlatforms: cycle.approvals.map(\.platform).joined(separator: ","), timeout: 180)
+                    print("E2E: IOS_INCOMING_VISIBLE_\(cycle.number)_\(step)")
+                    waitForApproval(platform: "ios-approve-\(step)", cycle: cycle.number)
+                    approveIncomingRecovery(approval.secret, cycle: cycle.number, request: step)
+                    print("E2E: IOS_APPROVED_INCOMING_\(cycle.number)_\(step)")
+                }
             }
 
             if let ownSecret = cycle.senderSecrets["ios"] {
                 waitForApproval(platform: "ios-show", cycle: cycle.number)
-                if cycle.approvals.contains(where: { $0.platform == "ios" }) {
-                    showAcceptedSecret(ownSecret, cycle: cycle.number)
-                }
+                showAcceptedSecret(ownSecret, cycle: cycle.number)
                 waitForVisible(identifier: "revealed-secret-value", timeout: 180)
                 print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle.number)")
                 closeShowSecretDialog()
@@ -208,13 +248,11 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
                 print("E2E: IOS_INCOMING_VISIBLE_\(cycle.number)_1")
                 print("E2E: IOS_NETWORK_LOSS_READY_\(cycle.number)")
                 waitForApproval(platform: "ios-offline-attempt", cycle: cycle.number)
-                tap("alert-recovery-request-accept")
+                app.lbSendDecision(approve: true)
                 enterSimulatorPasscodeIfNeeded()
                 print("E2E: IOS_OFFLINE_APPROVE_CLICKED_\(cycle.number)")
                 waitForApproval(platform: "ios-offline-online", cycle: cycle.number)
-                waitForVisible(identifier: "alert-recovery-request-accept", timeout: 120)
-                tap("alert-recovery-request-accept")
-                enterSimulatorPasscodeIfNeeded()
+                if app.lbResumeDecisionAfterReconnect() { app.lbDecideCurrent(approve: true) }
                 waitForHidden(identifier: "alert-recovery-request", timeout: 120)
                 waitForHidden(identifier: "alert-recovery-request-processing", timeout: 120)
                 print("E2E: IOS_APPROVED_AFTER_RECONNECT_\(cycle.number)_1")
@@ -251,6 +289,7 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         let secrets: [SecretDefinition]
         let recoveryPlan: [RecoveryCycle]
         let secretCreationPlan: [String: Any]?
+        let fifoScope: [String: String]?
     }
 
     private func loadCoordinatorScenario() -> CoordinatorScenario? {
@@ -271,7 +310,10 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
                     vaultName: vaultName,
                     secrets: secrets,
                     recoveryPlan: recoveryPlan,
-                    secretCreationPlan: raw["secretCreation"] as? [String: Any]
+                    secretCreationPlan: raw["secretCreation"] as? [String: Any],
+                    fifoScope: (raw["fifoVersion"] as? Int) == 1
+                        ? ["runId": raw["runId"] as? String ?? "", "testNumber": String(raw["testNumber"] as? Int ?? -1),
+                           "blockId": raw["blockId"] as? String ?? ""] : nil
                 )
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
@@ -438,97 +480,54 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
     }
 
     private func requestRecovery(_ secretName: String, cycle: Int) {
+        pendingRecoveryShow = nil
         logPrimaryAction(secretName, cycle: cycle, phase: "recover")
-        tap("secret-primary-action-\(secretName)")
-        enterSimulatorPasscodeIfNeeded()
-        waitForVisible(
-            identifier: "show-secret-dialog",
-            timeout: 30,
-            failureMessage: "recovery cycle \(cycle): Recover action did not open the secret dialog"
-        )
-        // The sender dialog stays open while the orchestrator coordinates the
-        // approvals. The Web-side incoming-claim badge is the authoritative
-        // synchronization point for the native recover() request; a success
-        // notification can be hidden behind this modal and is not a stable
-        // XCUI assertion.
+        app.lbRequestRecovery(secretName)
+        let selection = app.lbSelection
+        guard let namespace = recoveryShowNamespace(), let id = selection.secretId, !id.isEmpty,
+              selection.secrets[secretName] == id else {
+            XCTFail("Recovery selection continuity is unavailable"); return
+        }
+        let primary = app.descendants(matching: .any).matching(identifier: "lb-primary-\(id)")
+        let delete = app.descendants(matching: .any).matching(identifier: "lb-delete-\(id)")
+        guard primary.count == 1, delete.count == 1,
+              !primary.firstMatch.isEnabled, !delete.firstMatch.isEnabled else {
+            XCTFail("Exact recovery pending state is unavailable"); return
+        }
+        pendingRecoveryShow = RecoveryShowSelection(app: app, selection: selection, namespace: namespace,
+            cycle: cycle, name: secretName, passId: id)
         print("E2E: IOS_RECOVERY_DIALOG_OPEN_\(cycle)")
     }
-
     private func showAcceptedSecret(_ secretName: String, cycle: Int) {
+        let token = pendingRecoveryShow
+        pendingRecoveryShow = nil
+        guard let token, token.app === app, token.selection === app.lbSelection,
+              token.namespace == recoveryShowNamespace(), token.cycle == cycle, token.name == secretName,
+              !token.passId.isEmpty, app.lbSelection.secretId == token.passId,
+              app.lbSelection.secrets[secretName] == token.passId else {
+            XCTFail("Same-request Show continuity is unavailable"); return
+        }
         logPrimaryAction(secretName, cycle: cycle, phase: "show")
-        tap("secret-primary-action-\(secretName)")
-        enterSimulatorPasscodeIfNeeded()
-        waitForVisible(
-            identifier: "show-secret-dialog",
-            timeout: 30,
-            failureMessage: "recovery cycle \(cycle): Show action did not open the secret dialog"
-        )
+        app.lbShow(secretName, selectedId: token.passId)
     }
-
     private func logPrimaryAction(_ secretName: String, cycle: Int, phase: String) {
-        let action = app.descendants(matching: .any)["secret-primary-action-\(secretName)"]
-        XCTAssertTrue(
-            action.waitForExistence(timeout: 30),
-            "recovery cycle \(cycle): primary action was not visible before \(phase)"
-        )
-        print(
-            "E2E: IOS_PRIMARY_ACTION_\(cycle)_\(phase) " +
-                "label=\(action.label) value=\(action.value ?? "nil") " +
-                "enabled=\(action.isEnabled) hittable=\(action.isHittable)"
-        )
+        guard phase == "show" || phase == "recover" else { return }
+        print("E2E: IOS_PRIMARY_ACTION_\(cycle)_\(phase) status=INTENT")
     }
 
     private func closeShowSecretDialog() {
-        let dialog = app.descendants(matching: .any)["show-secret-dialog"]
-        let close = app.descendants(matching: .any)["show-secret-close"]
-        let deadline = Date().addingTimeInterval(30)
-        var tapAttempts = 0
-
-        // A state refresh can race the Compose dialog's exit transition. Treat
-        // the dialog itself as the source of truth, wait for the close control
-        // to become hittable, and retry only while the modal is still present.
-        // This is a semantic UI wait, not a fixed delay.
-        while Date() < deadline {
-            if !dialog.exists {
-                print("E2E: IOS_SHOW_SECRET_DIALOG_ALREADY_CLOSED")
-                return
-            }
-
-            if close.exists && close.isHittable {
-                tapAttempts += 1
-                print("E2E: IOS_SHOW_SECRET_CLOSE_ATTEMPT_\(tapAttempts)")
-                do {
-                    close.tap()
-                } catch {
-                    // A concurrent recovery update can remove and recreate
-                    // this accessibility element between the hittable check
-                    // and tap. Re-read the modal state and retry while it is
-                    // still present instead of failing on the stale handle.
-                    print(
-                        "E2E: IOS_SHOW_SECRET_CLOSE_STALE_\(tapAttempts) " +
-                            "dialogExists=\(dialog.exists)"
-                    )
-                    if !dialog.exists {
-                        return
-                    }
-                    continue
-                }
-                if dialog.waitForNonExistence(timeout: 5) {
-                    return
-                }
-            } else {
-                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-            }
-        }
-
-        print(
-            "E2E: IOS_SHOW_SECRET_CLOSE_TIMEOUT " +
-                "dialogExists=\(dialog.exists) closeExists=\(close.exists) " +
-                "closeHittable=\(close.isHittable) attempts=\(tapAttempts)"
-        )
-        XCTFail("show-secret-dialog did not disappear")
+        let revealed = app.lbSelection.secretId.map { app.descendants(matching: .any)["lb-value-\($0)"].exists } ?? false
+        app.lbCloseValueOrPending()
+        if revealed { pendingRecoveryShow = nil }
     }
-
+    private func recoveryShowNamespace() -> String? {
+        let key = "METASECRET_E2E_IDENTITY_NAMESPACE"
+        guard let namespace = app.launchEnvironment[key],
+              namespace == ProcessInfo.processInfo.environment[key], namespace.hasPrefix("f2-"),
+              let uuid = UUID(uuidString: String(namespace.dropFirst(3))),
+              namespace == "f2-" + uuid.uuidString.lowercased() else { return nil }
+        return namespace
+    }
     private func cycleSet(_ key: String, defaultValue: String) -> Set<Int> {
         Set(env(key, defaultValue: defaultValue).split(separator: ",").compactMap { Int($0) })
     }
@@ -540,25 +539,12 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
     }
 
     private func approveIncomingRecovery(_ secretName: String, cycle: Int, request: Int) {
-        tap("open-recovery-request-\(secretName)")
-        waitForVisible(
-            identifier: "alert-recovery-request",
-            timeout: 30,
-            failureMessage: "recovery cycle \(cycle), request \(request): approval alert was not visible"
-        )
-        tap("alert-recovery-request-accept")
-        enterSimulatorPasscodeIfNeeded()
-        waitForHidden(identifier: "alert-recovery-request", timeout: 120)
-        // The visible approval alert is replaced by a processing overlay while
-        // the native accept call is still running. Do not announce approval or
-        // tap the next Show action until that overlay is gone, otherwise the
-        // next tap is consumed by the overlay.
-        waitForHidden(identifier: "alert-recovery-request-processing", timeout: 120)
+        _ = app.lbIncoming(LiveboardIncomingExpected(kind: "Recover", subject: secretName))
+        app.lbDecideCurrent(approve: true)
         print("E2E: IOS_RECOVERY_APPROVE_SUCCESS_\(cycle)_\(request)")
     }
-
     private func skipOnboardingIfNeeded() {
-        let skip = app.descendants(matching: .any)["onboarding-skip"]
+        let skip = app.lbElement("onboarding-skip")
         if skip.waitForExistence(timeout: 10) {
             // A just-launched Compose screen can report the control before it
             // is actually hittable. Go through the common resilient tap path.
@@ -600,29 +586,18 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         return response.getData()
     }
 
-    private func typeSecretNameAndValue(name: String, value: String) {
-        let nameField = app.descendants(matching: .any)["secret-name-input"]
-        XCTAssertTrue(nameField.waitForExistence(timeout: 30), "secret-name-input was not visible")
-        // The add-secret dialog auto-focuses the name field. Tapping it again
-        // can report `not hittable` while the keyboard is animating in; the
-        // semantic existence check above is sufficient before typing.
-        nameField.typeText(name)
-
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.40)).tap()
-        let valueField = app.descendants(matching: .any)["secret-value-input"]
-        XCTAssertTrue(valueField.waitForExistence(timeout: 30), "secret-value-input was not visible")
-        valueField.typeText(value)
+    private func typeSecretNameAndValue(name: String, value: String) -> Bool {
+        app.lbFillCreate(name: name, value: value)
     }
-
-    private func createSecret(_ secret: SecretDefinition) {
+    private func createSecret(_ secret: SecretDefinition) -> Bool {
         print("E2E: IOS_CREATING_SECRET_\(secret.name)")
         tap("add-secret-fab", timeout: 180)
-        typeSecretNameAndValue(name: secret.name, value: secret.value)
+        guard typeSecretNameAndValue(name: secret.name, value: secret.value) else { return false }
         // The Compose dialog keeps the submit button behind the software
         // keyboard, so XCTest reports the accessibility button as existing
         // but not hittable. The established iOS E2E flow submits by tapping
         // the dialog's semantic button coordinate after both fields are set.
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.47)).tap()
+        app.lbSubmitCreate()
         enterSimulatorPasscodeIfNeeded()
         waitForVisible(
             identifier: "secret-row-\(secret.name)",
@@ -631,30 +606,19 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         )
         waitForHidden(identifier: "secret-name-input", timeout: 30)
         print("E2E: IOS_SECRET_ADDED_\(secret.name)")
+        return true
     }
 
     private func tap(_ identifier: String, timeout: TimeInterval = 30) {
-        let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(identifier) was not visible")
-        if !element.isHittable {
-            dismissKeyboardIfNeeded()
-            waitUntilHittable(element, timeout: 10)
-        }
-        element.tap()
+        app.lbTapIntent(identifier, timeout: timeout)
     }
-
     private func waitForVisible(
         identifier: String,
         timeout: TimeInterval,
         failureMessage: String? = nil
     ) {
-        let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(
-            element.waitForExistence(timeout: timeout),
-            failureMessage ?? "\(identifier) was not visible"
-        )
+        app.lbWaitIntent(identifier, timeout: timeout)
     }
-
     private func waitForIncomingRecovery(
         secretName: String,
         cycle: Int,
@@ -663,65 +627,37 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
         approvalPlatforms: String,
         timeout: TimeInterval
     ) {
-        let open = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
-        guard open.waitForExistence(timeout: timeout) else {
-            let row = app.descendants(matching: .any)["secret-row-\(secretName)"]
-            let badge = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
-            let alert = app.descendants(matching: .any)["alert-recovery-request"]
-            let processing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-            let showDialog = app.descendants(matching: .any)["show-secret-dialog"]
-            print(
-                "E2E: IOS_INCOMING_GATE_DIAGNOSTIC cycle=\(cycle) request=\(request) "
-                    + "platform=ios role=approver senders=\(senderPlatforms) "
-                    + "approvalPlatforms=\(approvalPlatforms) "
-                    + "secretRowExists=\(row.exists) secretRowHittable=\(row.isHittable) "
-                    + "openExists=\(open.exists) openHittable=\(open.isHittable) "
-                    + "badgeExists=\(badge.exists) badgeHittable=\(badge.isHittable) "
-                    + "recoveryAlertExists=\(alert.exists) recoveryAlertHittable=\(alert.isHittable) "
-                    + "processingExists=\(processing.exists) processingHittable=\(processing.isHittable) "
-                    + "showSecretDialogExists=\(showDialog.exists) "
-                    + "showSecretDialogHittable=\(showDialog.isHittable)"
-            )
-            XCTFail(
-                "recovery cycle \(cycle), request \(request): "
-                    + "incoming request was not visible before approval"
-            )
-            return
-        }
+        _ = app.lbIncoming(LiveboardIncomingExpected(kind: "Recover", subject: secretName), timeout: timeout)
     }
-
     private func waitForSecretAfterJoin(_ secretName: String, timeout: TimeInterval) {
-        let secret = app.descendants(matching: .any)["secret-row-\(secretName)"]
+        print("E2E: IOS_WAITING_FOR_JOIN_APPROVAL")
+        app.lbWait({
+            if self.enterSimulatorPasscodeIfNeeded() { print("E2E: IOS_LATE_JOIN_PASSCODE_ENTERED") }
+            return self.app.lbElement("lb-home").exists || self.app.lbElement("lb-secrets").exists
+        }, timeout: timeout)
+        _ = app.lbFindSecret(secretName, timeout: timeout)
+    }
+    private func waitForSecretsAfterJoin(_ secrets: [SecretDefinition], timeout: TimeInterval) -> Bool {
+        guard !secrets.isEmpty else { return true }
         let deadline = Date().addingTimeInterval(timeout)
         print("E2E: IOS_WAITING_FOR_JOIN_APPROVAL")
-
-        while Date() < deadline {
-            if secret.exists {
-                return
-            }
-
-            if enterSimulatorPasscodeIfNeeded() {
-                print("E2E: IOS_LATE_JOIN_PASSCODE_ENTERED")
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
-        }
-
-        XCTFail("secret-row-\(secretName) was not visible after join approval")
-    }
-
-    private func waitForSecretsAfterJoin(_ secrets: [SecretDefinition], timeout: TimeInterval) {
-        for secret in secrets {
-            waitForSecretAfterJoin(secret.name, timeout: timeout)
-        }
+        var mainReady = false
+        app.lbWait({
+            if self.enterSimulatorPasscodeIfNeeded() { print("E2E: IOS_LATE_JOIN_PASSCODE_ENTERED") }
+            mainReady = self.app.lbElement("lb-home").exists || self.app.lbElement("lb-secrets").exists
+            return mainReady
+        }, timeout: max(0, deadline.timeIntervalSinceNow))
+        guard mainReady, Date() < deadline else { XCTFail("Join readiness exceeded shared phase budget"); return false }
+        let resolved = app.lbFindSecrets(secrets.map(\.name), timeout: deadline.timeIntervalSinceNow)
+        XCTAssertEqual(resolved.count, secrets.count, "Every configured Secret requires exact scoped batch readiness")
+        return resolved.count == secrets.count && Date() < deadline
     }
 
     private func waitForHidden(identifier: String, timeout: TimeInterval) {
-        let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(element.waitForNonExistence(timeout: timeout), "\(identifier) did not disappear")
+        app.lbWaitIntent(identifier, timeout: timeout, visible: false)
     }
-
     private func waitForText(_ text: String, timeout: TimeInterval) {
-        let element = app.descendants(matching: .any)[text]
+        let element = app.lbElement(text)
         XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(text) was not visible")
     }
 
@@ -737,13 +673,8 @@ final class CaseFourIosConcurrentRecoveryUITest: XCTestCase {
     }
 
     private func dismissKeyboardIfNeeded() {
-        if app.keyboards.element.exists {
-            app.keyboards.buttons["Done"].tapIfExists()
-            app.keyboards.buttons["Return"].tapIfExists()
-            app.tap()
-        }
+        app.lbDismissKeyboard()
     }
-
     @discardableResult
     private func enterSimulatorPasscodeIfNeeded() -> Bool {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")

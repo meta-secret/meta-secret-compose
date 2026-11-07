@@ -25,7 +25,7 @@ class Case32AndroidOwnerTest {
 
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitCreateVault()
-        composeRule.waitForTag("add-secret-fab", 180_000)
+        composeRule.lbWaitMain(180_000)
 
         createSecret(secretName, secretValue)
         marker("ANDROID_TEST32_SECRET1_READY")
@@ -41,7 +41,7 @@ class Case32AndroidOwnerTest {
 
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitCreateVault()
-        composeRule.waitForTag("add-secret-fab", 180_000)
+        composeRule.lbWaitMain(180_000)
 
         createSecret(secretName, secretValue)
         marker("ANDROID_TEST35_SECRET1_READY")
@@ -57,7 +57,7 @@ class Case32AndroidOwnerTest {
 
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitCreateVault()
-        composeRule.waitForTag("add-secret-fab", 180_000)
+        composeRule.lbWaitMain(180_000)
 
         createSecret(secretName, secretValue)
         marker("ANDROID_TEST38_SECRET1_READY")
@@ -73,7 +73,7 @@ class Case32AndroidOwnerTest {
 
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitCreateVault()
-        composeRule.waitForTag("add-secret-fab", 180_000)
+        composeRule.lbWaitMain(180_000)
 
         createSecret(secretName, secretValue)
         marker("ANDROID_TEST41_SECRET1_READY")
@@ -89,7 +89,7 @@ class Case32AndroidOwnerTest {
 
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitCreateVault()
-        composeRule.waitForTag("add-secret-fab", 180_000)
+        composeRule.lbWaitMain(180_000)
 
         createSecret(secretName, secretValue)
         marker("ANDROID_TEST44_SECRET1_READY")
@@ -105,7 +105,7 @@ class Case32AndroidOwnerTest {
 
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitCreateVault()
-        composeRule.waitForTag("add-secret-fab", 180_000)
+        composeRule.lbWaitMain(180_000)
 
         createSecret(secretName, secretValue)
         marker("ANDROID_TEST48_SECRET1_READY")
@@ -117,14 +117,8 @@ class Case32AndroidOwnerTest {
         val target = argument("joinTarget", "ios").uppercase()
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-devices", 60_000)
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitForTagGone("alert-join-request", 120_000)
-        composeRule.waitForTagGone("pending-device-row", 120_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
 
         marker("ANDROID_TEST32_JOIN_APPROVED_$target")
     }
@@ -135,14 +129,8 @@ class Case32AndroidOwnerTest {
         val target = argument("joinTarget", "ios").uppercase()
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-devices", 60_000)
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitForTagGone("alert-join-request", 120_000)
-        composeRule.waitForTagGone("pending-device-row", 120_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
 
         marker("ANDROID_TEST35_JOIN_APPROVED_$target")
     }
@@ -152,14 +140,8 @@ class Case32AndroidOwnerTest {
         val target = argument("joinTarget", "ios").uppercase()
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-devices", 60_000)
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitForTagGone("alert-join-request", 120_000)
-        composeRule.waitForTagGone("pending-device-row", 120_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
 
         marker("ANDROID_TEST38_JOIN_APPROVED_$target")
     }
@@ -170,14 +152,8 @@ class Case32AndroidOwnerTest {
         val target = argument("joinTarget", "ios").uppercase()
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-devices", 60_000)
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitForTagGone("alert-join-request", 120_000)
-        composeRule.waitForTagGone("pending-device-row", 120_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
 
         marker("ANDROID_TEST41_JOIN_APPROVED_$target")
     }
@@ -188,14 +164,8 @@ class Case32AndroidOwnerTest {
         val target = argument("joinTarget", "ios").uppercase()
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-devices", 60_000)
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitForTagGone("alert-join-request", 120_000)
-        composeRule.waitForTagGone("pending-device-row", 120_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
 
         marker("ANDROID_TEST44_JOIN_APPROVED_$target")
     }
@@ -206,14 +176,8 @@ class Case32AndroidOwnerTest {
         val target = argument("joinTarget", "ios").uppercase()
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-devices", 60_000)
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitForTagGone("alert-join-request", 120_000)
-        composeRule.waitForTagGone("pending-device-row", 120_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
 
         marker("ANDROID_TEST48_JOIN_APPROVED_$target")
     }
@@ -225,9 +189,9 @@ class Case32AndroidOwnerTest {
         val cycle = argument("cycle", "2")
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-secrets", 60_000)
-        composeRule.onNodeWithTag("tab-secrets").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbSecrets()
+        composeRule.lbSecret(secretName, 180_000)
         marker("ANDROID_TEST35_SECRET_VISIBLE_$cycle")
     }
 
@@ -238,8 +202,8 @@ class Case32AndroidOwnerTest {
         val cycle = argument("cycle", "0")
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-secrets", 60_000)
-        composeRule.onNodeWithTag("tab-secrets").performClick()
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbSecrets()
         createSecret(secretName, secretValue)
         marker("ANDROID_TEST32_SECRET_CREATED_$cycle")
     }
@@ -251,21 +215,15 @@ class Case32AndroidOwnerTest {
         val cycle = argument("cycle", "0")
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-secrets", 60_000)
-        composeRule.onNodeWithTag("tab-secrets").performClick()
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbSecrets()
         createSecret(secretName, secretValue)
         marker("ANDROID_TEST38_SECRET_CREATED_$cycle")
     }
 
     private fun createSecret(secretName: String, secretValue: String) {
-        composeRule.waitForTag("add-secret-fab", 120_000)
-        composeRule.onNodeWithTag("add-secret-fab").performClick()
-        composeRule.waitForTag("secret-name-input", 30_000)
-        composeRule.onNodeWithTag("secret-name-input").performTextInput(secretName)
-        composeRule.onNodeWithTag("secret-value-input").performTextInput(secretValue)
-        composeRule.onNodeWithTag("add-secret-submit").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
-        composeRule.waitForTagGone("secret-name-input", 30_000)
+        composeRule.lbWaitMain(120_000)
+        composeRule.lbCreatePlain(secretName, secretValue)
     }
 
     private fun argument(name: String, fallback: String): String =

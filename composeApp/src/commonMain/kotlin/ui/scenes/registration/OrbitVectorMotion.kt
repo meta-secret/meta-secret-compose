@@ -25,7 +25,8 @@ import kotlin.math.sin
 internal fun OrbitAnimatedArt(action: OrbitAction, modifier: Modifier) {
     val vector = vectorResource(action.glyph.resource())
     val p by rememberInfiniteTransition(label = "icon groups").animateFloat(0f, 1f,
-        infiniteRepeatable(tween(if (action.glyph == OrbitGlyph.Request) 2000 else 2400, easing = LinearEasing)), label = "glyph phase")
+        infiniteRepeatable(tween(if (action.glyph == OrbitGlyph.Request) 2000 else 2400, easing = LinearEasing)),
+            label = "glyph phase")
     val builder = ImageVector.Builder(defaultWidth = vector.defaultWidth, defaultHeight = vector.defaultHeight,
         viewportWidth = vector.viewportWidth, viewportHeight = vector.viewportHeight)
     copyGroup(builder, vector.root, if (action.enabled) p else 0f, 1f)
@@ -76,6 +77,7 @@ private fun groupMotion(name: String, p: Float): GroupMotion {
                 else -> GroupMotion()
             }
         }
-        else -> if (name.startsWith("dot_")) GroupMotion(opacity = (.4 + .6 * (sin(p * 2 * PI) + 1) / 2).toFloat()) else GroupMotion()
+        else -> if (name.startsWith("dot_")) GroupMotion(opacity = (.4 + .6 * (sin(p * 2 * PI) + 1) / 2).toFloat()
+            ) else GroupMotion()
     }
 }

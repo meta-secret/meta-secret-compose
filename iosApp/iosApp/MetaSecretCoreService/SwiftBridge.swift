@@ -156,7 +156,25 @@ import Security
     }
 
     // MARK: - KeyChain
-    private let serviceName: String = "MetaSecret"
+    private static let testIdentityService: String? = {
+#if targetEnvironment(simulator)
+        let isSimulator = true
+#else
+        let isSimulator = false
+#endif
+        do {
+            return try resolveE2ETestIdentity(
+                marker: Bundle.main.object(forInfoDictionaryKey: "MetaSecretE2EIdentityRequired"),
+                namespace: ProcessInfo.processInfo.environment["METASECRET_E2E_IDENTITY_NAMESPACE"],
+                isSimulator: isSimulator
+            )
+        } catch {
+            preconditionFailure("Invalid E2E identity configuration")
+        }
+    }()
+    private var serviceName: String { SwiftBridge.testIdentityService ?? "MetaSecret" }
+
+    @objc public func e2eStorageSuiteName() -> String? { SwiftBridge.testIdentityService }
     @MainActor
     fileprivate static var appleEmailAuthDelegate: AppleEmailAuthDelegate?
     @MainActor

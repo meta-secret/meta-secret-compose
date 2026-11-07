@@ -1,8 +1,13 @@
 # Orbit registration
 
-The registration-only Compose module consumes design-system.lock.json version0.2.0,
-Manrope and generated resources in ui/design/generated and composeResources.
+Compose consumes design-system.lock.json version0.3.1, Manrope and generated
+resources in ui/design/generated and composeResources. The pin includes57 exports:
+15 Kotlin files,35 drawable XML files,5 Liveboard files and the existing font/license.
+Liveboard resources are prepared for later screen integration; their presence
+does not mean the new native Liveboard UI or its platform checks are complete.
 The approved visual source is the workspace-root Orbit05.13 prototype at eb9f704.
+The Orbit visual contract is unchanged:13 existing asset/font/license exports are
+byte-identical, and OrbitTokens changes only its generated package-version header.
 Legacy main, approval, secrets, recovery and settings retain their existing UI.
 
 ## Design resources during builds
@@ -17,7 +22,10 @@ build environment's PATH first; on macOS only, missing tools also use the known
 Homebrew locations `/opt/homebrew/bin` and `/usr/local/bin`. This supports IDE
 builds with a minimal PATH without changing the user's global shell settings.
 An old Node found on PATH fails its version check rather than silently switching
-to a Homebrew installation. Unchanged generation/sync inputs remain up-to-date.
+to a Homebrew installation. Generation tracks tokens, assets, imported scripts,
+the Liveboard source tree and the used brand/metasecret-gray.svg, alongside package
+metadata. A change to one of these inputs rebuilds and syncs the affected exports;
+unchanged generation/sync inputs remain up-to-date.
 
 Independent `-PdesignSystemNode=/absolute/path/to/node` and
 `-PdesignSystemNpm=/absolute/path/to/npm` overrides take precedence. Invalid
@@ -37,6 +45,10 @@ Tooling regressions run the actual Gradle Kotlin script in isolated fixtures:
 macOS Homebrew Node for the fallback cases; they do not install tools or launch
 the app. Logs default to `build/test-reports/toolchain`; set
 `DESIGN_SYSTEM_TEST_RECEIPTS` to retain a separate audit directory.
+Liveboard export-integrity and actual generation/cache regressions run with
+`python3 -m unittest discover -s gradle/tests -p 'test_design_system_liveboard_*.py' -v`.
+They apply the production Gradle script in owned temporary projects without app
+plugins; these are tooling checks, not native compilation or real-Core UI E2E.
 
 A standalone Compose checkout uses its committed generated resources and lock.
 JVM SHA-256 verification needs no Node/npm or sibling repository. Use
@@ -47,6 +59,13 @@ through the explicit shared design export/sync operation; Gradle does not
 silently replace the pinned package identity/version. Resource hash mismatches
 fail before compilation. Generated PNG captures under `docs/registration-orbit-visual`
 are ignored; its README and other authored documentation remain versioned.
+For0.3.1, verification requires the exact57 approved managed paths and their
+SHA-256 hashes; missing or unknown exports fail. Legacy minimal and complete0.2
+pins retain their standalone verification behavior. The version0.3.1 pin records
+the accepted source-manifest SHA-256
+`5872eee1ddce9959c7ee3857ccd84f0ea229cf0bb724cae102ff46accf82c837`.
+Its trusted shared-export handoff is checked separately during explicit adoption;
+a freely changed lock is not a manifest signature or security authority.
 
 ## Layers
 

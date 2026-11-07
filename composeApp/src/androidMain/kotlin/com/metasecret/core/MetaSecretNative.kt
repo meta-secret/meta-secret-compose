@@ -92,4 +92,30 @@ object MetaSecretNative {
     @JvmStatic
     fun showLocalSecret(secretId: String): String =
         uniffi.mobile_uniffi.showLocalSecret(secretId)
+
+    @JvmStatic
+    fun clusterDistributionChecked(name: String, value: String): String =
+        uniffi.mobile_uniffi.clusterDistributionChecked(name, value)
+
+    @JvmStatic
+    fun recoverChecked(secretId: String): String = uniffi.mobile_uniffi.recoverChecked(secretId)
+
+    @JvmStatic
+    fun decideJoinRequest(requestJson: String): String = uniffi.mobile_uniffi.decideJoinRequest(requestJson)
+
+    @JvmStatic
+    fun decideRemoveMember(requestJson: String): String = uniffi.mobile_uniffi.decideRemoveMember(requestJson)
+
+    @JvmStatic
+    fun deleteSecretChecked(secretId: String): String = uniffi.mobile_uniffi.deleteSecretChecked(secretId)
+
+    @JvmStatic
+    fun removeMemberChecked(targetDeviceId: String): String = uniffi.mobile_uniffi.removeMemberChecked(targetDeviceId)
+
+    @JvmStatic
+    fun reconcileProducerReceipt(reference: String): String = uniffi.mobile_uniffi.reconcileProducerReceipt(reference)
+
+    @JvmStatic
+    fun continueLocalRemoveChecked(reference: String): String = uniffi.mobile_uniffi.continueLocalRemoveChecked(
+        reference)
 }

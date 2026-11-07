@@ -4,7 +4,7 @@
 
 Read this file first. If you need details on any section, follow the links below.
 
-**Last updated:** 2026-09-20
+**Last updated:** 2026-10-30
 
 ---
 
@@ -65,6 +65,26 @@ must not reimplement these decisions. They may perform non-security UX
 validation (for example, reject an empty form field) and invoke platform UI
 such as biometry or navigation. A client may choose presentation (for example
 `Recover` versus `Show`) only from the status returned by Core.
+
+Recovery Approve/Decline is receiver-only: the current device must be the exact
+addressed receiver and Core must supply canApprove/canDecline. A requester cannot
+answer its own request; its consumption/completion and Show follow their separate
+existing roles ([Core actor rule](../../meta-secret-core/.ai/CONSTRAINTS.md#quick-reference)).
+
+For an already rendered, nondeleting Secret, local terminal Hide remains actionable
+independently of new Show/Recover readiness. It clears through the existing owner
+and privacy boundary without Core/auth/read; Copy and value-absent action guards remain.
+
+Core clientStatus, per-device delivery status and operation readiness are distinct.
+Done can coexist with waiting readiness; clients must not infer completion from
+waiting or a checked success/Queued/Unknown receipt. Next-Recover client selection
+cleanup and its measured verification scope are recorded in the [current issue status](../../UxRevolution/implementation/known-issues.md#lb009--следующий-явный-recover-после-core-done).
+
+### Client command lifetime and bounded manual retry
+
+A caller cancellation signal must revoke an unentered local command admission before a delayed caller continuation or late authentication can revive it. An already admitted native command instead completes under its original private owner; cancellation does not forget its outcome, cancel native work or allow replay.
+
+Manual Recover Approve after an error is allowed only from Core's exact invocation-bound notSubmitted evidence, the actual published-error acknowledgement and required fresh canonical reads for the same full request/session. A new user selection still requires fresh authentication and Core authorization. Unknown/post-dispatch outcomes stay blocked; display dismissal or an absent source alone grants no retry permission. See [client lifetime contract](../docs/liveboard.md#manual-recover-approve-after-a-proven-pre-dispatch-failure) and the Core binding contract.
 
 ### Authenticated state-events stream
 

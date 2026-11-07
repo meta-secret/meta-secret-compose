@@ -4,6 +4,9 @@ import core.BiometricAuthenticatorInterface
 import core.Secret
 import core.errors.ErrorMapper
 import core.metaSecretCore.MetaSecretAppManager
+import core.metaSecretCore.liveboard.LegacyNativeReadComposition
+import core.metaSecretCore.liveboard.NativeManagerPorts
+import core.metaSecretCore.liveboard.NativeManagerPresentation
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -67,9 +70,14 @@ class RemoveSecretViewModelTest {
     }
 
     private suspend fun createViewModel(core: FakeMetaSecretCore, auth: TestAuthenticator): RemoveSecretViewModel {
-        val manager = MetaSecretAppManager(core, FakeKeyChain(mutableMapOf("master_key" to "test-key")),
-            FakeKeyValueStorage(), FakeDebugLogger(), FakeNotificationCoordinator(), ErrorMapper(FakeStringProvider()),
-            FakeLogFormatter(), FakeAppStateCacheProvider())
+        val logger = FakeDebugLogger()
+        val formatter = FakeLogFormatter()
+        val cache = FakeAppStateCacheProvider()
+        val composition = LegacyNativeReadComposition(core, cache, logger, formatter)
+        val manager = composition.manager(
+            NativeManagerPorts(core, FakeKeyChain(mutableMapOf("master_key" to "test-key")), FakeKeyValueStorage(), logger),
+            NativeManagerPresentation(FakeNotificationCoordinator(), ErrorMapper(FakeStringProvider()), formatter, cache),
+        )
         manager.initWithSavedKey()
         return RemoveSecretViewModel(manager, auth, FakeSecretSocketHandler())
     }

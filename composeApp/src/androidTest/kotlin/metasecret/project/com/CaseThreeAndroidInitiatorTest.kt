@@ -28,13 +28,8 @@ class CaseThreeAndroidInitiatorTest {
 
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitCreateVault()
-        composeRule.waitForTag("add-secret-fab", 30_000)
-        composeRule.onNodeWithTag("add-secret-fab").performClick()
-        composeRule.waitForTag("secret-name-input", 30_000)
-        composeRule.onNodeWithTag("secret-name-input").performTextInput(secretName)
-        composeRule.onNodeWithTag("secret-value-input").performTextInput("test-secret-value")
-        composeRule.onNodeWithTag("add-secret-submit").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        composeRule.lbWaitMain(30_000)
+        composeRule.lbCreatePlain(secretName, "test-secret-value")
         // Match Test #2's one-secret owner setup: reveal and close once so the
         // owner's claim is initialized before Android sends recovery cycles.
         showCreatedSecret(secretName)
@@ -50,33 +45,16 @@ class CaseThreeAndroidInitiatorTest {
         )
         // Android is the recovery sender in Test #3. Web and iOS receive the
         // requests and the orchestrator chooses which one approves each cycle.
-        composeRule.onNodeWithTag("tab-secrets").performClick()
+        composeRule.lbSecrets()
         for (cycle in 1..recoveryCycles) {
             waitForApproval(approvalCoordinatorUrl, "android-sender", cycle)
-            val actionTag = "secret-primary-action-$secretName"
-            composeRule.waitForTag(actionTag, 45_000)
-            val action = composeRule.onNodeWithTag(actionTag)
-            val recoverActionReady = runCatching {
-                composeRule.waitUntil(45_000) {
-                    runCatching { action.assertTextContains("Recover", substring = true) }.isSuccess
-                }
-            }.isSuccess
-            action.printToLog("E2E_PRIMARY_ACTION_CYCLE_$cycle")
-            check(recoverActionReady) {
-                "Test #3 cycle $cycle: Android did not expose Recover for the same secret " +
-                    "within 45 seconds after the prior recovery was closed"
-            }
-            action.performClick()
+            composeRule.lbWaitPrimary(secretName, lbLabel(core.AppString.recover), 45_000)
+            Log.i("MetaSecretE2E", "E2E_PRIMARY_ACTION_CYCLE_$cycle actualRecoverReady=true")
+            composeRule.lbRequestRecovery(secretName)
             marker("ANDROID_RECOVERY_REQUEST_SENT_$cycle")
-            composeRule.waitForTag("revealed-secret-value", 180_000)
+            val shown = composeRule.lbRevealAccepted(secretName, "test-secret-value")
             marker("ANDROID_RECOVERY_SECRET_VISIBLE_$cycle")
-            composeRule.onNodeWithTag("show-secret-close").performClick()
-            composeRule.waitUntil(30_000) {
-                composeRule.onAllNodes(
-                    hasTestTag("revealed-secret-value"),
-                    useUnmergedTree = true,
-                ).fetchSemanticsNodes().isEmpty()
-            }
+            composeRule.lbHide(shown)
             marker("ANDROID_RECOVERY_CLOSED_$cycle")
         }
     }
@@ -86,7 +64,7 @@ class CaseThreeAndroidInitiatorTest {
         val vaultName = instrumentationArgument("vaultName", "test3@test.ru")
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitCreateVault()
-        composeRule.waitForTag("add-secret-fab", 180_000)
+        composeRule.lbWaitMain(180_000)
 
         val configuredNames = instrumentationArgument("secretNames", "").split(',').filter { it.isNotBlank() }
         val configuredValues = instrumentationArgument("secretValues", "").split(',')
@@ -120,32 +98,23 @@ class CaseThreeAndroidInitiatorTest {
         }
         // Join approval leaves the owner on Devices. Switch back to Secrets
         // before asserting that all configured secret rows are visible.
-        composeRule.onNodeWithTag("tab-secrets").performClick()
+        composeRule.lbSecrets()
         configuredSecrets.forEach { (name, _) ->
-            composeRule.waitForTag("secret-row-$name", 180_000)
-            composeRule.waitForTag("secret-primary-action-$name", 180_000)
+            composeRule.lbSecret(name, 180_000)
+            composeRule.lbWait("lb-primary-${composeRule.lbSecret(name)}")
         }
         marker("ANDROID_SECRETS_READY")
     }
 
     private fun createSecret(name: String, value: String) {
-        composeRule.onNodeWithTag("add-secret-fab").performClick()
-        composeRule.waitForTag("secret-name-input", 30_000)
-        composeRule.onNodeWithTag("secret-name-input").performTextInput(name)
-        composeRule.onNodeWithTag("secret-value-input").performTextInput(value)
-        composeRule.onNodeWithTag("add-secret-submit").performClick()
-        composeRule.waitForTag("secret-row-$name", 180_000)
-        composeRule.waitForTagGone("secret-name-input", 30_000)
+        composeRule.lbCreatePlain(name, value)
+    
     }
 
     private fun showCreatedSecret(name: String) {
-        composeRule.onNodeWithTag("secret-primary-action-$name")
-            .assertTextContains("Show", substring = true)
-            .performClick()
-        composeRule.waitForTag("revealed-secret-value", 180_000)
-        composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
-        composeRule.waitForTagGone("revealed-secret-value", 30_000)
-        composeRule.waitForTagGone("show-secret-dialog", 30_000)
+        val id = composeRule.lbShow(name)
+        composeRule.lbHide(id)
+    
     }
 
     private fun clickIfPresent(tag: String, timeoutMillis: Long) {
@@ -163,28 +132,14 @@ class CaseThreeAndroidInitiatorTest {
     private fun marker(message: String) = Log.i("MetaSecretE2E", "E2E: $message")
 
     private fun approvePendingJoin(marker: String) {
-        // The owner may currently be on Secrets. Open Devices proactively: this
-        // screen refreshes its list from state and exposes the pending request.
         marker("ANDROID_OPENING_DEVICES_FOR_JOIN_$marker")
-        composeRule.onNodeWithTag("tab-devices").performClick()
+        composeRule.lbHome()
         marker("ANDROID_DEVICES_TAB_OPENED_$marker")
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitUntil(120_000) {
-            composeRule.onAllNodes(hasTestTag("alert-join-request")).fetchSemanticsNodes().isEmpty()
-        }
-        // Closing the dialog only means that the UI dispatched the request.
-        // Do not tell the orchestrator that approval succeeded until Android
-        // has received the server state where this candidate is no longer
-        // pending. This distinguishes a real membership-write failure from a
-        // joiner's missed update.
+        val incoming = composeRule.lbIncoming("Join")
+        composeRule.lbDecide(incoming, true)
         marker("ANDROID_JOIN_APPROVAL_DISPATCHED_$marker")
-        composeRule.waitUntil(120_000) {
-            composeRule.onAllNodes(hasTestTag("pending-device-row")).fetchSemanticsNodes().isEmpty()
-        }
         marker(marker)
+    
     }
 
     private fun waitForApproval(coordinatorUrl: String, platform: String, cycle: Int) {

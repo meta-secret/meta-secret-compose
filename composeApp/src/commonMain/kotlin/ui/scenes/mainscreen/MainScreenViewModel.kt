@@ -15,11 +15,7 @@ import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
 import core.LogTag
 import core.ScreenMetricsProviderInterface
-import core.VaultStatsProviderInterface
 import core.BiometricAuthenticatorInterface
-import core.AlertCoordinatorInterface
-import core.AppStateCacheProviderInterface
-import core.KeyChainInterface
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import models.appInternalModels.RestoreData
@@ -33,10 +29,7 @@ class MainScreenViewModel(
     private val metaSecretAppManager: MetaSecretAppManagerInterface,
     private val biometricAuthenticator: BiometricAuthenticatorInterface,
     val screenMetricsProvider: ScreenMetricsProviderInterface,
-    private val vaultStatsProvider: VaultStatsProviderInterface,
-    private val alertCoordinator: AlertCoordinatorInterface,
-    private val keyChainManager: KeyChainInterface,
-    private val appStateCacheProvider: AppStateCacheProviderInterface,
+    private val dependencies: MainScreenDependencies,
 ) : CommonViewModel() {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -52,13 +45,12 @@ class MainScreenViewModel(
     val recoveredSecretTarget: StateFlow<RecoveredSecretTarget?> = _recoveredSecretTarget
     val pendingRecoveryRequests: StateFlow<List<RestoreData>> = socketHandler.pendingRecoveryRequests
 
-    val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
+    val devicesCount: StateFlow<Int> = dependencies.stats.devicesCount
 
     private val _isJoinBadgeDismissed = MutableStateFlow(false)
     private val _navigationEvent = MutableStateFlow<MainNavigationEvent>(MainNavigationEvent.Idle)
     val navigationEvent: StateFlow<MainNavigationEvent> = _navigationEvent
-    private var isCurrentDeviceRemovalResetInProgress = false
-    val hasJoinRequestsBadge: StateFlow<Boolean> = vaultStatsProvider.joinRequestsCount
+    val hasJoinRequestsBadge: StateFlow<Boolean> = dependencies.stats.joinRequestsCount
         .combine(_isJoinBadgeDismissed) { count, dismissed ->
             (count ?: 0) > 0 && !dismissed
         }
@@ -101,7 +93,7 @@ class MainScreenViewModel(
                 "secretId=${restoreData.secretId} senderType=${restoreData.senderType} " +
                 "alertBefore=$stateBefore",
         )
-        alertCoordinator.showRecoveryRequest(restoreData)
+        dependencies.alerts.showRecoveryRequest(restoreData)
         logger.e2eDiagnostic(
             "recovery-open-result claimId=${restoreData.claimId} " +
                 "alertAfter=${recoveryAlertStateDescription()}",
@@ -109,7 +101,7 @@ class MainScreenViewModel(
     }
 
     private fun recoveryAlertStateDescription(): String = when (
-        val state = alertCoordinator.recoveryRequestAlert.value
+        val state = dependencies.alerts.recoveryRequestAlert.value
     ) {
         is core.RecoveryRequestAlertState.Hidden -> "Hidden"
         is core.RecoveryRequestAlertState.Visible ->
@@ -125,32 +117,35 @@ class MainScreenViewModel(
             exclude = null
         )
 
-        alertCoordinator.setRecoveryRequestHandler { isAccepted ->
-            val currentState = alertCoordinator.recoveryRequestAlert.value
+        dependencies.alerts.setRecoveryRequestHandler { isAccepted ->
+            val currentState = dependencies.alerts.recoveryRequestAlert.value
             val restoreData = when (currentState) {
                 is core.RecoveryRequestAlertState.Visible -> currentState.restoreData
                 is core.RecoveryRequestAlertState.Processing -> currentState.restoreData
                 else -> {
-                    alertCoordinator.onRecoveryRequestProcessingComplete()
+                    dependencies.alerts.onRecoveryRequestProcessingComplete()
                     return@setRecoveryRequestHandler
                 }
             }
 
             if (!isAccepted) {
-                logger.log(LogTag.MainVM.Message.RecoverDeclined, "clicked claimId=${restoreData.claimId}", success = true)
+                logger.log(LogTag.MainVM.Message.RecoverDeclined, "clicked claimId=${restoreData.claimId}",
+                    success = true)
                 viewModelScope.launch(Dispatchers.IO) {
                     socketHandler.pauseRefreshes()
                     try {
-                        logger.log(LogTag.MainVM.Message.DeclineRecoverCalled, "claimId = ${restoreData.claimId}", success = true)
+                        logger.log(LogTag.MainVM.Message.DeclineRecoverCalled, "claimId = ${restoreData.claimId}",
+                            success = true)
                         metaSecretAppManager.declineRecover(restoreData.claimId)
                     } catch (t: Throwable) {
-                        logger.log(LogTag.MainVM.Message.DeclineRecoverFailed, "claimId = ${restoreData.claimId}: $t", success = false)
+                        logger.log(LogTag.MainVM.Message.DeclineRecoverFailed,
+                            "claimId = ${restoreData.claimId}: $t", success = false)
                         socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
                     } finally {
                         socketHandler.resumeRefreshes()
                         socketHandler.refreshAppState()
                         withContext<Unit>(Dispatchers.Main) {
-                            alertCoordinator.onRecoveryRequestProcessingComplete()
+                            dependencies.alerts.onRecoveryRequestProcessingComplete()
                         }
                     }
                 }
@@ -164,16 +159,18 @@ class MainScreenViewModel(
                     viewModelScope.launch(Dispatchers.IO) {
                         socketHandler.pauseRefreshes()
                         try {
-                            logger.log(LogTag.MainVM.Message.AcceptRecoverCalled, "claimId = ${restoreData.claimId}", success = true)
+                            logger.log(LogTag.MainVM.Message.AcceptRecoverCalled,
+                                "claimId = ${restoreData.claimId}", success = true)
                             metaSecretAppManager.acceptRecover(restoreData.claimId)
                         } catch (t: Throwable) {
-                            logger.log(LogTag.MainVM.Message.AcceptRecoverFailed, "claimId = ${restoreData.claimId}: $t", success = false)
+                            logger.log(LogTag.MainVM.Message.AcceptRecoverFailed,
+                                "claimId = ${restoreData.claimId}: $t", success = false)
                             socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
                         } finally {
                             socketHandler.resumeRefreshes()
                             socketHandler.refreshAppState()
                             withContext<Unit>(Dispatchers.Main) {
-                                alertCoordinator.onRecoveryRequestProcessingComplete()
+                                dependencies.alerts.onRecoveryRequestProcessingComplete()
                             }
                         }
                     }
@@ -181,17 +178,17 @@ class MainScreenViewModel(
                 onError = { error ->
                     logger.log(LogTag.MainVM.Message.BiometricAuthFailed, error, success = false)
                     socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
-                    alertCoordinator.onRecoveryRequestProcessingComplete()
+                    dependencies.alerts.onRecoveryRequestProcessingComplete()
                 },
                 onFallback = {
                     logger.log(LogTag.MainVM.Message.BiometricAuthFallback, success = false)
                     socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
-                    alertCoordinator.onRecoveryRequestProcessingComplete()
+                    dependencies.alerts.onRecoveryRequestProcessingComplete()
                 }
             )
         }
 
-        alertCoordinator.setRecoveryRequestDismissHandler { restoreData ->
+        dependencies.alerts.setRecoveryRequestDismissHandler { restoreData ->
             socketHandler.resetReadyToRecoverDedup(restoreData.claimId)
         }
 
@@ -202,11 +199,11 @@ class MainScreenViewModel(
         // that obsolete dialog.
         viewModelScope.launch {
             socketHandler.pendingRecoveryRequests.collect { pendingRequests ->
-                val visibleClaimId = (alertCoordinator.recoveryRequestAlert.value
+                val visibleClaimId = (dependencies.alerts.recoveryRequestAlert.value
                     as? core.RecoveryRequestAlertState.Visible)
                     ?.restoreData
                     ?.claimId
-                alertCoordinator.diagnostic(
+                dependencies.alerts.diagnostic(
                     "pending-collector pending=" +
                         pendingRequests.joinToString { "${it.claimId}:${it.secretId}" } +
                         " visibleClaim=${visibleClaimId ?: "none"} " +
@@ -215,7 +212,7 @@ class MainScreenViewModel(
                 if (visibleClaimId == null) return@collect
 
                 if (pendingRequests.none { it.claimId == visibleClaimId }) {
-                    alertCoordinator.diagnostic(
+                    dependencies.alerts.diagnostic(
                         "dismiss-origin=pending-list-collector visibleClaim=$visibleClaimId " +
                             "reason=claim-not-in-pending pending=" + pendingRequests.joinToString { it.claimId }
                     )
@@ -224,7 +221,7 @@ class MainScreenViewModel(
                         "claimId=$visibleClaimId is no longer pending",
                         success = true,
                     )
-                    alertCoordinator.dismissRecoveryRequest()
+                    dependencies.alerts.dismissRecoveryRequest()
                 }
             }
         }
@@ -234,9 +231,9 @@ class MainScreenViewModel(
                 when (action) {
                     is SocketActionModel.DISMISS_RECOVERY_REQUEST -> {
                         withContext(Dispatchers.Main) {
-                            val alertState = alertCoordinator.recoveryRequestAlert.value
+                            val alertState = dependencies.alerts.recoveryRequestAlert.value
                             val shouldDismiss = shouldDismissRecoveryRequest(alertState, action.claimId)
-                            alertCoordinator.diagnostic(
+                            dependencies.alerts.diagnostic(
                                 "dismiss-origin=socket-action-DISMISS_RECOVERY_REQUEST " +
                                     "completedClaim=${action.claimId} " +
                                     "visible=${recoveryAlertStateDescription()} matched=$shouldDismiss"
@@ -247,7 +244,7 @@ class MainScreenViewModel(
                                     "claimId=${action.claimId}",
                                     success = true,
                                 )
-                                alertCoordinator.dismissRecoveryRequest()
+                                dependencies.alerts.dismissRecoveryRequest()
                             }
                         }
                     }
@@ -280,7 +277,7 @@ class MainScreenViewModel(
                         }
                         withContext(Dispatchers.Main) {
                             _recoveredSecretTarget.value = null
-                            alertCoordinator.showRecoverDeclinedNotification()
+                            dependencies.alerts.showRecoverDeclinedNotification()
                         }
                     }
                     else -> { /* ignore */ }
@@ -289,7 +286,7 @@ class MainScreenViewModel(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            vaultStatsProvider.joinRequestsCount.collect { count ->
+            dependencies.stats.joinRequestsCount.collect { count ->
                 withContext(Dispatchers.Main) {
                     _joinRequestsCount.value = count
                     if ((count ?: 0) > 0) {
@@ -298,7 +295,7 @@ class MainScreenViewModel(
                         if (TabStateHolder.selectedTabIndex.value != 1) {
                             _isWarningShown.value = true
                         }
-                    } else if (vaultStatsProvider.devicesCount.value >= 3) {
+                    } else if (dependencies.stats.devicesCount.value >= WARNING_DEVICE_THRESHOLD) {
                         _isWarningShown.value = false
                         _isWarningDismissedByUser.value = false
                     }
@@ -343,37 +340,35 @@ class MainScreenViewModel(
 
     fun consumeNavigationEvent() {
         _navigationEvent.value = MainNavigationEvent.Idle
-        isCurrentDeviceRemovalResetInProgress = false
+        dependencies.consumeRemoval()
     }
 
     private suspend fun resetRemovedDeviceSession() {
-        if (isCurrentDeviceRemovalResetInProgress) return
-        isCurrentDeviceRemovalResetInProgress = true
-
+        val origin = dependencies.beginRemoval() ?: return
+        var receipt: core.metaSecretCore.liveboard.NativeKeyResult<Boolean>? = null
         logger.log(LogTag.MainVM.Message.CurrentDeviceRemovalReset, "started", success = true)
-        var localDataCleared = false
         try {
+            if (!dependencies.sameGeneration(origin)) return
             socketHandler.onAppBackground()
-            alertCoordinator.dismissJoinRequest()
-            alertCoordinator.dismissRecoveryRequest()
-            appStateCacheProvider.clearCache()
-            _recoveredSecretTarget.value = null
-            localDataCleared = keyChainManager.clearAll(isCleanDB = true)
+            receipt = dependencies.clearRemoval(origin) ?: return
+            val result = receipt
+            if (!dependencies.isCurrent(result)) return
+            dependencies.dismiss(result)
+            if (dependencies.isCurrent(result)) _recoveredSecretTarget.value = null
         } catch (t: Throwable) {
-            logger.log(
-                LogTag.MainVM.Message.CurrentDeviceRemovalReset,
-                "local cleanup failed: ${t.message}",
-                success = false,
-            )
+            logger.log(LogTag.MainVM.Message.CurrentDeviceRemovalReset, "local cleanup failed: ${t.message}",
+                success = false)
         } finally {
-            logger.log(
-                LogTag.MainVM.Message.CurrentDeviceRemovalReset,
-                "completed localDataCleared=$localDataCleared",
-                success = localDataCleared,
-            )
-            withContext(Dispatchers.Main) {
-                _navigationEvent.value = MainNavigationEvent.NavigateToSignIn
-            }
+            val result = receipt
+            val cleared = result?.value == true
+            logger.log(LogTag.MainVM.Message.CurrentDeviceRemovalReset, "completed localDataCleared=$cleared",
+                success = cleared)
+            try {
+                withContext(Dispatchers.Main) {
+                    if (result != null && dependencies.isCurrent(result)) _navigationEvent.value =
+                        MainNavigationEvent.NavigateToSignIn
+                }
+            } finally { dependencies.finishRemoval(origin, result) }
         }
     }
 
@@ -422,3 +417,5 @@ sealed class MainNavigationEvent {
     data object Idle : MainNavigationEvent()
     data object NavigateToSignIn : MainNavigationEvent()
 }
+
+private const val WARNING_DEVICE_THRESHOLD: Int = 3

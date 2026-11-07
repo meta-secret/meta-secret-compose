@@ -26,7 +26,8 @@ object OrbitTextStyles {
         letterSpacing = .2.sp, color = OrbitTokens.orbitColorSecondary,
     )
     @Composable
-    fun field() = TextStyle(fontFamily = family(), fontSize = OrbitTokens.orbitFontSizeField, color = OrbitTokens.orbitColorText)
+    fun field() = TextStyle(fontFamily = family(), fontSize = OrbitTokens.orbitFontSizeField, color = OrbitTokens
+        .orbitColorText)
     @Composable
     fun label() = TextStyle(
         fontFamily = family(), fontSize = OrbitTokens.orbitFontSizeActionLabel,

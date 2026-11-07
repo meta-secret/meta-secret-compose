@@ -103,7 +103,8 @@ class AddSecretViewModel(
         when (currentState) {
             AddSecretState.IDLE -> logger.log(LogTag.AddSecretVM.Message.WaitingForAddSecret, success = true)
             AddSecretState.IN_PROGRESS -> logger.log(LogTag.AddSecretVM.Message.InProgress, success = true)
-            AddSecretState.ADDED_SUCCESSFULLY -> logger.log(LogTag.AddSecretVM.Message.AddedSuccessfully, success = true)
+            AddSecretState.ADDED_SUCCESSFULLY -> logger.log(LogTag.AddSecretVM.Message.AddedSuccessfully, success =
+                true)
             AddSecretState.ADDING_FAILURE -> logger.log(LogTag.AddSecretVM.Message.AddingFailed, success = false)
             null -> logger.log(LogTag.AddSecretVM.Message.UnknownState, success = false)
         }

@@ -29,7 +29,8 @@ internal fun OrbitLoader(phase: RegistrationPhase, modifier: Modifier = Modifier
         infiniteRepeatable(tween(T.orbitDurationLoaderWave, easing = LinearEasing)), label = "bars")
     val reveal = remember { Animatable(0f) }
     LaunchedEffect(phase) {
-        if ((phase == RegistrationPhase.Requesting || phase == RegistrationPhase.Pending) && currentCoroutineContext()[MotionDurationScale]?.scaleFactor != 0f) delay(T.orbitDurationJoinFusion.toLong())
+        if ((phase == RegistrationPhase.Requesting || phase == RegistrationPhase.Pending) &&
+            currentCoroutineContext()[MotionDurationScale]?.scaleFactor != 0f) delay(T.orbitDurationJoinFusion.toLong())
         reveal.animateTo(1f, tween(T.orbitDurationLoaderReveal))
     }
     val join = phase in setOf(RegistrationPhase.Requesting, RegistrationPhase.Pending, RegistrationPhase.Syncing)
@@ -38,7 +39,8 @@ internal fun OrbitLoader(phase: RegistrationPhase, modifier: Modifier = Modifier
         repeat(count) { index ->
             val fraction = index.toFloat() / (count - 1)
             if ((phase == RegistrationPhase.Creating && fraction > reveal.value) ||
-                (phase != RegistrationPhase.Creating && kotlin.math.abs(fraction - .5f) > reveal.value / 2)) return@repeat
+                (phase != RegistrationPhase.Creating && kotlin.math.abs(fraction - .5f) > reveal.value / 2)
+                    ) return@repeat
             val x = size.width * fraction
             if (join && kotlin.math.abs(x - size.width / 2) < 34.dp.toPx()) return@repeat
             val strength = ((sin((wave + index * .095f) * 2 * PI) + 1) / 2).toFloat()

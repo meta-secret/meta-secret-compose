@@ -16,7 +16,8 @@ import core.LogFormatterInterface
 import java.io.File
 import metasecret.project.com.BuildConfig
 
-class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
+class MetaSecretCoreServiceAndroid : MetaSecretCoreInterface,
+    core.metaSecretCore.MetaSecretLiveboardOperationsInterface by AndroidLiveboardOperations {
 
     private fun e2eLog(message: String) {
         Log.i("MetaSecretE2E", "E2E: $message")
@@ -29,7 +30,8 @@ class MetaSecretCoreServiceAndroid: MetaSecretCoreInterface {
     private val context: Context by inject(Context::class.java)
 private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.java)
     private val logFormatter: LogFormatterInterface by inject(LogFormatterInterface::class.java)
-    private val clientDeviceInfoProvider: ClientDeviceInfoProviderInterface by inject(ClientDeviceInfoProviderInterface::class.java)
+    private val clientDeviceInfoProvider: ClientDeviceInfoProviderInterface by inject(
+        ClientDeviceInfoProviderInterface::class.java)
     
     companion object {
         private var loggerInstance: DebugLoggerInterface? = null
@@ -51,12 +53,16 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
                 System.setProperty("uniffi.component.mobile_uniffi.libraryOverride", "metasecret_mobile")
                 System.loadLibrary("metasecret_mobile")
                 loggerInstance?.log(LogTag.MetaSecretCoreService.Message.LibraryLoaded, success = true)
-                    ?: println(logFormatterInstance?.formatLogMessage("Metasecret_mobile library has been loaded successfully") 
+                    ?: println(logFormatterInstance?.formatLogMessage(
+                        "Metasecret_mobile library has been loaded successfully") 
                         ?: "[${System.currentTimeMillis()}] Metasecret_mobile library has been loaded successfully")
             } catch (e: Exception) {
-                loggerInstance?.log(LogTag.MetaSecretCoreService.Message.LibraryLoadError, "${e.message}", success = false)
-                    ?: println(logFormatterInstance?.formatLogMessage("Error during loading of the Metasecret_mobile library: ${e.message}")
-                        ?: "[${System.currentTimeMillis()}] Error during loading of the Metasecret_mobile library: ${e.message}")
+                loggerInstance?.log(LogTag.MetaSecretCoreService.Message.LibraryLoadError, "${e.message}", success =
+                    false)
+                    ?: println(logFormatterInstance?.formatLogMessage(
+                        "Error during loading of the Metasecret_mobile library: ${e.message}")
+                        ?:
+                            "[${System.currentTimeMillis()}] Error during loading of the Metasecret_mobile library: ${e.message}")
                 e.printStackTrace()
             }
         }
@@ -88,7 +94,8 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
 
             val targetDir = context.noBackupFilesDir ?: context.filesDir
             if (!targetDir.exists() && !targetDir.mkdirs()) {
-                throw IllegalStateException("Failed to create writable directory for native DB: ${targetDir.absolutePath}")
+                throw IllegalStateException(
+                    "Failed to create writable directory for native DB: ${targetDir.absolutePath}")
             }
             if (!targetDir.canWrite()) {
                 throw IllegalStateException("Native DB directory is not writable: ${targetDir.absolutePath}")
@@ -96,7 +103,8 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
 
             val nativeDatabaseDir = File(targetDir, "database")
             if (!nativeDatabaseDir.exists() && !nativeDatabaseDir.mkdirs()) {
-                throw IllegalStateException("Failed to create native database directory: ${nativeDatabaseDir.absolutePath}")
+                throw IllegalStateException(
+                    "Failed to create native database directory: ${nativeDatabaseDir.absolutePath}")
             }
 
             val result = libc.chdir(targetDir.absolutePath)
@@ -159,12 +167,14 @@ private val logger: DebugLoggerInterface by inject(DebugLoggerInterface::class.j
             val result = MetaSecretNative.getState()
             
             if (result.isEmpty()) {
-                logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "Empty response from FFI", success = false)
+                logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "Empty response from FFI",
+                    success = false)
                 throw IllegalStateException("Empty response from FFI getState")
             }
             
             if (!result.contains("\"message\"") && !result.contains("\"success\"")) {
-                logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "Invalid JSON response from FFI", success = false)
+                logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError,
+                    "Invalid JSON response from FFI", success = false)
                 throw IllegalStateException("Invalid JSON response from FFI getState: $result")
             }
             

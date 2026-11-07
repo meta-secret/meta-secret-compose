@@ -81,7 +81,8 @@ class DevicesScreen : Screen {
                             onClick = {
                                 if (pendingRemovalTargets.contains(device.id)) {
                                     removalTarget = device.id
-                                } else if (device.status == DeviceStatus.Pending || device.status == DeviceStatus.Declined) {
+                                } else if (device.status == DeviceStatus.Pending || device.status == DeviceStatus
+                                    .Declined) {
                                     viewModel.handle(DeviceViewEvents.SelectDevice(device.id))
                                 }
                             },

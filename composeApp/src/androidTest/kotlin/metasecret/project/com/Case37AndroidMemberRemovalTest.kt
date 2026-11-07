@@ -3,7 +3,8 @@ package metasecret.project.com
 import android.util.Log
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.*
+import core.metaSecretCore.liveboard.LiveboardKind
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -24,6 +25,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.HttpURLConnection
 import java.net.URL
+import org.json.JSONObject
+import models.apiModels.liveboard.LiveboardStateDecoder
 
 /** Visible-UI membership-removal and local-Show hooks for Tests #37–#43. */
 @RunWith(AndroidJUnit4::class)
@@ -60,33 +63,16 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.ios, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST37_REMOVAL_RECEIVER_READY")
 
-        composeRule.waitForTag("pending-removal-device-row", 180_000)
-        waitForMemberBadges(expectedMembers = 3)
-        composeRule.onNodeWithTag("pending-removal-device-row", useUnmergedTree = true).performClick()
-        composeRule.waitForTag("remove-device-dialog", 30_000)
-        val localizedRemoveDevice = StringProviderAndroid(composeRule.activity)
-            .getString(AppString.removeDevice)
-        val exactRemovalTitle = "$localizedRemoveDevice $targetDeviceName?"
-        val exactTargetInDialog = composeRule.onAllNodes(
-            hasText(exactRemovalTitle, substring = false)
-                .and(hasAnyAncestor(hasTestTag("remove-device-dialog"))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        assertEquals(
-            "Removal dialog must expose one exact localized iOS title",
-            1,
-            exactTargetInDialog.size,
-        )
+        val incoming = composeRule.lbIncoming("RemoveDevice", targetDeviceName)
+        assertEquals("Removal request must name the exact target", targetDeviceName, incoming.subject)
         marker("ANDROID_TEST37_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(coordinator, "android-remove-ios-approve", "1")
-        composeRule.onNodeWithTag("remove-device-dialog-accept", useUnmergedTree = true).performClick()
-        composeRule.waitForTagGone("remove-device-dialog", 120_000)
-        composeRule.waitForTagGone("pending-removal-device-row", 180_000)
+        composeRule.lbDecide(incoming, true)
         waitForExactDeviceMembership(
             listOf(
                 DeviceRole("web", deviceNames.web, "Member", expectsRemoveAction = true),
@@ -94,7 +80,7 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertDeviceRowAbsent(deviceNames.ios)
-        assertTagAbsent("remove-device-${threeMemberIds.getValue("ios")}")
+        assertTagAbsent("lb-remove-${threeMemberIds.getValue("ios")}")
 
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
@@ -109,46 +95,138 @@ class Case37AndroidMemberRemovalTest {
         val targetDeviceName = argument("joinTarget", "")
             .also { check(it.isNotBlank()) { "Test #15 requires the exact device name being removed" } }
         val secretNames = expectedSecretNames()
+        val fifo = test15FifoContext(coordinator)
+        if (fifo != null) {
+            check(cycle == "1" && argument("step", "1") == "1" && targetDeviceName == fifo.devices.getValue("ios").second)
+            check(secretNames == listOf(fifo.secret.second))
+        }
 
         openSecretsAndWaitFor(secretNames)
         openDevices()
         waitForMemberBadges(expectedMembers = 3)
         val targetId = exactDeviceId(targetDeviceName, "Member")
-        assertTrue("Removal target must expose a Remove action", hasTag("remove-device-$targetId"))
-        marker("ANDROID_TEST15_REMOVAL_APPROVER_READY")
+        assertTrue("Removal target must expose a Remove action", composeRule.lbInspectRemove(composeRule.lbMember(targetDeviceName, false)))
+        if (fifo == null) marker("ANDROID_TEST15_REMOVAL_APPROVER_READY")
+        else test15Marker("ANDROID_TEST15_REMOVAL_APPROVER_READY", fifo, null, 0)
 
-        composeRule.waitForTag("pending-removal-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-removal-device-row", useUnmergedTree = true).performClick()
-        composeRule.waitForTag("remove-device-dialog", 30_000)
-        val localizedRemoveDevice = StringProviderAndroid(composeRule.activity)
-            .getString(AppString.removeDevice)
-        val exactRemovalTitle = "$localizedRemoveDevice $targetDeviceName?"
-        val exactTargetInDialog = composeRule.onAllNodes(
-            hasText(exactRemovalTitle, substring = false)
-                .and(hasAnyAncestor(hasTestTag("remove-device-dialog"))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        assertEquals("Test #15 removal dialog must name the exact target", 1, exactTargetInDialog.size)
-        marker("ANDROID_TEST15_REMOVAL_REQUEST_VISIBLE")
+        if (fifo != null) {
+            val expectedRecovery = waitForTest15RecoveryHead(fifo)
+            val recovery = composeRule.lbIncoming("Recover", fifo.secret.second, fifo.devices.getValue("web").second)
+            check(recovery == expectedRecovery) { "Test15 head changed before opening the exact Recover" }
+            check(test15Head(fifo, recovery, fifo.recoveryId, 2))
+            test15Marker("ANDROID_TEST15_RECOVERY_HEAD_VISIBLE_1_1", fifo, recovery.requestId, 2)
+            waitForApproval(coordinator, "test15-recover-decline", cycle)
+            check(test15Head(fifo, recovery, fifo.recoveryId, 2))
+            composeRule.lbDecide(recovery, false)
+            test15Marker("ANDROID_TEST15_RECOVERY_DECLINED_1_1", fifo, recovery.requestId, 1)
+        }
+        val incoming = composeRule.lbIncoming("RemoveDevice", targetDeviceName)
+        assertEquals("Removal request must name the exact target", targetDeviceName, incoming.subject)
+        if (fifo == null) marker("ANDROID_TEST15_REMOVAL_REQUEST_VISIBLE")
+        else {
+            check(test15Head(fifo, incoming, incoming.requestId, 1))
+            test15Marker("ANDROID_TEST15_REMOVAL_REQUEST_VISIBLE", fifo, incoming.requestId, 1)
+        }
 
         waitForApproval(coordinator, "test15-remove-approve", cycle)
-        composeRule.onNodeWithTag("remove-device-dialog-accept", useUnmergedTree = true).performClick()
-        composeRule.waitForTagGone("remove-device-dialog", 120_000)
-        composeRule.waitForTagGone("pending-removal-device-row", 180_000)
+        if (fifo != null) check(test15Head(fifo, incoming, incoming.requestId, 1))
+        composeRule.lbDecide(incoming, true)
         composeRule.waitUntil(180_000) { deviceRowCount() == 2 }
         assertDeviceRowAbsent(targetDeviceName)
 
         openSecretsAndWaitFor(secretNames)
         secretNames.forEach { secretName ->
-            assertTagAbsent("recovery-request-badge-$secretName")
-            assertTagAbsent("open-recovery-request-$secretName")
+            val id = composeRule.lbSecret(secretName)
+            composeRule.lbValueAbsent(id)
         }
-        marker("ANDROID_TEST15_REMOVAL_APPROVED_RECOVERY_CLEARED")
+        if (fifo == null) marker("ANDROID_TEST15_REMOVAL_APPROVED_RECOVERY_CLEARED")
+        else {
+            check(composeRule.lbVisibleIncoming() == null && composeRule.lbIncomingCount() == 0)
+            test15Marker("ANDROID_TEST15_REMOVAL_APPROVED_RECOVERY_CLEARED", fifo, incoming.requestId, 0)
+        }
         waitForApproval(coordinator, "test15-cli-member-accepted", cycle)
         openDevices()
         openSecretsAndWaitFor(secretNames)
         marker("ANDROID_TEST15_CLI_STATE_REFRESHED")
         waitForApproval(coordinator, "test15-cli-redistribution-observed", cycle)
+    }
+
+    private data class Test15Scope(val runId: String, val testNumber: Int, val block: String, val cycle: Int, val step: Int)
+    private data class Test15Fifo(
+        val scope: Test15Scope, val vault: String, val secret: Pair<String, String>,
+        val devices: Map<String, Pair<String, String>>, val recoveryId: String,
+    )
+
+    private fun test15FifoContext(coordinator: String): Test15Fifo? {
+        val raw = argument("test15FifoContext", "")
+        if (raw.isEmpty()) return null
+        val json = JSONObject(raw)
+        val scope = json.getJSONObject("scope").let {
+            Test15Scope(it.getString("runId"), it.getInt("testNumber"), it.getString("block"), it.getInt("cycle"), it.getInt("step"))
+        }
+        val owning = lbFifoIdentity(coordinator)
+        check(scope.runId == owning.runId && scope.testNumber == 15 && scope.testNumber == owning.testNumber &&
+            scope.block == "scenario-block1" && scope.block == owning.blockId && scope.cycle == 1 && scope.step == 1)
+        check(json.getString("sender") == "web" && json.getString("removalApprover") == "android" && json.getString("removalTarget") == "ios")
+        val secret = json.getJSONObject("secret").let { it.getString("passId") to it.getString("name") }
+        val approvals = json.getJSONArray("approvals")
+        check(approvals.length() == 1)
+        approvals.getJSONObject(0).let {
+            check(it.getString("platform") == "android" && it.getString("action") == "decline" && it.getString("secret") == secret.second)
+        }
+        val devices = listOf("web", "android", "ios").associateWith { role ->
+            json.getJSONObject("devices").getJSONObject(role).let { it.getString("id") to it.getString("name") }
+        }
+        val request = json.getString("recoveryId")
+        check(request.isNotBlank() && secret.first.isNotBlank() && secret.second.isNotBlank() &&
+            devices.values.all { it.first.isNotBlank() && it.second.isNotBlank() } && devices.values.map { it.first }.distinct().size == 3)
+        val baseline = json.getJSONArray("baselineRequestIds")
+        check((0 until baseline.length()).none { baseline.getString(it) == request })
+        return Test15Fifo(scope, json.getString("vaultId").also { check(it.isNotBlank()) }, secret, devices, request)
+    }
+
+    private fun waitForTest15RecoveryHead(context: Test15Fifo): LiveboardTestIncoming {
+        var captured: LiveboardTestIncoming? = null
+        composeRule.waitUntil(180_000) {
+            val head = composeRule.lbVisibleIncoming() ?: return@waitUntil false
+            check(head.kind == "Recover" && head.requestId == context.recoveryId &&
+                head.requesterName == context.devices.getValue("web").second && head.subject == context.secret.second) {
+                "Test15 requires the exact original Recover as the visible FIFO head"
+            }
+            check(head.count in 1..2) { "Test15 visible queue count is outside the declared concurrent pair" }
+            if (head.count != 2 || !test15Head(context, head, context.recoveryId, 2)) return@waitUntil false
+            captured = head
+            true
+        }
+        return checkNotNull(captured)
+    }
+
+    private fun test15Head(context: Test15Fifo, head: LiveboardTestIncoming, requestId: String, count: Int): Boolean {
+        check(composeRule.lbVisibleIncoming() == head && head.requestId == requestId && head.count == count)
+        val view = lbReadCanonical() ?: return false
+        val operation = lbBindIncoming(head, view.source)
+        val snapshot = checkNotNull(LiveboardStateDecoder.decode(view.source))
+        check(snapshot.identity.vaultName == context.vault && snapshot.identity.currentDeviceId == context.devices.getValue("android").first)
+        check(snapshot.devices.size == 3 && context.devices.values.all { expected ->
+            snapshot.devices.singleOrNull { it.deviceId == expected.first }?.name == expected.second
+        })
+        check(snapshot.secrets.single { it.identity.passId == context.secret.first }.identity.name == context.secret.second)
+        check(operation.identity.requesterId == context.devices.getValue("web").first &&
+            context.devices.getValue("android").first in operation.permissions.eligiblePeerIds)
+        if (head.kind == "Recover") check(operation.identity.secretId == context.secret.first && requestId == context.recoveryId)
+        else check(head.kind == "RemoveDevice" && operation.identity.targetDeviceId == context.devices.getValue("ios").first)
+        val current = lbReadCanonical(checkNotNull(view.frame.scope)) ?: return false
+        return current.frame === view.frame && current.source === view.source &&
+            current.frame.scope === view.frame.scope && composeRule.lbVisibleIncoming() == head
+    }
+
+    private fun test15Marker(prefix: String, context: Test15Fifo, requestId: String?, count: Int) {
+        val scope = context.scope
+        val fields = mutableListOf("\"runId\":" + JSONObject.quote(scope.runId), "\"testNumber\":${scope.testNumber}",
+            "\"block\":" + JSONObject.quote(scope.block), "\"cycle\":${scope.cycle}", "\"step\":${scope.step}")
+        if (requestId != null) fields.add("\"claimId\":" + JSONObject.quote(requestId))
+        fields.add("\"count\":$count")
+        marker("$prefix {${fields.joinToString(",")}}")
     }
 
     /** Android is Test #42's sole approver and reverse resharer for Web removal. */
@@ -171,33 +249,16 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.web, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST42_REMOVAL_RECEIVER_READY")
 
-        composeRule.waitForTag("pending-removal-device-row", 180_000)
-        waitForMemberBadges(expectedMembers = 3)
-        composeRule.onNodeWithTag("pending-removal-device-row", useUnmergedTree = true).performClick()
-        composeRule.waitForTag("remove-device-dialog", 30_000)
-        val localizedRemoveDevice = StringProviderAndroid(composeRule.activity)
-            .getString(AppString.removeDevice)
-        val exactRemovalTitle = "$localizedRemoveDevice $targetDeviceName?"
-        val exactTargetInDialog = composeRule.onAllNodes(
-            hasText(exactRemovalTitle, substring = false)
-                .and(hasAnyAncestor(hasTestTag("remove-device-dialog"))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        assertEquals(
-            "Removal dialog must expose one exact localized Web title",
-            1,
-            exactTargetInDialog.size,
-        )
+        val incoming = composeRule.lbIncoming("RemoveDevice", targetDeviceName)
+        assertEquals("Removal request must name the exact target", targetDeviceName, incoming.subject)
         marker("ANDROID_TEST42_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(coordinator, "android-remove-web-approve-test42", "1")
-        composeRule.onNodeWithTag("remove-device-dialog-accept", useUnmergedTree = true).performClick()
-        composeRule.waitForTagGone("remove-device-dialog", 120_000)
-        composeRule.waitForTagGone("pending-removal-device-row", 180_000)
+        composeRule.lbDecide(incoming, true)
         waitForExactDeviceMembership(
             listOf(
                 DeviceRole("android", deviceNames.android, "Current", expectsRemoveAction = false),
@@ -205,7 +266,7 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertDeviceRowAbsent(deviceNames.web)
-        assertTagAbsent("remove-device-${threeMemberIds.getValue("web")}")
+        assertTagAbsent("lb-remove-${threeMemberIds.getValue("web")}")
 
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
@@ -232,33 +293,16 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.web, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST43_REMOVAL_RECEIVER_READY")
 
-        composeRule.waitForTag("pending-removal-device-row", 180_000)
-        waitForMemberBadges(expectedMembers = 3)
-        composeRule.onNodeWithTag("pending-removal-device-row", useUnmergedTree = true).performClick()
-        composeRule.waitForTag("remove-device-dialog", 30_000)
-        val localizedRemoveDevice = StringProviderAndroid(composeRule.activity)
-            .getString(AppString.removeDevice)
-        val exactRemovalTitle = "$localizedRemoveDevice $targetDeviceName?"
-        val exactTargetInDialog = composeRule.onAllNodes(
-            hasText(exactRemovalTitle, substring = false)
-                .and(hasAnyAncestor(hasTestTag("remove-device-dialog"))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        assertEquals(
-            "Removal dialog must expose one exact localized Web title",
-            1,
-            exactTargetInDialog.size,
-        )
+        val incoming = composeRule.lbIncoming("RemoveDevice", targetDeviceName)
+        assertEquals("Removal request must name the exact target", targetDeviceName, incoming.subject)
         marker("ANDROID_TEST43_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(coordinator, "android-remove-web-approve-test43", "1")
-        composeRule.onNodeWithTag("remove-device-dialog-accept", useUnmergedTree = true).performClick()
-        composeRule.waitForTagGone("remove-device-dialog", 120_000)
-        composeRule.waitForTagGone("pending-removal-device-row", 180_000)
+        composeRule.lbDecide(incoming, true)
         waitForExactDeviceMembership(
             listOf(
                 DeviceRole("android", deviceNames.android, "Current", expectsRemoveAction = false),
@@ -266,7 +310,7 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertDeviceRowAbsent(deviceNames.web)
-        assertTagAbsent("remove-device-${threeMemberIds.getValue("web")}")
+        assertTagAbsent("lb-remove-${threeMemberIds.getValue("web")}")
 
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
@@ -349,15 +393,10 @@ class Case37AndroidMemberRemovalTest {
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
         waitForExactPrimaryAction(secretName, "Show", 180_000)
-        composeRule.onNodeWithTag("secret-primary-action-$secretName").performClick()
-        composeRule.waitForTag("revealed-secret-value", 30_000)
-        composeRule.onNodeWithTag("revealed-secret-value", useUnmergedTree = true)
-            .assertTextEquals(secretValue)
+        val revealedId = composeRule.lbShow(secretName, secretValue)
         marker("${markerPrefix}_LOCAL_SECRET_VALUE_VERIFIED_$cycle")
 
-        composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
-        composeRule.waitForTagGone("revealed-secret-value", 30_000)
-        composeRule.waitForTagGone("show-secret-dialog", 30_000)
+        composeRule.lbHide(revealedId)
         composeRule.waitForExactTextGone(secretValue, 30_000)
         waitForExactPrimaryAction(secretName, "Show", 30_000)
         assertNoStaleSecretUi(secretNames)
@@ -384,8 +423,8 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.web, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST38_WEB_REMOVAL_REQUESTER_READY")
 
         waitForApproval(coordinator, "android-remove-web-start", "1")
@@ -406,7 +445,7 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertDeviceRowAbsent(deviceNames.web)
-        assertTagAbsent("remove-device-${threeMemberIds.getValue("web")}")
+        assertTagAbsent("lb-remove-${threeMemberIds.getValue("web")}")
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
         marker("ANDROID_TEST38_WEB_REMOVAL_COMPLETED")
@@ -432,8 +471,8 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.ios, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST41_IOS_REMOVAL_REQUESTER_READY")
 
         waitForApproval(coordinator, "android-remove-ios-start-test41", "1")
@@ -452,7 +491,7 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertDeviceRowAbsent(deviceNames.ios)
-        assertTagAbsent("remove-device-${threeMemberIds.getValue("ios")}")
+        assertTagAbsent("lb-remove-${threeMemberIds.getValue("ios")}")
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
         marker("ANDROID_TEST41_IOS_REMOVAL_COMPLETED")
@@ -478,8 +517,8 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.ios, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST45_IOS_REMOVAL_REQUESTER_READY")
 
         waitForApproval(coordinator, "android-remove-ios-start-test45", "1")
@@ -496,7 +535,7 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertDeviceRowAbsent(deviceNames.ios)
-        assertTagAbsent("remove-device-${threeMemberIds.getValue("ios")}")
+        assertTagAbsent("lb-remove-${threeMemberIds.getValue("ios")}")
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
         marker("ANDROID_TEST45_IOS_REMOVAL_COMPLETED")
@@ -522,8 +561,8 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.web, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST46_WEB_REMOVAL_REQUESTER_READY")
 
         waitForApproval(coordinator, "android-remove-web-start-test46", "1")
@@ -540,7 +579,7 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertDeviceRowAbsent(deviceNames.web)
-        assertTagAbsent("remove-device-${threeMemberIds.getValue("web")}")
+        assertTagAbsent("lb-remove-${threeMemberIds.getValue("web")}")
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
         marker("ANDROID_TEST46_WEB_REMOVAL_COMPLETED")
@@ -566,34 +605,16 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.web, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST47_PHASE1_DECLINER_READY")
 
-        composeRule.waitForTag("pending-removal-device-row", 180_000)
-        waitForMemberBadges(expectedMembers = 3)
-        composeRule.onNodeWithTag("pending-removal-device-row", useUnmergedTree = true).performClick()
-        composeRule.waitForTag("remove-device-dialog", 30_000)
-        val localizedRemoveDevice = StringProviderAndroid(composeRule.activity)
-            .getString(AppString.removeDevice)
-        val exactRemovalTitle = "$localizedRemoveDevice $targetDeviceName?"
-        val exactTargetInDialog = composeRule.onAllNodes(
-            hasText(exactRemovalTitle, substring = false)
-                .and(hasAnyAncestor(hasTestTag("remove-device-dialog"))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        assertEquals(
-            "Test #47 decline dialog must expose one exact Web title",
-            1,
-            exactTargetInDialog.size,
-        )
+        val incoming = composeRule.lbIncoming("RemoveDevice", targetDeviceName)
+        assertEquals("Removal request must name the exact target", targetDeviceName, incoming.subject)
         marker("ANDROID_TEST47_PHASE1_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(coordinator, "android-decline-web-test47", "1")
-        composeRule.onNodeWithTag("remove-device-dialog-decline", useUnmergedTree = true)
-            .performClick()
-        composeRule.waitForTagGone("remove-device-dialog", 120_000)
-        composeRule.waitForTagGone("pending-removal-device-row", 180_000)
+        composeRule.lbDecide(incoming, false)
         waitForExactSettledDeviceMembership(
             listOf(
                 DeviceRole("web", deviceNames.web, "Member", expectsRemoveAction = true),
@@ -626,8 +647,8 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.ios, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST47_PHASE2_REQUESTER_READY")
 
         waitForApproval(coordinator, "android-remove-ios-start-test47", "2")
@@ -701,8 +722,8 @@ class Case37AndroidMemberRemovalTest {
                 DeviceRole("ios", deviceNames.ios, "Member", expectsRemoveAction = true),
             ),
         )
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST48_PHASE1_TARGET_READY")
 
         waitForApproval(coordinator, "android-phase1-decline-observed-test48", "1")
@@ -739,34 +760,16 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.web, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST48_PHASE2_DECLINER_READY")
 
-        composeRule.waitForTag("pending-removal-device-row", 180_000)
-        waitForMemberBadges(expectedMembers = 3)
-        composeRule.onNodeWithTag("pending-removal-device-row", useUnmergedTree = true).performClick()
-        composeRule.waitForTag("remove-device-dialog", 30_000)
-        val localizedRemoveDevice = StringProviderAndroid(composeRule.activity)
-            .getString(AppString.removeDevice)
-        val exactRemovalTitle = "$localizedRemoveDevice $targetDeviceName?"
-        val exactTargetInDialog = composeRule.onAllNodes(
-            hasText(exactRemovalTitle, substring = false)
-                .and(hasAnyAncestor(hasTestTag("remove-device-dialog"))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        assertEquals(
-            "Test #48 decline dialog must expose one exact Web title",
-            1,
-            exactTargetInDialog.size,
-        )
+        val incoming = composeRule.lbIncoming("RemoveDevice", targetDeviceName)
+        assertEquals("Removal request must name the exact target", targetDeviceName, incoming.subject)
         marker("ANDROID_TEST48_PHASE2_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(coordinator, "android-decline-web-test48", "2")
-        composeRule.onNodeWithTag("remove-device-dialog-decline", useUnmergedTree = true)
-            .performClick()
-        composeRule.waitForTagGone("remove-device-dialog", 120_000)
-        composeRule.waitForTagGone("pending-removal-device-row", 180_000)
+        composeRule.lbDecide(incoming, false)
         waitForExactSettledDeviceMembership(
             listOf(
                 DeviceRole("web", deviceNames.web, "Member", expectsRemoveAction = true),
@@ -799,8 +802,8 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.ios, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST48_PHASE3_REQUESTER_READY")
 
         waitForApproval(coordinator, "android-remove-ios-start-test48", "3")
@@ -844,8 +847,8 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.ios, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST49_PHASE1_REQUESTER_READY")
 
         waitForApproval(coordinator, "android-remove-ios-start-test49", "1")
@@ -886,8 +889,8 @@ class Case37AndroidMemberRemovalTest {
                 DeviceRole("ios", deviceNames.ios, "Member", expectsRemoveAction = true),
             ),
         )
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST49_PHASE2_TARGET_READY")
 
         waitForApproval(coordinator, "android-phase2-decline-observed-test49", "2")
@@ -924,34 +927,16 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertEquals(deviceNames.web, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST49_PHASE3_DECLINER_READY")
 
-        composeRule.waitForTag("pending-removal-device-row", 180_000)
-        waitForMemberBadges(expectedMembers = 3)
-        composeRule.onNodeWithTag("pending-removal-device-row", useUnmergedTree = true).performClick()
-        composeRule.waitForTag("remove-device-dialog", 30_000)
-        val localizedRemoveDevice = StringProviderAndroid(composeRule.activity)
-            .getString(AppString.removeDevice)
-        val exactRemovalTitle = "$localizedRemoveDevice $targetDeviceName?"
-        val exactTargetInDialog = composeRule.onAllNodes(
-            hasText(exactRemovalTitle, substring = false)
-                .and(hasAnyAncestor(hasTestTag("remove-device-dialog"))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        assertEquals(
-            "Test #49 decline dialog must expose one exact Web title",
-            1,
-            exactTargetInDialog.size,
-        )
+        val incoming = composeRule.lbIncoming("RemoveDevice", targetDeviceName)
+        assertEquals("Removal request must name the exact target", targetDeviceName, incoming.subject)
         marker("ANDROID_TEST49_PHASE3_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(coordinator, "android-decline-web-test49", "3")
-        composeRule.onNodeWithTag("remove-device-dialog-decline", useUnmergedTree = true)
-            .performClick()
-        composeRule.waitForTagGone("remove-device-dialog", 120_000)
-        composeRule.waitForTagGone("pending-removal-device-row", 180_000)
+        composeRule.lbDecide(incoming, false)
         waitForExactSettledDeviceMembership(
             listOf(
                 DeviceRole("web", deviceNames.web, "Member", expectsRemoveAction = true),
@@ -984,8 +969,8 @@ class Case37AndroidMemberRemovalTest {
         )
         assertDeviceRowAbsent(deviceNames.web)
         assertEquals(deviceNames.ios, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST38_IOS_LOCAL_REMOVAL_READY")
 
         waitForApproval(coordinator, "android-remove-ios-local", "2")
@@ -1000,7 +985,7 @@ class Case37AndroidMemberRemovalTest {
         )
         marker("ANDROID_TEST38_IOS_LOCAL_REMOVAL_REQUESTED")
         assertDeviceRowAbsent(deviceNames.ios)
-        assertTagAbsent("remove-device-${twoMemberIds.getValue("ios")}")
+        assertTagAbsent("lb-remove-${twoMemberIds.getValue("ios")}")
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
         marker("ANDROID_TEST38_IOS_LOCAL_REMOVAL_COMPLETED")
@@ -1026,8 +1011,8 @@ class Case37AndroidMemberRemovalTest {
         )
         assertDeviceRowAbsent(deviceNames.web)
         assertEquals(deviceNames.ios, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST42_IOS_LOCAL_REMOVAL_READY")
 
         waitForApproval(coordinator, "android-remove-ios-local-test42", "2")
@@ -1042,7 +1027,7 @@ class Case37AndroidMemberRemovalTest {
         )
         marker("ANDROID_TEST42_IOS_LOCAL_REMOVAL_REQUESTED")
         assertDeviceRowAbsent(deviceNames.ios)
-        assertTagAbsent("remove-device-${twoMemberIds.getValue("ios")}")
+        assertTagAbsent("lb-remove-${twoMemberIds.getValue("ios")}")
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
         marker("ANDROID_TEST42_IOS_LOCAL_REMOVAL_COMPLETED")
@@ -1068,8 +1053,8 @@ class Case37AndroidMemberRemovalTest {
         )
         assertDeviceRowAbsent(deviceNames.web)
         assertEquals(deviceNames.ios, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST43_IOS_LOCAL_REMOVAL_READY")
 
         waitForApproval(coordinator, "android-remove-ios-local-test43", "2")
@@ -1084,7 +1069,7 @@ class Case37AndroidMemberRemovalTest {
         )
         marker("ANDROID_TEST43_IOS_LOCAL_REMOVAL_REQUESTED")
         assertDeviceRowAbsent(deviceNames.ios)
-        assertTagAbsent("remove-device-${twoMemberIds.getValue("ios")}")
+        assertTagAbsent("lb-remove-${twoMemberIds.getValue("ios")}")
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
         marker("ANDROID_TEST43_IOS_LOCAL_REMOVAL_COMPLETED")
@@ -1110,8 +1095,8 @@ class Case37AndroidMemberRemovalTest {
         )
         assertDeviceRowAbsent(deviceNames.web)
         assertEquals(deviceNames.ios, targetDeviceName)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
         marker("ANDROID_TEST46_IOS_LOCAL_REMOVAL_READY")
 
         waitForApproval(coordinator, "android-remove-ios-local-test46", "2")
@@ -1126,7 +1111,7 @@ class Case37AndroidMemberRemovalTest {
         )
         marker("ANDROID_TEST46_IOS_LOCAL_REMOVAL_REQUESTED")
         assertDeviceRowAbsent(deviceNames.ios)
-        assertTagAbsent("remove-device-${twoMemberIds.getValue("ios")}")
+        assertTagAbsent("lb-remove-${twoMemberIds.getValue("ios")}")
         openSecretsAndWaitFor(secretNames)
         assertNoStaleSecretUi(secretNames)
         marker("ANDROID_TEST46_IOS_LOCAL_REMOVAL_COMPLETED")
@@ -1147,29 +1132,17 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertDeviceRowAbsent(deviceNames.ios)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
-        assertTagAbsent("alert-recovery-request")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
+        assertNoIncoming(LiveboardKind.Recover)
         marker("ANDROID_TEST37_REMOVAL_TARGET_READY")
 
-        composeRule.waitUntil(180_000) {
-            hasTag("orbit-enter") &&
-                !hasTag("tab-secrets") &&
-                !hasTag("tab-devices") &&
-                secretNames.none { hasTag("secret-row-$it") } &&
-                !hasTag("pending-removal-device-row") &&
-                !hasTag("remove-device-dialog") &&
-                !hasTag("alert-recovery-request") &&
-                !hasTag("alert-recovery-request-processing") &&
-                twoMemberIds.values.none { hasTag("remove-device-$it") }
-        }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
-        assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
-        assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
-        assertTrue(
-            "Android member removal actions survived reset",
-            twoMemberIds.values.none { hasTag("remove-device-$it") },
-        )
+        composeRule.lbWait("orbit-enter", 180_000)
+        check(!composeRule.lbHas("lb-home") && !composeRule.lbHas("lb-secrets") && !composeRule.lbHas("lb-profile"))
+        check(composeRule.lbTagged("lb-device-").isEmpty() && composeRule.lbTagged("lb-secret-").isEmpty())
+        check(composeRule.lbTagged("lb-value-").isEmpty() && composeRule.lbTagged("lb-copy-").isEmpty())
+        check(composeRule.lbTagged("lb-inbox-head-").isEmpty() && composeRule.lbIncomingCount() == 0)
+        check(composeRule.lbTagged("lb-remove-").isEmpty() && composeRule.lbTagged("lb-approve-").isEmpty())
         marker("ANDROID_TEST37_REMOVED_RESET")
     }
 
@@ -1188,32 +1161,17 @@ class Case37AndroidMemberRemovalTest {
                 DeviceRole("ios", deviceNames.ios, "Member", expectsRemoveAction = true),
             ),
         )
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
-        assertTagAbsent("alert-recovery-request")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
+        assertNoIncoming(LiveboardKind.Recover)
         marker("ANDROID_TEST39_REMOVAL_TARGET_READY")
 
-        composeRule.waitUntil(180_000) {
-            hasTag("orbit-enter") &&
-                !hasTag("tab-secrets") &&
-                !hasTag("tab-devices") &&
-                secretNames.none { hasTag("secret-row-$it") } &&
-                !hasTag("pending-device-row") &&
-                !hasTag("pending-removal-device-row") &&
-                !hasTag("remove-device-dialog") &&
-                !hasTag("alert-recovery-request") &&
-                !hasTag("alert-recovery-request-processing") &&
-                !hasTag("alert-join-request") &&
-                !hasTag("alert-join-request-processing") &&
-                threeMemberIds.values.none { hasTag("remove-device-$it") }
-        }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
-        assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
-        assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
-        assertTrue(
-            "Android removal actions survived reset",
-            threeMemberIds.values.none { hasTag("remove-device-$it") },
-        )
+        composeRule.lbWait("orbit-enter", 180_000)
+        check(!composeRule.lbHas("lb-home") && !composeRule.lbHas("lb-secrets") && !composeRule.lbHas("lb-profile"))
+        check(composeRule.lbTagged("lb-device-").isEmpty() && composeRule.lbTagged("lb-secret-").isEmpty())
+        check(composeRule.lbTagged("lb-value-").isEmpty() && composeRule.lbTagged("lb-copy-").isEmpty())
+        check(composeRule.lbTagged("lb-inbox-head-").isEmpty() && composeRule.lbIncomingCount() == 0)
+        check(composeRule.lbTagged("lb-remove-").isEmpty() && composeRule.lbTagged("lb-approve-").isEmpty())
         marker("ANDROID_TEST39_REMOVED_RESET")
     }
 
@@ -1233,32 +1191,17 @@ class Case37AndroidMemberRemovalTest {
                 DeviceRole("ios", deviceNames.ios, "Member", expectsRemoveAction = true),
             ),
         )
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
-        assertTagAbsent("alert-recovery-request")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
+        assertNoIncoming(LiveboardKind.Recover)
         marker("ANDROID_TEST40_REMOVAL_TARGET_READY")
 
-        composeRule.waitUntil(180_000) {
-            hasTag("orbit-enter") &&
-                !hasTag("tab-secrets") &&
-                !hasTag("tab-devices") &&
-                secretNames.none { hasTag("secret-row-$it") } &&
-                !hasTag("pending-device-row") &&
-                !hasTag("pending-removal-device-row") &&
-                !hasTag("remove-device-dialog") &&
-                !hasTag("alert-recovery-request") &&
-                !hasTag("alert-recovery-request-processing") &&
-                !hasTag("alert-join-request") &&
-                !hasTag("alert-join-request-processing") &&
-                threeMemberIds.values.none { hasTag("remove-device-$it") }
-        }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
-        assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
-        assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
-        assertTrue(
-            "Android removal actions survived reset",
-            threeMemberIds.values.none { hasTag("remove-device-$it") },
-        )
+        composeRule.lbWait("orbit-enter", 180_000)
+        check(!composeRule.lbHas("lb-home") && !composeRule.lbHas("lb-secrets") && !composeRule.lbHas("lb-profile"))
+        check(composeRule.lbTagged("lb-device-").isEmpty() && composeRule.lbTagged("lb-secret-").isEmpty())
+        check(composeRule.lbTagged("lb-value-").isEmpty() && composeRule.lbTagged("lb-copy-").isEmpty())
+        check(composeRule.lbTagged("lb-inbox-head-").isEmpty() && composeRule.lbIncomingCount() == 0)
+        check(composeRule.lbTagged("lb-remove-").isEmpty() && composeRule.lbTagged("lb-approve-").isEmpty())
         marker("ANDROID_TEST40_REMOVED_RESET")
     }
 
@@ -1278,32 +1221,17 @@ class Case37AndroidMemberRemovalTest {
                 DeviceRole("ios", deviceNames.ios, "Member", expectsRemoveAction = true),
             ),
         )
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
-        assertTagAbsent("alert-recovery-request")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
+        assertNoIncoming(LiveboardKind.Recover)
         marker("ANDROID_TEST44_REMOVAL_TARGET_READY")
 
-        composeRule.waitUntil(180_000) {
-            hasTag("orbit-enter") &&
-                !hasTag("tab-secrets") &&
-                !hasTag("tab-devices") &&
-                secretNames.none { hasTag("secret-row-$it") } &&
-                !hasTag("pending-device-row") &&
-                !hasTag("pending-removal-device-row") &&
-                !hasTag("remove-device-dialog") &&
-                !hasTag("alert-recovery-request") &&
-                !hasTag("alert-recovery-request-processing") &&
-                !hasTag("alert-join-request") &&
-                !hasTag("alert-join-request-processing") &&
-                threeMemberIds.values.none { hasTag("remove-device-$it") }
-        }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
-        assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
-        assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
-        assertTrue(
-            "Android removal actions survived reset",
-            threeMemberIds.values.none { hasTag("remove-device-$it") },
-        )
+        composeRule.lbWait("orbit-enter", 180_000)
+        check(!composeRule.lbHas("lb-home") && !composeRule.lbHas("lb-secrets") && !composeRule.lbHas("lb-profile"))
+        check(composeRule.lbTagged("lb-device-").isEmpty() && composeRule.lbTagged("lb-secret-").isEmpty())
+        check(composeRule.lbTagged("lb-value-").isEmpty() && composeRule.lbTagged("lb-copy-").isEmpty())
+        check(composeRule.lbTagged("lb-inbox-head-").isEmpty() && composeRule.lbIncomingCount() == 0)
+        check(composeRule.lbTagged("lb-remove-").isEmpty() && composeRule.lbTagged("lb-approve-").isEmpty())
         marker("ANDROID_TEST44_REMOVED_RESET")
     }
 
@@ -1323,32 +1251,17 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertDeviceRowAbsent(deviceNames.ios)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
-        assertTagAbsent("alert-recovery-request")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
+        assertNoIncoming(LiveboardKind.Recover)
         marker("ANDROID_TEST41_REMOVAL_TARGET_READY")
 
-        composeRule.waitUntil(180_000) {
-            hasTag("orbit-enter") &&
-                !hasTag("tab-secrets") &&
-                !hasTag("tab-devices") &&
-                secretNames.none { hasTag("secret-row-$it") } &&
-                !hasTag("pending-device-row") &&
-                !hasTag("pending-removal-device-row") &&
-                !hasTag("remove-device-dialog") &&
-                !hasTag("alert-recovery-request") &&
-                !hasTag("alert-recovery-request-processing") &&
-                !hasTag("alert-join-request") &&
-                !hasTag("alert-join-request-processing") &&
-                twoMemberIds.values.none { hasTag("remove-device-$it") }
-        }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
-        assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
-        assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
-        assertTrue(
-            "Android removal actions survived reset",
-            twoMemberIds.values.none { hasTag("remove-device-$it") },
-        )
+        composeRule.lbWait("orbit-enter", 180_000)
+        check(!composeRule.lbHas("lb-home") && !composeRule.lbHas("lb-secrets") && !composeRule.lbHas("lb-profile"))
+        check(composeRule.lbTagged("lb-device-").isEmpty() && composeRule.lbTagged("lb-secret-").isEmpty())
+        check(composeRule.lbTagged("lb-value-").isEmpty() && composeRule.lbTagged("lb-copy-").isEmpty())
+        check(composeRule.lbTagged("lb-inbox-head-").isEmpty() && composeRule.lbIncomingCount() == 0)
+        check(composeRule.lbTagged("lb-remove-").isEmpty() && composeRule.lbTagged("lb-approve-").isEmpty())
         marker("ANDROID_TEST41_REMOVED_RESET")
     }
 
@@ -1368,88 +1281,49 @@ class Case37AndroidMemberRemovalTest {
             ),
         )
         assertDeviceRowAbsent(deviceNames.ios)
-        assertTagAbsent("pending-removal-device-row")
-        assertTagAbsent("remove-device-dialog")
-        assertTagAbsent("alert-recovery-request")
+        assertNoIncoming(LiveboardKind.RemoveDevice)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
+        assertNoIncoming(LiveboardKind.Recover)
         marker("ANDROID_TEST45_REMOVAL_TARGET_READY")
 
-        composeRule.waitUntil(180_000) {
-            hasTag("orbit-enter") &&
-                !hasTag("tab-secrets") &&
-                !hasTag("tab-devices") &&
-                secretNames.none { hasTag("secret-row-$it") } &&
-                !hasTag("pending-device-row") &&
-                !hasTag("pending-removal-device-row") &&
-                !hasTag("remove-device-dialog") &&
-                !hasTag("alert-recovery-request") &&
-                !hasTag("alert-recovery-request-processing") &&
-                !hasTag("alert-join-request") &&
-                !hasTag("alert-join-request-processing") &&
-                twoMemberIds.values.none { hasTag("remove-device-$it") }
-        }
-        assertTrue("Android reset did not expose manual sign-in", hasTag("orbit-enter"))
-        assertFalse("Android Vault tabs survived removal", hasTag("tab-secrets") || hasTag("tab-devices"))
-        assertTrue("Android Secret rows survived removal", secretNames.none { hasTag("secret-row-$it") })
-        assertTrue(
-            "Android member removal actions survived reset",
-            twoMemberIds.values.none { hasTag("remove-device-$it") },
-        )
+        composeRule.lbWait("orbit-enter", 180_000)
+        check(!composeRule.lbHas("lb-home") && !composeRule.lbHas("lb-secrets") && !composeRule.lbHas("lb-profile"))
+        check(composeRule.lbTagged("lb-device-").isEmpty() && composeRule.lbTagged("lb-secret-").isEmpty())
+        check(composeRule.lbTagged("lb-value-").isEmpty() && composeRule.lbTagged("lb-copy-").isEmpty())
+        check(composeRule.lbTagged("lb-inbox-head-").isEmpty() && composeRule.lbIncomingCount() == 0)
+        check(composeRule.lbTagged("lb-remove-").isEmpty() && composeRule.lbTagged("lb-approve-").isEmpty())
         marker("ANDROID_TEST45_REMOVED_RESET")
     }
 
     private fun openSecretsAndWaitFor(secretNames: List<String>) {
-        clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-secrets", 60_000)
-        composeRule.onNodeWithTag("tab-secrets").performClick()
-        secretNames.forEach { composeRule.waitForTag("secret-row-$it", 180_000) }
+        composeRule.lbSecrets()
+        secretNames.forEach { composeRule.lbSecret(it) }
     }
 
-    private fun openDevices() {
-        composeRule.waitForTag("tab-devices", 60_000)
-        composeRule.onNodeWithTag("tab-devices").performClick()
-    }
+    private fun openDevices() = composeRule.lbHome()
 
     private fun revealAndConfirmRemoval(deviceId: String, targetDeviceName: String) {
-        composeRule.onNodeWithTag("device-row-$deviceId", useUnmergedTree = true)
-            .performTouchInput { swipeLeft() }
-        composeRule.waitForTag("remove-device-$deviceId", 30_000)
-        composeRule.onNodeWithTag("remove-device-$deviceId", useUnmergedTree = true).performClick()
-        composeRule.waitForTag("remove-device-dialog", 30_000)
-        val localizedRemoveDevice = StringProviderAndroid(composeRule.activity)
-            .getString(AppString.removeDevice)
-        val exactRemovalTitle = "$localizedRemoveDevice $targetDeviceName?"
-        val exactTargetInDialog = composeRule.onAllNodes(
-            hasText(exactRemovalTitle, substring = false)
-                .and(hasAnyAncestor(hasTestTag("remove-device-dialog"))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        assertEquals("Removal dialog must expose one exact target title", 1, exactTargetInDialog.size)
-        composeRule.onNodeWithTag("remove-device-dialog-accept", useUnmergedTree = true).performClick()
-        composeRule.waitForTagGone("remove-device-dialog", 120_000)
+        val member = composeRule.lbMember(targetDeviceName, false)
+        check(member.deviceId == deviceId) { "Removal target identity changed" }
+        composeRule.lbPreviewRemoval(deviceId)
+        composeRule.lbSubmitRemoval()
     }
 
     private fun assertNoStaleSecretUi(secretNames: List<String>) {
-        secretNames.forEach { secretName ->
-            assertTagAbsent("recovery-request-badge-$secretName")
-            assertTagAbsent("open-recovery-request-$secretName")
-        }
-        listOf(
-            "alert-recovery-request",
-            "alert-recovery-request-processing",
-            "alert-join-request",
-            "alert-join-request-processing",
-            "pending-device-row",
-            "pending-removal-device-row",
-            "remove-device-dialog",
-        ).forEach(::assertTagAbsent)
+        val snapshot = checkNotNull(lbSnapshot())
+        val ids = snapshot.secrets.filter { it.identity.name in secretNames }.map { it.identity.passId }.toSet()
+        check(snapshot.operations.none { it.identity.secretId in ids && it.status.outcome == null &&
+            it.identity.kind == LiveboardKind.Recover }) { "Stale canonical Recovery remains" }
+        check(composeRule.lbTagged("lb-value-").isEmpty() && composeRule.lbTagged("lb-copy-").isEmpty())
+        composeRule.lbHome()
+        check(composeRule.lbVisibleIncoming() == null && composeRule.lbIncomingCount() == 0)
+        check(composeRule.lbTagged("lb-approve-").isEmpty() && composeRule.lbTagged("lb-remove-").isEmpty())
     }
 
     private fun waitForMemberBadges(expectedMembers: Int) {
-        composeRule.waitUntil(180_000) {
-            exactTextCount("Current") == 1 && exactTextCount("Member") == expectedMembers - 1
-        }
-        assertEquals(1, exactTextCount("Current"))
-        assertEquals(expectedMembers - 1, exactTextCount("Member"))
+        composeRule.lbHome()
+        composeRule.waitUntil(180_000) { composeRule.lbMembers().size == expectedMembers }
+        check(composeRule.lbMembers().count { it.current } == 1)
     }
 
     private data class ExpectedDeviceNames(
@@ -1478,100 +1352,43 @@ class Case37AndroidMemberRemovalTest {
     }
 
     private fun waitForExactDeviceMembership(expectedRoles: List<DeviceRole>): Map<String, String> {
-        composeRule.waitUntil(180_000) {
-            deviceRowCount() == expectedRoles.size && expectedRoles.all(::deviceRoleMatches)
-        }
-        assertEquals(expectedRoles.size, deviceRowCount())
-        return expectedRoles.associate { role ->
-            assertTrue(
-                "${role.platform} row did not match exact name/status/remove role",
-                deviceRoleMatches(role),
-            )
-            role.platform to exactDeviceId(role.name, role.status)
-        }
+        val byName = composeRule.lbAssertMembers(expectedRoles.map { it.name to (it.status == "Current") })
+        expectedRoles.forEach { check(it.expectsRemoveAction == (it.status != "Current")) }
+        return expectedRoles.associate { it.platform to byName.getValue(it.name) }
     }
 
     private fun waitForExactSettledDeviceMembership(expectedRoles: List<DeviceRole>): Map<String, String> {
         composeRule.waitUntil(180_000) {
-            !hasTag("pending-removal-device-row") &&
-                deviceRowCount() == expectedRoles.size &&
-                expectedRoles.all(::deviceRoleMatches)
+            val snapshot = lbSnapshot() ?: return@waitUntil false
+            snapshot.operations.none { it.identity.kind == LiveboardKind.RemoveDevice && it.status.outcome == null } &&
+                snapshot.devices.size == expectedRoles.size
         }
-        assertTagAbsent("pending-removal-device-row")
-        return expectedRoles.associate { role ->
-            assertTrue(
-                "${role.platform} row did not match the settled exact removal topology",
-                deviceRoleMatches(role),
-            )
-            role.platform to exactDeviceId(role.name, role.status)
-        }
+        return waitForExactDeviceMembership(expectedRoles)
     }
 
-    private fun deviceRoleMatches(role: DeviceRole): Boolean {
-        val matchingRows = composeRule.onAllNodes(
-            deviceRowMatcher()
-                .and(hasAnyDescendant(hasText(role.name, substring = false)))
-                .and(hasAnyDescendant(hasText(role.status, substring = false))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        if (matchingRows.size != 1) return false
-        val deviceId = semanticsTestTag(matchingRows.single())
-            ?.removePrefix("device-row-")
-            ?.takeIf { it.isNotBlank() }
-            ?: return false
-        return hasTag("remove-device-$deviceId") == role.expectsRemoveAction
-    }
-
-    private fun exactDeviceId(name: String, status: String): String {
-        val rows = composeRule.onAllNodes(
-            deviceRowMatcher()
-                .and(hasAnyDescendant(hasText(name, substring = false)))
-                .and(hasAnyDescendant(hasText(status, substring = false))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        assertEquals("Expected one exact device row for $name/$status", 1, rows.size)
-        return semanticsTestTag(rows.single())!!.removePrefix("device-row-")
-    }
+    private fun exactDeviceId(name: String, status: String): String =
+        composeRule.lbMember(name, status == "Current").deviceId
 
     private fun assertDeviceRowAbsent(name: String) {
-        val rows = composeRule.onAllNodes(
-            deviceRowMatcher().and(hasAnyDescendant(hasText(name, substring = false))),
-            useUnmergedTree = true,
-        ).fetchSemanticsNodes()
-        assertTrue("Removed device row remained visible: $name", rows.isEmpty())
+        check(composeRule.lbMembers().none { it.name == name }) { "Removed Device remained visible" }
+        check(lbSnapshot()?.devices?.none { it.name == name } == true) { "Removed Device remained canonical" }
     }
 
-    private fun deviceRowCount(): Int =
-        composeRule.onAllNodes(deviceRowMatcher(), useUnmergedTree = true)
-            .fetchSemanticsNodes().size
-
-    private fun deviceRowMatcher(): SemanticsMatcher =
-        SemanticsMatcher("TestTag starts with device-row-") { node ->
-            semanticsTestTag(node)?.startsWith("device-row-") == true
-        }
-
-    private fun semanticsTestTag(node: androidx.compose.ui.semantics.SemanticsNode): String? =
-        runCatching { node.config[SemanticsProperties.TestTag] }.getOrNull()
+    private fun deviceRowCount(): Int = composeRule.lbMembers().size
 
     private fun waitForExactPrimaryAction(secretName: String, expected: String, timeoutMillis: Long) {
-        composeRule.waitUntil(timeoutMillis) {
-            runCatching {
-                composeRule.onNodeWithTag("secret-primary-action-$secretName")
-                    .assertTextEquals(expected)
-            }.isSuccess
-        }
+        composeRule.lbWaitPrimary(secretName, expected, timeoutMillis)
     }
 
-    private fun exactTextCount(text: String): Int =
-        composeRule.onAllNodes(hasText(text, substring = false), useUnmergedTree = true)
-            .fetchSemanticsNodes().size
-
-    private fun hasTag(tag: String): Boolean =
-        composeRule.onAllNodes(hasTestTag(tag), useUnmergedTree = true)
-            .fetchSemanticsNodes().isNotEmpty()
+    private fun hasTag(tag: String): Boolean = composeRule.lbHas(tag)
 
     private fun assertTagAbsent(tag: String) {
-        assertFalse("Unexpected visible UI tag: $tag", hasTag(tag))
+        check(!composeRule.lbHas(tag)) { "Unexpected current UI control" }
+    }
+
+    private fun assertNoIncoming(kind: LiveboardKind) {
+        check(lbSnapshot()?.operations?.none { it.identity.kind == kind && it.status.outcome == null } == true)
+        check(composeRule.lbVisibleIncoming()?.kind != kind.name)
     }
 
     private fun expectedSecretNames(): List<String> =

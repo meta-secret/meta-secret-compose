@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.metasecret.core.MetaSecretNative
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,8 +26,11 @@ import org.json.JSONObject
  */
 @RunWith(AndroidJUnit4::class)
 class CaseSevenAndroidOfflineReceiverTest {
-    @get:Rule
+    private val canonicalLaunch = LiveboardCanonicalLaunchBoundary()
     val composeRule = createAndroidComposeRule<MainActivity>()
+    @get:Rule
+    val activityAndCanonicalBoundary: org.junit.rules.TestRule = org.junit.rules.RuleChain
+        .outerRule(canonicalLaunch).around(composeRule)
 
     @Test
     fun createVaultThenWaitForOfflineRecovery() {
@@ -42,15 +44,9 @@ class CaseSevenAndroidOfflineReceiverTest {
 
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitCreateVault()
-        composeRule.waitForTag("add-secret-fab", 180_000)
+        composeRule.lbWaitMain(180_000)
 
-        composeRule.onNodeWithTag("add-secret-fab").performClick()
-        composeRule.waitForTag("secret-name-input", 30_000)
-        composeRule.onNodeWithTag("secret-name-input").performTextInput(secretName)
-        composeRule.waitForTag("secret-value-input", 30_000)
-        composeRule.onNodeWithTag("secret-value-input").performTextInput(secretValue)
-        composeRule.onNodeWithTag("add-secret-submit").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        composeRule.lbCreatePlain(secretName, secretValue)
         marker("ANDROID_INITIATOR_READY")
 
         // Android approves Web and then iOS joins before this device goes
@@ -59,9 +55,9 @@ class CaseSevenAndroidOfflineReceiverTest {
         waitForApproval(approvalCoordinatorUrl, "android-ios-join", 0)
         approvePendingJoin("ANDROID_IOS_JOIN_APPROVED")
 
-        composeRule.onNodeWithTag("tab-secrets").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
-        composeRule.waitForTag("secret-primary-action-$secretName", 180_000)
+        composeRule.lbSecrets()
+        composeRule.lbSecret(secretName, 180_000)
+        composeRule.lbWait("lb-primary-${composeRule.lbSecret(secretName)}")
         marker("ANDROID_OFFLINE_READY")
 
         // Return before the orchestrator force-stops the target application.
@@ -74,32 +70,21 @@ class CaseSevenAndroidOfflineReceiverTest {
     fun assertNoStaleRecoveryAlertAfterOfflineRestart() {
         val secretName = instrumentationArgument("secretName", "test-secret")
         marker("ANDROID_STALE_ALERT_ASSERTION_STARTED")
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
-
-        // find_claim performs the first post-relaunch sync. Waiting for the
-        // explicit "claim not found" response gives the UI a meaningful
-        // synchronization point instead of guessing with a timeout/sleep.
-        var lastClaimResponse = ""
+        val passId = composeRule.lbSecret(secretName, 180_000)
+        val selected = composeRule.lbWaitCanonicalSecret(passId, secretName)
         composeRule.waitUntil(180_000) {
-            lastClaimResponse = runCatching {
-                MetaSecretNative.find_claim_by_(secretName)
-            }.getOrDefault("")
-            Log.i(
-                "MetaSecretE2E",
-                "E2E: ANDROID_STALE_ALERT_CLAIM_STATE secret=$secretName "
-                    + "responseBytes=${lastClaimResponse.length}",
-            )
-            lastClaimResponse.contains("\"success\":false")
-                && lastClaimResponse.contains("Claim has not been found")
+            val current = lbReadCanonical(selected.scope) ?: return@waitUntil false
+            val afterLaunch = lbAfterLaunch(current, canonicalLaunch.beforeFrame)
+            val noActive = lbNoActiveRecovery(current, selected)
+            marker("ANDROID_STALE_ALERT_CLAIM_STATE cachedAttempt=${current.frame.attempt} afterLaunch=$afterLaunch noActiveSelectedPass=$noActive")
+            afterLaunch && noActive
         }
-
-        check(lastClaimResponse.contains("Claim has not been found")) {
-            "Expected no active recovery claim after restart, got: $lastClaimResponse"
+        composeRule.lbHome()
+        composeRule.waitUntil(30_000) {
+            val current = lbReadCanonical(selected.scope) ?: return@waitUntil false
+            lbAfterLaunch(current, canonicalLaunch.beforeFrame) && lbNoActiveRecovery(current, selected) &&
+                composeRule.lbIncomingCount() == 0 && composeRule.lbVisibleIncoming() == null
         }
-        composeRule.waitForTagGone("recovery-request-badge-$secretName", 30_000)
-        composeRule.waitForTagGone("open-recovery-request-$secretName", 30_000)
-        composeRule.waitForTagGone("alert-recovery-request", 30_000)
-        composeRule.waitForTagGone("alert-recovery-request-processing", 30_000)
         marker("ANDROID_STALE_ALERT_ABSENT")
     }
 
@@ -111,7 +96,7 @@ class CaseSevenAndroidOfflineReceiverTest {
             "http://10.0.2.2:5180",
         )
         marker("ANDROID_REMAINING_RECOVERY_READY")
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        composeRule.lbSecret(secretName, 180_000)
 
         recoveryCyclePlan(coordinatorUrl)
             .filter { it.number > 1 }
@@ -207,78 +192,35 @@ class CaseSevenAndroidOfflineReceiverTest {
     }
 
     private fun requestRecovery(secretName: String) {
-        val action = composeRule.onNodeWithTag("secret-primary-action-$secretName")
-        composeRule.waitUntil(120_000) {
-            runCatching {
-                action.assertTextContains("Recover", substring = true)
-                true
-            }.getOrDefault(false)
-        }
         marker("ANDROID_PRIMARY_ACTION_CLICK_$secretName")
-        action.performClick()
-        composeRule.waitForTag("show-secret-dialog", 30_000)
+        composeRule.lbRequestRecovery(secretName)
+
     }
 
     private fun approveIncomingRecovery(secretName: String) {
-        composeRule.waitForTag("recovery-request-badge-$secretName", 180_000)
-        composeRule.onNodeWithTag("open-recovery-request-$secretName").performClick()
-        composeRule.waitForTag("alert-recovery-request", 30_000)
-        composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
-        composeRule.waitUntil(120_000) {
-            composeRule.onAllNodes(
-                hasTestTag("alert-recovery-request"),
-                useUnmergedTree = true,
-            ).fetchSemanticsNodes().isEmpty() && composeRule.onAllNodes(
-                hasTestTag("alert-recovery-request-processing"),
-                useUnmergedTree = true,
-            ).fetchSemanticsNodes().isEmpty()
-        }
+        composeRule.lbDecide(composeRule.lbIncoming("Recover", secretName), true)
+
     }
 
     private fun closeShowSecretDialog() {
-        runCatching {
-            composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
-        }
-        composeRule.waitForTagGone("show-secret-dialog", 30_000)
+        composeRule.lbCloseCurrentRevealOrPending()
+
     }
 
     private fun revealAndClose(secretName: String, reopenClaim: Boolean) {
-        if (reopenClaim) {
-            val action = composeRule.onNodeWithTag("secret-primary-action-$secretName")
-            composeRule.waitUntil(120_000) {
-                runCatching {
-                    action.assertTextContains("Show", substring = true)
-                    true
-                }.getOrDefault(false)
-            }
-            action.performClick()
-            composeRule.waitForTag("show-secret-dialog", 30_000)
-        }
-        composeRule.waitForTag("revealed-secret-value", 120_000)
-        closeShowSecretDialog()
+        // Both old presentations now use an explicit current canonical Show, never another Recover.
+        val shown = composeRule.lbRevealAccepted(secretName)
+        composeRule.lbHide(shown)
+
     }
 
     private fun approvePendingJoin(resultMarker: String) {
         marker("ANDROID_OPENING_DEVICES_FOR_JOIN_$resultMarker")
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitUntil(120_000) {
-            composeRule.onAllNodes(
-                hasTestTag("alert-join-request"),
-                useUnmergedTree = true,
-            ).fetchSemanticsNodes().isEmpty()
-        }
+        composeRule.lbHome()
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
         marker("ANDROID_JOIN_APPROVAL_DISPATCHED_$resultMarker")
-        composeRule.waitUntil(120_000) {
-            composeRule.onAllNodes(
-                hasTestTag("pending-device-row"),
-                useUnmergedTree = true,
-            ).fetchSemanticsNodes().isEmpty()
-        }
         marker(resultMarker)
+
     }
 
     private fun waitForApproval(coordinatorUrl: String, platform: String, cycle: Int) {

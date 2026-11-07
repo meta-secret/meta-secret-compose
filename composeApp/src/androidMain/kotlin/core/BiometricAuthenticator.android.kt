@@ -62,6 +62,10 @@ class BiometricAuthenticatorAndroid (
     }
 
     private fun isRunningInTest(): Boolean {
+        // Debug integration tests may select the existing real system prompt, never synthetic approval.
+        if (metasecret.project.com.BuildConfig.DEBUG &&
+            (activity.intent?.getBooleanExtra("metasecret.force_system_auth", false) == true ||
+                System.getProperty("metasecret.test.force_system_auth") == "true")) return false
         // Detect emulator by fingerprint patterns or explicit test flag
         val fingerprint = Build.FINGERPRINT.lowercase()
         val isEmulator = fingerprint.contains("emulator") ||
@@ -144,7 +148,8 @@ class BiometricAuthenticatorAndroid (
             }
 
             if (isDeviceSecure &&
-                biometricManager.canAuthenticate(BiometricManager.Authenticators.DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS
+                biometricManager.canAuthenticate(BiometricManager.Authenticators.DEVICE_CREDENTIAL) ==
+                    BiometricManager.BIOMETRIC_SUCCESS
             ) {
                 return PromptConfig(
                     authenticators = BiometricManager.Authenticators.DEVICE_CREDENTIAL,

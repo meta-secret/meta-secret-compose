@@ -41,6 +41,8 @@
 	<string>$(META_SECRET_SOCKET_URL)</string>
 	<key>META_SECRET_ENV</key>
 	<string>$(META_SECRET_ENV)</string>
+	<key>MetaSecretE2EIdentityRequired</key>
+	<string>$(METASECRET_E2E_IDENTITY_REQUIRED)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
@@ -62,10 +64,7 @@
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>

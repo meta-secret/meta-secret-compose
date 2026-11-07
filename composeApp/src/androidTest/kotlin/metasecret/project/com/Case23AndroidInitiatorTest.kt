@@ -33,23 +33,13 @@ class Case23AndroidInitiatorTest {
 
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitCreateVault()
-        composeRule.waitForTag("add-secret-fab", 180_000)
+        composeRule.lbWaitMain(180_000)
 
-        composeRule.onNodeWithTag("add-secret-fab").performClick()
-        composeRule.waitForTag("secret-name-input", 30_000)
-        composeRule.onNodeWithTag("secret-name-input").performTextInput(secretName)
-        composeRule.onNodeWithTag("secret-value-input").performTextInput(secretValue)
-        composeRule.onNodeWithTag("add-secret-submit").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
-        composeRule.waitForTagGone("secret-name-input", 30_000)
+        composeRule.lbCreatePlain(secretName, secretValue)
 
-        composeRule.onNodeWithTag("secret-primary-action-$secretName")
-            .assertTextContains("Show", substring = true)
-            .performClick()
-        composeRule.waitForTag("revealed-secret-value", 180_000)
-        composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
-        composeRule.waitForTagGone("revealed-secret-value", 30_000)
-        composeRule.waitForTagGone("show-secret-dialog", 30_000)
+        val shown = composeRule.lbShow(secretName, secretValue)
+
+        composeRule.lbHide(shown)
 
         marker("ANDROID_TEST23_SECRET1_READY")
         marker("ANDROID_TEST23_INITIATOR_SETUP_READY")
@@ -63,13 +53,7 @@ class Case23AndroidInitiatorTest {
         clickIfPresent("onboarding-skip", 10_000)
         waitForApproval(coordinator, "android-approve-$target-join", cycle)
 
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitForTagGone("alert-join-request", 120_000)
-        composeRule.waitForTagGone("pending-device-row", 120_000)
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
         marker("ANDROID_JOIN_APPROVED_${target.uppercase()}")
     }
 
@@ -81,24 +65,13 @@ class Case23AndroidInitiatorTest {
         val initializeShow = argument("initializeShow", "false") == "true"
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.onNodeWithTag("tab-secrets").performClick()
-        composeRule.waitForTag("add-secret-fab", 120_000)
-        composeRule.onNodeWithTag("add-secret-fab").performClick()
-        composeRule.waitForTag("secret-name-input", 30_000)
-        composeRule.onNodeWithTag("secret-name-input").performTextInput(secretName)
-        composeRule.onNodeWithTag("secret-value-input").performTextInput(secretValue)
-        composeRule.onNodeWithTag("add-secret-submit").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
-        composeRule.waitForTagGone("secret-name-input", 30_000)
+        composeRule.lbSecrets()
+        composeRule.lbWaitMain(120_000)
+        composeRule.lbCreatePlain(secretName, secretValue)
 
         if (initializeShow) {
-            composeRule.onNodeWithTag("secret-primary-action-$secretName")
-                .assertTextContains("Show", substring = true)
-                .performClick()
-            composeRule.waitForTag("revealed-secret-value", 60_000)
-            composeRule.onNodeWithTag("show-secret-close", useUnmergedTree = true).performClick()
-            composeRule.waitForTagGone("revealed-secret-value", 30_000)
-            composeRule.waitForTagGone("show-secret-dialog", 30_000)
+            val shown = composeRule.lbShow(secretName, secretValue)
+            composeRule.lbHide(shown)
         }
         marker("ANDROID_TEST23_SECRET_CREATED_${cycle}")
     }

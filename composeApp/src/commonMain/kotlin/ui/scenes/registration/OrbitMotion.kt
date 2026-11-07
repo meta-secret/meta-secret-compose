@@ -50,7 +50,8 @@ internal fun OrbitMotion(
       Box(Modifier.fillMaxSize().testTag(if (interactive) "orbit-transition-ready" else "orbit-transition-running")) {
         Box(Modifier.fillMaxSize().then(if (interactive) Modifier else Modifier.clearAndSetSemantics {}).graphicsLayer {
             transformOrigin = TransformOrigin(pivot, .5f)
-            rotationZ = orbitKeyframeValue(progress.value, listOf(0f to -40f, .4f to -24f, .7f to -12f, 1f to 0f)) * state.direction
+            rotationZ = orbitKeyframeValue(progress.value, listOf(0f to -40f, .4f to -24f, .7f to -12f, 1f to 0f)) *
+                state.direction
             alpha = orbitKeyframeValue(progress.value, listOf(0f to 0f, .4f to .1f, .7f to .6f, 1f to 1f))
         }) {
             CompositionLocalProvider(LocalOrbitInteractive provides interactive) {
@@ -60,7 +61,8 @@ internal fun OrbitMotion(
         outgoing?.let { old ->
             Box(Modifier.fillMaxSize().clearAndSetSemantics {}.graphicsLayer {
                 transformOrigin = TransformOrigin(pivot, .5f)
-                rotationZ = orbitKeyframeValue(progress.value, listOf(0f to 0f, .5f to 20f, .8f to 32f, 1f to 40f)) * state.direction
+                rotationZ = orbitKeyframeValue(progress.value, listOf(0f to 0f, .5f to 20f, .8f to 32f, 1f to 40f)
+                    ) * state.direction
                 alpha = orbitKeyframeValue(progress.value, listOf(0f to 1f, .5f to .25f, .8f to 0f, 1f to 0f))
             }) { CompositionLocalProvider(LocalOrbitInteractive provides false) { content(old, false) } }
         }

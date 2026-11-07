@@ -47,7 +47,8 @@ internal object AppleEmailProof {
 
 internal object AppleEmailPolicy {
     private val domain = Regex("(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,63}")
-    private val authorizationKeys = setOf("client_id", "redirect_uri", "response_type", "response_mode", "scope", "state", "nonce")
+    private val authorizationKeys = setOf("client_id", "redirect_uri", "response_type", "response_mode", "scope",
+        "state", "nonce")
 
     fun origin(value: String): String? = runCatching {
         val uri = URI(value)

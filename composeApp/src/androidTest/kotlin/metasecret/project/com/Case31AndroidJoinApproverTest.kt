@@ -21,14 +21,8 @@ class Case31AndroidJoinApproverTest {
         val target = argument("joinTarget", "ios").uppercase()
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-devices", 60_000)
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitForTagGone("alert-join-request", 120_000)
-        composeRule.waitForTagGone("pending-device-row", 120_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
 
         marker("ANDROID_TEST31_JOIN_APPROVED_$target")
     }
@@ -39,14 +33,8 @@ class Case31AndroidJoinApproverTest {
         val target = argument("joinTarget", "ios").uppercase()
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-devices", 60_000)
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitForTagGone("alert-join-request", 120_000)
-        composeRule.waitForTagGone("pending-device-row", 120_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
 
         marker("ANDROID_TEST34_JOIN_APPROVED_$target")
     }
@@ -62,14 +50,8 @@ class Case31AndroidJoinApproverTest {
         val phase = argument("cycle", "1")
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-devices", 60_000)
-        composeRule.onNodeWithTag("tab-devices").performClick()
-        composeRule.waitForTag("pending-device-row", 180_000)
-        composeRule.onNodeWithTag("pending-device-row").performClick()
-        composeRule.waitForTag("alert-join-request", 30_000)
-        composeRule.onNodeWithTag("alert-join-request-accept").performClick()
-        composeRule.waitForTagGone("alert-join-request", 120_000)
-        composeRule.waitForTagGone("pending-device-row", 120_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbDecide(composeRule.lbIncoming("Join"), true)
 
         marker("ANDROID_TEST46_JOIN_APPROVED_${target}_$phase")
     }
@@ -81,7 +63,7 @@ class Case31AndroidJoinApproverTest {
         val cycle = argument("cycle", "18")
 
         openSecrets()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        composeRule.lbSecret(secretName, 180_000)
         marker("ANDROID_TEST34_SECRET_VISIBLE_$cycle")
     }
 
@@ -91,14 +73,14 @@ class Case31AndroidJoinApproverTest {
         val cycle = argument("cycle", "18")
 
         openSecrets()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        composeRule.lbSecret(secretName, 180_000)
         marker("ANDROID_TEST31_SECRET_VISIBLE_$cycle")
     }
 
     private fun openSecrets() {
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-secrets", 60_000)
-        composeRule.onNodeWithTag("tab-secrets").performClick()
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbSecrets()
     }
 
     private fun argument(name: String, fallback: String): String =

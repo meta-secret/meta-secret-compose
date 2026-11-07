@@ -1,6 +1,8 @@
 package core
 
 import android.graphics.Bitmap
+import android.graphics.Canvas as AndroidCanvas
+import android.graphics.Rect as AndroidRect
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -15,6 +17,30 @@ import kotlin.math.sqrt
 
 /** CPU blur remains available on API 25, where Compose RenderEffect blur is ignored. */
 class OrbitBackdropBlurAndroid : OrbitBackdropBlur {
+    override fun paddedCopy(source: ImageBitmap, paddingPx: Int): ImageBitmap {
+        require(paddingPx >= 0)
+        val readable = checkNotNull(source.asAndroidBitmap().copy(Bitmap.Config.ARGB_8888, true))
+        var output: Bitmap? = null
+        try {
+            val padded = try {
+                val allocated = Bitmap.createBitmap(readable.width + paddingPx * 2, readable.height + paddingPx * 2,
+                    Bitmap.Config.ARGB_8888)
+                output = allocated
+                AndroidCanvas(allocated).drawBitmap(readable, null, AndroidRect(paddingPx, paddingPx,
+                    paddingPx + readable.width, paddingPx + readable.height), null)
+                allocated
+            } finally {
+                try { readable.eraseColor(android.graphics.Color.TRANSPARENT) } finally { readable.recycle() }
+            }
+            val image = padded.asImageBitmap()
+            output = null
+            return image
+        } finally {
+            output?.let { incomplete -> try { incomplete.eraseColor(android.graphics.Color.TRANSPARENT) } finally {
+                incomplete.recycle() } }
+        }
+    }
+
     override suspend fun blur(source: ImageBitmap, radiusPx: Float): ImageBitmap =
         withContext(Dispatchers.Default) {
             require(radiusPx.isFinite() && radiusPx >= 0f && radiusPx <= 256f)

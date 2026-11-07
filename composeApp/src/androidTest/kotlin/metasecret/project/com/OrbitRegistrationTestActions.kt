@@ -23,7 +23,8 @@ internal fun AndroidComposeTestRule<*, *>.orbitCreateVault() {
     orbitWaitForTag("orbit-transition-ready")
     onNodeWithTag("orbit-create", useUnmergedTree = true).assertIsEnabled()
     orbitTap("orbit-create")
-    orbitWaitForTag("tab-secrets", 180_000)
+    lbWaitMain(180_000)
+    orbitWaitForTag("lb-home", 180_000)
 }
 
 internal fun AndroidComposeTestRule<*, *>.orbitRequestJoin(awaitPending: Boolean = true) {

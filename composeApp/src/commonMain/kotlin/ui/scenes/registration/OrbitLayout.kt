@@ -45,7 +45,8 @@ internal fun OrbitLayout(state: RegistrationUiState, onIntent: (RegistrationInte
     )).testTag("orbit-registration")) {
         val center = maxHeight / 2
         OrbitScale(center)
-        OrbitMotion(state, ((maxWidth - T.orbitDimensionPivotRightInset) / maxWidth).coerceIn(0f, 1f)) { frame, interactive ->
+        OrbitMotion(state, ((maxWidth - T.orbitDimensionPivotRightInset) / maxWidth).coerceIn(0f, 1f)) { frame,
+            interactive ->
             val emit: (RegistrationIntent) -> Unit = { if (interactive) onIntent(it) }
             OrbitStep(frame.scene.step, center)
             if (frame.scene == RegistrationScene.Manual) {
@@ -54,11 +55,14 @@ internal fun OrbitLayout(state: RegistrationUiState, onIntent: (RegistrationInte
                 Column(Modifier.align(Alignment.Center).width((maxWidth - 144.dp).coerceAtMost(560.dp))
                     , horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                    val heading = if (frame.scene == RegistrationScene.Providers) appString(AppString.orbitBrand) else frame.identity.email
-                    Text(heading, style = OrbitTextStyles.heading(if (frame.scene == RegistrationScene.Providers) 29f else 23f),
+                    val heading = if (frame.scene == RegistrationScene.Providers) appString(AppString.orbitBrand
+                        ) else frame.identity.email
+                    Text(heading, style = OrbitTextStyles.heading(if (frame.scene == RegistrationScene.Providers
+                        ) 29f else 23f),
                         textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.testTag("orbit-heading"))
-                    Text(appString(status(frame)), style = OrbitTextStyles.status(), color = if (frame.error != null) T.orbitColorError else T.orbitColorSecondary,
+                    Text(appString(status(frame)), style = OrbitTextStyles.status(), color = if (frame.error != null
+                        ) T.orbitColorError else T.orbitColorSecondary,
                         textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.testTag("orbit-status"))
                 }
             }
@@ -75,14 +79,16 @@ internal fun OrbitLayout(state: RegistrationUiState, onIntent: (RegistrationInte
                 } }, row)
                 frame.scene == RegistrationScene.Manual -> OrbitActionRow(listOf(
                     OrbitAction(OrbitGlyph.Back, AppString.orbitBack), OrbitAction(OrbitGlyph.Ok, AppString.orbitOk),
-                ), { emit(if (it == OrbitGlyph.Back) RegistrationIntent.Back else RegistrationIntent.ConfirmEmail) }, row)
+                ), { emit(if (it == OrbitGlyph.Back) RegistrationIntent.Back else RegistrationIntent.ConfirmEmail)
+                    }, row)
                 frame.scene == RegistrationScene.Join -> {
                     OrbitJoinActions(frame, { glyph -> when (glyph) {
                         OrbitGlyph.Qr -> if (interactive) onQr()
                         OrbitGlyph.Request -> emit(RegistrationIntent.Request)
                         else -> emit(RegistrationIntent.Back)
                     } }, row)
-                    if (frame.phase in setOf(RegistrationPhase.Pending, RegistrationPhase.Requesting, RegistrationPhase.Syncing)) {
+                    if (frame.phase in setOf(RegistrationPhase.Pending, RegistrationPhase.Requesting,
+                        RegistrationPhase.Syncing)) {
                         OrbitLoader(frame.phase, row.offset(y = 3.5.dp))
                     }
                 }
@@ -93,11 +99,14 @@ internal fun OrbitLayout(state: RegistrationUiState, onIntent: (RegistrationInte
                 frame.phase in setOf(RegistrationPhase.Checking, RegistrationPhase.Syncing) ->
                     OrbitLoader(frame.phase, row.offset(y = 3.5.dp))
                 frame.phase == RegistrationPhase.CreateError -> Unit
-                frame.phase == RegistrationPhase.Error -> OrbitActionRow(listOf(OrbitAction(OrbitGlyph.Back, AppString.orbitBack)), { emit(RegistrationIntent.Back) }, row)
+                frame.phase == RegistrationPhase.Error -> OrbitActionRow(listOf(OrbitAction(OrbitGlyph.Back,
+                    AppString.orbitBack)), { emit(RegistrationIntent.Back) }, row)
                 else -> OrbitActionRow(listOf(
-                    OrbitAction(OrbitGlyph.Create, AppString.orbitCreate, frame.identity.availability == VaultAvailability.AVAILABLE),
+                    OrbitAction(OrbitGlyph.Create, AppString.orbitCreate, frame.identity.availability ==
+                        VaultAvailability.AVAILABLE),
                     OrbitAction(OrbitGlyph.Join, AppString.orbitJoin,
-                        frame.phase == RegistrationPhase.Idle && frame.identity.availability == VaultAvailability.EXISTS),
+                        frame.phase == RegistrationPhase.Idle && frame.identity.availability == VaultAvailability
+                            .EXISTS),
                     OrbitAction(OrbitGlyph.Enter, AppString.orbitEnter),
                 ), { emit(when (it) {
                     OrbitGlyph.Create -> RegistrationIntent.Create
@@ -110,19 +119,25 @@ internal fun OrbitLayout(state: RegistrationUiState, onIntent: (RegistrationInte
 }
 
 @Composable
-private fun OrbitEmailField(state: RegistrationUiState, center: Dp, onIntent: (RegistrationIntent) -> Unit, interactive: Boolean) {
+private fun OrbitEmailField(state: RegistrationUiState, center: Dp, onIntent: (RegistrationIntent) -> Unit,
+    interactive: Boolean) {
     val focus = remember { FocusRequester() }
     LaunchedEffect(interactive) { if (interactive) focus.requestFocus() }
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         BasicTextField(state.identity.email, { onIntent(RegistrationIntent.Email(it)) },
-            modifier = Modifier.width((maxWidth - 142.dp).coerceAtLeast(100.dp).coerceAtMost(T.orbitDimensionFieldMaxWidth)).height(T.orbitDimensionFieldHeight)
-                .testTag("orbit-email-input").focusRequester(focus).border(1.dp, if (state.error != null) T.orbitColorError else T.orbitColorFieldBorder,
+            modifier = Modifier.width((maxWidth - 142.dp).coerceAtLeast(100.dp).coerceAtMost(T
+                .orbitDimensionFieldMaxWidth)).height(T.orbitDimensionFieldHeight)
+                .testTag("orbit-email-input").focusRequester(focus).border(1.dp, if (state.error != null) T
+                    .orbitColorError else T.orbitColorFieldBorder,
                     RoundedCornerShape(T.orbitDimensionFieldRadius)),
-            textStyle = OrbitTextStyles.field(), singleLine = true, enabled = interactive, cursorBrush = SolidColor(T.orbitColorText),
+            textStyle = OrbitTextStyles.field(), singleLine = true, enabled = interactive, cursorBrush = SolidColor(
+                T.orbitColorText),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onIntent(RegistrationIntent.ConfirmEmail) }),
-            decorationBox = { field -> Box(Modifier.fillMaxSize().offset(x = 15.dp), contentAlignment = Alignment.CenterStart) {
-                if (state.identity.email.isEmpty()) Text(appString(AppString.orbitEmailPlaceholder), style = OrbitTextStyles.field(), color = T.orbitColorSecondary)
+            decorationBox = { field -> Box(Modifier.fillMaxSize().offset(x = 15.dp), contentAlignment = Alignment
+                .CenterStart) {
+                if (state.identity.email.isEmpty()) Text(appString(AppString.orbitEmailPlaceholder), style =
+                    OrbitTextStyles.field(), color = T.orbitColorSecondary)
                 field()
             } },
         )
@@ -140,6 +155,7 @@ private fun status(state: RegistrationUiState): AppString = state.error ?: when 
     else -> when (state.scene) {
         RegistrationScene.Providers -> AppString.orbitTagline
         RegistrationScene.Join -> AppString.orbitJoining
-        else -> if (state.identity.availability == VaultAvailability.EXISTS) AppString.orbitTaken else AppString.orbitAvailable
+        else -> if (state.identity.availability == VaultAvailability.EXISTS) AppString.orbitTaken else AppString
+            .orbitAvailable
     }
 }

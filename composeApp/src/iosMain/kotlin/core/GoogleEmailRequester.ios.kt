@@ -11,7 +11,8 @@ import kotlinx.cinterop.ExperimentalForeignApi
 class GoogleEmailRequesterIos : GoogleEmailRequesterInterface {
     private val json = Json { ignoreUnknownKeys = true }
 
-    override suspend fun requestGoogleEmail(): GoogleEmailAuthResult = withContext(kotlinx.coroutines.Dispatchers.Default) {
+    override suspend fun requestGoogleEmail(): GoogleEmailAuthResult = withContext(kotlinx.coroutines.Dispatchers
+        .Default) {
         val response = runCatching {
             SwiftBridge().requestGoogleEmail()
         }.getOrElse { error ->

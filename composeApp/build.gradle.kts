@@ -1,4 +1,5 @@
 import io.gitlab.arturbosch.detekt.Detekt
+import groovy.json.JsonSlurper
 import io.github.ttypic.swiftklib.gradle.task.CompileSwiftTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -291,6 +292,27 @@ detekt {
 }
 
 tasks.withType<Detekt>().configureEach {
+    val generatedNames = setOf(
+        "OrbitTokens.kt", "LiveboardTokens.kt", "LiveboardGeometry.kt", "LiveboardMotion.kt",
+        "LiveboardTimelines.kt", "LiveboardMotionSchema.kt", "LiveboardScriptedGeometry.kt",
+        "LiveboardMaterials.kt", "LiveboardStyles.kt", "LiveboardGlyphs.kt", "LiveboardDeviceArt.kt",
+        "LiveboardUtilityArt.kt", "LiveboardIcons.kt", "LiveboardStyleRulesA.kt", "LiveboardStyleRulesB.kt",
+    )
+    val generatedPrefix = "composeApp/src/commonMain/kotlin/ui/design/generated/"
+    val generatedFiles = generatedNames.map {
+        rootProject.file(generatedPrefix + it).absoluteFile.normalize()
+    }.toSet()
+    dependsOn(rootProject.tasks.named("verifyDesignSystem"))
+    inputs.file(rootProject.file("design-system.lock.json"))
+    doFirst {
+        val lock = JsonSlurper().parse(rootProject.file("design-system.lock.json")) as Map<*, *>
+        val lockedFiles = lock["files"] as Map<*, *>
+        val lockedGeneratedPaths = lockedFiles.keys.filterIsInstance<String>()
+            .filter { it.startsWith(generatedPrefix) }.toSet()
+        check(lockedGeneratedPaths == generatedNames.map { generatedPrefix + it }.toSet()) {
+            "Generated Kotlin inventory differs from the exact design-system export allowlist."
+        }
+    }
     setSource(
         files(
             "src/commonMain/kotlin",
@@ -300,4 +322,5 @@ tasks.withType<Detekt>().configureEach {
     )
     jvmTarget = "11"
     exclude("**/uniffi/**")
+    exclude { it.file.absoluteFile.normalize() in generatedFiles }
 }

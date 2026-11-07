@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="32dp" android:height="32dp" android:viewportWidth="32" android:viewportHeight="32">
+  <group android:translateX="0" android:translateY="0">
+  <group android:name="error_triangle">
+    <path android:pathData="M14 5a2.3 2.3 0 0 1 4 0l12 21a2.3 2.3 0 0 1-2 3H4a2.3 2.3 0 0 1-2-3Z" android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.3" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+  <group android:name="error_mark">
+    <path android:pathData="M16 12v8" android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.3" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+    <path android:pathData="M15.2 24a0.8 0.8 0 1 0 1.6 0a0.8 0.8 0 1 0 -1.6 0Z" android:fillColor="#FFFFFFFF" android:strokeColor="#00000000" android:strokeWidth="1.3" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+  </group>
+</vector>

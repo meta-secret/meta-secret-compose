@@ -44,7 +44,8 @@ internal class AppleEmailBrokerClient(baseUrl: String, http: AppleBrokerHttp? = 
         val result = post("take", proof(requestId, verifier))
         if (!setOf("status", "email", "code").containsAll(result.keys)) throw AppleBrokerException()
         val status = string(result, "status")
-        if ("code" in result && (!string(result, "code").matches(Regex("[a-z_]{1,64}")) || status !in setOf("error", "cancelled"))) {
+        if ("code" in result && (!string(result, "code").matches(Regex("[a-z_]{1,64}")) || status !in setOf("error",
+            "cancelled"))) {
             throw AppleBrokerException()
         }
         if (status != "success" && "email" in result) throw AppleBrokerException()
@@ -83,7 +84,8 @@ internal class AppleEmailBrokerClient(baseUrl: String, http: AppleBrokerHttp? = 
             val transport = http ?: KtorAppleBrokerHttp().also { http = it }
             val response = withTimeoutOrNull(30_000) { transport.post("$base/apple/$path", body.toString()) }
                 ?: throw AppleBrokerException()
-            if (response.status != 200 || response.body.toByteArray(Charsets.UTF_8).size > 16_384) throw AppleBrokerException()
+            if (response.status != 200 || response.body.toByteArray(Charsets.UTF_8).size > 16_384
+                ) throw AppleBrokerException()
             appleBrokerObject(response.body)
         } catch (cancelled: CancellationException) {
             throw cancelled

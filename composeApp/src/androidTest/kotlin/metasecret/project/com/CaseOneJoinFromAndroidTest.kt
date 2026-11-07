@@ -1,14 +1,14 @@
 package metasecret.project.com
 
 import android.util.Log
+import models.apiModels.ClientStatus
+import org.json.JSONObject
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.metasecret.core.MetaSecretNative
-import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,67 +24,43 @@ class CaseOneJoinFromAndroidTest {
     fun joinApprovedVaultAndWaitForRecoveryCompletion() {
         val vaultName = instrumentationArgument("vaultName", "test@test.ru")
         val secretName = instrumentationArgument("secretName", "test-secret")
-
         composeRule.orbitEnterVaultName(vaultName)
         composeRule.orbitRequestJoin()
         marker("ANDROID_JOIN_REQUEST_SENT")
-
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
+        val passId = composeRule.lbSecret(secretName)
+        val canonicalSecret = composeRule.lbWaitCanonicalSecret(passId, secretName)
         marker("ANDROID_MAIN_AFTER_APPROVE")
         marker("ANDROID_SECRET_VISIBLE")
-
         val recoveryCycles = instrumentationArgument("recoveryCycles", "18").toInt()
         val approvalCycles = instrumentationArgument("androidRecoveryApprovals", "7,8,9,10,11,12,14,16,18")
-            .split(',')
-            .mapNotNull(String::toIntOrNull)
-            .toSet()
-        val approvalCoordinatorUrl = instrumentationArgument(
-            "approvalCoordinatorUrl",
-            "http://10.0.2.2:5180",
-        )
-        val stateDrivenRecoveryWait = instrumentationArgument("stateDrivenRecoveryWait", "false") == "true"
-
+            .split(',').mapNotNull(String::toIntOrNull).toSet()
+        val coordinator = instrumentationArgument("approvalCoordinatorUrl", "http://10.0.2.2:5180")
+        val stateDriven = instrumentationArgument("stateDrivenRecoveryWait", "false") == "true"
+        val seenClaimIds = mutableSetOf<String>()
         for (cycle in 1..recoveryCycles) {
-            if (stateDrivenRecoveryWait) {
-                waitForApproval(approvalCoordinatorUrl, "android-state", cycle)
+            if (stateDriven) {
+                waitForApproval(coordinator, "android-state", cycle)
                 marker("ANDROID_RECOVERY_STATE_PENDING_$cycle")
             }
-            try {
-                composeRule.waitForTag("recovery-request-badge-$secretName", 45_000)
+            val incoming = try {
+                composeRule.lbIncoming("Recover", secretName)
             } catch (failure: Throwable) {
-                val secretRowCount = composeRule.onAllNodes(hasTestTag("secret-row-$secretName"), useUnmergedTree = true)
-                    .fetchSemanticsNodes().size
-                val badgeCount = composeRule.onAllNodes(hasTestTag("recovery-request-badge-$secretName"), useUnmergedTree = true)
-                    .fetchSemanticsNodes().size
-                val openActionCount = composeRule.onAllNodes(hasTestTag("open-recovery-request-$secretName"), useUnmergedTree = true)
-                    .fetchSemanticsNodes().size
-                marker(
-                    "ANDROID_RECOVERY_BADGE_DIAGNOSTIC_$cycle " +
-                        "secretRowCount=$secretRowCount badgeCount=$badgeCount openActionCount=$openActionCount"
-                )
+                marker("ANDROID_RECOVERY_BADGE_DIAGNOSTIC_$cycle actualHeadPresent=${composeRule.lbVisibleIncoming() != null} actualCount=${composeRule.lbIncomingCount()}")
                 throw failure
             }
+            val observed = composeRule.lbObserveCanonicalRecovery(canonicalSecret, incoming.requestId, seenClaimIds)
+            seenClaimIds.add(incoming.requestId)
             marker("ANDROID_RECOVERY_REQUEST_ALERT_$cycle")
             if (cycle in approvalCycles) {
-                waitForApproval(approvalCoordinatorUrl, "android", cycle)
-                composeRule.onNodeWithTag("open-recovery-request-$secretName").performClick()
-                composeRule.waitForTag("alert-recovery-request", 30_000)
-                composeRule.onNodeWithTag("alert-recovery-request-accept").performClick()
-                // The dialog is hidden as soon as the acceptance starts.  Do not let the
-                // instrumentation process finish until the async core/server operation did.
-                composeRule.waitForTag("alert-recovery-request-processing", 30_000)
-                composeRule.waitUntil(180_000) {
-                    composeRule.onAllNodes(hasTestTag("alert-recovery-request-processing"))
-                        .fetchSemanticsNodes()
-                        .isEmpty()
-                }
+                waitForApproval(coordinator, "android", cycle)
+                composeRule.lbDecide(incoming, true)
                 marker("ANDROID_RECOVERY_APPROVE_SUCCESS_$cycle")
             }
-            val completedRecoveryClaims = waitForCoreRecoveryCompletion(secretName, cycle)
+            val completedRecoveryClaims = waitForCoreRecoveryCompletion(observed, cycle)
             marker("ANDROID_RECOVERY_CORE_DONE_$cycle completedRecoveryClaims=$completedRecoveryClaims")
             composeRule.waitUntil(180_000) {
-                composeRule.onAllNodes(hasTestTag("recovery-request-badge-$secretName"), useUnmergedTree = true)
-                    .fetchSemanticsNodes().isEmpty()
+                !composeRule.lbHas("lb-inbox-head-Recover-${incoming.requestId}") &&
+                    composeRule.lbIncomingCount() == incoming.count - 1
             }
             marker("ANDROID_RECOVERY_REQUEST_CLOSED_$cycle")
         }
@@ -102,54 +78,53 @@ class CaseOneJoinFromAndroidTest {
     private fun instrumentationArgument(name: String, fallback: String): String =
         androidx.test.platform.app.InstrumentationRegistry.getArguments().getString(name) ?: fallback
 
-    /**
-     * Wait for an authoritative Core state transition before inspecting Compose
-     * semantics. A Core read is serialized with the preceding FFI accept call;
-     * the cycle-indexed count also ensures an older completed claim cannot
-     * satisfy this cycle's barrier.
-     */
-    private fun waitForCoreRecoveryCompletion(secretName: String, cycle: Int): Int {
-        var completedRecoveryClaims = 0
-        composeRule.waitUntil(180_000) {
-            val response = MetaSecretNative.getState()
-            val state = JSONObject(response)
-            check(state.getBoolean("success")) {
-                "Core getState failed while waiting for Android recovery cycle $cycle"
+    /** Observe actual current successful cache publications; this passive barrier never calls Core. */
+    private fun waitForCoreRecoveryCompletion(observed: LiveboardCanonicalRecovery, cycle: Int): Int {
+        var completed: Int? = null
+        var sample = recoveryCompletionSample(cycle)
+        try {
+            composeRule.waitUntil(180_000) {
+                sample = recoveryCompletionSample(cycle)
+                val view = lbReadCanonical(observed.secret.scope)
+                completed = view?.let { lbCompletedReceiverRecoveries(it, observed, cycle) }
+                runCatching {
+                    sample["VIEW_AVAILABLE"] = if (view == null) 0 else 1
+                    if (view != null) {
+                        sample["NEWER"] = if (view.frame.attempt > observed.afterAttempt) 1 else 0
+                        val claim = view.member.ssClaims?.claims?.get(observed.claimId)
+                        sample["CLAIM_PRESENT"] = if (claim == null) 0 else 1
+                        sample["CLAIM_STATUS"] = when (claim?.clientStatus) {
+                            ClientStatus.PENDING -> "PENDING"
+                            ClientStatus.NEED_APPROVE -> "NEED_APPROVE"
+                            ClientStatus.ACCEPTED -> "ACCEPTED"
+                            ClientStatus.DECLINED -> "DECLINED"
+                            ClientStatus.DONE -> "DONE"
+                            null -> "UNKNOWN"
+                        }
+                    }
+                    sample["COMPLETED"] = completed ?: "UNKNOWN"
+                }
+                completed != null
             }
-            completedRecoveryClaims = completedReceiverRecoveryCount(state, secretName)
-            completedRecoveryClaims >= cycle
+        } catch (failure: Throwable) {
+            runCatching { recordRecoveryCompletion(sample) }
+            throw failure
         }
-        return completedRecoveryClaims
+        return checkNotNull(completed)
     }
 
-    private fun completedReceiverRecoveryCount(state: JSONObject, secretName: String): Int {
-        val message = state.getJSONObject("message")
-        val appState = message.getJSONObject("state")
-        val userMemberInfo = appState.getJSONObject("vault")
-            .getJSONObject("member")
-        val deviceId = userMemberInfo.getJSONObject("member")
-            .getJSONObject("member")
-            .getJSONObject("userData")
-            .getJSONObject("device")
-            .getString("deviceId")
-        val claims = userMemberInfo.optJSONObject("ssClaims")?.optJSONObject("claims")
-            ?: return 0
+    private fun recoveryCompletionSample(cycle: Int): MutableMap<String, Any> = mutableMapOf(
+        "VERSION" to 1, "PHASE" to "RECOVERY_COMPLETION_WAIT_FAILURE", "REQUIRED_CYCLE" to cycle,
+        "VIEW_AVAILABLE" to "UNKNOWN", "NEWER" to "UNKNOWN", "CLAIM_PRESENT" to "UNKNOWN",
+        "CLAIM_STATUS" to "UNKNOWN", "COMPLETED" to "UNKNOWN", "INNER_GUARDS" to "UNOBSERVED"
+    )
 
-        var completed = 0
-        val claimIds = claims.keys()
-        while (claimIds.hasNext()) {
-            val claim = claims.getJSONObject(claimIds.next())
-            if (claim.optString("distributionType") != "recover" ||
-                claim.optString("clientStatus") != "done" ||
-                claim.optJSONObject("distClaimId")?.optJSONObject("passId")?.optString("name") != secretName
-            ) continue
-
-            val receivers = claim.optJSONArray("receivers") ?: continue
-            if ((0 until receivers.length()).any { receivers.optString(it) == deviceId }) {
-                completed += 1
-            }
-        }
-        return completed
+    private fun recordRecoveryCompletion(sample: Map<String, Any>) {
+        val prefix = "LIVEBOARD_RECOVERY_OBSERVATION "
+        val record = prefix + JSONObject(sample).toString()
+        val safe = if (record.toByteArray(Charsets.UTF_8).size + 1 <= 512) record else
+            prefix + "{\"VERSION\":1,\"STATUS\":\"INCONCLUSIVE\",\"REASON\":\"STDOUT_LIMIT\"}"
+        Log.i("MetaSecretE2E", safe)
     }
 
     private fun marker(message: String) = Log.i("MetaSecretE2E", "E2E: $message")

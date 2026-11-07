@@ -6,6 +6,7 @@ import core.metaSecretCore.AuthState
 import core.metaSecretCore.InitResult
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import core.metaSecretCore.liveboard.NativeReadRequirement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
@@ -167,6 +168,7 @@ class SplashScreenViewModelTest {
 
         override fun onAppBackground() = Unit
         override fun refreshAppState() = Unit
+        override fun refreshAppState(required: NativeReadRequirement) = refreshAppState()
         override fun setProcessingSecretName(secretName: String) = Unit
         override fun resetReadyToRecoverDedup(claimId: String?) = Unit
         override fun resetSocketActionType(expected: SocketActionModel?) = Unit

@@ -1,6 +1,7 @@
 package testutils
 
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import core.metaSecretCore.liveboard.NativeReadRequirement
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import models.appInternalModels.RestoreData
@@ -18,6 +19,7 @@ class FakeSecretSocketHandler : MetaSecretSocketHandlerInterface {
         override fun onAppForeground() = Unit
         override fun onAppBackground() = Unit
         override fun refreshAppState() = Unit
+        override fun refreshAppState(required: NativeReadRequirement) = refreshAppState()
         override fun setProcessingSecretName(secretName: String) = Unit
         override fun resetReadyToRecoverDedup(claimId: String?) = Unit
         override fun resetSocketActionType(expected: SocketActionModel?) = Unit

@@ -29,9 +29,22 @@ import core.metaSecretCore.IosMetaSecretSocketClient
 import core.metaSecretCore.MetaSecretSocketClient
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSBundle
+import core.KeyValueStorageInterface
+import core.KeyValueStorageImpl
+import com.metaSecret.ios.SwiftBridge
+import com.russhwolf.settings.NSUserDefaultsSettings
 
 @OptIn(ExperimentalForeignApi::class)
 val iosPlatformModule = module {
+    val testSuiteName = SwiftBridge().e2eStorageSuiteName()
+    if (testSuiteName != null) {
+        single<KeyValueStorageInterface> {
+            KeyValueStorageImpl(get(), settingsFactory = { NSUserDefaultsSettings.Factory().create(testSuiteName) })
+        }
+    }
+    single<ui.liveboard.LiveboardPlatformPort> {
+        ui.liveboard.LiveboardPlatformIos(identityAdmitted = testSuiteName != null)
+    }
     single<core.OrbitBackdropBlur> { core.OrbitBackdropBlurIos() }
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceIos(get(), get()) }
     single<MetaSecretSocketClient> {

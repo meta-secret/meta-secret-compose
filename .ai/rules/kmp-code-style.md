@@ -36,7 +36,7 @@ text = appString(AppString.vaultName)
 
 ### Rule: Use approved typography adapters
 
-Legacy screens use `AppTextStyles`. The scoped registration adapter may define token-backed typography from the approved shared design package; no unrelated global restyling.
+Legacy screens use `AppTextStyles`. Scoped registration and Liveboard adapters may define token-backed typography from the approved shared design package; no unrelated global restyling.
 
 ❌ **FORBIDDEN:**
 ```kotlin
@@ -64,7 +64,7 @@ style = AppTextStyles.BodyMedium()
 ### Available styles:
 - **Location:** `ui/theme/AppTextStyles.kt`
 - **Examples:** `ScreenTitle()`, `BodyMedium()`, `LabelSmall()`, `HeadlineLarge()`
-- **If style missing:** Add the approved token-backed style through the scoped registration typography adapter or `AppTextStyles.kt`; do not ask again for a style already approved in the design reference.
+- **If style missing:** Add the approved token-backed style through the scoped registration/Liveboard typography adapter or `AppTextStyles.kt`; do not ask again for a style already approved in the design reference.
 
 ### Why:
 - Consistent visual hierarchy
@@ -286,11 +286,11 @@ class VaultViewModel(
 ## Checklist for Code Review
 
 - [ ] All strings use `appString(AppString.xxx)`
-- [ ] Legacy text styles use `AppTextStyles`; new registration uses its approved generated-token typography adapter
+- [ ] Legacy text styles use `AppTextStyles`; approved registration/Liveboard use their generated-token typography adapters
 - [ ] File is ≤ 400 lines
 - [ ] Methods have ≤ 5 parameters (or use Input model)
 - [ ] Default visibility is `private`
-- [ ] No screen-local typography constants; scoped registration styles derive from shared generated tokens
+- [ ] No screen-local typography constants; scoped registration/Liveboard styles derive from shared generated tokens
 - [ ] No inline colors (use theme)
 - [ ] Composables are at top-level or `private`
 - [ ] No commented-out code

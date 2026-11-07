@@ -32,7 +32,8 @@ internal fun OrbitScale(center: Dp) {
             val inner = if (tick % 5 == 0) 230f else 234f
             val tail = 40f
             val opacity = cos(abs(tick) / tail * PI / 2).coerceAtLeast(0.0).pow(1.65).toFloat()
-            fun point(radius: Float) = Offset((265 + cos(angle) * radius).toFloat().dp.toPx(), (rulerCenterY.value + sin(angle) * radius).toFloat().dp.toPx())
+            fun point(radius: Float) = Offset((265 + cos(angle) * radius).toFloat().dp.toPx(), (rulerCenterY.value +
+                sin(angle) * radius).toFloat().dp.toPx())
             drawLine(T.orbitColorRuler.copy(alpha = opacity), point(inner), point(241f), .9.dp.toPx())
         }
     }

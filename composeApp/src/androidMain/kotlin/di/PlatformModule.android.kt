@@ -30,8 +30,11 @@ import core.apple.AppleEmailBrokerClient
 import core.apple.AndroidAppleEmailBrowser
 
 val androidPlatformModule = module {
+    single { ui.liveboard.LiveboardPlatformAndroid(get<Context>().applicationContext) }
+    single<ui.liveboard.LiveboardPlatformPort> { get<ui.liveboard.LiveboardPlatformAndroid>() }
     single { AndroidAppleEmailBrowser() }
-    single { AppleEmailRequesterAndroid(AppleEmailBrokerClient(BuildConfig.APPLE_EMAIL_BROKER_URL), get<AndroidAppleEmailBrowser>()) }
+    single { AppleEmailRequesterAndroid(AppleEmailBrokerClient(BuildConfig.APPLE_EMAIL_BROKER_URL),
+        get<AndroidAppleEmailBrowser>()) }
     single<AppleEmailRequesterInterface> { get<AppleEmailRequesterAndroid>() }
     single<core.OrbitBackdropBlur> { core.OrbitBackdropBlurAndroid() }
     single<MetaSecretCoreInterface> { MetaSecretCoreServiceAndroid() }

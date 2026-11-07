@@ -34,27 +34,34 @@ import ui.design.generated.OrbitTokens as T
 import ui.theme.OrbitTextStyles
 
 internal enum class OrbitGlyph { Apple, Google, Create, Join, Enter, Back, Ok, Qr, Request, Fusion, Approved }
-internal data class OrbitActionAppearance(val glyphOpacity: Float = 1f, val labelOpacity: Float = 1f, val interactive: Boolean = true)
+internal data class OrbitActionAppearance(val glyphOpacity: Float = 1f, val labelOpacity: Float = 1f,
+    val interactive: Boolean = true)
 internal data class OrbitAction(val glyph: OrbitGlyph, val label: AppString, val enabled: Boolean = true,
     val labelVisible: Boolean = true, val appearance: OrbitActionAppearance = OrbitActionAppearance())
 
 @Composable
 internal fun OrbitActionButton(action: OrbitAction, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val pulse = rememberInfiniteTransition(label = "action pulse").animateFloat(.8f, 1f,
-        infiniteRepeatable(keyframes { durationMillis = 2000; .8f at 0; 1.18f at 400; 1f at 1400; .8f at 2000 }), label = "create pulse")
+        infiniteRepeatable(keyframes { durationMillis = 2000; .8f at 0; 1.18f at 400; 1f at 1400; .8f at 2000 }),
+            label = "create pulse")
     val interactive = LocalOrbitInteractive.current
     val color = T.orbitColorControl
-    val opacity = if (!action.enabled) T.orbitNumberDisabledOpacity else if (action.glyph in setOf(OrbitGlyph.Apple, OrbitGlyph.Google)) T.orbitNumberProviderOpacity else 1f
+    val opacity = if (!action.enabled) T.orbitNumberDisabledOpacity else if (action.glyph in setOf(OrbitGlyph.Apple,
+        OrbitGlyph.Google)) T.orbitNumberProviderOpacity else 1f
     Column(modifier.size(width = T.orbitDimensionControlTarget, height = 72.dp)
         .graphicsLayer { alpha = opacity }.testTag("orbit-${action.glyph.name.lowercase()}")
-        .clickable(enabled = action.enabled && interactive && action.appearance.interactive, onClickLabel = appString(action.label), onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(T.orbitDimensionControlLabelGap)) {
-        Box(Modifier.size(T.orbitDimensionControlCircle).border(1.dp, T.orbitColorControlBorder, CircleShape), contentAlignment = Alignment.Center) {
+        .clickable(enabled = action.enabled && interactive && action.appearance.interactive, onClickLabel =
+            appString(action.label), onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(T
+            .orbitDimensionControlLabelGap)) {
+        Box(Modifier.size(T.orbitDimensionControlCircle).border(1.dp, T.orbitColorControlBorder, CircleShape),
+            contentAlignment = Alignment.Center) {
             if (action.glyph == OrbitGlyph.Google) {
                 Text("G", style = OrbitTextStyles.heading(20f), color = color)
             } else OrbitAnimatedArt(action, Modifier
                     .size(if (action.glyph == OrbitGlyph.Create) T.orbitDimensionCreateGlyph else T.orbitDimensionGlyph)
-                    .graphicsLayer { alpha = action.appearance.glyphOpacity; if (action.glyph == OrbitGlyph.Create && action.enabled) { scaleX = pulse.value; scaleY = pulse.value } })
+                    .graphicsLayer { alpha = action.appearance.glyphOpacity; if (action.glyph == OrbitGlyph
+                        .Create && action.enabled) { scaleX = pulse.value; scaleY = pulse.value } })
         }
         if (action.labelVisible) Text(appString(action.label), style = OrbitTextStyles.label(),
             modifier = Modifier.graphicsLayer { alpha = action.appearance.labelOpacity })
@@ -69,8 +76,10 @@ internal fun OrbitActionRow(actions: List<OrbitAction>, onClick: (OrbitGlyph) ->
 }
 
 @Composable
-internal fun OrbitJoinActions(state: RegistrationUiState, onClick: (OrbitGlyph) -> Unit, modifier: Modifier = Modifier) {
-    val waiting = state.phase in setOf(RegistrationPhase.Requesting, RegistrationPhase.Pending, RegistrationPhase.Syncing)
+internal fun OrbitJoinActions(state: RegistrationUiState, onClick: (OrbitGlyph) -> Unit, modifier: Modifier =
+    Modifier) {
+    val waiting = state.phase in setOf(RegistrationPhase.Requesting, RegistrationPhase.Pending, RegistrationPhase
+        .Syncing)
     val merge = remember { Animatable(0f) }
     LaunchedEffect(waiting) {
         if (waiting) merge.animateTo(1f, tween(T.orbitDurationJoinFusion, easing = LinearEasing)) else merge.snapTo(0f)
@@ -92,13 +101,15 @@ internal fun OrbitJoinActions(state: RegistrationUiState, onClick: (OrbitGlyph) 
         Box(Modifier.align(Alignment.TopCenter).graphicsLayer { scaleX = pose.scaleX; scaleY = pose.scaleY }) {
             val approved = state.phase == RegistrationPhase.Syncing
             OrbitActionButton(OrbitAction(if (approved) OrbitGlyph.Approved else OrbitGlyph.Back,
-                if (approved) AppString.orbitApproved else AppString.orbitBack, appearance = OrbitActionAppearance(pose.opacity.back, pose.opacity.back,
+                if (approved) AppString.orbitApproved else AppString.orbitBack, appearance = OrbitActionAppearance(
+                    pose.opacity.back, pose.opacity.back,
                     !waiting || (state.phase == RegistrationPhase.Pending && merge.value >= .96f))),
                 { onClick(OrbitGlyph.Back) })
             if (pose.opacity.dots > 0f) Box(Modifier.size(T.orbitDimensionControlTarget, T.orbitDimensionControlCircle),
                 contentAlignment = Alignment.Center) {
                 OrbitAnimatedArt(OrbitAction(OrbitGlyph.Fusion, AppString.orbitBack),
-                    Modifier.size(T.orbitDimensionGlyph).graphicsLayer { alpha = pose.opacity.dots }.clearAndSetSemantics {})
+                    Modifier.size(T.orbitDimensionGlyph).graphicsLayer { alpha = pose.opacity.dots }
+                        .clearAndSetSemantics {})
             }
         }
     }

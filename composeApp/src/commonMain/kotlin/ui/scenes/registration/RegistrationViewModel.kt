@@ -69,7 +69,8 @@ class RegistrationViewModel(
                 perform { submit(false) }
             }
             RegistrationIntent.Join -> if (state.value.scene == RegistrationScene.Name &&
-                state.value.phase == RegistrationPhase.Idle && state.value.identity.availability == VaultAvailability.EXISTS
+                state.value.phase == RegistrationPhase.Idle && state.value.identity.availability ==
+                    VaultAvailability.EXISTS
             ) {
                 mutableState.value = state.value.copy(scene = RegistrationScene.Join, error = null, direction = 1)
             }
@@ -148,7 +149,8 @@ class RegistrationViewModel(
             mutableState.value = state.value.copy(scene = RegistrationScene.Join)
             submit(true)
         } else if (prepared.status == RegistrationStatus.Prepared) {
-            mutableState.value = state.value.copy(scene = RegistrationScene.Join, phase = RegistrationPhase.Error, error = AppString.orbitVaultNotFound)
+            mutableState.value = state.value.copy(scene = RegistrationScene.Join, phase = RegistrationPhase.Error,
+                error = AppString.orbitVaultNotFound)
         }
     }
 
@@ -162,7 +164,8 @@ class RegistrationViewModel(
         if (!join && result.status == RegistrationStatus.Failed && result.reconciledFailure) {
             mutableState.value = state.value.copy(phase = RegistrationPhase.CreateError)
             delay(3000) // Approved visible error duration; never a Core readiness timeout.
-            mutableState.value = state.value.copy(scene = RegistrationScene.Name, phase = RegistrationPhase.Idle, error = null)
+            mutableState.value = state.value.copy(scene = RegistrationScene.Name, phase = RegistrationPhase.Idle,
+                error = null)
         }
     }
 
@@ -170,7 +173,8 @@ class RegistrationViewModel(
         val previous = state.value
         if (previous.scene == RegistrationScene.Manual) {
             mutableState.value = previous.copy(
-                scene = if (previous.identity.availability == null) RegistrationScene.Providers else RegistrationScene.Name,
+                scene = if (previous.identity.availability == null) RegistrationScene
+                    .Providers else RegistrationScene.Name,
                 error = null, direction = -1,
             )
             return
@@ -183,10 +187,12 @@ class RegistrationViewModel(
             if (!session.reset()) {
                 val refreshed = session.resume()
                 if (refreshed.status == RegistrationStatus.Ready) applySnapshot(refreshed)
-                else mutableState.value = previous.copy(phase = RegistrationPhase.Error, error = AppString.orbitResetFailed)
+                else mutableState.value = previous.copy(phase = RegistrationPhase.Error, error = AppString
+                    .orbitResetFailed)
                 return
             }
-            mutableState.value = previous.copy(scene = RegistrationScene.Name, phase = RegistrationPhase.Checking, error = null, direction = -1)
+            mutableState.value = previous.copy(scene = RegistrationScene.Name, phase = RegistrationPhase.Checking,
+                error = null, direction = -1)
             applySnapshot(session.prepare(previous.identity.email))
         }
     }
@@ -200,7 +206,8 @@ class RegistrationViewModel(
                 RegistrationStatus.Empty -> mutableState.value = RegistrationUiState(direction = -1)
                 RegistrationStatus.Ready -> applySnapshot(result)
                 RegistrationStatus.Prepared -> {
-                    mutableState.value = previous.copy(scene = RegistrationScene.Name, phase = RegistrationPhase.Checking,
+                    mutableState.value = previous.copy(scene = RegistrationScene.Name, phase = RegistrationPhase
+                        .Checking,
                         error = null, direction = -1)
                     applySnapshot(session.prepare(result.email))
                 }
@@ -214,7 +221,8 @@ class RegistrationViewModel(
         val previous = state.value
         mutableState.value = previous.copy(
             identity = previous.identity.copy(email = snapshot.email, availability = snapshot.availability),
-            scene = if (snapshot.status == RegistrationStatus.Pending || snapshot.status == RegistrationStatus.Declined) {
+            scene = if (snapshot.status == RegistrationStatus.Pending || snapshot.status == RegistrationStatus
+                .Declined) {
                 RegistrationScene.Join
             } else previous.scene,
             phase = when (snapshot.status) {

@@ -12,6 +12,8 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
+        app.lbApplyTestIdentity()
+        app.lbResetSelectors()
         app.launchEnvironment["METASECRET_UI_TEST_MODE"] = "true"
         app.launch()
     }
@@ -24,16 +26,16 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
         app.orbitEnterVaultName(vaultName)
         app.orbitCreateVault()
         tap("add-secret-fab", timeout: 180)
-        typeSecretNameAndValue(name: secretName, value: secretValue)
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.47)).tap()
+        guard typeSecretNameAndValue(name: secretName, value: secretValue) else { return }
+        app.lbSubmitCreate()
         enterSimulatorPasscodeIfNeeded()
         waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
         tap("secret-primary-action-\(secretName)")
         enterSimulatorPasscodeIfNeeded()
         waitForVisible(identifier: "revealed-secret-value", timeout: 90)
-        XCTAssertTrue(app.descendants(matching: .any)[secretValue].waitForExistence(timeout: 10), "iOS revealed secret value was not visible")
+        app.lbAssertValue(secretValue)
         tap("show-secret-close")
-        XCTAssertFalse(app.descendants(matching: .any)[secretValue].waitForExistence(timeout: 5), "iOS secret value stayed visible after closing")
+        app.lbAssertNoPrivateContent(secretValue)
         print("E2E: IOS_INITIATOR_READY")
 
         approvePendingJoin(marker: "IOS_ANDROID_JOIN_APPROVED")
@@ -50,8 +52,9 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
             tap("secret-primary-action-\(secretName)")
             enterSimulatorPasscodeIfNeeded()
             print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)")
+            app.lbShow(secretName, expected: secretValue)
             waitForVisible(identifier: "revealed-secret-value", timeout: 180)
-            XCTAssertTrue(app.descendants(matching: .any)[secretValue].waitForExistence(timeout: 10))
+            app.lbAssertValue(secretValue)
             print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)")
             tap("show-secret-close")
             print("E2E: IOS_RECOVERY_CLOSED_\(cycle)")
@@ -65,11 +68,28 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
         app.orbitCreateVault()
         for secret in secrets {
             tap("add-secret-fab", timeout: 180)
-            typeSecretNameAndValue(name: secret.name, value: secret.value)
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.47)).tap()
+            guard typeSecretNameAndValue(name: secret.name, value: secret.value) else { return }
+            app.lbSubmitCreate()
             enterSimulatorPasscodeIfNeeded()
-            waitForVisible(identifier: "secret-row-\(secret.name)", timeout: 180)
-            waitForHidden(identifier: "secret-name-input", timeout: 30)
+            let closeDeadline = Date().addingTimeInterval(30)
+            let modalAbsent: () -> Bool = {
+                self.app.descendants(matching: .any).matching(identifier: "lb-create").count == 0
+            }
+            if !modalAbsent(), Date() < closeDeadline {
+                app.lbWait(modalAbsent, timeout: max(0, closeDeadline.timeIntervalSinceNow), message: "Create modal did not close")
+            }
+            guard Date() < closeDeadline else { XCTFail("Create close deadline expired"); return }
+            let absent = modalAbsent()
+            guard absent, Date() < closeDeadline else { XCTFail("Create modal absence was not proved within its close phase"); return }
+        }
+        let names = secrets.map(\.name)
+        func completeSecretSet() -> Bool {
+            let resolved = app.lbFindSecrets(names, timeout: 180)
+            return !names.isEmpty && resolved.count == names.count && Set(resolved.keys) == Set(names) &&
+                Set(resolved.values).count == names.count && resolved.values.allSatisfy { !$0.isEmpty }
+        }
+        guard completeSecretSet() else {
+            XCTFail("Created Secret set failed its complete uniqueness barrier"); return
         }
         print("E2E: IOS_INITIATOR_READY")
         approvePendingJoin(marker: "IOS_WEB_JOIN_APPROVED")
@@ -80,14 +100,14 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
         // Join approval leaves the app on the Devices tab. Return to Secrets
         // before asserting that the owner's secret rows remain available.
         tap("tab-secrets")
-        for secret in secrets {
-            waitForVisible(identifier: "secret-row-\(secret.name)", timeout: 180)
+        guard completeSecretSet() else {
+            XCTFail("Joined Secret set failed its complete uniqueness barrier"); return
         }
         print("E2E: IOS_SECRETS_READY")
     }
 
     private func skipOnboardingIfNeeded() {
-        let skip = app.descendants(matching: .any)["onboarding-skip"]
+        let skip = app.lbElement("onboarding-skip")
         if skip.waitForExistence(timeout: 10) {
             skip.tap()
         }
@@ -107,17 +127,9 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
         XCTFail("Timed out waiting for orchestrator approval for iOS recovery cycle \(cycle)")
     }
 
-    private func typeSecretNameAndValue(name: String, value: String) {
-        let nameField = app.descendants(matching: .any)["secret-name-input"]
-        XCTAssertTrue(nameField.waitForExistence(timeout: 30), "secret-name-input was not visible")
-        nameField.typeText(name)
-
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.40)).tap()
-        let valueField = app.descendants(matching: .any)["secret-value-input"]
-        XCTAssertTrue(valueField.waitForExistence(timeout: 5), "secret-value-input was not visible")
-        valueField.typeText(value)
+    private func typeSecretNameAndValue(name: String, value: String) -> Bool {
+        app.lbFillCreate(name: name, value: value)
     }
-
     private func configuredSecrets() -> [SecretDefinition] {
         let fallbackName = env("E2E_SECRET_NAME", defaultValue: "test-secret")
         let fallbackValue = env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
@@ -180,34 +192,20 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
     }
 
     private func tap(_ identifier: String, timeout: TimeInterval = 30) {
-        let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(identifier) was not visible")
-        if !element.isHittable {
-            dismissKeyboardIfNeeded()
-            waitUntilHittable(element, timeout: 10)
-        }
-        element.tap()
+        app.lbTapIntent(identifier, timeout: timeout)
     }
-
     private func waitForVisible(
         identifier: String,
         timeout: TimeInterval,
         failureMessage: String? = nil
     ) {
-        let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(
-            element.waitForExistence(timeout: timeout),
-            failureMessage ?? "\(identifier) was not visible"
-        )
+        app.lbWaitIntent(identifier, timeout: timeout)
     }
-
     private func waitForHidden(identifier: String, timeout: TimeInterval) {
-        let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(element.waitForNonExistence(timeout: timeout), "\(identifier) did not disappear")
+        app.lbWaitIntent(identifier, timeout: timeout, visible: false)
     }
-
     private func waitForText(_ text: String, timeout: TimeInterval) {
-        let element = app.descendants(matching: .any)[text]
+        let element = app.lbElement(text)
         XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(text) was not visible")
     }
 
@@ -223,13 +221,8 @@ final class CaseTwoIosInitiatorUITest: XCTestCase {
     }
 
     private func dismissKeyboardIfNeeded() {
-        if app.keyboards.element.exists {
-            app.keyboards.buttons["Done"].tapIfExists()
-            app.keyboards.buttons["Return"].tapIfExists()
-            app.tap()
-        }
+        app.lbDismissKeyboard()
     }
-
     private func enterSimulatorPasscodeIfNeeded() {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let passcodeFields = springboard.secureTextFields

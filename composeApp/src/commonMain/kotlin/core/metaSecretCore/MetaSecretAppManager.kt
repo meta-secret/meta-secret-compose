@@ -1,29 +1,23 @@
 package core.metaSecretCore
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 import models.apiModels.AppStateModel
 import models.apiModels.CommonResponseModel
-import models.apiModels.JoinClusterRequest
 import models.apiModels.State
 import models.apiModels.UserData
-import models.apiModels.VaultEvents
 import models.apiModels.VaultFullInfo
 import models.apiModels.VaultSummary
-import core.AppStateCacheProviderInterface
-import core.KeyChainInterface
-import core.KeyValueStorageInterface
 import core.LogTag
-import core.DebugLoggerInterface
-import core.LogFormatterInterface
-import models.apiModels.ClientStatus
 import models.apiModels.RecoveredSecretModel
 import models.apiModels.SearchClaimModel
 import models.appInternalModels.ClaimModel
 import models.appInternalModels.SecretModel
-import core.NotificationCoordinatorInterface
-import core.errors.ErrorMapper
+import core.metaSecretCore.liveboard.NativeManagerStateReader
+import core.metaSecretCore.liveboard.NativeCanonicalReadOwner
+import core.metaSecretCore.liveboard.NativeManagerRuntime
+import core.metaSecretCore.liveboard.NativeReadScope
+import core.metaSecretCore.liveboard.NativeManagerPorts
+import core.metaSecretCore.liveboard.NativeManagerPresentation
 
 sealed class InitResult {
     data class Success(val result: String) : InitResult()
@@ -31,179 +25,51 @@ sealed class InitResult {
 }
 
 class MetaSecretAppManager(
-    private val metaSecretCore: MetaSecretCoreInterface,
-    private val keyChainInterface: KeyChainInterface,
-    private val keyValueStorage: KeyValueStorageInterface,
-    private val logger: DebugLoggerInterface,
-    private val notificationCoordinator: NotificationCoordinatorInterface,
-    private val errorMapper: ErrorMapper,
-    private val logFormatter: LogFormatterInterface,
-    private val appStateCacheProvider: AppStateCacheProviderInterface
+    ports: NativeManagerPorts,
+    presentation: NativeManagerPresentation,
+    private val readOwner: NativeCanonicalReadOwner,
+    runtime: NativeManagerRuntime,
 ): MetaSecretAppManagerInterface {
+    private val metaSecretCore = ports.core
+    private val keyLifecycle = runtime.keyLifecycle
+    private val operations = runtime.operations
+    private val logger = ports.logger
+    private val notificationCoordinator = presentation.notification
+    private val errorMapper = presentation.errorMapper
+    private val logFormatter = presentation.logFormatter
+    private val appStateCacheProvider = presentation.cache
     
-    private var _isAppManagerInitialized = false
-    private var initializedMasterKey: String? = null
+    private val stateReader = NativeManagerStateReader(ports, presentation, readOwner, operations)
+
+    private val _isAppManagerInitialized: Boolean get() = keyLifecycle.isInitialized
 
     override suspend fun initWithSavedKey(): InitResult {
-        val masterKey = readMasterKeyWithRecovery()
-        logger.log(LogTag.AppManager.Message.MasterKeyExist, "${masterKey != null}", success = true)
-        logger.setMasterKeyGenerated(!masterKey.isNullOrEmpty())
-
-        if (_isAppManagerInitialized && !masterKey.isNullOrEmpty() && initializedMasterKey == masterKey) {
-            logger.log(LogTag.AppManager.Message.IsInitiated, "Already initialized", success = true)
-            return InitResult.Success("Already initialized")
-        }
-        
-        return if (!masterKey.isNullOrEmpty()) {
-            try {
-                val appManagerResult = withContext(Dispatchers.IO) {
-                    metaSecretCore.initAppManager(masterKey)
+        val result = keyLifecycle.initializeSavedKey(keyLifecycle.capture())
+            ?: return InitResult.Error("Native owner retired")
+        if (!keyLifecycle.isCurrent(result.owner)) return InitResult.Error("Native owner retired")
+        val initialized = result.value is InitResult.Success
+        logger.setMasterKeyGenerated(initialized || (result.value as? InitResult.Error)?.message !=
+            "No master key found")
+        logger.setAppManagerCreated(initialized)
+        return when (val value = result.value) {
+            is InitResult.Success -> {
+                logger.log(LogTag.AppManager.Message.IsInitiated, value.result, success = true)
+                value
+            }
+            is InitResult.Error -> {
+                logger.log(LogTag.AppManager.Message.InitError, value.message, success = false)
+                result.failure?.takeIf { keyLifecycle.isCurrent(result.owner) }?.let { failure ->
+                    val appError = errorMapper.mapExceptionToAppError(failure)
+                    notificationCoordinator.showError(errorMapper.getUserFriendlyMessage(appError))
                 }
-                logger.log(LogTag.AppManager.Message.IsInitiated, appManagerResult, success = true)
-                logger.setAppManagerCreated(true)
-                _isAppManagerInitialized = true
-                initializedMasterKey = masterKey
-                InitResult.Success(appManagerResult)
-            } catch (e: Exception) {
-                logger.log(LogTag.AppManager.Message.InitError, "${e.message}", success = false)
-                logger.setAppManagerCreated(false)
-                val appError = errorMapper.mapExceptionToAppError(e)
-                val userMessage = errorMapper.getUserFriendlyMessage(appError)
-                notificationCoordinator.showError(userMessage)
-                InitResult.Error(e.message ?: "Unknown error")
-            }
-        } else {
-            logger.log(LogTag.AppManager.Message.InitErrorNoMasterKey, success = false)
-            logger.setAppManagerCreated(false)
-            _isAppManagerInitialized = false
-            initializedMasterKey = null
-            keyChainInterface.clearAll(isCleanDB = true)
-            InitResult.Error("No master key found")
-        }
-    }
-
-    private suspend fun readMasterKeyWithRecovery(): String? {
-        val primaryRead = keyChainInterface.getString("master_key")
-        if (!primaryRead.isNullOrEmpty()) {
-            return primaryRead
-        }
-
-        if (!keyChainInterface.containsKey("master_key")) {
-            return null
-        }
-
-        return keyChainInterface.getString("master_key")
-    }
-
-    override suspend fun getStateModel(): AppStateModel? {
-        appStateCacheProvider.beginSynchronization()
-        var successful = false
-        return try {
-            getStateModelInternal().also { successful = it?.success == true }
-        } finally {
-            appStateCacheProvider.finishSynchronization(successful)
-        }
-    }
-
-    private suspend fun getStateModelInternal(): AppStateModel? {
-        if (!_isAppManagerInitialized) {
-            return null
-        }
-        
-        val stateJson = withContext(Dispatchers.IO) {
-            metaSecretCore.getAppState() // It's ok. Uses Few times. Not cyclical
-        }
-        return try {
-            val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
-            val appState = currentState.getCurrentAppState()
-            logger.setVaultState(appState?.description())
-
-            appStateCacheProvider.updateCache(currentState)
-            cacheDeviceAndVaultInfoIfNeeded(currentState)
-            updateClaimsStats(currentState)
-
-            currentState
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseStateJson, "${e.message}", success = false)
-            logger.setVaultState(null)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            AppStateModel(null, false)
-        }
-    }
-    
-    private fun updateClaimsStats(appState: AppStateModel) {
-        val deviceId = appState.getCurrentDeviceId()
-        logger.setDeviceId(deviceId)
-        
-        val vaultInfo = appState.getVaultFullInfo()
-        if (vaultInfo is VaultFullInfo.Member) {
-            val joinRequestsCount = vaultInfo.member.vaultEvents?.getJoinRequestsCount() ?: 0
-            val claims = vaultInfo.member.ssClaims?.claims?.values ?: emptyList()
-            
-            var pendingCount = 0
-            var sentCount = 0
-            var deliveredCount = 0
-
-            for (claim in claims) {
-                when (claim.clientStatus) {
-                    ClientStatus.NEED_APPROVE -> pendingCount++
-                    ClientStatus.ACCEPTED -> sentCount++
-                    ClientStatus.DONE -> deliveredCount++
-                    else -> { }
-                }
-            }
-            
-            logger.setClaimsStats(joinRequestsCount, pendingCount, sentCount, deliveredCount)
-        } else {
-            logger.setClaimsStats(0, 0, 0, 0)
-        }
-    }
-    
-    private fun cacheDeviceAndVaultInfoIfNeeded(appState: AppStateModel) {
-        if (keyValueStorage.cachedDeviceId != null && keyValueStorage.cachedVaultName != null) {
-            return
-        }
-        
-        val vaultInfo = appState.getVaultFullInfo()
-        if (vaultInfo is VaultFullInfo.Member) {
-            val deviceId = vaultInfo.member.member.member.userData.device.deviceId
-            val vaultName = vaultInfo.member.member.member.userData.vaultName
-            
-            if (keyValueStorage.cachedDeviceId == null) {
-                keyValueStorage.cachedDeviceId = deviceId
-                logger.log(LogTag.AppManager.Message.CachedDeviceId, deviceId, success = true)
-            }
-            
-            if (keyValueStorage.cachedVaultName == null) {
-                keyValueStorage.cachedVaultName = vaultName
-                logger.log(LogTag.AppManager.Message.CachedVaultName, vaultName, success = true)
+                value
             }
         }
     }
 
-    override suspend fun getVaultFullInfoModel(): VaultFullInfo? {
-        if (!_isAppManagerInitialized) {
-            return null
-        }
-        
-        val stateJson = withContext(Dispatchers.IO) {
-            metaSecretCore.getAppState() // It's ok. Uses onli during login
-        }
-        return try {
-            val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
-            val vaultState = currentState.getVaultFullInfo()
-            logger.log(LogTag.AppManager.Message.VaultInfo, "stateLoaded=true", success = true)
-            vaultState
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseVaultInfoJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
-        }
-    }
+    override suspend fun getStateModel(): AppStateModel? = stateReader.getStateModel()
+
+    override suspend fun getVaultFullInfoModel(): VaultFullInfo? = stateReader.getVaultFullInfoModel()
 
     override suspend fun getJoinRequestsCount(): Int? {
         if (!_isAppManagerInitialized) {
@@ -227,52 +93,30 @@ class MetaSecretAppManager(
         }
     }
 
-    override suspend fun getVaultSummary(isSocketAction: Boolean): VaultSummary? {
-        if (!_isAppManagerInitialized) {
-            return null
-        }
-        
-        val currentState = if (isSocketAction) {
-            appStateCacheProvider.appState.value
-        } else {
-            val stateJson = withContext(Dispatchers.IO) {
-                metaSecretCore.getAppState()
-            }
-            AppStateModel.fromJson(stateJson, logger, logFormatter)
-        }
-        
-        if (currentState == null || !currentState.success) {
-            return null
-        }
-        appStateCacheProvider.updateCache(currentState)
-        
-        return try {
-            val vaultSummary = currentState.getVaultSummary()
-            logger.log(LogTag.AppManager.Message.VaultSummary, "loaded=true", success = true)
-            vaultSummary
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseVaultSummaryJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
-        }
+    override suspend fun getVaultSummary(isSocketAction: Boolean): VaultSummary? =
+        stateReader.getVaultSummary(isSocketAction)
+
+    private fun notifyOperationError(scope: NativeReadScope, error: Exception) {
+        if (error is CancellationException) throw error
+        if (!operations.isCurrent(scope)) return
+        val appError = errorMapper.mapExceptionToAppError(error)
+        val userMessage = errorMapper.getUserFriendlyMessage(appError)
+        if (operations.isCurrent(scope)) notificationCoordinator.showError(userMessage)
     }
 
     override suspend fun updateMember(candidate: UserData, actionUpdate: String): CommonResponseModel? {
-        val updateResult = withContext(Dispatchers.IO) {
+        return operations.execute(native = {
             metaSecretCore.updateMembership(candidate, actionUpdate)
-        }
-        return try {
-            val result = CommonResponseModel.fromJson(updateResult)
-            logger.log(LogTag.AppManager.Message.UpdateCandidateResult, "success=${result.success}", success = true)
-            result
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseUpdateCandidateJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
+        }) { expected, updateResult ->
+            try {
+                val result = CommonResponseModel.fromJson(updateResult)
+                logger.log(LogTag.AppManager.Message.UpdateCandidateResult, "success=${result.success}", success = true)
+                result
+            } catch (e: Exception) {
+                logger.log(LogTag.AppManager.Message.FailedToParseUpdateCandidateJson, "${e.message}", success = false)
+                notifyOperationError(expected, e)
+                null
+            }
         }
     }
 
@@ -287,43 +131,49 @@ class MetaSecretAppManager(
         }
 
     private suspend fun deletionOperation(operation: () -> String): CommonResponseModel? {
-        appStateCacheProvider.beginSynchronization()
+        val expected = operations.capture() ?: return null
+        val turn = readOwner.beginRead(expected) ?: return null
+        var begun = false
         var synchronized = false
+        var completed = false
         return try {
-            val result = withContext(Dispatchers.IO) { CommonResponseModel.fromJson(operation()) }
-            // Even an error can follow an applied request: always reconcile from Core.
-            val state = getStateModel()
-            synchronized = state?.success == true
-            result
+            begun = true
+            appStateCacheProvider.beginSynchronization()
+            operations.execute(expected, operation) { _, response ->
+                val result = CommonResponseModel.fromJson(response)
+                // Even an error can follow an applied request: reconcile only its current owner.
+                if (!operations.isCurrent(expected)) return@execute null
+                val state = stateReader.getStateModel(expected, turn)
+                if (!operations.isCurrent(expected)) return@execute null
+                synchronized = state?.success == true
+                result
+            }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (_: Exception) {
-            CommonResponseModel(success = false)
+            if (operations.isCurrent(expected)) CommonResponseModel(success = false) else null
         } finally {
-            appStateCacheProvider.finishSynchronization(synchronized)
+            try {
+                if (begun) appStateCacheProvider.finishSynchronization(synchronized)
+                completed = synchronized
+            } finally { readOwner.finishRead(turn, completed) }
         }
     }
 
-    override suspend fun removeMember(targetDeviceId: String): CommonResponseModel? {
-        val response = withContext(Dispatchers.IO) {
-            metaSecretCore.removeMember(targetDeviceId)
+    override suspend fun removeMember(targetDeviceId: String): CommonResponseModel? =
+        operations.execute(native = { metaSecretCore.removeMember(targetDeviceId) }) { _, response ->
+            parseDeviceRemovalResponse(response)
         }
-        return parseDeviceRemovalResponse(response)
-    }
 
-    override suspend fun approveRemoveMember(targetDeviceId: String): CommonResponseModel? {
-        val response = withContext(Dispatchers.IO) {
-            metaSecretCore.approveRemoveMember(targetDeviceId)
+    override suspend fun approveRemoveMember(targetDeviceId: String): CommonResponseModel? =
+        operations.execute(native = { metaSecretCore.approveRemoveMember(targetDeviceId) }) { _, response ->
+            parseDeviceRemovalResponse(response)
         }
-        return parseDeviceRemovalResponse(response)
-    }
 
-    override suspend fun declineRemoveMember(targetDeviceId: String): CommonResponseModel? {
-        val response = withContext(Dispatchers.IO) {
-            metaSecretCore.declineRemoveMember(targetDeviceId)
+    override suspend fun declineRemoveMember(targetDeviceId: String): CommonResponseModel? =
+        operations.execute(native = { metaSecretCore.declineRemoveMember(targetDeviceId) }) { _, response ->
+            parseDeviceRemovalResponse(response)
         }
-        return parseDeviceRemovalResponse(response)
-    }
 
     private fun parseDeviceRemovalResponse(response: String): CommonResponseModel? {
         return try {
@@ -334,27 +184,7 @@ class MetaSecretAppManager(
         }
     }
 
-    override suspend fun getUserDataBy(deviceId: String): UserData? {
-        if (!_isAppManagerInitialized) {
-            return null
-        }
-        
-        val stateJson = withContext(Dispatchers.IO) {
-            metaSecretCore.getAppState() // It's ok. Uses only for user joining
-        }
-        return try {
-            val currentState = AppStateModel.fromJson(stateJson, logger, logFormatter)
-            val deviceIdResult = currentState.getUserDataByDeviceId(deviceId)
-            logger.log(LogTag.AppManager.Message.GetUserDataByDeviceId, "$deviceId is $deviceIdResult", success = true)
-            deviceIdResult
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseGetUserDataByIdJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
-        }
-    }
+    override suspend fun getUserDataBy(deviceId: String): UserData? = stateReader.getUserDataBy(deviceId)
 
     override suspend fun checkAuth(): AuthState {
         return when (initWithSavedKey()) {
@@ -389,19 +219,18 @@ class MetaSecretAppManager(
         if (secretModel.secretName == null || secretModel.secret == null) {
             return null
         }
-        val splitResult = withContext(Dispatchers.IO) {
+        return operations.execute(native = {
             metaSecretCore.splitSecret(secretModel.secretName, secretModel.secret)
-        }
-        return try {
-            val result = CommonResponseModel.fromJson(splitResult)
-            logger.log(LogTag.AppManager.Message.SplitSecretResult, "success=${result.success}", success = true)
-            result
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseSplitSecretJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
+        }) { expected, splitResult ->
+            try {
+                val result = CommonResponseModel.fromJson(splitResult)
+                logger.log(LogTag.AppManager.Message.SplitSecretResult, "success=${result.success}", success = true)
+                result
+            } catch (e: Exception) {
+                logger.log(LogTag.AppManager.Message.FailedToParseSplitSecretJson, "${e.message}", success = false)
+                notifyOperationError(expected, e)
+                null
+            }
         }
     }
 
@@ -411,22 +240,21 @@ class MetaSecretAppManager(
             return null
         }
         
-        val searchResult = withContext(Dispatchers.IO) {
+        return operations.execute(native = {
             metaSecretCore.findClaim(secretId)
-        }
-        return try {
-            val result = SearchClaimModel.fromJson(searchResult)
-            if (result.claim == null) {
+        }) { expected, searchResult ->
+            try {
+                val result = SearchClaimModel.fromJson(searchResult)
+                if (result.claim == null) {
+                    null
+                } else {
+                    result.claim
+                }
+            } catch (e: Exception) {
+                logger.log(LogTag.AppManager.Message.FailedToParseFindClaimJson, "${e.message}", success = false)
+                notifyOperationError(expected, e)
                 null
-            } else {
-                result.claim
             }
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseFindClaimJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
         }
     }
 
@@ -435,19 +263,18 @@ class MetaSecretAppManager(
             logger.log(LogTag.AppManager.Message.RecoverSecretIdNull, success = true)
             return null
         }
-        val recoverRequestResult = withContext(Dispatchers.IO) {
+        return operations.execute(native = {
             metaSecretCore.recover(secretModel.secretName)
-        }
-        return try {
-            val result = CommonResponseModel.fromJson(recoverRequestResult)
-            logger.log(LogTag.AppManager.Message.RecoverRequestResult, "success=${result.success}", success = true)
-            result
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseRecoverRequestJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
+        }) { expected, recoverRequestResult ->
+            try {
+                val result = CommonResponseModel.fromJson(recoverRequestResult)
+                logger.log(LogTag.AppManager.Message.RecoverRequestResult, "success=${result.success}", success = true)
+                result
+            } catch (e: Exception) {
+                logger.log(LogTag.AppManager.Message.FailedToParseRecoverRequestJson, "${e.message}", success = false)
+                notifyOperationError(expected, e)
+                null
+            }
         }
     }
 
@@ -456,19 +283,18 @@ class MetaSecretAppManager(
         if (claimId == null) {
             return null
         }
-        val acceptResult = withContext(Dispatchers.IO) {
+        return operations.execute(native = {
             metaSecretCore.acceptRecover(claimId)
-        }
-        return try {
-            val result = AppStateModel.fromJson(acceptResult, logger, logFormatter)
-            logger.log(LogTag.AppManager.Message.AcceptRecoverResult, "success=${result.success}", success = true)
-            result
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseAcceptRecoverJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
+        }) { expected, acceptResult ->
+            try {
+                val result = AppStateModel.fromJson(acceptResult, logger, logFormatter)
+                logger.log(LogTag.AppManager.Message.AcceptRecoverResult, "success=${result.success}", success = true)
+                result
+            } catch (e: Exception) {
+                logger.log(LogTag.AppManager.Message.FailedToParseAcceptRecoverJson, "${e.message}", success = false)
+                notifyOperationError(expected, e)
+                null
+            }
         }
     }
 
@@ -477,34 +303,31 @@ class MetaSecretAppManager(
         if (claimId == null) {
             return null
         }
-        val declineResult = withContext(Dispatchers.IO) {
+        return operations.execute(native = {
             metaSecretCore.declineRecover(claimId)
-        }
-        return try {
-            val result = AppStateModel.fromJson(declineResult, logger, logFormatter)
-            logger.log(
-                LogTag.AppManager.Message.DeclineRecoverResult,
-                "success=${result.success}",
-                success = result.success
-            )
-            if (!result.success) {
-                throw IllegalStateException("Decline recovery request was not accepted by core")
+        }) { expected, declineResult ->
+            try {
+                val result = AppStateModel.fromJson(declineResult, logger, logFormatter)
+                logger.log(
+                    LogTag.AppManager.Message.DeclineRecoverResult,
+                    "success=${result.success}",
+                    success = result.success
+                )
+                if (!result.success) {
+                    throw IllegalStateException("Decline recovery request was not accepted by core")
+                }
+                result
+            } catch (e: Exception) {
+                logger.log(LogTag.AppManager.Message.FailedToParseDeclineRecoverJson, "${e.message}", success = false)
+                notifyOperationError(expected, e)
+                null
             }
-            result
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseDeclineRecoverJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
         }
     }
 
     override suspend fun sendDeclineCompletion(claimId: String?) {
         if (claimId == null) return
-        withContext(Dispatchers.IO) {
-            metaSecretCore.sendDeclineCompletion(claimId)
-        }
+        operations.execute(native = { metaSecretCore.sendDeclineCompletion(claimId) }) { _, _ -> Unit }
     }
 
     override suspend fun showRecovered(secretModel: SecretModel): String? {
@@ -516,60 +339,28 @@ class MetaSecretAppManager(
             return null
         }
         
-        val showRecoveredResult = withContext(Dispatchers.IO) {
+        return operations.execute(native = {
             if (secretModel.claimId != null) {
                 metaSecretCore.showRecovered(secretModel.claimId)
             } else {
                 metaSecretCore.showLocalSecret(secretModel.secretName)
             }
-        }
-        return try {
-            val parsed = RecoveredSecretModel.fromJson(showRecoveredResult)
-            logger.log(LogTag.AppManager.Message.ShowRecoveredSuccess, "success=${parsed.success} hasSecret=${parsed.message?.secret != null}", success = true)
-            parsed.message?.secret
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseShowRecoveredJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
+        }) { expected, showRecoveredResult ->
+            try {
+                val parsed = RecoveredSecretModel.fromJson(showRecoveredResult)
+                logger.log(LogTag.AppManager.Message.ShowRecoveredSuccess,
+                    "success=${parsed.success} hasSecret=${parsed.message?.secret != null}", success = true)
+                parsed.message?.secret
+            } catch (e: Exception) {
+                logger.log(LogTag.AppManager.Message.FailedToParseShowRecoveredJson, "${e.message}", success = false)
+                notifyOperationError(expected, e)
+                null
+            }
         }
     }
 
-    override suspend fun getSecretsFromVault(isSocketAction: Boolean): List<models.apiModels.SecretApiModel>? {
-        if (!_isAppManagerInitialized) {
-            return null
-        }
-        
-        val currentState = if (isSocketAction) {
-            appStateCacheProvider.appState.value
-        } else {
-            val stateJson = withContext(Dispatchers.IO) {
-                metaSecretCore.getAppState()
-            }
-            AppStateModel.fromJson(stateJson, logger, logFormatter)
-        }
-        
-        if (currentState == null || !currentState.success) {
-            return null
-        }
-        appStateCacheProvider.updateCache(currentState)
-        
-        return try {
-            val secrets = when (val vaultInfo = currentState.getVaultFullInfo()) {
-                is VaultFullInfo.Member -> vaultInfo.member.member.vault.secrets
-                else -> emptyList()
-            }
-            logger.log(LogTag.AppManager.Message.GetSecretsFromVaultResult, "count=${secrets.size}", success = true)
-            secrets
-        } catch (e: Exception) {
-            logger.log(LogTag.AppManager.Message.FailedToParseGetSecretsFromVaultJson, "${e.message}", success = false)
-            val appError = errorMapper.mapExceptionToAppError(e)
-            val userMessage = errorMapper.getUserFriendlyMessage(appError)
-            notificationCoordinator.showError(userMessage)
-            null
-        }
-    }
+    override suspend fun getSecretsFromVault(isSocketAction: Boolean): List<models.apiModels.SecretApiModel>? =
+        stateReader.getSecretsFromVault(isSocketAction)
 }
 
 enum class AuthState {

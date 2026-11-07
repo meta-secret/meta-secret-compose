@@ -5,6 +5,9 @@ import core.DebugLoggerInterface
 import core.NotificationCoordinatorInterface
 import core.errors.ErrorMapper
 import core.metaSecretCore.MetaSecretAppManager
+import core.metaSecretCore.liveboard.LegacyNativeReadComposition
+import core.metaSecretCore.liveboard.NativeManagerPorts
+import core.metaSecretCore.liveboard.NativeManagerPresentation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -117,9 +120,13 @@ class DevicesVaultQrTest {
         }
         val storage = FakeKeyValueStorage().apply { cachedVaultName = "wrong-cached@example.org" }
         val stats = FakeVaultStatsProvider()
-        val manager = MetaSecretAppManager(
-            FakeMetaSecretCore(), FakeKeyChain(), storage, logger, notifications,
-            ErrorMapper(FakeStringProvider()), FakeLogFormatter(), FakeAppStateCacheProvider(),
+        val core = FakeMetaSecretCore()
+        val formatter = FakeLogFormatter()
+        val cache = FakeAppStateCacheProvider()
+        val composition = LegacyNativeReadComposition(core, cache, logger, formatter)
+        val manager = composition.manager(
+            NativeManagerPorts(core, FakeKeyChain(), storage, logger),
+            NativeManagerPresentation(notifications, ErrorMapper(FakeStringProvider()), formatter, cache),
         )
         val model = DevicesScreenViewModel(
             FakeScreenMetricsProvider(), FakeSecretSocketHandler(), manager, storage,

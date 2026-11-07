@@ -1,5 +1,6 @@
 package core.metaSecretCore
 
+import core.metaSecretCore.liveboard.LegacyNativeReadComposition
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -9,6 +10,7 @@ import kotlinx.serialization.encodeToString
 import models.apiModels.*
 import models.appInternalModels.AppErrors
 import testutils.FakeDebugLogger
+import testutils.FakeAppStateCacheProvider
 import testutils.FakeMetaSecretCore
 
 class MetaSecretRegistrationResolverTest {
@@ -46,7 +48,12 @@ class MetaSecretRegistrationResolverTest {
         }
     }
 
-    private fun resolver(core: CoreStub) = MetaSecretStateResolver(core, FakeDebugLogger())
+    private fun resolver(core: CoreStub): MetaSecretStateResolver {
+        val logger = FakeDebugLogger()
+        val composition = LegacyNativeReadComposition(core, FakeAppStateCacheProvider(), logger)
+        kotlinx.coroutines.runBlocking { composition.initializeImplicitCore() }
+        return MetaSecretStateResolver(core, logger, composition.reads, composition.operations)
+    }
 
     @Test fun `continue without preparation never calls Core signup`() = runTest {
         val core = CoreStub()

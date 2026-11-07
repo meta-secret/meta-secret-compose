@@ -14,9 +14,10 @@ import kotlinx.serialization.builtins.ListSerializer
 import models.apiModels.SecretApiModel
 
 class KeyValueStorageImpl(
-    private val deviceInfoProvider: DeviceInfoProviderInterface
+    private val deviceInfoProvider: DeviceInfoProviderInterface,
+    settingsFactory: () -> Settings = { Settings() },
 ): KeyValueStorageInterface {
-    private val settings: Settings by lazy { Settings() }
+    private val settings: Settings by lazy { settingsFactory() }
 
     override var isOnboardingCompleted: Boolean
         get() = settings.getBoolean(StorageKeys.ONBOARDING_INFO.key, defaultValue = false)

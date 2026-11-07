@@ -133,7 +133,8 @@ class AppleEmailRequesterAndroid internal constructor(
                     AppleBrokerResult.Cancelled -> finish(attempt, AppleEmailAuthResult.Cancelled, false)
                     AppleBrokerResult.Error -> finish(attempt, unavailable(), false)
                     is AppleBrokerResult.Success -> finish(attempt,
-                        if (AppleEmailPolicy.email(result.email)) AppleEmailAuthResult.Success(result.email) else unavailable(), false)
+                        if (AppleEmailPolicy.email(result.email)) AppleEmailAuthResult.Success(result.email
+                            ) else unavailable(), false)
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled

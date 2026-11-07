@@ -6,7 +6,9 @@ import CoreImage
 final class CaseEightIosBothOfflineUITest: XCTestCase {
     private struct StepConfig: Decodable, Sendable {
         let coreServerUrl: String?
+        let devicePasscode: String?
         let requireCoreRouting: Bool?
+        let authProfile: String?
         let expectRequest: Bool?
         let role: String?
         let cycle: String?
@@ -21,12 +23,19 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let duplicateRecovery: Bool?
         let verifyReceiverAlert: Bool?
         let receiverRequestAlreadySent: Bool?
+        let recoveryPhase: String?
+        let recoveryPhaseRequired: Bool?
+        let recoveryPhaseSelectedProfile: String?
+        let recoveryPhaseExpected: String?
         let networkRole: String?
         let networkCycles: String?
         let expectedWebDeviceName: String?
         let expectedAndroidDeviceName: String?
         let expectedIosDeviceName: String?
         let joinTarget: String?
+        let test22ShowPhase: Test22ShowPhaseContext?
+        let test25ShowPhase: String?
+        let recoveryShowPhase: String?
     }
 
     private struct Test50GeometryFixture: Codable, Sendable {
@@ -283,8 +292,47 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchEnvironment["METASECRET_UI_TEST_MODE"] = "true"
+        app.lbResetSelectors()
         let routing = Self.readStepConfig()
+        if TestRecoveryProfile.future(routing.recoveryPhaseSelectedProfile) != nil || routing.recoveryShowPhase != nil {
+            _ = try RecoveryShowPhaseContext.readEntry(RecoveryShowEntry(raw: routing.recoveryShowPhase,
+                phase: Test24PhaseEntry(raw: routing.recoveryPhase, required: routing.recoveryPhaseRequired == true,
+                    selectedProfile: routing.recoveryPhaseSelectedProfile, expected: routing.recoveryPhaseExpected),
+                current: RecoveryShowCurrent(role: routing.role, cycle: routing.cycle, step: routing.step,
+                    hasLegacy22: routing.test22ShowPhase != nil, hasLiteral25: routing.test25ShowPhase != nil)))
+        }
+        if routing.recoveryPhaseSelectedProfile == "test25:web-secondary-creator-lifecycle" || routing.test25ShowPhase != nil {
+            _ = try Test25ShowPhaseContext.readEntry(Test25ShowEntry(raw: routing.test25ShowPhase,
+                phase: Test24PhaseEntry(raw: routing.recoveryPhase, required: routing.recoveryPhaseRequired == true,
+                    selectedProfile: routing.recoveryPhaseSelectedProfile, expected: routing.recoveryPhaseExpected),
+                current: Test25ShowCurrent(role: routing.role, cycle: routing.cycle, step: routing.step,
+                    hasLegacy22: routing.test22ShowPhase != nil)))
+        }
+        let authProfile = routing.authProfile ?? "real-os"
+        if let required = ProcessInfo.processInfo.environment["E2E_AUTH_PROFILE"] {
+            guard required == authProfile && routing.requireCoreRouting == true else {
+                throw NSError(domain: "MetaSecretTest50ProfileBinding", code: 1)
+            }
+        }
+        if routing.authProfile != nil && routing.requireCoreRouting != true {
+            throw NSError(domain: "MetaSecretTest50Profile", code: 1)
+        }
+        if authProfile == "controlled-business" {
+#if !targetEnvironment(simulator)
+            throw NSError(domain: "MetaSecretTest50SimulatorRequired", code: 1)
+#endif
+            guard routing.devicePasscode == nil else { throw NSError(domain: "MetaSecretTest50NoCredentials", code: 1) }
+        }
+        app.lbApplyTestIdentity(requireRealOs: routing.requireCoreRouting == true)
+        if let passcode = routing.devicePasscode {
+            guard passcode.range(of: "^[0-9]{4,16}$", options: .regularExpression) != nil else {
+                throw NSError(domain: "MetaSecretTestDevicePIN", code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "Declared E2E PIN is invalid (value omitted)"])
+            }
+            app.lbSelection.devicePasscode = passcode
+        }
+        // Default Test50 keeps real auth; the explicit business profile is independent of Core routing.
+        if routing.requireCoreRouting != true || authProfile == "controlled-business" { app.launchEnvironment["METASECRET_UI_TEST_MODE"] = "true" }
         let e2eServerUrl = (routing.coreServerUrl
             ?? ProcessInfo.processInfo.environment["E2E_CORE_SERVER_URL"] ?? "")
             .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
@@ -299,6 +347,11 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             app.launchEnvironment["METASECRET_E2E_SERVER_URL"] = e2eServerUrl
         }
         app.launch()
+    }
+
+    override func tearDownWithError() throws {
+        app?.lbSelection.devicePasscode = nil
+        try super.tearDownWithError()
     }
 
     func joinWebInitiatedVault() throws {
@@ -466,26 +519,24 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
             XCTAssertFalse(
-                app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists,
+                app.lbElement("recovery-request-badge-\(secretName)").exists,
                 "iOS had a stale recovery badge before Test #41 removal"
             )
             XCTAssertFalse(
-                app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists,
+                app.lbElement("open-recovery-request-\(secretName)").exists,
                 "iOS had a stale recovery action before Test #41 removal"
             )
         }
 
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let recoveryAlert = app.descendants(matching: .any)["alert-recovery-request"]
-        let recoveryProcessing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let joinAlert = app.descendants(matching: .any)["alert-join-request"]
-        let joinProcessing = app.descendants(matching: .any)["alert-join-request-processing"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
+        let recoveryAlert = app.lbElement("alert-recovery-request")
+        let recoveryProcessing = app.lbElement("alert-recovery-request-processing")
+        let joinAlert = app.lbElement("alert-join-request")
+        let joinProcessing = app.lbElement("alert-join-request-processing")
         test37DeviceTopologyDiagnosticsEmitted = false
         let cleanBoundary = {
             guard
@@ -504,7 +555,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 ),
                 Set([webDeviceId, androidDeviceId, iosDeviceId]).count == 3
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosDeviceId).count == 0
+            return !self.app.lbCanRemove(iosDeviceId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -547,24 +598,25 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             3,
             "iOS Test #41 device rows did not resolve to three unique exact identifiers"
         )
-        XCTAssertEqual(
-            test37RemoveActionQuery(deviceId: iosDeviceId).count,
-            0,
+        XCTAssertFalse(
+            app.lbCanRemove(iosDeviceId),
             "iOS Current row exposed an invalid self-remove action"
         )
         print("E2E: IOS_TEST41_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
-        let secretsTab = app.descendants(matching: .any)["tab-secrets"]
-        let devicesTab = app.descendants(matching: .any)["tab-devices"]
+        let manualSignIn = app.lbElement("orbit-enter")
+        let secretsTab = app.lbElement("tab-secrets")
+        let devicesTab = app.lbElement("tab-devices")
+        let orbitReady = app.lbElement("orbit-transition-ready")
+        let orbitIdle = app.lbElement("orbit-phase-idle")
         let removed = NSPredicate { _, _ in
-            manualSignIn.exists
-                && manualSignIn.isHittable
+            orbitReady.exists
+                && orbitIdle.exists
                 && !secretsTab.exists
                 && !devicesTab.exists
                 && deviceRows.count == 0
                 && secretNames.allSatisfy {
-                    !self.app.descendants(matching: .any)["secret-row-\($0)"].exists
+                    !self.app.lbElement("secret-row-\($0)").exists
                 }
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
@@ -573,9 +625,11 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 && !recoveryProcessing.exists
                 && !joinAlert.exists
                 && !joinProcessing.exists
-                && !self.app.descendants(matching: .any)["remove-device-\(webDeviceId)"].exists
-                && !self.app.descendants(matching: .any)["remove-device-\(androidDeviceId)"].exists
-                && !self.app.descendants(matching: .any)["remove-device-\(iosDeviceId)"].exists
+                && !self.app.lbElement("remove-device-\(webDeviceId)").exists
+                && !self.app.lbElement("remove-device-\(androidDeviceId)").exists
+                && !self.app.lbElement("remove-device-\(iosDeviceId)").exists
+                && self.app.lbVisible(manualSignIn)
+                && manualSignIn.isHittable
         }
         let removedExpectation = XCTNSPredicateExpectation(predicate: removed, object: nil)
         XCTAssertEqual(
@@ -583,14 +637,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             .completed,
             "iOS did not reset to authentication with the Test #41 Vault UI removed"
         )
-        XCTAssertTrue(manualSignIn.exists && manualSignIn.isHittable)
+        XCTAssertTrue(app.lbVisible(manualSignIn) && manualSignIn.isHittable)
         XCTAssertFalse(secretsTab.exists || devicesTab.exists)
         XCTAssertTrue(secretNames.allSatisfy {
-            !app.descendants(matching: .any)["secret-row-\($0)"].exists
+            !app.lbElement("secret-row-\($0)").exists
         })
-        XCTAssertFalse(app.descendants(matching: .any)["remove-device-\(webDeviceId)"].exists)
-        XCTAssertFalse(app.descendants(matching: .any)["remove-device-\(androidDeviceId)"].exists)
-        XCTAssertFalse(app.descendants(matching: .any)["remove-device-\(iosDeviceId)"].exists)
+        XCTAssertFalse(app.lbElement("remove-device-\(webDeviceId)").exists)
+        XCTAssertFalse(app.lbElement("remove-device-\(androidDeviceId)").exists)
+        XCTAssertFalse(app.lbElement("remove-device-\(iosDeviceId)").exists)
         print("E2E: IOS_TEST41_REMOVED_RESET")
     }
 
@@ -615,26 +669,24 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
             XCTAssertFalse(
-                app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists,
+                app.lbElement("recovery-request-badge-\(secretName)").exists,
                 "iOS had a stale recovery badge before Test #45 removal"
             )
             XCTAssertFalse(
-                app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists,
+                app.lbElement("open-recovery-request-\(secretName)").exists,
                 "iOS had a stale recovery action before Test #45 removal"
             )
         }
 
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let recoveryAlert = app.descendants(matching: .any)["alert-recovery-request"]
-        let recoveryProcessing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let joinAlert = app.descendants(matching: .any)["alert-join-request"]
-        let joinProcessing = app.descendants(matching: .any)["alert-join-request-processing"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
+        let recoveryAlert = app.lbElement("alert-recovery-request")
+        let recoveryProcessing = app.lbElement("alert-recovery-request-processing")
+        let joinAlert = app.lbElement("alert-join-request")
+        let joinProcessing = app.lbElement("alert-join-request-processing")
         test37DeviceTopologyDiagnosticsEmitted = false
         let cleanBoundary = {
             guard
@@ -653,7 +705,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 ),
                 Set([webDeviceId, androidDeviceId, iosDeviceId]).count == 3
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosDeviceId).count == 0
+            return !self.app.lbCanRemove(iosDeviceId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -696,24 +748,25 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             3,
             "iOS Test #45 device rows did not resolve to three unique exact identifiers"
         )
-        XCTAssertEqual(
-            test37RemoveActionQuery(deviceId: iosDeviceId).count,
-            0,
+        XCTAssertFalse(
+            app.lbCanRemove(iosDeviceId),
             "iOS Current row exposed an invalid self-remove action"
         )
         print("E2E: IOS_TEST45_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
-        let secretsTab = app.descendants(matching: .any)["tab-secrets"]
-        let devicesTab = app.descendants(matching: .any)["tab-devices"]
+        let manualSignIn = app.lbElement("orbit-enter")
+        let secretsTab = app.lbElement("tab-secrets")
+        let devicesTab = app.lbElement("tab-devices")
+        let orbitReady = app.lbElement("orbit-transition-ready")
+        let orbitIdle = app.lbElement("orbit-phase-idle")
         let removed = NSPredicate { _, _ in
-            manualSignIn.exists
-                && manualSignIn.isHittable
+            orbitReady.exists
+                && orbitIdle.exists
                 && !secretsTab.exists
                 && !devicesTab.exists
                 && deviceRows.count == 0
                 && secretNames.allSatisfy {
-                    !self.app.descendants(matching: .any)["secret-row-\($0)"].exists
+                    !self.app.lbElement("secret-row-\($0)").exists
                 }
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
@@ -722,9 +775,11 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 && !recoveryProcessing.exists
                 && !joinAlert.exists
                 && !joinProcessing.exists
-                && !self.app.descendants(matching: .any)["remove-device-\(webDeviceId)"].exists
-                && !self.app.descendants(matching: .any)["remove-device-\(androidDeviceId)"].exists
-                && !self.app.descendants(matching: .any)["remove-device-\(iosDeviceId)"].exists
+                && !self.app.lbElement("remove-device-\(webDeviceId)").exists
+                && !self.app.lbElement("remove-device-\(androidDeviceId)").exists
+                && !self.app.lbElement("remove-device-\(iosDeviceId)").exists
+                && self.app.lbVisible(manualSignIn)
+                && manualSignIn.isHittable
         }
         let removedExpectation = XCTNSPredicateExpectation(predicate: removed, object: nil)
         XCTAssertEqual(
@@ -732,14 +787,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             .completed,
             "iOS did not reset to authentication with the Test #45 Vault UI removed"
         )
-        XCTAssertTrue(manualSignIn.exists && manualSignIn.isHittable)
+        XCTAssertTrue(app.lbVisible(manualSignIn) && manualSignIn.isHittable)
         XCTAssertFalse(secretsTab.exists || devicesTab.exists)
         XCTAssertTrue(secretNames.allSatisfy {
-            !app.descendants(matching: .any)["secret-row-\($0)"].exists
+            !app.lbElement("secret-row-\($0)").exists
         })
-        XCTAssertFalse(app.descendants(matching: .any)["remove-device-\(webDeviceId)"].exists)
-        XCTAssertFalse(app.descendants(matching: .any)["remove-device-\(androidDeviceId)"].exists)
-        XCTAssertFalse(app.descendants(matching: .any)["remove-device-\(iosDeviceId)"].exists)
+        XCTAssertFalse(app.lbElement("remove-device-\(webDeviceId)").exists)
+        XCTAssertFalse(app.lbElement("remove-device-\(androidDeviceId)").exists)
+        XCTAssertFalse(app.lbElement("remove-device-\(iosDeviceId)").exists)
         print("E2E: IOS_TEST45_REMOVED_RESET")
     }
 
@@ -765,26 +820,24 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
             XCTAssertFalse(
-                app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists,
+                app.lbElement("recovery-request-badge-\(secretName)").exists,
                 "iOS had a stale recovery badge before Test #37 removal"
             )
             XCTAssertFalse(
-                app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists,
+                app.lbElement("open-recovery-request-\(secretName)").exists,
                 "iOS had a stale recovery action before Test #37 removal"
             )
         }
 
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let recoveryAlert = app.descendants(matching: .any)["alert-recovery-request"]
-        let recoveryProcessing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let joinAlert = app.descendants(matching: .any)["alert-join-request"]
-        let joinProcessing = app.descendants(matching: .any)["alert-join-request-processing"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
+        let recoveryAlert = app.lbElement("alert-recovery-request")
+        let recoveryProcessing = app.lbElement("alert-recovery-request-processing")
+        let joinAlert = app.lbElement("alert-join-request")
+        let joinProcessing = app.lbElement("alert-join-request-processing")
         test37DeviceTopologyDiagnosticsEmitted = false
         let cleanBoundary = {
             guard
@@ -803,7 +856,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 ),
                 Set([webDeviceId, androidDeviceId, iosDeviceId]).count == 3
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosDeviceId).count == 0
+            return !self.app.lbCanRemove(iosDeviceId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -846,16 +899,15 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             3,
             "iOS Test #37 device rows did not resolve to three unique exact identifiers"
         )
-        XCTAssertEqual(
-            test37RemoveActionQuery(deviceId: iosDeviceId).count,
-            0,
+        XCTAssertFalse(
+            app.lbCanRemove(iosDeviceId),
             "iOS Current row exposed an invalid self-remove action"
         )
         print("E2E: IOS_TEST37_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
-        let secretsTab = app.descendants(matching: .any)["tab-secrets"]
-        let devicesTab = app.descendants(matching: .any)["tab-devices"]
+        let manualSignIn = app.lbElement("orbit-enter")
+        let secretsTab = app.lbElement("tab-secrets")
+        let devicesTab = app.lbElement("tab-devices")
         let removed = NSPredicate { _, _ in
             manualSignIn.exists
                 && manualSignIn.isHittable
@@ -863,7 +915,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 && !devicesTab.exists
                 && deviceRows.count == 0
                 && secretNames.allSatisfy {
-                    !self.app.descendants(matching: .any)["secret-row-\($0)"].exists
+                    !self.app.lbElement("secret-row-\($0)").exists
                 }
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
@@ -876,9 +928,9 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 && !recoveryProcessing.exists
                 && !joinAlert.exists
                 && !joinProcessing.exists
-                && !self.app.descendants(matching: .any)["remove-device-\(webDeviceId)"].exists
-                && !self.app.descendants(matching: .any)["remove-device-\(androidDeviceId)"].exists
-                && !self.app.descendants(matching: .any)["remove-device-\(iosDeviceId)"].exists
+                && !self.app.lbElement("remove-device-\(webDeviceId)").exists
+                && !self.app.lbElement("remove-device-\(androidDeviceId)").exists
+                && !self.app.lbElement("remove-device-\(iosDeviceId)").exists
         }
         let removedExpectation = XCTNSPredicateExpectation(predicate: removed, object: nil)
         XCTAssertEqual(
@@ -889,11 +941,11 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         XCTAssertTrue(manualSignIn.exists && manualSignIn.isHittable)
         XCTAssertFalse(secretsTab.exists || devicesTab.exists)
         XCTAssertTrue(secretNames.allSatisfy {
-            !app.descendants(matching: .any)["secret-row-\($0)"].exists
+            !app.lbElement("secret-row-\($0)").exists
         })
-        XCTAssertFalse(app.descendants(matching: .any)["remove-device-\(webDeviceId)"].exists)
-        XCTAssertFalse(app.descendants(matching: .any)["remove-device-\(androidDeviceId)"].exists)
-        XCTAssertFalse(app.descendants(matching: .any)["remove-device-\(iosDeviceId)"].exists)
+        XCTAssertFalse(app.lbElement("remove-device-\(webDeviceId)").exists)
+        XCTAssertFalse(app.lbElement("remove-device-\(androidDeviceId)").exists)
+        XCTAssertFalse(app.lbElement("remove-device-\(iosDeviceId)").exists)
         print("E2E: IOS_TEST37_REMOVED_RESET")
     }
 
@@ -917,21 +969,19 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
 
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let recoveryAlert = app.descendants(matching: .any)["alert-recovery-request"]
-        let recoveryProcessing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let joinAlert = app.descendants(matching: .any)["alert-join-request"]
-        let joinProcessing = app.descendants(matching: .any)["alert-join-request-processing"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
+        let recoveryAlert = app.lbElement("alert-recovery-request")
+        let recoveryProcessing = app.lbElement("alert-recovery-request-processing")
+        let joinAlert = app.lbElement("alert-join-request")
+        let joinProcessing = app.lbElement("alert-join-request-processing")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -940,9 +990,9 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current"),
                 Set([webId, androidId, iosId]).count == 3
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: webId).count == 1
-                && self.test37RemoveActionQuery(deviceId: androidId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return self.app.lbCanRemove(webId)
+                && self.app.lbCanRemove(androidId)
+                && !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -962,18 +1012,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         waitForVisible(identifier: "pending-removal-device-row", timeout: 180)
         tap("pending-removal-device-row")
         waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let exactLocalizedRemovalTitles = [
-            "Remove device \(webDeviceName)?",
-            "Удалить устройство \(webDeviceName)?",
-        ]
-        let visibleExactRemovalTitles = exactLocalizedRemovalTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            visibleExactRemovalTitles.count,
-            1,
-            "Test #38 removal dialog must expose one exact localized composite Web title"
-        )
+        app.lbAssertRemovalSubject(webDeviceName)
         print("E2E: IOS_TEST38_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(platform: "ios-remove-web-approve", cycle: "1")
@@ -988,8 +1027,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let androidId = self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member"),
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: androidId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return self.app.lbCanRemove(androidId)
+                && !self.app.lbCanRemove(iosId)
                 && !pendingRemoval.exists
                 && !removalDialog.exists
                 && !recoveryAlert.exists
@@ -1002,9 +1041,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not observe the two-member Test #38 resharing boundary"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #38 Secret after resharing")
         print("E2E: IOS_TEST38_WEB_REMOVAL_APPROVED")
     }
 
@@ -1026,21 +1064,19 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
 
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let recoveryAlert = app.descendants(matching: .any)["alert-recovery-request"]
-        let recoveryProcessing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let joinAlert = app.descendants(matching: .any)["alert-join-request"]
-        let joinProcessing = app.descendants(matching: .any)["alert-join-request-processing"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
+        let recoveryAlert = app.lbElement("alert-recovery-request")
+        let recoveryProcessing = app.lbElement("alert-recovery-request-processing")
+        let joinAlert = app.lbElement("alert-join-request")
+        let joinProcessing = app.lbElement("alert-join-request-processing")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -1049,9 +1085,9 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current"),
                 Set([webId, androidId, iosId]).count == 3
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: webId).count == 1
-                && self.test37RemoveActionQuery(deviceId: androidId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return self.app.lbCanRemove(webId)
+                && self.app.lbCanRemove(androidId)
+                && !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -1071,18 +1107,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         waitForVisible(identifier: "pending-removal-device-row", timeout: 180)
         tap("pending-removal-device-row")
         waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let exactLocalizedRemovalTitles = [
-            "Remove device \(webDeviceName)?",
-            "Удалить устройство \(webDeviceName)?",
-        ]
-        let visibleExactRemovalTitles = exactLocalizedRemovalTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            visibleExactRemovalTitles.count,
-            1,
-            "Test #46 removal dialog must expose one exact localized composite Web title"
-        )
+        app.lbAssertRemovalSubject(webDeviceName)
         print("E2E: IOS_TEST46_WEB_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(platform: "ios-remove-web-approve-test46", cycle: "1")
@@ -1097,8 +1122,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let androidId = self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member"),
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: androidId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return self.app.lbCanRemove(androidId)
+                && !self.app.lbCanRemove(iosId)
                 && !pendingRemoval.exists
                 && !removalDialog.exists
                 && !recoveryAlert.exists
@@ -1111,9 +1136,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not observe Test #46's two-member reverse-resharing boundary"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #46 Secret after the removal decision")
         print("E2E: IOS_TEST46_WEB_REMOVAL_APPROVED")
     }
 
@@ -1137,9 +1161,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
+        let deviceRows = app.lbConnectedSlots
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 2,
@@ -1147,13 +1169,13 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let androidId = self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member"),
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: androidId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
-                && !self.app.descendants(matching: .any)["pending-device-row"].exists
-                && !self.app.descendants(matching: .any)["pending-removal-device-row"].exists
-                && !self.app.descendants(matching: .any)["remove-device-dialog"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
+            return self.app.lbCanRemove(androidId)
+                && !self.app.lbCanRemove(iosId)
+                && !self.app.lbElement("pending-device-row").exists
+                && !self.app.lbElement("pending-removal-device-row").exists
+                && !self.app.lbElement("remove-device-dialog").exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
         }
         let cleanExpectation = XCTNSPredicateExpectation(predicate: cleanBoundary, object: nil)
         XCTAssertEqual(
@@ -1163,9 +1185,9 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST38_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
-        let secretsTab = app.descendants(matching: .any)["tab-secrets"]
-        let devicesTab = app.descendants(matching: .any)["tab-devices"]
+        let manualSignIn = app.lbElement("orbit-enter")
+        let secretsTab = app.lbElement("tab-secrets")
+        let devicesTab = app.lbElement("tab-devices")
         let removed = NSPredicate { _, _ in
             manualSignIn.exists
                 && manualSignIn.isHittable
@@ -1173,15 +1195,15 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 && !devicesTab.exists
                 && deviceRows.count == 0
                 && secretNames.allSatisfy {
-                    !self.app.descendants(matching: .any)["secret-row-\($0)"].exists
+                    !self.app.lbElement("secret-row-\($0)").exists
                 }
-                && !self.app.descendants(matching: .any)["pending-device-row"].exists
-                && !self.app.descendants(matching: .any)["pending-removal-device-row"].exists
-                && !self.app.descendants(matching: .any)["remove-device-dialog"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request-processing"].exists
+                && !self.app.lbElement("pending-device-row").exists
+                && !self.app.lbElement("pending-removal-device-row").exists
+                && !self.app.lbElement("remove-device-dialog").exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
+                && !self.app.lbElement("alert-join-request").exists
+                && !self.app.lbElement("alert-join-request-processing").exists
         }
         let removedExpectation = XCTNSPredicateExpectation(predicate: removed, object: nil)
         XCTAssertEqual(
@@ -1210,13 +1232,11 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
+        let deviceRows = app.lbConnectedSlots
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 2,
@@ -1224,13 +1244,13 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let androidId = self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member"),
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: androidId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
-                && !self.app.descendants(matching: .any)["pending-device-row"].exists
-                && !self.app.descendants(matching: .any)["pending-removal-device-row"].exists
-                && !self.app.descendants(matching: .any)["remove-device-dialog"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
+            return self.app.lbCanRemove(androidId)
+                && !self.app.lbCanRemove(iosId)
+                && !self.app.lbElement("pending-device-row").exists
+                && !self.app.lbElement("pending-removal-device-row").exists
+                && !self.app.lbElement("remove-device-dialog").exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
         }
         let cleanExpectation = XCTNSPredicateExpectation(predicate: cleanBoundary, object: nil)
         XCTAssertEqual(
@@ -1240,9 +1260,9 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST42_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
-        let secretsTab = app.descendants(matching: .any)["tab-secrets"]
-        let devicesTab = app.descendants(matching: .any)["tab-devices"]
+        let manualSignIn = app.lbElement("orbit-enter")
+        let secretsTab = app.lbElement("tab-secrets")
+        let devicesTab = app.lbElement("tab-devices")
         let removed = NSPredicate { _, _ in
             manualSignIn.exists
                 && manualSignIn.isHittable
@@ -1250,15 +1270,15 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 && !devicesTab.exists
                 && deviceRows.count == 0
                 && secretNames.allSatisfy {
-                    !self.app.descendants(matching: .any)["secret-row-\($0)"].exists
+                    !self.app.lbElement("secret-row-\($0)").exists
                 }
-                && !self.app.descendants(matching: .any)["pending-device-row"].exists
-                && !self.app.descendants(matching: .any)["pending-removal-device-row"].exists
-                && !self.app.descendants(matching: .any)["remove-device-dialog"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request-processing"].exists
+                && !self.app.lbElement("pending-device-row").exists
+                && !self.app.lbElement("pending-removal-device-row").exists
+                && !self.app.lbElement("remove-device-dialog").exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
+                && !self.app.lbElement("alert-join-request").exists
+                && !self.app.lbElement("alert-join-request-processing").exists
         }
         let removedExpectation = XCTNSPredicateExpectation(predicate: removed, object: nil)
         XCTAssertEqual(
@@ -1287,13 +1307,11 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
+        let deviceRows = app.lbConnectedSlots
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 2,
@@ -1301,13 +1319,13 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let androidId = self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member"),
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: androidId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
-                && !self.app.descendants(matching: .any)["pending-device-row"].exists
-                && !self.app.descendants(matching: .any)["pending-removal-device-row"].exists
-                && !self.app.descendants(matching: .any)["remove-device-dialog"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
+            return self.app.lbCanRemove(androidId)
+                && !self.app.lbCanRemove(iosId)
+                && !self.app.lbElement("pending-device-row").exists
+                && !self.app.lbElement("pending-removal-device-row").exists
+                && !self.app.lbElement("remove-device-dialog").exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
         }
         let cleanExpectation = XCTNSPredicateExpectation(predicate: cleanBoundary, object: nil)
         XCTAssertEqual(
@@ -1317,25 +1335,29 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST43_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
-        let secretsTab = app.descendants(matching: .any)["tab-secrets"]
-        let devicesTab = app.descendants(matching: .any)["tab-devices"]
+        let manualSignIn = app.lbElement("orbit-enter")
+        let secretsTab = app.lbElement("tab-secrets")
+        let devicesTab = app.lbElement("tab-devices")
+        let orbitReady = app.lbElement("orbit-transition-ready")
+        let orbitIdle = app.lbElement("orbit-phase-idle")
         let removed = NSPredicate { _, _ in
-            manualSignIn.exists
-                && manualSignIn.isHittable
+            orbitReady.exists
+                && orbitIdle.exists
                 && !secretsTab.exists
                 && !devicesTab.exists
                 && deviceRows.count == 0
                 && secretNames.allSatisfy {
-                    !self.app.descendants(matching: .any)["secret-row-\($0)"].exists
+                    !self.app.lbElement("secret-row-\($0)").exists
                 }
-                && !self.app.descendants(matching: .any)["pending-device-row"].exists
-                && !self.app.descendants(matching: .any)["pending-removal-device-row"].exists
-                && !self.app.descendants(matching: .any)["remove-device-dialog"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request-processing"].exists
+                && !self.app.lbElement("pending-device-row").exists
+                && !self.app.lbElement("pending-removal-device-row").exists
+                && !self.app.lbElement("remove-device-dialog").exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
+                && !self.app.lbElement("alert-join-request").exists
+                && !self.app.lbElement("alert-join-request-processing").exists
+                && self.app.lbVisible(manualSignIn)
+                && manualSignIn.isHittable
         }
         let removedExpectation = XCTNSPredicateExpectation(predicate: removed, object: nil)
         XCTAssertEqual(
@@ -1364,20 +1386,18 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let recoveryAlert = app.descendants(matching: .any)["alert-recovery-request"]
-        let recoveryProcessing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let joinAlert = app.descendants(matching: .any)["alert-join-request"]
-        let joinProcessing = app.descendants(matching: .any)["alert-join-request-processing"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
+        let recoveryAlert = app.lbElement("alert-recovery-request")
+        let recoveryProcessing = app.lbElement("alert-recovery-request-processing")
+        let joinAlert = app.lbElement("alert-join-request")
+        let joinProcessing = app.lbElement("alert-join-request-processing")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 2,
@@ -1385,8 +1405,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let androidId = self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member"),
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: androidId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return self.app.lbCanRemove(androidId)
+                && !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -1403,17 +1423,19 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         )
         print("E2E: IOS_TEST46_REMOVAL_TARGET_READY")
 
-        let manualSignIn = app.descendants(matching: .any)["orbit-enter"]
-        let secretsTab = app.descendants(matching: .any)["tab-secrets"]
-        let devicesTab = app.descendants(matching: .any)["tab-devices"]
+        let manualSignIn = app.lbElement("orbit-enter")
+        let secretsTab = app.lbElement("tab-secrets")
+        let devicesTab = app.lbElement("tab-devices")
+        let orbitReady = app.lbElement("orbit-transition-ready")
+        let orbitIdle = app.lbElement("orbit-phase-idle")
         let removed = NSPredicate { _, _ in
-            manualSignIn.exists
-                && manualSignIn.isHittable
+            orbitReady.exists
+                && orbitIdle.exists
                 && !secretsTab.exists
                 && !devicesTab.exists
                 && deviceRows.count == 0
                 && secretNames.allSatisfy {
-                    !self.app.descendants(matching: .any)["secret-row-\($0)"].exists
+                    !self.app.lbElement("secret-row-\($0)").exists
                 }
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
@@ -1422,6 +1444,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 && !recoveryProcessing.exists
                 && !joinAlert.exists
                 && !joinProcessing.exists
+                && self.app.lbVisible(manualSignIn)
+                && manualSignIn.isHittable
         }
         let removedExpectation = XCTNSPredicateExpectation(predicate: removed, object: nil)
         XCTAssertEqual(
@@ -1451,21 +1475,19 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
 
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let recoveryAlert = app.descendants(matching: .any)["alert-recovery-request"]
-        let recoveryProcessing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let joinAlert = app.descendants(matching: .any)["alert-join-request"]
-        let joinProcessing = app.descendants(matching: .any)["alert-join-request-processing"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
+        let recoveryAlert = app.lbElement("alert-recovery-request")
+        let recoveryProcessing = app.lbElement("alert-recovery-request-processing")
+        let joinAlert = app.lbElement("alert-join-request")
+        let joinProcessing = app.lbElement("alert-join-request-processing")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -1474,9 +1496,9 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current"),
                 Set([webId, androidId, iosId]).count == 3
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: webId).count == 1
-                && self.test37RemoveActionQuery(deviceId: androidId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return self.app.lbCanRemove(webId)
+                && self.app.lbCanRemove(androidId)
+                && !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -1496,18 +1518,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         waitForVisible(identifier: "pending-removal-device-row", timeout: 180)
         tap("pending-removal-device-row")
         waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let exactLocalizedRemovalTitles = [
-            "Remove device \(androidDeviceName)?",
-            "Удалить устройство \(androidDeviceName)?",
-        ]
-        let visibleExactRemovalTitles = exactLocalizedRemovalTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            visibleExactRemovalTitles.count,
-            1,
-            "Test #40 removal dialog must expose one exact localized composite Android title"
-        )
+        app.lbAssertRemovalSubject(androidDeviceName)
         print("E2E: IOS_TEST40_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(platform: "ios-remove-android-approve-test40", cycle: "1")
@@ -1522,8 +1533,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let webId = self.exactDeviceRowIdentifier(name: webDeviceName, status: "Member"),
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: webId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return self.app.lbCanRemove(webId)
+                && !self.app.lbCanRemove(iosId)
                 && !pendingRemoval.exists
                 && !removalDialog.exists
                 && !recoveryAlert.exists
@@ -1536,9 +1547,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not observe Test #40's two-member reverse-resharing boundary"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #40 Secret after resharing")
         print("E2E: IOS_TEST40_ANDROID_REMOVAL_APPROVED")
     }
 
@@ -1558,9 +1568,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         waitForVisible(identifier: "secret-row-\(config.secretName ?? "test-secret")", timeout: 180)
         tap("tab-devices")
 
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
+        let deviceRows = app.lbConnectedSlots
         let targetRowReady = NSPredicate { _, _ in
             deviceRows.count == 3
                 && self.exactDeviceRowIdentifier(name: targetDeviceName, status: "Member") != nil
@@ -1574,12 +1582,10 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let targetId = exactDeviceRowIdentifier(name: targetDeviceName, status: "Member")
         XCTAssertNotNil(targetId, "Test #15 removal target is not one exact current member")
         guard let targetId else { return }
-        let targetRow = app.descendants(matching: .any)["device-row-\(targetId)"]
+        let targetRow = app.lbElement("device-row-\(targetId)")
         XCTAssertTrue(targetRow.waitForExistence(timeout: 30))
         XCTAssertEqual(
-            app.descendants(matching: .any).matching(
-                NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-            ).count,
+            app.lbConnectedSlots.count,
             3,
             "Test #15 removal starts from exactly three current members"
         )
@@ -1588,32 +1594,22 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         waitForVisible(identifier: "pending-removal-device-row", timeout: 180)
         tap("pending-removal-device-row")
         waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let exactTitles = [
-            "Remove device \(targetDeviceName)?",
-            "Удалить устройство \(targetDeviceName)?",
-        ]
-        XCTAssertEqual(
-            exactTitles.filter { exactVisibleText($0, belongsTo: app.descendants(matching: .any)["remove-device-dialog"]) }.count,
-            1,
-            "Test #15 removal dialog must name the exact target"
-        )
+        app.lbAssertRemovalSubject(targetDeviceName)
         print("E2E: IOS_TEST15_REMOVAL_REQUEST_VISIBLE")
         waitForApproval(platform: "test15-remove-approve", cycle: cycle)
         tap("remove-device-dialog-accept")
         waitForHidden(identifier: "remove-device-dialog", timeout: 120)
         let targetRemoved = NSPredicate { _, _ in
-            !self.app.descendants(matching: .any)["device-row-\(targetId)"].exists
-                && self.app.descendants(matching: .any).matching(
-                    NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-                ).count == 2
+            !self.app.lbElement("device-row-\(targetId)").exists
+                && self.app.lbConnectedSlots.count == 2
         }
         let removedWait = XCTNSPredicateExpectation(predicate: targetRemoved, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [removedWait], timeout: 180), .completed)
         tap("tab-secrets")
         let secretName = config.secretName ?? "test-secret"
         waitForVisible(identifier: "secret-row-\(secretName)", timeout: 60)
-        XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-        XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+        XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+        XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         print("E2E: IOS_TEST15_REMOVAL_APPROVED_RECOVERY_CLEARED")
         waitForApproval(platform: "test15-cli-member-accepted", cycle: cycle)
         tap("tab-devices")
@@ -1641,16 +1637,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 2,
@@ -1659,12 +1653,12 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
             return webId != iosId
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+                && !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
         }
         let cleanExpectation = XCTNSPredicateExpectation(predicate: cleanBoundary, object: nil)
         XCTAssertEqual(
@@ -1689,7 +1683,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") == nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -1729,21 +1723,19 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
 
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let recoveryAlert = app.descendants(matching: .any)["alert-recovery-request"]
-        let recoveryProcessing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let joinAlert = app.descendants(matching: .any)["alert-join-request"]
-        let joinProcessing = app.descendants(matching: .any)["alert-join-request-processing"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
+        let recoveryAlert = app.lbElement("alert-recovery-request")
+        let recoveryProcessing = app.lbElement("alert-recovery-request-processing")
+        let joinAlert = app.lbElement("alert-join-request")
+        let joinProcessing = app.lbElement("alert-join-request-processing")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -1752,9 +1744,9 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current"),
                 Set([webId, androidId, iosId]).count == 3
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: webId).count == 1
-                && self.test37RemoveActionQuery(deviceId: androidId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return self.app.lbCanRemove(webId)
+                && self.app.lbCanRemove(androidId)
+                && !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -1774,18 +1766,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         waitForVisible(identifier: "pending-removal-device-row", timeout: 180)
         tap("pending-removal-device-row")
         waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let exactLocalizedRemovalTitles = [
-            "Remove device \(androidDeviceName)?",
-            "Удалить устройство \(androidDeviceName)?",
-        ]
-        let visibleExactRemovalTitles = exactLocalizedRemovalTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            visibleExactRemovalTitles.count,
-            1,
-            "Test #44 removal dialog must expose one exact localized composite Android title"
-        )
+        app.lbAssertRemovalSubject(androidDeviceName)
         print("E2E: IOS_TEST44_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(platform: "ios-remove-android-approve-test44", cycle: "1")
@@ -1800,8 +1781,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let webId = self.exactDeviceRowIdentifier(name: webDeviceName, status: "Member"),
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: webId).count == 1
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return self.app.lbCanRemove(webId)
+                && !self.app.lbCanRemove(iosId)
                 && !pendingRemoval.exists
                 && !removalDialog.exists
                 && !recoveryAlert.exists
@@ -1814,9 +1795,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not observe Test #44's two-member reverse-resharing boundary"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #44 Secret after resharing")
         print("E2E: IOS_TEST44_ANDROID_REMOVAL_APPROVED")
     }
 
@@ -1838,16 +1818,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 2,
@@ -1856,12 +1834,12 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
             return webId != iosId
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+                && !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
         }
         let cleanExpectation = XCTNSPredicateExpectation(predicate: cleanBoundary, object: nil)
         XCTAssertEqual(
@@ -1886,7 +1864,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") == nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -1928,16 +1906,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -1946,14 +1922,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current"),
                 Set([webId, androidId, iosId]).count == 3
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request-processing"].exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
+                && !self.app.lbElement("alert-join-request").exists
+                && !self.app.lbElement("alert-join-request-processing").exists
         }
         let cleanExpectation = XCTNSPredicateExpectation(predicate: cleanBoundary, object: nil)
         XCTAssertEqual(
@@ -1978,7 +1954,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: webDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2015,16 +1991,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2033,14 +2007,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current"),
                 Set([webId, androidId, iosId]).count == 3
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request-processing"].exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
+                && !self.app.lbElement("alert-join-request").exists
+                && !self.app.lbElement("alert-join-request-processing").exists
         }
         let cleanExpectation = XCTNSPredicateExpectation(predicate: cleanBoundary, object: nil)
         XCTAssertEqual(
@@ -2065,7 +2039,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2077,9 +2051,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not observe Test #42's two-member reverse-resharing boundary"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #42 Secret after resharing")
         print("E2E: IOS_TEST42_WEB_REMOVAL_COMPLETED")
     }
 
@@ -2101,16 +2074,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2119,14 +2090,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current"),
                 Set([webId, androidId, iosId]).count == 3
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request"].exists
-                && !self.app.descendants(matching: .any)["alert-join-request-processing"].exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
+                && !self.app.lbElement("alert-join-request").exists
+                && !self.app.lbElement("alert-join-request-processing").exists
         }
         let cleanExpectation = XCTNSPredicateExpectation(predicate: cleanBoundary, object: nil)
         XCTAssertEqual(
@@ -2151,7 +2122,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2163,9 +2134,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not observe Test #43's two-member reverse-resharing boundary"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #43 Secret after resharing")
         print("E2E: IOS_TEST43_WEB_REMOVAL_COMPLETED")
     }
 
@@ -2187,16 +2157,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let threeMemberBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2204,7 +2172,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2234,9 +2202,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not preserve the three-member boundary after phase-1 Decline"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #47 Secret after the removal decision")
         print("E2E: IOS_TEST47_PHASE1_DECLINE_OBSERVED")
     }
 
@@ -2260,12 +2227,10 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let threeMemberBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2273,7 +2238,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2295,9 +2260,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not remain a member after Test #47 phase-2 Decline"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #47 Secret after the removal decision")
         print("E2E: IOS_TEST47_PHASE2_DECLINE_OBSERVED")
     }
 
@@ -2319,16 +2283,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2336,7 +2298,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2352,18 +2314,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         waitForVisible(identifier: "pending-removal-device-row", timeout: 180)
         tap("pending-removal-device-row")
         waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let exactLocalizedTitles = [
-            "Remove device \(androidDeviceName)?",
-            "Удалить устройство \(androidDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #47 Decline dialog must expose one exact Android title"
-        )
+        app.lbAssertRemovalSubject(androidDeviceName)
         print("E2E: IOS_TEST47_PHASE3_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(platform: "ios-decline-android-test47", cycle: "3")
@@ -2378,9 +2329,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not preserve the three-member boundary after phase-3 Decline"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #47 Secret after the removal decision")
         print("E2E: IOS_TEST47_PHASE3_REMOVAL_DECLINED")
     }
 
@@ -2402,16 +2352,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2419,7 +2367,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2435,18 +2383,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         waitForVisible(identifier: "pending-removal-device-row", timeout: 180)
         tap("pending-removal-device-row")
         waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let exactLocalizedTitles = [
-            "Remove device \(androidDeviceName)?",
-            "Удалить устройство \(androidDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #48 Decline dialog must expose one exact Android title"
-        )
+        app.lbAssertRemovalSubject(androidDeviceName)
         print("E2E: IOS_TEST48_PHASE1_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(platform: "ios-decline-android-test48", cycle: "1")
@@ -2461,9 +2398,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not preserve the three-member boundary after phase-1 Decline"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #48 Secret after the removal decision")
         print("E2E: IOS_TEST48_PHASE1_REMOVAL_DECLINED")
     }
 
@@ -2485,16 +2421,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let threeMemberBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2502,7 +2436,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2532,9 +2466,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not preserve the three-member boundary after phase-2 Decline"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #48 Secret after the removal decision")
         print("E2E: IOS_TEST48_PHASE2_DECLINE_OBSERVED")
     }
 
@@ -2558,12 +2491,10 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let threeMemberBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2571,7 +2502,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2593,9 +2524,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not remain a member after Test #48 phase-3 Decline"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #48 Secret after the removal decision")
         print("E2E: IOS_TEST48_PHASE3_DECLINE_OBSERVED")
     }
 
@@ -2619,12 +2549,10 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let threeMemberBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2632,7 +2560,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2654,9 +2582,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not remain a member after Test #49 phase-1 Decline"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #49 Secret after the removal decision")
         print("E2E: IOS_TEST49_PHASE1_DECLINE_OBSERVED")
     }
 
@@ -2678,16 +2605,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2695,7 +2620,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2711,18 +2636,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         waitForVisible(identifier: "pending-removal-device-row", timeout: 180)
         tap("pending-removal-device-row")
         waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let exactLocalizedTitles = [
-            "Remove device \(androidDeviceName)?",
-            "Удалить устройство \(androidDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #49 Decline dialog must expose one exact Android title"
-        )
+        app.lbAssertRemovalSubject(androidDeviceName)
         print("E2E: IOS_TEST49_PHASE2_REMOVAL_REQUEST_VISIBLE")
 
         waitForApproval(platform: "ios-decline-android-test49", cycle: "2")
@@ -2737,9 +2651,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not preserve the three-member boundary after phase-2 Decline"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #49 Secret after the removal decision")
         print("E2E: IOS_TEST49_PHASE2_REMOVAL_DECLINED")
     }
 
@@ -2761,16 +2674,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let threeMemberBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 3,
@@ -2778,7 +2689,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") != nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2808,9 +2719,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
             "iOS did not preserve the three-member boundary after phase-3 Decline"
         )
         tap("tab-secrets")
-        for secretName in secretNames {
-            waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        }
+        let resolved = app.lbFindSecrets(secretNames, timeout: 180)
+        XCTAssertEqual(Set(resolved.keys), Set(secretNames), "iOS did not find every Test #49 Secret after the removal decision")
         print("E2E: IOS_TEST49_PHASE3_DECLINE_OBSERVED")
     }
 
@@ -2833,16 +2743,14 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         tap("tab-secrets")
         for secretName in secretNames {
             waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-            XCTAssertFalse(app.descendants(matching: .any)["recovery-request-badge-\(secretName)"].exists)
-            XCTAssertFalse(app.descendants(matching: .any)["open-recovery-request-\(secretName)"].exists)
+            XCTAssertFalse(app.lbElement("recovery-request-badge-\(secretName)").exists)
+            XCTAssertFalse(app.lbElement("open-recovery-request-\(secretName)").exists)
         }
         tap("tab-devices")
-        let deviceRows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        let pendingJoin = app.descendants(matching: .any)["pending-device-row"]
-        let pendingRemoval = app.descendants(matching: .any)["pending-removal-device-row"]
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
+        let deviceRows = app.lbConnectedSlots
+        let pendingJoin = app.lbElement("pending-device-row")
+        let pendingRemoval = app.lbElement("pending-removal-device-row")
+        let removalDialog = app.lbElement("remove-device-dialog")
         let cleanBoundary = NSPredicate { _, _ in
             guard
                 deviceRows.count == 2,
@@ -2851,12 +2759,12 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
             return webId != iosId
-                && self.test37RemoveActionQuery(deviceId: iosId).count == 0
+                && !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request"].exists
-                && !self.app.descendants(matching: .any)["alert-recovery-request-processing"].exists
+                && !self.app.lbElement("alert-recovery-request").exists
+                && !self.app.lbElement("alert-recovery-request-processing").exists
         }
         let cleanExpectation = XCTNSPredicateExpectation(predicate: cleanBoundary, object: nil)
         XCTAssertEqual(
@@ -2881,7 +2789,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 self.exactDeviceRowIdentifier(name: androidDeviceName, status: "Member") == nil,
                 let iosId = self.exactDeviceRowIdentifier(name: iosDeviceName, status: "Current")
             else { return false }
-            return self.test37RemoveActionQuery(deviceId: iosId).count == 0
+            return !self.app.lbCanRemove(iosId)
                 && !pendingJoin.exists
                 && !pendingRemoval.exists
                 && !removalDialog.exists
@@ -2954,15 +2862,11 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let cycle = config.cycle ?? env("E2E_CYCLE", defaultValue: "1")
 
         enterSimulatorPasscodeIfNeeded()
-        waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-        waitForPrimaryAction(secretName, expected: "Show", timeout: 180)
-        tap("secret-primary-action-\(secretName)")
-        enterSimulatorPasscodeIfNeeded()
-        waitForVisible(identifier: "revealed-secret-value", timeout: 60)
-        XCTAssertTrue(
-            app.descendants(matching: .any)[secretValue].waitForExistence(timeout: 10),
-            "iOS did not reveal the expected local secret"
-        )
+        var showInputReturned = false
+        app.lbShow(secretName, valueTimeout: 60, freshActionResolution: true,
+                   inputReturned: { showInputReturned = true })
+        guard showInputReturned else { return }
+        app.lbAssertValue(secretValue)
         if let testMarkerPrefix {
             print("E2E: \(testMarkerPrefix)_LOCAL_SECRET_VALUE_VERIFIED_\(cycle)")
             print("E2E: \(testMarkerPrefix)_LOCAL_SECRET_VISIBLE_\(cycle)")
@@ -3131,10 +3035,40 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         guard let name = config.secretName, let value = config.secretValue else {
             XCTFail("Test50 requires explicit Secret selectors"); return
         }
-        enterSimulatorPasscodeIfNeeded()
+        // Each controlled-business repetition starts from the same persisted
+        // identity, but the previous XCTest subprocess may leave a live
+        // native window on a stale route. Terminate and relaunch this same
+        // app (no wipe, reset, or simulator replacement) before entering
+        // Secrets so the marker deadline measures the actual create flow.
+        if config.step?.contains("recreate") == true {
+            relaunchTest50AppUntilReady()
+        } else {
+            app.launch()
+            enterSimulatorPasscodeIfNeeded()
+            waitForVisible(identifier: "tab-secrets", timeout: 180)
+        }
         tap("tab-secrets", timeout: 60)
         createSecretForTest24Ui(name: name, value: value, scrollForTest50: true)
         print("E2E: IOS_TEST50_SECRET_CREATED_\(config.cycle ?? "missing")_\(config.step ?? "missing")")
+    }
+
+    private func relaunchTest50AppUntilReady() {
+        func launchAndWait() -> Bool {
+            app.launch()
+            enterSimulatorPasscodeIfNeeded()
+            return app.lbElement("tab-secrets").waitForExistence(timeout: 90)
+        }
+
+        app.terminate()
+        RunLoop.current.run(until: Date().addingTimeInterval(1))
+        if !launchAndWait() {
+            // A stale native window can survive one XCTest teardown. Retry
+            // once on the same simulator without clearing app data.
+            app.terminate()
+            RunLoop.current.run(until: Date().addingTimeInterval(1))
+            XCTAssertTrue(launchAndWait(), "Test50 iOS app did not expose the Secrets tab after relaunch")
+        }
+        waitForVisible(identifier: "tab-secrets", timeout: 60)
     }
 
     func approveJoinForTest50() throws {
@@ -3158,7 +3092,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         waitForVisible(identifier: "tab-secrets", timeout: 180)
         tap("tab-secrets")
         waitForVisible(identifier: "add-secret-fab", timeout: 180)
-        waitForHidden(identifier: "vault-sync-blocker", timeout: 180)
+
         for name in configuredSecretNames() {
             test50RequireVisible("secret-row-\(name)")
         }
@@ -3170,175 +3104,154 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let config = stepConfig()
         guard let role = config.role, let cycle = config.cycle, let step = config.step,
               let name = config.secretName, let value = config.secretValue,
-              let outcome = config.expectedOutcome,
-              ["accepted", "declined", "pending"].contains(outcome) else {
+              let outcome = config.expectedOutcome, ["accepted", "declined", "pending"].contains(outcome) else {
             XCTFail("Test50 actor configuration is incomplete"); return
         }
-        func marker(_ action: String) { print("E2E: IOS_DELETION_\(action)_\(cycle)_\(step)") }
-        func gate(_ phase: String) {
-            waitForApproval(platform: "ios-deletion-\(phase)", cycle: cycle, step: step)
+        XCTAssertTrue(config.requireCoreRouting == true, "Test50 requires the verified local Core route")
+        if config.authProfile == "controlled-business" {
+            XCTAssertTrue(app.launchEnvironment["METASECRET_UI_TEST_MODE"] == "true", "Controlled business requires its admitted app-local mode")
+        } else {
+            XCTAssertNil(app.launchEnvironment["METASECRET_UI_TEST_MODE"], "Entire Test50 launch must use actual OS authentication")
         }
+        func marker(_ action: String) { print("E2E: IOS_DELETION_\(action)_\(cycle)_\(step)") }
+        func gate(_ phase: String) { waitForApproval(platform: "ios-deletion-\(phase)", cycle: cycle, step: step) }
         let row = "secret-row-\(name)"
-        let request = "open-deletion-request-\(name)"
-        let pending = "deletion-pending-\(name)"
         var baselineGeometry: [String: CGRect] = [:]
+        var incoming: LiveboardIncoming?
         if role == "startup-gone" {
             XCTAssertEqual(app.state, .runningForeground, "Cold app is not foreground")
             XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 30), "Cold app window missing")
-            XCTAssertFalse(app.descendants(matching: .any)[row].exists, "Cached deleted row rendered before canonical sync")
-            XCTAssertFalse(app.descendants(matching: .any)["show-secret-dialog"].exists, "Cold startup retained Show")
-            XCTAssertFalse(app.descendants(matching: .any)["revealed-secret-value"].exists, "Cold startup retained plaintext")
-            let tab = app.descendants(matching: .any)["tab-secrets"]
-            let blocker = app.descendants(matching: .any)["vault-sync-blocker"]
-            XCTAssertTrue(!tab.exists || blocker.exists, "Cold startup exposed Main without canonical guard")
+            XCTAssertFalse(app.lbElement(row).exists, "Cached deleted row rendered before canonical sync")
+            app.lbAssertNoPrivateContent(value)
             let fixtureData = try Data(contentsOf: URL(fileURLWithPath: Self.stepConfigPath + ".test50-geometry.json"))
             let fixture = try JSONDecoder().decode(Test50GeometryFixture.self, from: fixtureData)
             XCTAssertTrue(step.hasSuffix("-startup"), "Cold geometry fixture actor scope invalid")
             let expectedSourceStep = String(step.dropLast("-startup".count)) + "-main"
             XCTAssertTrue(fixture.cycle == cycle && fixture.sourceStep == expectedSourceStep && fixture.secretName == name,
-                "Cold geometry fixture scope mismatch")
+                          "Cold geometry fixture scope mismatch")
             XCTAssertTrue(fixture.window == test50RectNumbers(app.windows.firstMatch.frame), "Cold geometry window changed")
-            let storedGeometry = fixture.privateRects.mapValues { values -> CGRect in
+            baselineGeometry = fixture.privateRects.mapValues { values -> CGRect in
                 guard values.count == 4 else { return .zero }
                 return CGRect(x: values[0], y: values[1], width: values[2], height: values[3])
             }
-            for key in ["show", "value", "copy"] {
-                XCTAssertTrue(storedGeometry[key].map { !$0.isEmpty } ?? false, "Cold private-content geometry missing")
-            }
-            if blocker.exists {
-                test50AssertOverlayCoverage(blocker.frame, window: app.windows.firstMatch.frame, baseline: storedGeometry)
-            }
-            let coldCopy = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Copy secret", "Copy phrase")).firstMatch
-            XCTAssertFalse(coldCopy.exists, "Cold startup exposed private Copy control")
+            baselineGeometry["window"] = app.windows.firstMatch.frame
+            test50AssertOverlayCoverage(app.windows.firstMatch.frame, window: app.windows.firstMatch.frame, baseline: baselineGeometry)
+            app.lbProbeOldCopyPoint(value, baseline: baselineGeometry)
             marker("READY")
             gate("action")
+            // The coordinator still holds this actor's canonical read and proves zero Core commands.
+            app.lbProbeOldCopyPoint(value, baseline: baselineGeometry)
             gate("terminal")
             enterSimulatorPasscodeIfNeeded()
-            waitForVisible(identifier: "tab-secrets", timeout: 180)
-            waitForHidden(identifier: "vault-sync-blocker", timeout: 120)
-            XCTAssertFalse(test50FindInList(row), "Deleted Secret row remains in list")
-            waitForHidden(identifier: "show-secret-dialog", timeout: 30)
-            waitForHidden(identifier: "revealed-secret-value", timeout: 30)
+            app.lbSecrets()
+            XCTAssertFalse(test50FindInList(row), "Deleted Secret row remains in complete list")
+            app.lbAssertNoPrivateContent(value)
             marker("TERMINAL")
             return
         }
         enterSimulatorPasscodeIfNeeded()
-        tap("tab-secrets", timeout: 60)
-        waitForHidden(identifier: "vault-sync-blocker", timeout: 180)
+        app.lbSecrets()
         test50RequireVisible(row)
-        waitForHidden(identifier: "secret-deletion-dialog", timeout: 30)
-
+        let id = app.lbFindSecret(name)
         if role == "sync-observe" {
-            test50RequireVisible("secret-primary-action-\(name)")
-            waitForPrimaryAction(name, expected: "Show", timeout: 180)
-            test50Tap("secret-primary-action-\(name)")
-            enterSimulatorPasscodeIfNeeded()
-            assertTest50Plaintext(value)
-            if role == "sync-observe" {
-                let copy = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Copy secret", "Copy phrase")).firstMatch
-                XCTAssertTrue(copy.waitForExistence(timeout: 30), "Copy control unavailable before sync")
-                XCTAssertTrue(copy.isHittable, "Copy control blocked before sync")
-                baselineGeometry = test50SyncGeometry(phase: "baseline", baseline: [:])
-                let fixture = Test50GeometryFixture(cycle: cycle, sourceStep: step, secretName: name,
-                    window: test50RectNumbers(app.windows.firstMatch.frame),
-                    privateRects: baselineGeometry.filter { ["show", "value", "copy"].contains($0.key) }.mapValues(test50RectNumbers))
-                try JSONEncoder().encode(fixture).write(to: URL(fileURLWithPath: Self.stepConfigPath + ".test50-geometry.json"), options: .atomic)
-            }
+            app.lbShow(name, expected: value)
+            baselineGeometry = test50SyncGeometry(phase: "baseline", baseline: [:])
+            let fixture = Test50GeometryFixture(cycle: cycle, sourceStep: step, secretName: name,
+                window: test50RectNumbers(app.windows.firstMatch.frame),
+                privateRects: baselineGeometry.filter { ["show", "value", "copy"].contains($0.key) }.mapValues(test50RectNumbers))
+            try JSONEncoder().encode(fixture).write(to: URL(fileURLWithPath: Self.stepConfigPath + ".test50-geometry.json"), options: .atomic)
         }
         marker("READY")
         switch role {
         case "requester", "cancel":
             gate("action")
-            test50Tap("delete-secret-\(name)")
-            waitForVisible(identifier: "secret-deletion-dialog", timeout: 30)
+            // The coordinator may leave the iOS app with a blank native window
+            // after a long approval gate. Re-activate the same app and restore
+            // the Secrets route before interacting with the exact card.
+            // The selected XCTest suite can leave a live but unrendered app
+            // window after teardown. Relaunch the same bundle (without wiping
+            // the simulator or its data) so the next suite gets a real route.
+            app.launch()
+            _ = app.lbSecrets(timeout: 180)
+            test50RequireVisible(row)
+            if role == "cancel" && config.authProfile == "controlled-business" {
+                XCTAssertTrue(app.lbSelection.secretId == id, "Manual-pending boundary lost the exact Pass ID")
+                XCTAssertTrue(app.lbElement("lb-delete-\(id)").isEnabled && app.lbElement("lb-primary-\(id)").isEnabled)
+                app.lbAssertNoPrivateContent(value)
+                marker("AUTH_MANUAL_PENDING")
+                return
+            }
+            app.lbTap("lb-delete-\(id)")
             if role == "cancel" {
-                // Cancel has no stable identifier in the production dialog.
-                let cancel = app.buttons["Cancel"]
-                XCTAssertTrue(cancel.waitForExistence(timeout: 30), "Deletion Cancel unavailable")
-                cancel.tap()
-                waitForHidden(identifier: "secret-deletion-dialog", timeout: 30)
+                app.lbCancelSystemAuthentication()
                 test50RequireVisible(row)
-                XCTAssertFalse(app.descendants(matching: .any)[pending].exists)
-                XCTAssertFalse(app.descendants(matching: .any)[request].exists)
+                XCTAssertTrue(app.lbElement("lb-secrets").exists, "System Cancel closed the Secret list")
+                XCTAssertTrue(app.lbElement("lb-delete-\(id)").isEnabled, "System Cancel left Delete pending")
+                XCTAssertTrue(app.lbElement("lb-primary-\(id)").isEnabled, "System Cancel left the primary action pending")
+                app.lbAssertNoPrivateContent(value)
                 marker("CANCELLED")
                 return
             }
-            tap("confirm-secret-deletion")
             enterSimulatorPasscodeIfNeeded()
-            waitForHidden(identifier: "secret-deletion-dialog", timeout: 120)
-            if outcome == "pending" {
-                test50RequireVisible(pending)
-            } else if outcome == "accepted" {
-                // For N=3 the request is pending until the peer decision; for
-                // N=1/2 it is already gone. The coordinator supplies action.
-                let settled = NSPredicate { _, _ in
-                    !self.app.descendants(matching: .any)[row].exists ||
-                    self.app.descendants(matching: .any)[pending].exists
-                }
-                XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: settled, object: nil)], timeout: 120), .completed)
-            } else {
-                test50RequireVisible(pending)
+            app.lbWait({
+                !self.app.lbElement("lb-secret-\(id)").exists ||
+                (!self.app.lbElement("lb-delete-\(id)").isEnabled && !self.app.lbElement("lb-primary-\(id)").isEnabled)
+            }, timeout: 180, message: "Delete neither removed the exact card nor entered actual inline pending state")
+            if outcome != "accepted" {
+                XCTAssertTrue(app.lbElement("lb-secret-\(id)").exists)
+                XCTAssertFalse(app.lbElement("lb-delete-\(id)").isEnabled)
             }
             marker("SUBMITTED")
         case "approve", "decline", "observe":
             if config.expectRequest != false {
-                test50RequireVisible(request)
+                incoming = app.lbObserveIncoming(LiveboardIncomingExpected(kind: "DeleteSecret", subject: name))
                 marker("REQUEST_VISIBLE")
+            } else {
+                app.lbHome()
+                XCTAssertTrue(app.lbInboxIdle(), "Expected the actual idle inbox at the clean observer boundary")
             }
             if role != "observe" {
                 gate("action")
-                test50Tap(request)
-                tap(role == "approve" ? "confirm-secret-deletion" : "decline-secret-deletion")
-                enterSimulatorPasscodeIfNeeded()
-                waitForHidden(identifier: "secret-deletion-dialog", timeout: 120)
-                XCTAssertFalse(test50FindInList(request), "Incoming deletion request remains in list")
+                guard let head = incoming else { XCTFail("Deletion decision lacks a captured request"); return }
+                _ = app.lbIncoming(LiveboardIncomingExpected(kind: head.kind, subject: head.subject,
+                    requester: head.sender, requestId: head.requestId, count: head.count))
+                app.lbDecideCurrent(approve: role == "approve")
                 marker("SUBMITTED")
             }
         case "show":
             gate("action")
-            test50RequireVisible("secret-primary-action-\(name)")
-            waitForPrimaryAction(name, expected: "Show", timeout: 180)
-            test50Tap("secret-primary-action-\(name)")
-            enterSimulatorPasscodeIfNeeded()
-            assertTest50Plaintext(value)
-            closeShowSecretDialog()
+            app.lbShow(name, expected: value)
+            app.lbHide(id)
             marker("SHOW_VALID")
             return
         case "sync-observe":
             gate("action")
             XCUIDevice.shared.press(.home)
-            app.activate() // Hot foreground refresh retains the composed Show.
-            waitForVisible(identifier: "vault-sync-blocker", timeout: 120)
-            let blocker = app.descendants(matching: .any)["vault-sync-blocker"]
-            let window = app.windows.firstMatch.frame
+            app.activate()
+            // Retired full-screen overlay becomes actual revoked disclosure + disabled commands.
+            app.lbWait({ !self.app.lbElement("lb-value-\(id)").exists && !self.app.lbElement("lb-copy-\(id)").exists
+                && self.app.lbElement("lb-primary-\(id)").exists && !self.app.lbElement("lb-primary-\(id)").isEnabled
+                && self.app.lbElement("lb-delete-\(id)").exists && !self.app.lbElement("lb-delete-\(id)").isEnabled }, timeout: 120)
             _ = test50SyncGeometry(phase: "blocked", baseline: baselineGeometry)
-            test50AssertOverlayCoverage(blocker.frame, window: window, baseline: baselineGeometry)
-            let plaintext = app.descendants(matching: .any)["revealed-secret-value"]
-            XCTAssertFalse(plaintext.exists, "Plaintext remains accessible under sync overlay")
-            let copy = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Copy secret", "Copy phrase")).firstMatch
-            XCTAssertFalse(copy.exists, "Copy remains accessible under sync overlay")
+            app.lbProbeOldCopyPoint(value, baseline: baselineGeometry, id: id)
             marker("SYNC_BLOCKED")
             gate("sync-release")
-            let retry = app.descendants(matching: .any)["retry-vault-sync"]
-            if retry.exists { retry.tap() }
         default:
             XCTFail("Unsupported Test50 role"); return
         }
         gate("terminal")
-        waitForHidden(identifier: "vault-sync-blocker", timeout: 120)
-        XCTAssertFalse(test50FindInList(request), "Incoming deletion request remains in list")
-        waitForHidden(identifier: "secret-deletion-dialog", timeout: 120)
+        if let incoming { app.lbIncomingTerminal(incoming) }
         if outcome == "accepted" {
-            XCTAssertFalse(test50FindInList(row), "Deleted Secret row remains in list")
-            waitForHidden(identifier: "show-secret-dialog", timeout: 30)
-            waitForHidden(identifier: "revealed-secret-value", timeout: 30)
+            XCTAssertFalse(test50FindInList(row), "Deleted Secret row remains in complete list")
+            app.lbAssertNoPrivateContent(value)
         } else {
             test50RequireVisible(row)
-            if outcome == "declined" { XCTAssertFalse(test50FindInList(pending), "Pending deletion remains in list") }
+            if outcome == "declined" {
+                app.lbWait({ self.app.lbElement("lb-delete-\(id)").isEnabled && self.app.lbElement("lb-primary-\(id)").isEnabled }, timeout: 180)
+            } else { XCTAssertFalse(app.lbElement("lb-delete-\(id)").isEnabled) }
         }
         marker("TERMINAL")
     }
-
     // Search only rendered accessibility metadata. Reaching a stable viewport
     // at both ends establishes absence across the LazyColumn, not just offscreen.
     private func test50RectNumbers(_ rect: CGRect) -> [Double] {
@@ -3346,121 +3259,30 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     }
 
     private func test50AssertOverlayCoverage(_ blocker: CGRect, window: CGRect, baseline: [String: CGRect]) {
-        XCTAssertTrue(!blocker.isEmpty, "Opaque synchronization surface missing geometry")
-        XCTAssertTrue(blocker.minX <= window.minX && blocker.maxX >= window.maxX, "Sync overlay misses application width")
-        XCTAssertTrue(blocker.contains(CGPoint(x: window.midX, y: window.midY)), "Sync overlay misses application center")
+        // Signature is retained for the old geometry fixture. The actual guard
+        // assertions also require foreground plaintext/Copy absence, disabled commands,
+        // and the physical old-Copy-point clipboard probe under the held Core read.
+        XCTAssertTrue(blocker == window && !window.isEmpty, "Guard changed the original application window")
         for key in ["show", "value", "copy"] {
-            guard let frame = baseline[key], !frame.isEmpty else {
-                XCTFail("Measured private-content geometry missing"); return
-            }
-            XCTAssertTrue(blocker.contains(frame), "Sync overlay fails full measured private-content coverage")
+            guard let rect = baseline[key], !rect.isEmpty && !rect.isNull else { XCTFail("Measured private geometry missing"); return }
+            XCTAssertTrue(window.contains(rect), "Measured private content escaped the original application window")
         }
     }
-
     // Geometry only: never emit accessibility labels or Secret payloads.
     private func test50SyncGeometry(phase: String, baseline: [String: CGRect]) -> [String: CGRect] {
-        let blocker = app.descendants(matching: .any)["vault-sync-blocker"]
-        let show = app.descendants(matching: .any)["show-secret-dialog"]
-        let value = app.descendants(matching: .any)["revealed-secret-value"]
-        let copy = app.buttons.matching(NSPredicate(format: "label == %@ OR label == %@", "Copy secret", "Copy phrase")).firstMatch
-        var geometry: [String: CGRect] = [:]
-        for (key, element) in [("blocker", blocker), ("show", show), ("value", value), ("copy", copy)] {
-            if element.exists { geometry[key] = element.frame }
-            print("E2E: IOS_TEST50_GEOMETRY phase=\(phase) node=\(key) exists=\(element.exists) hittable=\(element.exists && element.isHittable) frame=\(element.exists ? diagnosticFrame(element.frame) : "absent")")
-        }
-        for (index, window) in app.windows.allElementsBoundByIndex.enumerated() {
-            let frame = window.frame
-            let widthRatio = blocker.exists && frame.width > 0 ? blocker.frame.width / frame.width : 0
-            let heightRatio = blocker.exists && frame.height > 0 ? blocker.frame.height / frame.height : 0
-            print("E2E: IOS_TEST50_GEOMETRY phase=\(phase) window=\(index) frame=\(diagnosticFrame(frame)) widthRatio=\(widthRatio) heightRatio=\(heightRatio) covered=\(blocker.exists && blocker.frame.contains(frame))")
-        }
-        for key in ["show", "value", "copy"] {
-            if let frame = baseline[key] {
-                print("E2E: IOS_TEST50_GEOMETRY phase=\(phase) baseline=\(key) frame=\(diagnosticFrame(frame)) covered=\(blocker.exists && blocker.frame.contains(frame)) centerCovered=\(blocker.exists && blocker.frame.contains(CGPoint(x: frame.midX, y: frame.midY)))")
-            }
-            if let frame = geometry[key] {
-                print("E2E: IOS_TEST50_GEOMETRY phase=\(phase) active=\(key) covered=\(blocker.exists && blocker.frame.contains(frame))")
-            }
+        guard let id = app.lbSelection.secretId else { XCTFail("Geometry has no exact selected Pass ID"); return [:] }
+        let geometry = phase == "baseline" ? app.lbPrivateGeometry(id: id) : baseline
+        for key in ["window", "show", "value", "copy"] {
+            if let rect = geometry[key] { print("E2E: IOS_TEST50_GEOMETRY phase=\(phase) node=\(key) frame=\(diagnosticFrame(rect))") }
         }
         return geometry
     }
-
     private func test50FindInList(_ identifier: String) -> Bool {
-        waitForVisible(identifier: "tab-secrets", timeout: 180)
-        waitForVisible(identifier: "add-secret-fab", timeout: 180)
-        waitForHidden(identifier: "vault-sync-blocker", timeout: 180)
-        let target = app.descendants(matching: .any)[identifier]
-        let scrollContainers = app.scrollViews
-        XCTAssertEqual(scrollContainers.count, 1, "Test50 Secret scroll container is ambiguous")
-        let scroll = scrollContainers.firstMatch
-        if target.exists && target.isHittable { return true }
-        guard scroll.waitForExistence(timeout: 30) else {
-            XCTFail("Test50 semantic Secret scroll container missing")
-            return false
-        }
-        func viewport() -> [String]? {
-            let snapshotDeadline = Date().addingTimeInterval(15)
-            for attempt in 1...3 {
-                do {
-                    // One public immutable snapshot: canonical deletion cannot
-                    // shift live index-bound elements between property reads.
-                    let root = try scroll.snapshot()
-                    var stack: [any XCUIElementSnapshot] = [root]
-                    var visited = 0
-                    var keys: [String] = []
-                    while let node = stack.popLast() {
-                        visited += 1
-                        guard visited <= 8192 else {
-                            XCTFail("Test50 scoped snapshot exceeds metadata traversal budget")
-                            return nil
-                        }
-                        if node.identifier.hasPrefix("secret-row-"), node.frame.intersects(root.frame) {
-                            keys.append(Self.test50ViewportKey(id: node.identifier, row: node.frame, viewport: root.frame))
-                        }
-                        stack.append(contentsOf: node.children)
-                    }
-                    return keys.sorted()
-                } catch {
-                    // Error descriptions can contain accessibility content;
-                    // record only retry metadata, never the snapshot or payload.
-                    print("E2E: IOS_TEST50_VIEWPORT_SNAPSHOT_RETRY attempt=\(attempt)")
-                    if Date() >= snapshotDeadline { break }
-                }
-            }
-            XCTFail("Test50 immutable viewport snapshot unavailable within bounded retries")
-            return nil
-        }
-        var reachedBothEnds = true
-        // Seek below first: newly added sorted rows can be below the current
-        // viewport. Each direction owns its own budget, so bounce cannot starve
-        // the opposite sweep. Never infer absence unless BOTH ends are proven.
-        for upward in [true, false] {
-            let directionDeadline = Date().addingTimeInterval(60)
-            var unchanged = 0
-            for _ in 0..<64 {
-                if target.exists && target.isHittable { return true }
-                guard let before = viewport() else { return false }
-                if upward { scroll.swipeUp() } else { scroll.swipeDown() }
-                if target.exists && target.isHittable { return true }
-                guard let after = viewport() else { return false }
-                unchanged = !after.isEmpty && before == after ? unchanged + 1 : 0
-                if unchanged >= 3 { break }
-                if Date() >= directionDeadline { break }
-            }
-            reachedBothEnds = reachedBothEnds && unchanged >= 3
-        }
-        XCTAssertTrue(reachedBothEnds, "Test50 complete list absence cannot be established within bounded sweeps")
-        return false
+        app.lbFindInList(identifier)
     }
-
     nonisolated private static func test50ViewportKey(id: String, row: CGRect, viewport: CGRect) -> String {
-        // Discrete clipping states retain partial-row movement evidence without
-        // letting elastic bounce pixel jitter prevent an otherwise stable end.
-        let clipsTop = row.minY < viewport.minY - 8
-        let clipsBottom = row.maxY > viewport.maxY + 8
-        return "\(id):\(clipsTop):\(clipsBottom)"
+        liveboardViewportKey(id: id, row: row, viewport: viewport)
     }
-
     private func test50RequireVisible(_ identifier: String) {
         let deadline = Date().addingTimeInterval(180)
         repeat {
@@ -3475,12 +3297,8 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     }
 
     private func assertTest50Plaintext(_ expected: String) {
-        let plaintext = app.descendants(matching: .any)["revealed-secret-value"]
-        XCTAssertTrue(plaintext.waitForExistence(timeout: 30), "Plaintext node missing")
-        // Compare as a Boolean: XCTest must never include values in a diff.
-        XCTAssertTrue(plaintext.label == expected, "Plaintext equality check failed")
+        app.lbAssertValue(expected)
     }
-
     func createVaultForTest49() throws {
         let config = stepConfig()
         let vaultName = coordinatorVaultName(defaultValue: "test49@test.ru")
@@ -4001,7 +3819,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         app.orbitRequestJoin(awaitPending: false)
 
         app.orbitWaitForTag("orbit-phase-error", timeout: 120)
-        let error = app.descendants(matching: .any)["orbit-status"]
+        let error = app.lbElement("orbit-status")
         XCTAssertTrue(error.label.lowercased().contains("maximum of 3 devices"), "Unexpected fourth-device error: \(error.label)")
         print("E2E: IOS_FOURTH_DEVICE_REJECTED")
         waitForApproval(platform: "ios-rejection", cycle: "1", step: "screenshot")
@@ -4067,21 +3885,18 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                     timeout: 10
                 )
                 print("E2E: IOS_INCOMING_VISIBLE_\(cycle)_1")
+                guard let reconnectHead = app.lbSelection.incoming else {
+                    XCTFail("Test16 has no captured original request"); return
+                }
                 print("E2E: IOS_NETWORK_LOSS_READY_\(cycle)")
                 waitForApproval(platform: "ios-offline-attempt", cycle: cycle, step: "1")
-                tap("alert-recovery-request-accept")
+                app.lbSendDecision(approve: true)
                 enterSimulatorPasscodeIfNeeded()
                 print("E2E: IOS_OFFLINE_APPROVE_CLICKED_\(cycle)")
                 waitForApproval(platform: "ios-offline-online", cycle: cycle, step: "1")
-                // Reconnect can flush the failed approval automatically. Do
-                // not create a second response when the alert has already
-                // disappeared; tap only if the action is still present.
-                if waitForRecoveryResolutionOrApprove(timeout: 120) {
-                    tap("alert-recovery-request-accept")
-                    enterSimulatorPasscodeIfNeeded()
+                guard app.lbTest16ReconnectApprove(reconnectHead) else {
+                    XCTFail("Test16 reconnect did not establish original terminal proof"); return
                 }
-                waitForHidden(identifier: "alert-recovery-request", timeout: 120)
-                waitForHidden(identifier: "alert-recovery-request-processing", timeout: 120)
                 print("E2E: IOS_APPROVED_AFTER_RECONNECT_\(cycle)_1")
 
             case "observer":
@@ -4132,7 +3947,7 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_1")
     }
 
-    func handleRecoveryStep() throws {
+    func handleRecoveryStep() async throws {
         let config = stepConfig()
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test-secret")
         let secretValue = config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")
@@ -4141,27 +3956,42 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let step = config.step ?? env("E2E_STEP", defaultValue: "1")
         let approvalPlatform = config.approvalPlatform ?? env("E2E_APPROVAL_PLATFORM", defaultValue: "")
         let sender = config.sender ?? env("E2E_SENDER", defaultValue: "")
-        let verifyReceiverAlert = config.verifyReceiverAlert
-            ?? (env("E2E_VERIFY_RECEIVER_ALERT", defaultValue: "0") == "1")
-        let receiverRequestAlreadySent = config.receiverRequestAlreadySent ?? false
-
+        let verifyReceiverAlert = config.verifyReceiverAlert ?? (env("E2E_VERIFY_RECEIVER_ALERT", defaultValue: "0") == "1")
+        let phaseContext = try Test24RecoveryPhaseContext.readEntry(Test24PhaseEntry(raw: config.recoveryPhase,
+            required: config.recoveryPhaseRequired == true, selectedProfile: config.recoveryPhaseSelectedProfile,
+            expected: config.recoveryPhaseExpected))
+        try phaseContext?.requireCurrent(role: role, cycle: cycle, step: step)
+        let recoveryShowEntry = RecoveryShowEntry(raw: config.recoveryShowPhase,
+                phase: Test24PhaseEntry(raw: config.recoveryPhase, required: config.recoveryPhaseRequired == true,
+                    selectedProfile: config.recoveryPhaseSelectedProfile, expected: config.recoveryPhaseExpected),
+                current: RecoveryShowCurrent(role: role, cycle: cycle, step: step,
+                    hasLegacy22: config.test22ShowPhase != nil, hasLiteral25: config.test25ShowPhase != nil))
+        let recoveryShowPhase = try RecoveryShowPhaseContext.readEntry(recoveryShowEntry)
+        let showEntry = Test25ShowEntry(raw: config.test25ShowPhase,
+                phase: Test24PhaseEntry(raw: config.recoveryPhase, required: config.recoveryPhaseRequired == true,
+                    selectedProfile: config.recoveryPhaseSelectedProfile, expected: config.recoveryPhaseExpected),
+                current: Test25ShowCurrent(role: role, cycle: cycle, step: step,
+                    hasLegacy22: config.test22ShowPhase != nil))
+        let showPhase: Test25ShowPhaseContext?
+        if config.recoveryPhaseSelectedProfile == "test25:web-secondary-creator-lifecycle" || config.test25ShowPhase != nil {
+            showPhase = try Test25ShowPhaseContext.readEntry(showEntry)
+        } else { showPhase = nil }
+        let phase = try phaseContext.map { try makeTest24RecoveryPhaseClient($0,
+            base: env("E2E_APPROVAL_COORDINATOR_URL", defaultValue: "http://127.0.0.1:5180")) }
         enterSimulatorPasscodeIfNeeded()
-        waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-
+        _ = app.lbFindSecret(secretName)
         if role == "sender" {
-            // A receiver that approved an earlier cycle legitimately has a
-            // Show action. Consume that accepted claim before creating the
-            // next recovery request; otherwise waiting for Recover would hang
-            // forever even though the application is in the correct state.
             showAcceptedSecretIfNeeded(secretName, cycle: cycle, step: step)
             waitForSenderRecoveryUiReady(secretName, timeout: 180)
             print("E2E: IOS_SENDER_UI_READY_\(cycle)_\(step)")
             print("E2E: IOS_STEP_CONFIG role=\(role) cycle=\(cycle) step=\(step) approval=\(approvalPlatform)")
-            waitForApproval(platform: "ios-sender", cycle: cycle, step: step)
-            tap("secret-primary-action-\(secretName)")
-            enterSimulatorPasscodeIfNeeded()
-            waitForVisible(identifier: "show-secret-dialog", timeout: 30)
+            if let phase {
+                try phase.context.emit("READY", failureCount: testRun?.failureCount)
+                try await phase.awaitDispatch()
+            } else { waitForApproval(platform: "ios-sender", cycle: cycle, step: step) }
+            app.lbRequestRecovery(secretName)
             print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)_\(step)")
+            try phase?.context.emit("REQUEST_SENT", failureCount: testRun?.failureCount)
             if approvalPlatform == "cli" {
                 if config.expectedOutcome == "membership-removal" {
                     waitForApproval(platform: "ios-request-committed", cycle: cycle, step: step)
@@ -4177,191 +4007,83 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
                 return
             }
             waitForApproval(platform: "ios-show", cycle: cycle, step: step)
-            revealAcceptedSecret(secretName, cycle: cycle, step: step)
-            XCTAssertTrue(
-                app.descendants(matching: .any)[secretValue].waitForExistence(timeout: 10),
-                "iOS sender did not reveal the expected secret"
-            )
+            let recoveryPrepared: ((Test22ShowPreparation) -> Void)? = recoveryShowPhase.map { scope in
+                { (outcome: Test22ShowPreparation) in
+                    guard let line = scope.line(outcome.rawValue, current: recoveryShowEntry, failureCount: self.testRun?.failureCount) else {
+                        XCTFail("Invalid current recovery Show procedure boundary"); return
+                    }
+                    print(line)
+                }
+            }
+            let prepared: ((Test22ShowPreparation) -> Void)? = recoveryPrepared ?? showPhase.map { scope in
+                { (outcome: Test22ShowPreparation) in
+                    guard let line = scope.line(outcome.rawValue, current: showEntry, failureCount: self.testRun?.failureCount) else {
+                        XCTFail("Invalid current Test25 Show procedure boundary"); return
+                    }
+                    print(line)
+                }
+            } ?? config.test22ShowPhase.map { context in
+                { context.emit($0, cycle: cycle, step: step) }
+            }
+            revealAcceptedSecret(secretName, cycle: cycle, step: step, prepared: prepared)
+            app.lbAssertValue(secretValue)
             print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)_\(step)")
             closeShowSecretDialog()
             waitForHidden(identifier: "revealed-secret-value", timeout: 30)
             print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_\(step)")
             return
         }
-
-        let readyBadge = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
-        let readyOpen = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
-        let readyAlert = app.descendants(matching: .any)["alert-recovery-request"]
-        let readyProcessing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let receiverReady = NSPredicate { _, _ in
-            !readyBadge.exists && !readyOpen.exists && !readyAlert.exists && !readyProcessing.exists
-        }
-        let receiverReadyWait = XCTNSPredicateExpectation(predicate: receiverReady, object: nil)
-        if !receiverRequestAlreadySent {
-            XCTAssertEqual(
-                XCTWaiter.wait(for: [receiverReadyWait], timeout: 30),
-                .completed,
-                "iOS receiver did not reach a clean pre-request recovery UI state"
-            )
+        app.lbHome()
+        if config.receiverRequestAlreadySent != true {
+            app.lbWait({ self.app.lbIncomingCount() == 0 && self.app.lbReadIncoming() == nil }, timeout: 30,
+                       message: "Receiver pre-request boundary contains stale addressed work")
         }
         print("E2E: IOS_RECEIVER_UI_READY_\(cycle)_\(step)")
         print("E2E: IOS_STEP_CONFIG role=\(role) cycle=\(cycle) step=\(step) approval=\(approvalPlatform)")
-
-        waitForVisible(identifier: "recovery-request-badge-\(secretName)", timeout: 180)
-        // The first responder can close this receiver's request before the
-        // second runner reaches the open button. Wait for either the button
-        // or the terminal badge disappearance instead of asserting the
-        // button at a fixed instant.
-        let openBeforeDecision = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
-        let badgeBeforeDecision = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
-        let openOrTerminal = NSPredicate { _, _ in openBeforeDecision.exists || !badgeBeforeDecision.exists }
-        let openWait = XCTNSPredicateExpectation(predicate: openOrTerminal, object: nil)
-        _ = XCTWaiter.wait(for: [openWait], timeout: 30)
-        if !openBeforeDecision.exists {
-            if !badgeBeforeDecision.exists {
-                print("E2E: IOS_ACTION_SKIPPED_AFTER_TERMINAL_\(cycle)_\(step)")
-                return
-            }
-            XCTFail("iOS recovery request button did not appear while the request remained pending")
-            return
-        }
+        let badgeTimeout: TimeInterval
+        if let phase {
+            try phase.context.emit("READY", failureCount: testRun?.failureCount)
+            badgeTimeout = Double(try await phase.awaitRequestSent()) / 1000
+        } else { badgeTimeout = 180 }
+        let head = app.lbObserveIncoming(LiveboardIncomingExpected(kind: "Recover", subject: secretName), timeout: badgeTimeout)
         print("E2E: IOS_INCOMING_VISIBLE_\(cycle)_\(step)")
+        if let phase {
+            guard !head.identifier.isEmpty, head.count > 0, head.kind == "Recover", head.subject == secretName else {
+                throw Test24PhaseError.invalidResponse
+            }
+            try phase.context.emit("INCOMING_VISIBLE", failureCount: testRun?.failureCount)
+        }
         if config.expectedOutcome == "membership-removal" {
             print("E2E: IOS_RECOVERY_READY_FOR_REMOVAL_\(cycle)_\(step)")
             return
         }
         if approvalPlatform == "ios" || verifyReceiverAlert {
-            let alert = app.descendants(matching: .any)["alert-recovery-request"]
-            let badge = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
-            let open = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
-
-            logRecoveryUiState(
-                cycle: cycle,
-                step: step,
-                phase: "before-open",
-                secretName: secretName,
-                alert: alert,
-                badge: badge,
-                open: open
-            )
-
-            // The request button and the sheet are rendered by separate
-            // Compose state transitions. On a repeated recovery cycle the
-            // first tap can land while the previous transition is still
-            // settling. Reuse an already visible sheet; otherwise retry the
-            // state-based open action once before declaring the UI broken.
-            var alertVisible = alert.exists
-            for attempt in 0..<2 where !alertVisible {
-                if !badge.exists {
-                    print("E2E: IOS_ACTION_SKIPPED_AFTER_TERMINAL_\(cycle)_\(step)")
-                    return
-                }
-                if !open.exists {
-                    _ = open.waitForExistence(timeout: 15)
-                }
-                if open.exists {
-                    if attempt > 0 { print("E2E: IOS_OPEN_REQUEST_RETRY_\(cycle)_\(step)") }
-                    open.tap()
-                    logRecoveryUiState(
-                        cycle: cycle,
-                        step: step,
-                        phase: "after-open-\(attempt + 1)",
-                        secretName: secretName,
-                        alert: alert,
-                        badge: badge,
-                        open: open
-                    )
-                }
-                let alertOrTerminal = NSPredicate { _, _ in alert.exists || !badge.exists }
-                let expectation = XCTNSPredicateExpectation(predicate: alertOrTerminal, object: nil)
-                _ = XCTWaiter.wait(for: [expectation], timeout: 15)
-                alertVisible = alert.exists
-            }
-            if !alertVisible {
-                // A repeated cycle can leave the renderer with the previous
-                // claim snapshot even though the badge/button are still
-                // visible. Relaunch only as a diagnostic test boundary: it
-                // forces a fresh appState read without changing Core or the
-                // production Compose flow.
-                print("E2E: IOS_RECOVERY_UI_REFRESH_\(cycle)_\(step)")
-                app.terminate()
-                app.launch()
-                enterSimulatorPasscodeIfNeeded()
-                waitForVisible(identifier: "secret-row-\(secretName)", timeout: 60)
-                waitForVisible(identifier: "recovery-request-badge-\(secretName)", timeout: 60)
-                waitForVisible(identifier: "open-recovery-request-\(secretName)", timeout: 60)
-                if !alert.exists {
-                    app.descendants(matching: .any)["open-recovery-request-\(secretName)"].tap()
-                    logRecoveryUiState(
-                        cycle: cycle,
-                        step: step,
-                        phase: "after-refresh-open",
-                        secretName: secretName,
-                        alert: alert,
-                        badge: badge,
-                        open: open
-                    )
-                    let alertOrTerminal = NSPredicate { _, _ in alert.exists || !badge.exists }
-                    let expectation = XCTNSPredicateExpectation(predicate: alertOrTerminal, object: nil)
-                    _ = XCTWaiter.wait(for: [expectation], timeout: 30)
-                }
-                alertVisible = alert.exists
-            }
-            if !alertVisible {
-                if !badge.exists {
-                    print("E2E: IOS_ACTION_SKIPPED_AFTER_TERMINAL_\(cycle)_\(step)")
-                    return
-                }
-                print(
-                    "E2E: IOS_RECOVERY_ALERT_MISSING_\(cycle)_\(step) "
-                        + "secret=\(secretName) alertExists=\(alert.exists) "
-                        + "badgeExists=\(badge.exists) badgeLabel=\(badge.label) "
-                        + "openExists=\(open.exists) openLabel=\(open.label) "
-                        + "openHittable=\(open.isHittable)"
-                )
-                print("E2E: IOS_ACCESSIBILITY_TREE_\(cycle)_\(step)\n\(app.debugDescription)")
-                XCTFail("iOS recovery alert did not appear while the request remained pending")
-                return
-            }
-            assertRecoveryAlertVisible(
-                secretName: secretName,
-                requester: sender.isEmpty ? nil : sender,
-                timeout: 10
-            )
+            _ = app.lbIncoming(LiveboardIncomingExpected(kind: head.kind, subject: head.subject,
+                requester: head.sender, requestId: head.requestId, count: head.count))
+            assertRecoveryAlertVisible(secretName: secretName, requester: sender.isEmpty ? nil : sender, timeout: 10)
             print("E2E: IOS_INCOMING_ALERT_VISIBLE_\(cycle)_\(step)")
             if approvalPlatform == "ios" {
                 waitForApproval(platform: "ios-approve", cycle: cycle, step: step)
-                tap("alert-recovery-request-accept")
-                enterSimulatorPasscodeIfNeeded()
-                waitForHidden(identifier: "alert-recovery-request", timeout: 120)
-                waitForHidden(identifier: "alert-recovery-request-processing", timeout: 120)
+                app.lbDecideCurrent(approve: true)
                 print("E2E: IOS_APPROVED_INCOMING_\(cycle)_\(step)")
             } else {
-                let dismissBackdrop = app.descendants(matching: .any)["alert-dismiss"]
-                XCTAssertTrue(dismissBackdrop.waitForExistence(timeout: 30))
-                // Tap an uncovered backdrop coordinate above the bottom
-                // sheet. Tapping the element center can land on the dialog
-                // content and would not prove a visible no-decision close.
-                dismissBackdrop.coordinate(
-                    withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)
-                ).tap()
-                waitForHidden(identifier: "alert-recovery-request", timeout: 30)
-                XCTAssertTrue(badge.exists, "iOS observer badge disappeared after local alert dismissal")
-                XCTAssertTrue(open.exists, "iOS observer open action disappeared after local alert dismissal")
-                print("E2E: IOS_INCOMING_ALERT_DISMISSED_WITHOUT_DECISION_\(cycle)_\(step)")
+                // The new tile remains expanded. This historical marker still proves zero decisions.
+                XCTAssertTrue(app.lbElement("lb-approve-\(head.requestId)").exists)
+                XCTAssertTrue(app.lbElement("lb-decline-\(head.requestId)").exists)
+                print("E2E: IOS_INCOMING_ALERT_DISMISSED_WITHOUT_DECISION_\(cycle)_\(step) expanded=true decisions=0")
                 waitForApproval(platform: "ios-dismiss", cycle: cycle, step: step)
-                waitForHidden(identifier: "recovery-request-badge-\(secretName)", timeout: 120)
-                waitForHidden(identifier: "open-recovery-request-\(secretName)", timeout: 120)
+                app.lbIncomingTerminal(head)
                 print("E2E: IOS_DISMISSED_INCOMING_\(cycle)_\(step)")
             }
         } else {
             waitForApproval(platform: "ios-dismiss", cycle: cycle, step: step)
-            waitForHidden(identifier: "recovery-request-badge-\(secretName)", timeout: 120)
-            waitForHidden(identifier: "open-recovery-request-\(secretName)", timeout: 120)
+            app.lbIncomingTerminal(head)
             print("E2E: IOS_DISMISSED_INCOMING_\(cycle)_\(step)")
         }
     }
-
+    private func makeTest24RecoveryPhaseClient(_ context: Test24RecoveryPhaseContext, base: String) throws -> Test24RecoveryPhaseClient {
+        try Test24RecoveryPhaseClient(context: context, base: base)
+    }
     func handleApproveDeclineStep() throws {
         let config = stepConfig()
         let secretName = config.secretName ?? env("E2E_SECRET_NAME", defaultValue: "test-secret")
@@ -4373,328 +4095,136 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
         let repeatApprove = config.repeatApprove ?? (env("E2E_REPEAT_APPROVE", defaultValue: "0") == "1")
         let duplicateRecovery = config.duplicateRecovery ?? (env("E2E_DUPLICATE_RECOVERY", defaultValue: "0") == "1")
         let sender = config.sender ?? env("E2E_SENDER", defaultValue: "")
-
         enterSimulatorPasscodeIfNeeded()
-        waitForVisible(identifier: "secret-row-\(secretName)", timeout: 180)
-
+        _ = app.lbFindSecret(secretName)
         if role == "sender" {
             waitForApproval(platform: "ios-sender", cycle: cycle, step: step)
             showAcceptedSecretIfNeeded(secretName, cycle: cycle, step: step)
-            waitForPrimaryAction(secretName, expected: "Recover", timeout: 180)
-            tap("secret-primary-action-\(secretName)")
-            enterSimulatorPasscodeIfNeeded()
-            waitForVisible(identifier: "show-secret-dialog", timeout: 30)
+            app.lbRequestRecovery(secretName)
             print("E2E: IOS_RECOVERY_REQUEST_SENT_\(cycle)_\(step)")
             if duplicateRecovery {
-                let duplicateAction = app.descendants(matching: .any)["secret-primary-action-\(secretName)"]
-                if duplicateAction.exists && duplicateAction.isHittable {
+                let duplicateAction = app.lbElement("secret-primary-action-\(secretName)")
+                if duplicateAction.exists && duplicateAction.isHittable && duplicateAction.isEnabled {
                     duplicateAction.tap()
                     print("E2E: IOS_DUPLICATE_RECOVERY_SENT_\(cycle)_\(step)")
-                } else {
-                    print("E2E: IOS_DUPLICATE_RECOVERY_SKIPPED_AFTER_GUARD_\(cycle)_\(step)")
-                }
+                } else { print("E2E: IOS_DUPLICATE_RECOVERY_SKIPPED_AFTER_GUARD_\(cycle)_\(step)") }
                 closeShowSecretDialog()
+                print("E2E: IOS_DUPLICATE_RECOVERY_PENDING_CLOSED_\(cycle)_\(step)")
                 waitForApproval(platform: "ios-duplicate-finish", cycle: cycle, step: step)
                 revealAcceptedSecret(secretName, cycle: cycle, step: step)
-                XCTAssertTrue(app.descendants(matching: .any)[config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")].exists)
+                app.lbAssertValue(config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test-secret-value"))
                 print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)_\(step)")
                 closeShowSecretDialog()
                 waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
                 print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_\(step)")
                 return
             }
-            // Keep the sender from auto-completing the claim when the first
-            // receiver approves. The race test must process both receiver
-            // decisions before the explicit Show gate is released.
             closeShowSecretDialog()
             if expectedOutcome == "approved" {
                 waitForApproval(platform: "ios-show", cycle: cycle, step: step)
                 revealAcceptedSecret(secretName, cycle: cycle, step: step)
-                XCTAssertTrue(app.descendants(matching: .any)[config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test-secret-value")].exists)
+                app.lbAssertValue(config.secretValue ?? env("E2E_SECRET_VALUE", defaultValue: "test-secret-value"))
                 print("E2E: IOS_RECOVERY_SECRET_VISIBLE_\(cycle)_\(step)")
                 closeShowSecretDialog()
-                waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
-                print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_\(step)")
             } else {
                 waitForApproval(platform: "ios-declined", cycle: cycle, step: step)
-                closeShowSecretDialog()
                 waitForHidden(identifier: "revealed-secret-value", timeout: 30)
-                waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
                 print("E2E: IOS_RECOVERY_NOT_VISIBLE_\(cycle)_\(step)")
-                print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_\(step)")
             }
+            waitForPrimaryAction(secretName, expected: "Recover", timeout: 30)
+            print("E2E: IOS_RECOVERY_CLOSED_\(cycle)_\(step)")
             return
         }
-
-        waitForVisible(identifier: "recovery-request-badge-\(secretName)", timeout: 180)
+        let head = app.lbObserveIncoming(LiveboardIncomingExpected(kind: "Recover", subject: secretName))
         if duplicateRecovery {
-            waitForSingleActiveClaim(secretName, cycle: cycle, step: step)
-        }
-        // The first responder can close this receiver's request before the
-        // second runner reaches the open button. Wait for either the button
-        // or the terminal badge disappearance instead of asserting the
-        // button at a fixed instant.
-        let openBeforeDecision = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
-        let badgeBeforeDecision = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
-        let openOrTerminal = NSPredicate { _, _ in openBeforeDecision.exists || !badgeBeforeDecision.exists }
-        let openWait = XCTNSPredicateExpectation(predicate: openOrTerminal, object: nil)
-        _ = XCTWaiter.wait(for: [openWait], timeout: 30)
-        if !openBeforeDecision.exists {
-            if !badgeBeforeDecision.exists {
-                print("E2E: IOS_ACTION_SKIPPED_AFTER_TERMINAL_\(cycle)_\(step)")
-                return
-            }
-            XCTFail("iOS recovery request button did not appear while the request remained pending")
-            return
+            XCTAssertEqual(head.count, 1, "Duplicate request produced more than one addressed claim")
+            print("E2E: IOS_SINGLE_ACTIVE_CLAIM_\(cycle)_\(step)")
         }
         print("E2E: IOS_INCOMING_VISIBLE_\(cycle)_\(step)")
         waitForApproval(platform: "ios-\(action)", cycle: cycle, step: step)
-        let open = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
-        let badgeAfterGate = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
-        // The first response is committed before this gate is released. Give
-        // the local accessibility tree a bounded, state-based opportunity to
-        // observe that terminal transition; if it remains pending, this
-        // runner is the first responder and may open the request.
-        let terminalAfterGate = NSPredicate { _, _ in !badgeAfterGate.exists || !open.exists }
-        let terminalWait = XCTNSPredicateExpectation(predicate: terminalAfterGate, object: nil)
-        let terminalResult = XCTWaiter.wait(for: [terminalWait], timeout: 5)
-        if terminalResult == .completed || !badgeAfterGate.exists || !open.exists || !open.isHittable {
+        switch app.lbOpenIncomingOrTerminal(head) {
+        case .terminal:
             print("E2E: IOS_ACTION_SKIPPED_AFTER_TERMINAL_\(cycle)_\(step)")
             return
+        case .refused: XCTFail("Current request opening or terminal proof was refused"); return
+        case .opened: break
         }
-        open.tap()
-        // The first responder may have already made the recovery terminal
-        // before this runner opens its local sheet. In that case the badge is
-        // removed and there is no alert to act on; record a skipped late
-        // response instead of failing while waiting for a dialog that should
-        // no longer exist.
-        let alert = app.descendants(matching: .any)["alert-recovery-request"]
-        let badge = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
-        let terminalOrAlert = NSPredicate { _, _ in alert.exists || !badge.exists }
-        let alertWait = XCTNSPredicateExpectation(predicate: terminalOrAlert, object: nil)
-        _ = XCTWaiter.wait(for: [alertWait], timeout: 30)
-        if !alert.exists {
-            if !badge.exists {
-                print("E2E: IOS_ACTION_SKIPPED_AFTER_TERMINAL_\(cycle)_\(step)")
-                return
+        if !sender.isEmpty {
+            let exactNames = ["web": config.expectedWebDeviceName, "android": config.expectedAndroidDeviceName, "ios": config.expectedIosDeviceName]
+            if let candidate = exactNames[sender.lowercased()], let canonical = candidate, !canonical.isEmpty {
+                guard head.sender == canonical else { XCTFail("Incoming requester differs from the canonical configured Device"); return }
+            } else {
+                guard head.sender.localizedCaseInsensitiveContains(sender) else { XCTFail("Incoming requester does not match the existing scenario"); return }
             }
-            XCTFail("iOS recovery alert did not appear while the request remained pending")
-            return
         }
-        assertRecoveryAlertVisible(
-            secretName: secretName,
-            requester: sender.isEmpty ? nil : sender,
-            timeout: 10
-        )
+        guard app.lbElement("lb-approve-\(head.requestId)").exists,
+              app.lbElement("lb-decline-\(head.requestId)").exists else { XCTFail("Current recovery controls are unavailable"); return }
+        guard ["approve", "decline"].contains(action) else { XCTFail("Unsupported recovery response"); return }
         print("E2E: IOS_ACTION_STARTED_\(cycle)_\(step)")
-        // The shared scenario calls the positive decision `approve`, while
-        // the iOS accessibility identifier follows the product label `accept`.
-        let actionIdentifier = action == "approve" ? "accept" : action
-        tap("alert-recovery-request-\(actionIdentifier)")
-        enterSimulatorPasscodeIfNeeded()
+        app.lbSendDecision(approve: action == "approve")
         if repeatApprove && action == "approve" {
-            let secondApprove = app.descendants(matching: .any)["alert-recovery-request-accept"]
-            if secondApprove.exists && secondApprove.isHittable {
+            let secondApprove = app.lbElement("lb-approve-\(head.requestId)")
+            if secondApprove.exists && secondApprove.isHittable && secondApprove.isEnabled {
                 print("E2E: IOS_REPEAT_APPROVE_SECOND_TAP_SENT_\(cycle)_\(step)")
                 secondApprove.tap()
-            } else {
-                print("E2E: IOS_REPEAT_APPROVE_SECOND_TAP_SKIPPED_AFTER_DISMISS_\(cycle)_\(step)")
-            }
+            } else { print("E2E: IOS_REPEAT_APPROVE_SECOND_TAP_SKIPPED_AFTER_DISMISS_\(cycle)_\(step)") }
         }
-        waitForHidden(identifier: "alert-recovery-request", timeout: 120)
-        waitForHidden(identifier: "alert-recovery-request-processing", timeout: 120)
+        app.lbIncomingTerminal(head)
         print("E2E: IOS_\(action == "decline" ? "DECLINED" : "APPROVED")_INCOMING_\(cycle)_\(step)")
     }
-
     private func assertRecoveryAlertVisible(
         secretName: String,
         requester: String?,
         timeout: TimeInterval
     ) {
-        let alert = app.descendants(matching: .any)["alert-recovery-request"]
-        XCTAssertTrue(
-            alert.waitForExistence(timeout: timeout),
-            "iOS recovery alert container did not appear for \(secretName)"
-        )
-
-        let alertVisible = NSPredicate { _, _ in
-            guard alert.exists else { return false }
-            let frame = alert.frame
-            return !frame.isEmpty && !frame.isNull && self.app.frame.intersects(frame)
-        }
-        let alertVisibleWait = XCTNSPredicateExpectation(predicate: alertVisible, object: nil)
-        XCTAssertEqual(
-            XCTWaiter.wait(for: [alertVisibleWait], timeout: timeout),
-            .completed,
-            "iOS recovery alert container was not visibly rendered for \(secretName)"
-        )
-
-        let quotedSecretName = "\"\(secretName)\""
-        let textPredicate: NSPredicate
+        let captured = app.lbIncoming(LiveboardIncomingExpected(kind: "Recover", subject: secretName), timeout: timeout)
         if let requester, !requester.isEmpty {
-            textPredicate = NSPredicate(
-                format: "label CONTAINS %@ AND label CONTAINS[c] %@",
-                quotedSecretName,
-                requester
-            )
-        } else {
-            textPredicate = NSPredicate(format: "label CONTAINS %@", quotedSecretName)
-        }
-        let matchingTexts = app.staticTexts.matching(textPredicate)
-        let matchingTextVisible = NSPredicate { _, _ in
-            guard alert.exists else { return false }
-            let alertFrame = alert.frame
-            for index in 0..<matchingTexts.count {
-                let candidate = matchingTexts.element(boundBy: index)
-                guard candidate.exists else { continue }
-                let candidateFrame = candidate.frame
-                if !candidateFrame.isEmpty
-                    && !candidateFrame.isNull
-                    && self.app.frame.intersects(candidateFrame)
-                    && alertFrame.intersects(candidateFrame) {
-                    return true
-                }
+            let config = stepConfig()
+            let exactNames = ["web": config.expectedWebDeviceName, "android": config.expectedAndroidDeviceName, "ios": config.expectedIosDeviceName]
+            if let candidate = exactNames[requester.lowercased()], let canonical = candidate, !canonical.isEmpty {
+                XCTAssertTrue(captured.sender == canonical, "Incoming requester differs from the canonical configured Device")
+            } else {
+                // Older single-claim fixtures supplied a platform substring, not a canonical Device name.
+                // Keep their original requester assertion; the full observed sender is frozen for the SAME-ID decision.
+                XCTAssertTrue(captured.sender.localizedCaseInsensitiveContains(requester), "Incoming requester does not match the existing scenario")
             }
-            return false
         }
-        let matchingTextWait = XCTNSPredicateExpectation(predicate: matchingTextVisible, object: nil)
-        XCTAssertEqual(
-            XCTWaiter.wait(for: [matchingTextWait], timeout: timeout),
-            .completed,
-            "iOS recovery alert visible StaticText did not contain quoted secret \(quotedSecretName)"
-                + (requester.map { " and requester \($0)" } ?? "")
-        )
-
-        XCTAssertTrue(
-            app.descendants(matching: .any)["alert-recovery-request-accept"].exists,
-            "iOS recovery alert did not expose its generic accept action"
-        )
-        XCTAssertTrue(
-            app.descendants(matching: .any)["alert-recovery-request-decline"].exists,
-            "iOS recovery alert did not expose its generic decline action"
-        )
+        XCTAssertTrue(app.lbElement("lb-approve-\(captured.requestId)").exists)
+        XCTAssertTrue(app.lbElement("lb-decline-\(captured.requestId)").exists)
     }
-
-    private func revealAcceptedSecret(_ secretName: String, cycle: String, step: String) {
-        let action = app.descendants(matching: .any)["secret-primary-action-\(secretName)"]
-        let dialog = app.descendants(matching: .any)["show-secret-dialog"]
-        let revealed = app.descendants(matching: .any)["revealed-secret-value"]
-        let deadline = Date().addingTimeInterval(180)
-        while Date() < deadline {
-            if revealed.exists { return }
-            if action.exists && action.label.localizedCaseInsensitiveContains("Show") {
-                print("E2E: IOS_SHOW_ACTION_AFTER_APPROVAL_\(cycle)_\(step)")
-                if dialog.exists {
-                    tap("show-secret-close")
-                    _ = dialog.waitForNonExistence(timeout: 30)
-                }
-                action.tap()
-                enterSimulatorPasscodeIfNeeded()
-                waitForVisible(identifier: "revealed-secret-value", timeout: 180)
-                return
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+    private func revealAcceptedSecret(_ secretName: String, cycle: String, step: String, prepared: ((Test22ShowPreparation) -> Void)? = nil) {
+        if let id = app.lbSelection.secrets[secretName], app.lbElement("lb-value-\(id)").exists {
+            app.lbSelection.secretId = id
+            prepared?(.alreadyVisible)
+            return // Preserve the same authorized disclosure; never issue a second Show.
         }
-        XCTFail("iOS sender did not reveal accepted secret in cycle \(cycle), step \(step)")
+        print("E2E: IOS_SHOW_ACTION_AFTER_APPROVAL_\(cycle)_\(step)")
+        app.lbShow(secretName, inputReturned: prepared.map { notify in { notify(.inputReturned) } })
     }
-
     private func createSecretForTest24Ui(name: String, value: String, scrollForTest50: Bool = false) {
-        tap("add-secret-fab", timeout: 180)
-        let nameField = app.descendants(matching: .any)["secret-name-input"]
-        XCTAssertTrue(nameField.waitForExistence(timeout: 30), "secret-name-input was not visible")
-        nameField.typeText(name)
-
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.40)).tap()
-        let valueField = app.descendants(matching: .any)["secret-value-input"]
-        XCTAssertTrue(valueField.waitForExistence(timeout: 30), "secret-value-input was not visible")
-        valueField.typeText(value)
-
-        // The software keyboard covers the semantic submit control. Use the
-        // established iOS E2E coordinate for the dialog action, then wait on
-        // the persisted Secret row rather than on an animation duration.
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.47)).tap()
-        enterSimulatorPasscodeIfNeeded()
-        if scrollForTest50 {
-            waitForHidden(identifier: "secret-name-input", timeout: 30)
-            waitForHidden(identifier: "vault-sync-blocker", timeout: 180)
-            test50RequireVisible("secret-row-\(name)")
-        } else {
-            waitForVisible(identifier: "secret-row-\(name)", timeout: 180)
-        }
-        waitForHidden(identifier: "secret-name-input", timeout: 30)
+        app.lbCreate(name: name, value: value)
+        if scrollForTest50 { test50RequireVisible("secret-row-\(name)") }
     }
-
     private func waitForPrimaryAction(_ secretName: String, expected: String, timeout: TimeInterval) {
-        let action = app.descendants(matching: .any)["secret-primary-action-\(secretName)"]
-        let deadline = Date().addingTimeInterval(timeout)
-        var lastObservedLabel = "<missing>"
-        while Date() < deadline {
-            let observedLabel = action.exists ? action.label : "<missing>"
-            if observedLabel != lastObservedLabel {
-                print(
-                    "E2E: IOS_PRIMARY_ACTION_STATE secret=\(secretName) "
-                        + "expected=\(expected) label=\(observedLabel)"
-                )
-                lastObservedLabel = observedLabel
-            }
-            if action.exists, action.label.localizedCaseInsensitiveContains(expected) {
-                return
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        print(
-            "E2E: IOS_PRIMARY_ACTION_TIMEOUT secret=\(secretName) expected=\(expected) "
-                + "exists=\(action.exists) label=\(action.label)"
-        )
-        XCTFail("Primary action for \(secretName) did not become \(expected)")
+        let id = app.lbFindSecret(secretName, timeout: timeout)
+        let action = app.lbRequire("lb-primary-\(id)")
+        app.lbWait({ action.isEnabled && self.app.lbLabel(action, matches: [expected]) }, timeout: timeout)
     }
-
     private func waitForSenderRecoveryUiReady(_ secretName: String, timeout: TimeInterval) {
-        let action = app.descendants(matching: .any)["secret-primary-action-\(secretName)"]
-        let dialog = app.descendants(matching: .any)["show-secret-dialog"]
-        let value = app.descendants(matching: .any)["revealed-secret-value"]
-        let badge = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
-        let open = app.descendants(matching: .any)["open-recovery-request-\(secretName)"]
-        let alert = app.descendants(matching: .any)["alert-recovery-request"]
-        let processing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let ready = NSPredicate { _, _ in
-            action.exists
-                && action.label.trimmingCharacters(in: .whitespacesAndNewlines)
-                    .caseInsensitiveCompare("Recover") == .orderedSame
-                && !dialog.exists
-                && !value.exists
-                && !badge.exists
-                && !open.exists
-                && !alert.exists
-                && !processing.exists
-        }
-        let expectation = XCTNSPredicateExpectation(predicate: ready, object: nil)
-        XCTAssertEqual(
-            XCTWaiter.wait(for: [expectation], timeout: timeout),
-            .completed,
-            "iOS sender did not reach exact Recover with a clean recovery UI"
-        )
+        let id = app.lbFindSecret(secretName, timeout: timeout)
+        let primary = app.lbRequire("lb-primary-\(id)")
+        app.lbWait({ primary.isEnabled && self.app.lbLabel(primary, matches: ["Recover", "Восстановить"])
+            && !self.app.lbElement("lb-value-\(id)").exists }, timeout: timeout)
+        app.lbHome()
+        XCTAssertEqual(app.lbIncomingCount(), 0, "Sender clean boundary contains stale incoming requests")
+        _ = app.lbFindSecret(secretName, timeout: timeout)
     }
-
     private func waitForSingleActiveClaim(_ secretName: String, cycle: String, step: String) {
-        let badge = app.descendants(matching: .any)["recovery-request-badge-\(secretName)"]
-        let deadline = Date().addingTimeInterval(180)
-        while Date() < deadline {
-            if badge.exists {
-                let label = badge.label.trimmingCharacters(in: .whitespacesAndNewlines)
-                let count = label.split(whereSeparator: { $0 == " " || $0 == "\u{00a0}" }).last.map(String.init)
-                if count == "1" {
-                    print("E2E: IOS_SINGLE_ACTIVE_CLAIM_\(cycle)_\(step)")
-                    return
-                }
-            }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        XCTFail("iOS expected exactly one active recovery claim, badge=\(badge.label)")
+        _ = app.lbIncoming(LiveboardIncomingExpected(kind: "Recover", subject: secretName, count: 1))
+        print("E2E: IOS_SINGLE_ACTIVE_CLAIM_\(cycle)_\(step)")
     }
-
     private func showAcceptedSecretIfNeeded(_ secretName: String, cycle: String, step: String) {
-        let action = app.descendants(matching: .any)["secret-primary-action-\(secretName)"]
+        let action = app.lbElement("secret-primary-action-\(secretName)")
         let deadline = Date().addingTimeInterval(180)
         while Date() < deadline {
             if action.exists {
@@ -4732,45 +4262,22 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     }
 
     private func skipOnboardingIfNeeded() {
-        let skip = app.descendants(matching: .any)["onboarding-skip"]
+        let skip = app.lbElement("onboarding-skip")
         if skip.waitForExistence(timeout: 10) { skip.tap() }
     }
 
     private func tap(_ identifier: String, timeout: TimeInterval = 30) {
-        let element = app.descendants(matching: .any)[identifier]
-        XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(identifier) was not visible")
-        if !element.isHittable { dismissKeyboardIfNeeded() }
-        element.tap()
+        app.lbTapIntent(identifier, timeout: timeout)
     }
-
     private func waitForVisible(identifier: String, timeout: TimeInterval) {
-        XCTAssertTrue(
-            app.descendants(matching: .any)[identifier].waitForExistence(timeout: timeout),
-            "\(identifier) was not visible"
-        )
+        app.lbWaitIntent(identifier, timeout: timeout)
     }
-
     private func waitForHidden(identifier: String, timeout: TimeInterval) {
-        XCTAssertTrue(
-            app.descendants(matching: .any)[identifier].waitForNonExistence(timeout: timeout),
-            "\(identifier) did not disappear"
-        )
+        app.lbWaitIntent(identifier, timeout: timeout, visible: false)
     }
-
     private func waitForRecoveryResolutionOrApprove(timeout: TimeInterval) -> Bool {
-        let accept = app.descendants(matching: .any)["alert-recovery-request-accept"]
-        let alert = app.descendants(matching: .any)["alert-recovery-request"]
-        let processing = app.descendants(matching: .any)["alert-recovery-request-processing"]
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if accept.exists { return true }
-            if !alert.exists && !processing.exists { return false }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        XCTFail("Recovery alert did not resolve after reconnect")
-        return false
+        app.lbResumeDecisionAfterReconnect(timeout: timeout)
     }
-
     private func logRecoveryUiState(
         cycle: String,
         step: String,
@@ -4789,67 +4296,13 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     }
 
     private func closeShowSecretDialog() {
-        let dialog = app.descendants(matching: .any)["show-secret-dialog"]
-        let close = app.descendants(matching: .any)["show-secret-close"]
-        let deadline = Date().addingTimeInterval(30)
-        var tapAttempts = 0
-
-        // Compose can recreate the close control during the exit transition.
-        // Retry only while the dialog is present and the control is hittable;
-        // this is a state-based wait, not an artificial sleep.
-        while Date() < deadline {
-            if !dialog.exists {
-                return
-            }
-            if close.exists && close.isHittable {
-                tapAttempts += 1
-                print("E2E: IOS_SHOW_SECRET_CLOSE_ATTEMPT_\(tapAttempts)")
-                do {
-                    close.tap()
-                } catch {
-                    // A live recovery update can invalidate the accessibility
-                    // element after the hittable check. Re-read the dialog
-                    // and retry only while that dialog remains on screen.
-                    print(
-                        "E2E: IOS_SHOW_SECRET_CLOSE_STALE_\(tapAttempts) " +
-                            "dialogExists=\(dialog.exists)"
-                    )
-                    if !dialog.exists {
-                        return
-                    }
-                    continue
-                }
-                if dialog.waitForNonExistence(timeout: 5) {
-                    return
-                }
-            } else {
-                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-            }
-        }
-
-        XCTFail("show-secret-dialog did not disappear")
+        app.lbCloseValueOrPending()
     }
-
     private func dismissKeyboardIfNeeded() {
-        if app.keyboards.element.exists {
-            app.keyboards.buttons["Done"].tapIfExists()
-            app.keyboards.buttons["Return"].tapIfExists()
-            app.tap()
-        }
+        app.lbDismissKeyboard()
     }
-
     private func enterSimulatorPasscodeIfNeeded() {
-        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let secureField = springboard.secureTextFields.element(boundBy: 0)
-        if secureField.waitForExistence(timeout: 2) {
-            secureField.tap()
-            secureField.typeText("1111")
-            return
-        }
-        let one = springboard.buttons["1"]
-        if one.waitForExistence(timeout: 1) {
-            one.tap(); one.tap(); one.tap(); one.tap()
-        }
+        _ = app.lbConfirmSystemIfPresent()
     }
 
     private func env(_ key: String, defaultValue: String) -> String {
@@ -4896,246 +4349,38 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     }
 
     private func exactDeviceRowIdentifier(name: String, status: String) -> String? {
-        let rows = app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "device-row-")
-        )
-        var matchingRows: [XCUIElement] = []
-        for index in 0..<rows.count {
-            let row = rows.element(boundBy: index)
-            if exactVisibleText(name, belongsTo: row)
-                && exactVisibleText(status, belongsTo: row) {
-                matchingRows.append(row)
-            }
-        }
-        guard matchingRows.count == 1 else { return nil }
-        let row = matchingRows[0]
-        guard row.identifier.hasPrefix("device-row-") else { return nil }
-        let deviceId = String(row.identifier.dropFirst("device-row-".count))
-        return deviceId.isEmpty ? nil : deviceId
+        app.lbDeviceId(name: name, status: status)
     }
-
     private func test37RemoveActionQuery(deviceId: String) -> XCUIElementQuery {
         app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier == %@", "remove-device-\(deviceId)")
+            NSPredicate(format: "identifier == %@", "lb-remove-\(deviceId)")
         )
     }
 
     private func test39SwipeAndConfirmRemoval(deviceId: String, targetDeviceName: String) {
-        let row = app.descendants(matching: .any)["device-row-\(deviceId)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "Test #39 removal row is missing")
-        row.swipeLeft()
-
-        let action = test37RemoveActionQuery(deviceId: deviceId).firstMatch
-        XCTAssertTrue(action.waitForExistence(timeout: 30), "Test #39 swipe did not expose Remove")
-        action.tap()
-        waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let exactLocalizedTitles = [
-            "Remove device \(targetDeviceName)?",
-            "Удалить устройство \(targetDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #39 removal dialog must expose one exact localized composite title"
-        )
-        tap("remove-device-dialog-accept")
-        enterSimulatorPasscodeIfNeeded()
-        waitForHidden(identifier: "remove-device-dialog", timeout: 120)
+        app.lbRemoveDevice(deviceId, name: targetDeviceName)
     }
-
     private func test47SwipeAndConfirmRemoval(deviceId: String, targetDeviceName: String) {
-        let row = app.descendants(matching: .any)["device-row-\(deviceId)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "Test #47 removal row is missing")
-        row.swipeLeft()
-
-        let action = test37RemoveActionQuery(deviceId: deviceId).firstMatch
-        XCTAssertTrue(action.waitForExistence(timeout: 30), "Test #47 swipe did not expose Remove")
-        action.tap()
-        waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let exactLocalizedTitles = [
-            "Remove device \(targetDeviceName)?",
-            "Удалить устройство \(targetDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #47 removal dialog must expose one exact localized composite title"
-        )
-        tap("remove-device-dialog-accept")
-        enterSimulatorPasscodeIfNeeded()
-        waitForHidden(identifier: "remove-device-dialog", timeout: 120)
+        app.lbRemoveDevice(deviceId, name: targetDeviceName)
     }
-
     private func test48SwipeAndConfirmRemoval(deviceId: String, targetDeviceName: String) {
-        let row = app.descendants(matching: .any)["device-row-\(deviceId)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "Test #48 removal row is missing")
-        row.swipeLeft()
-
-        let action = test37RemoveActionQuery(deviceId: deviceId).firstMatch
-        XCTAssertTrue(action.waitForExistence(timeout: 30), "Test #48 swipe did not expose Remove")
-        action.tap()
-        waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let exactLocalizedTitles = [
-            "Remove device \(targetDeviceName)?",
-            "Удалить устройство \(targetDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #48 removal dialog must expose one exact localized composite title"
-        )
-        tap("remove-device-dialog-accept")
-        enterSimulatorPasscodeIfNeeded()
-        waitForHidden(identifier: "remove-device-dialog", timeout: 120)
+        app.lbRemoveDevice(deviceId, name: targetDeviceName)
     }
-
     private func test49SwipeAndConfirmRemoval(deviceId: String, targetDeviceName: String) {
-        let row = app.descendants(matching: .any)["device-row-\(deviceId)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "Test #49 removal row is missing")
-        row.swipeLeft()
-
-        let action = test37RemoveActionQuery(deviceId: deviceId).firstMatch
-        XCTAssertTrue(action.waitForExistence(timeout: 30), "Test #49 swipe did not expose Remove")
-        action.tap()
-        waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let exactLocalizedTitles = [
-            "Remove device \(targetDeviceName)?",
-            "Удалить устройство \(targetDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #49 removal dialog must expose one exact localized composite title"
-        )
-        tap("remove-device-dialog-accept")
-        enterSimulatorPasscodeIfNeeded()
-        waitForHidden(identifier: "remove-device-dialog", timeout: 120)
+        app.lbRemoveDevice(deviceId, name: targetDeviceName)
     }
-
     private func test40SwipeAndConfirmRemoval(deviceId: String, targetDeviceName: String) {
-        let row = app.descendants(matching: .any)["device-row-\(deviceId)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "Test #40 removal row is missing")
-        row.swipeLeft()
-
-        let action = test37RemoveActionQuery(deviceId: deviceId).firstMatch
-        XCTAssertTrue(action.waitForExistence(timeout: 30), "Test #40 swipe did not expose Remove")
-        action.tap()
-        waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let exactLocalizedTitles = [
-            "Remove device \(targetDeviceName)?",
-            "Удалить устройство \(targetDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #40 removal dialog must expose one exact localized composite title"
-        )
-        tap("remove-device-dialog-accept")
-        enterSimulatorPasscodeIfNeeded()
-        waitForHidden(identifier: "remove-device-dialog", timeout: 120)
+        app.lbRemoveDevice(deviceId, name: targetDeviceName)
     }
-
     private func test42SwipeAndConfirmRemoval(deviceId: String, targetDeviceName: String) {
-        let row = app.descendants(matching: .any)["device-row-\(deviceId)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "Test #42 removal row is missing")
-        row.swipeLeft()
-
-        let action = test37RemoveActionQuery(deviceId: deviceId).firstMatch
-        XCTAssertTrue(action.waitForExistence(timeout: 30), "Test #42 swipe did not expose Remove")
-        action.tap()
-        waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let exactLocalizedTitles = [
-            "Remove device \(targetDeviceName)?",
-            "Удалить устройство \(targetDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #42 removal dialog must expose one exact localized composite title"
-        )
-        tap("remove-device-dialog-accept")
-        enterSimulatorPasscodeIfNeeded()
-        waitForHidden(identifier: "remove-device-dialog", timeout: 120)
+        app.lbRemoveDevice(deviceId, name: targetDeviceName)
     }
-
     private func test43SwipeAndConfirmRemoval(deviceId: String, targetDeviceName: String) {
-        let row = app.descendants(matching: .any)["device-row-\(deviceId)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "Test #43 removal row is missing")
-        row.swipeLeft()
-
-        let action = test37RemoveActionQuery(deviceId: deviceId).firstMatch
-        XCTAssertTrue(action.waitForExistence(timeout: 30), "Test #43 swipe did not expose Remove")
-        action.tap()
-        waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let exactLocalizedTitles = [
-            "Remove device \(targetDeviceName)?",
-            "Удалить устройство \(targetDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #43 removal dialog must expose one exact localized composite title"
-        )
-        tap("remove-device-dialog-accept")
-        enterSimulatorPasscodeIfNeeded()
-        waitForHidden(identifier: "remove-device-dialog", timeout: 120)
+        app.lbRemoveDevice(deviceId, name: targetDeviceName)
     }
-
     private func test44SwipeAndConfirmRemoval(deviceId: String, targetDeviceName: String) {
-        let row = app.descendants(matching: .any)["device-row-\(deviceId)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30), "Test #44 removal row is missing")
-        row.swipeLeft()
-
-        let action = test37RemoveActionQuery(deviceId: deviceId).firstMatch
-        XCTAssertTrue(action.waitForExistence(timeout: 30), "Test #44 swipe did not expose Remove")
-        action.tap()
-        waitForVisible(identifier: "remove-device-dialog", timeout: 30)
-        let removalDialog = app.descendants(matching: .any)["remove-device-dialog"]
-        let exactLocalizedTitles = [
-            "Remove device \(targetDeviceName)?",
-            "Удалить устройство \(targetDeviceName)?",
-        ]
-        let matchingTitles = exactLocalizedTitles.filter {
-            exactVisibleText($0, belongsTo: removalDialog)
-        }
-        XCTAssertEqual(
-            matchingTitles.count,
-            1,
-            "Test #44 removal dialog must expose one exact localized composite title"
-        )
-        tap("remove-device-dialog-accept")
-        enterSimulatorPasscodeIfNeeded()
-        waitForHidden(identifier: "remove-device-dialog", timeout: 120)
+        app.lbRemoveDevice(deviceId, name: targetDeviceName)
     }
-
     private func exactVisibleText(_ expected: String, belongsTo row: XCUIElement) -> Bool {
         if accessibilityLabelComponents(row.label).contains(expected) {
             return true
@@ -5232,13 +4477,37 @@ final class CaseEightIosBothOfflineUITest: XCTestCase {
     private func stepConfig() -> StepConfig { Self.readStepConfig() }
 
     nonisolated private static func readStepConfig() -> StepConfig {
-        guard
-            let data = FileManager.default.contents(atPath: Self.stepConfigPath),
-            let config = try? JSONDecoder().decode(StepConfig.self, from: data)
-        else {
-            return StepConfig(coreServerUrl: nil, requireCoreRouting: nil, expectRequest: nil, role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, secretValue: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil, verifyReceiverAlert: nil, receiverRequestAlreadySent: nil, networkRole: nil, networkCycles: nil, expectedWebDeviceName: nil, expectedAndroidDeviceName: nil, expectedIosDeviceName: nil, joinTarget: nil)
+        guard let data = FileManager.default.contents(atPath: Self.stepConfigPath) else {
+            precondition(ProcessInfo.processInfo.environment["E2E_AUTH_PROFILE"] == nil,
+                         "A scoped Test50 actor cannot launch without its supplied configuration")
+            return StepConfig(coreServerUrl: nil, devicePasscode: nil, requireCoreRouting: nil, authProfile: nil, expectRequest: nil, role: nil, cycle: nil, step: nil, approvalPlatform: nil, sender: nil, secretName: nil, secretValue: nil, action: nil, expectedOutcome: nil, repeatApprove: nil, duplicateRecovery: nil, verifyReceiverAlert: nil, receiverRequestAlreadySent: nil, recoveryPhase: nil, recoveryPhaseRequired: nil, recoveryPhaseSelectedProfile: nil, recoveryPhaseExpected: nil, networkRole: nil, networkCycles: nil, expectedWebDeviceName: nil, expectedAndroidDeviceName: nil, expectedIosDeviceName: nil, joinTarget: nil, test22ShowPhase: nil, test25ShowPhase: nil, recoveryShowPhase: nil)
         }
-        return config
+        do {
+            guard let fields = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                preconditionFailure("Invalid supplied XCTest actor configuration")
+            }
+            if let supplied = fields["authProfile"] {
+                guard let profile = supplied as? String, ["real-os", "controlled-business"].contains(profile) else {
+                    preconditionFailure("Invalid supplied Test50 authentication profile")
+                }
+            }
+            for key in ["recoveryPhase", "recoveryPhaseSelectedProfile", "recoveryPhaseExpected", "test25ShowPhase", "recoveryShowPhase"] where fields.keys.contains(key) {
+                guard let value = fields[key] as? String, key == "recoveryPhase" || !value.isEmpty else {
+                    preconditionFailure("Invalid supplied recovery phase launch metadata")
+                }
+            }
+            if fields.keys.contains("recoveryShowPhase") || TestRecoveryProfile.future(fields["recoveryPhaseSelectedProfile"] as? String) != nil {
+                guard !fields.keys.contains("test22ShowPhase"), !fields.keys.contains("test25ShowPhase") else {
+                    preconditionFailure("Conflicting supplied recovery Show procedure metadata")
+                }
+            }
+            if fields["recoveryPhaseRequired"] is NSNull {
+                preconditionFailure("Invalid supplied recovery phase requirement")
+            }
+            return try JSONDecoder().decode(StepConfig.self, from: data)
+        } catch {
+            preconditionFailure("Supplied XCTest actor configuration cannot use a legacy fallback")
+        }
     }
 }
 

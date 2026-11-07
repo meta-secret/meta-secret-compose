@@ -7,6 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F2E243700000000000000005 /* RecoveryShowPhaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E243700000000000000006 /* RecoveryShowPhaseTests.swift */; };
+		F2E243700000000000000003 /* RecoveryShowPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E243700000000000000004 /* RecoveryShowPhase.swift */; };
+		F2E243700000000000000001 /* TestRecoveryProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E243700000000000000002 /* TestRecoveryProfile.swift */; };
+		F2E240400000000000000001 /* Test25ShowPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E240400000000000000002 /* Test25ShowPhase.swift */; };
+		F2E235350000000000000001 /* Test24RecoveryPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E235350000000000000002 /* Test24RecoveryPhase.swift */; };
+		F2E211370000000000000001 /* LiveboardSecretsNavigationTestActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E211370000000000000002 /* LiveboardSecretsNavigationTestActions.swift */; };
+		F2E211010000000000000001 /* LiveboardRequireTestActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E211010000000000000002 /* LiveboardRequireTestActions.swift */; };
+		F2E208080000000000000001 /* LiveboardPrimaryGestureTestActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E208080000000000000002 /* LiveboardPrimaryGestureTestActions.swift */; };
+		F2E209090000000000000001 /* LiveboardIncomingObservation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E209090000000000000002 /* LiveboardIncomingObservation.swift */; };
+		F2E207070000000000000001 /* LiveboardActionabilityObservation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E207070000000000000002 /* LiveboardActionabilityObservation.swift */; };
+		F2E210010000000000000001 /* E2ETestIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E210010000000000000003 /* E2ETestIdentity.swift */; };
+		F2E210010000000000000002 /* E2ETestIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E210010000000000000003 /* E2ETestIdentity.swift */; };
+		F2E210020000000000000002 /* LiveboardTestIdentityConfigTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E210020000000000000001 /* LiveboardTestIdentityConfigTest.swift */; };
+		5B2026102200000000000001 /* LiveboardNativeRendererUITest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B2026102200000000000002 /* LiveboardNativeRendererUITest.swift */; };
+		A4B401010000000000000001 /* SwiftBridge+Liveboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4B401020000000000000002 /* SwiftBridge+Liveboard.swift */; };
 		5A2044340000000000000001 /* StartupLaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5A2044340000000000000002 /* StartupLaunchScreen.storyboard */; };
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
@@ -21,6 +36,16 @@
 		E5F5B5B82EFD8E0700F73916 /* SwiftLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F5B5B72EFD8E0700F73916 /* SwiftLogger.swift */; };
 		E60000020000000000000002 /* mobile_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = E60000010000000000000001 /* mobile_uniffi.swift */; };
 		E60000060000000000000006 /* mobile_uniffi_compat.swift in Sources */ = {isa = PBXBuildFile; fileRef = E60000050000000000000005 /* mobile_uniffi_compat.swift */; };
+		A4B400010000000000000001 /* LiveboardPackageSmokeTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4B400020000000000000002 /* LiveboardPackageSmokeTest.swift */; };
+		A4B400030000000000000003 /* mobile_uniffi.swift in Sources */ = {isa = PBXBuildFile; fileRef = E60000010000000000000001 /* mobile_uniffi.swift */; };
+		B79AA843B73AA93447B96AF9 /* LiveboardTestActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFD91B159736486013EBE60A /* LiveboardTestActions.swift */; };
+		671237F95DF8602CAF8FCC35 /* LiveboardSecretTestActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19E180CF50BEE96F4BD34AAE /* LiveboardSecretTestActions.swift */; };
+		C6B400010000000000000001 /* LiveboardCreateTestActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6B400020000000000000002 /* LiveboardCreateTestActions.swift */; };
+		F890208588BC9E006526E336 /* LiveboardInboxTestActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670D00CA3218D2261B52625F /* LiveboardInboxTestActions.swift */; };
+		B21600000000000000000001 /* LiveboardTest16ReconnectActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B21600000000000000000002 /* LiveboardTest16ReconnectActions.swift */; };
+		A72A43FA5E9D5AAD866C67AE /* LiveboardMemberTestActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE969ACBF7EE0AFA1B94899 /* LiveboardMemberTestActions.swift */; };
+		3406C86A81B006DC598D52AF /* LiveboardAuthenticationTestActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 492BEB8E50F0A507AFF9F38C /* LiveboardAuthenticationTestActions.swift */; };
+		65757FCA1BC65029E93B6907 /* LiveboardPrivacyTestActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE439DB9A4EB907FC4B40D4C /* LiveboardPrivacyTestActions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +59,20 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F2E243700000000000000006 /* RecoveryShowPhaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryShowPhaseTests.swift; sourceTree = "<group>"; };
+		F2E243700000000000000004 /* RecoveryShowPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryShowPhase.swift; sourceTree = "<group>"; };
+		F2E243700000000000000002 /* TestRecoveryProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestRecoveryProfile.swift; sourceTree = "<group>"; };
+		F2E240400000000000000002 /* Test25ShowPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test25ShowPhase.swift; sourceTree = "<group>"; };
+		F2E235350000000000000002 /* Test24RecoveryPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Test24RecoveryPhase.swift; sourceTree = "<group>"; };
+		F2E211370000000000000002 /* LiveboardSecretsNavigationTestActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardSecretsNavigationTestActions.swift; sourceTree = "<group>"; };
+		F2E211010000000000000002 /* LiveboardRequireTestActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardRequireTestActions.swift; sourceTree = "<group>"; };
+		F2E208080000000000000002 /* LiveboardPrimaryGestureTestActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardPrimaryGestureTestActions.swift; sourceTree = "<group>"; };
+		F2E209090000000000000002 /* LiveboardIncomingObservation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardIncomingObservation.swift; sourceTree = "<group>"; };
+		F2E207070000000000000002 /* LiveboardActionabilityObservation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardActionabilityObservation.swift; sourceTree = "<group>"; };
+		F2E210010000000000000003 /* E2ETestIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = E2ETestIdentity.swift; sourceTree = "<group>"; };
+		F2E210020000000000000001 /* LiveboardTestIdentityConfigTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardTestIdentityConfigTest.swift; sourceTree = "<group>"; };
+		5B2026102200000000000002 /* LiveboardNativeRendererUITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardNativeRendererUITest.swift; sourceTree = "<group>"; };
+		A4B401020000000000000002 /* SwiftBridge+Liveboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SwiftBridge+Liveboard.swift"; sourceTree = "<group>"; };
 		5A2044340000000000000002 /* StartupLaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = StartupLaunchScreen.storyboard; sourceTree = "<group>"; };
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -54,6 +93,16 @@
 		E5F5B5B72EFD8E0700F73916 /* SwiftLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftLogger.swift; sourceTree = "<group>"; };
 		E60000010000000000000001 /* mobile_uniffi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mobile_uniffi.swift; sourceTree = "<group>"; };
 		E60000050000000000000005 /* mobile_uniffi_compat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mobile_uniffi_compat.swift; sourceTree = "<group>"; };
+		A4B400020000000000000002 /* LiveboardPackageSmokeTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardPackageSmokeTest.swift; sourceTree = "<group>"; };
+		A4B400040000000000000004 /* LiveboardPackageSmokeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LiveboardPackageSmokeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFD91B159736486013EBE60A /* LiveboardTestActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardTestActions.swift; sourceTree = "<group>"; };
+		19E180CF50BEE96F4BD34AAE /* LiveboardSecretTestActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardSecretTestActions.swift; sourceTree = "<group>"; };
+		C6B400020000000000000002 /* LiveboardCreateTestActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardCreateTestActions.swift; sourceTree = "<group>"; };
+		670D00CA3218D2261B52625F /* LiveboardInboxTestActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardInboxTestActions.swift; sourceTree = "<group>"; };
+		B21600000000000000000002 /* LiveboardTest16ReconnectActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardTest16ReconnectActions.swift; sourceTree = "<group>"; };
+		6EE969ACBF7EE0AFA1B94899 /* LiveboardMemberTestActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardMemberTestActions.swift; sourceTree = "<group>"; };
+		492BEB8E50F0A507AFF9F38C /* LiveboardAuthenticationTestActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardAuthenticationTestActions.swift; sourceTree = "<group>"; };
+		AE439DB9A4EB907FC4B40D4C /* LiveboardPrivacyTestActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveboardPrivacyTestActions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,6 +118,12 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A4B400050000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -95,6 +150,7 @@
 				AB1DB47929225F7C00F7AF9C /* Configuration */,
 				7555FF7D242A565900829871 /* iosApp */,
 				61E7A0072F30A00000A00001 /* iosAppUITests */,
+				A4B400060000000000000006 /* LiveboardPackageSmokeTests */,
 				7555FF7C242A565900829871 /* Products */,
 				42799AB246E5F90AF97AA0EF /* Frameworks */,
 			);
@@ -105,6 +161,7 @@
 			children = (
 				7555FF7B242A565900829871 /* MetaSecret.app */,
 				61E7A0062F30A00000A00001 /* iosAppUITests.xctest */,
+				A4B400040000000000000004 /* LiveboardPackageSmokeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -117,6 +174,26 @@
 				61E7A1042F30A00000A00104 /* CaseThreeIosJoinUITest.swift */,
 				61E7A1062F30A00000A00106 /* CaseFourIosConcurrentRecoveryUITest.swift */,
 				61E7A1082F30A00000A00108 /* CaseEightIosBothOfflineUITest.swift */,
+				F2E235350000000000000002 /* Test24RecoveryPhase.swift */,
+				F2E240400000000000000002 /* Test25ShowPhase.swift */,
+				F2E243700000000000000006 /* RecoveryShowPhaseTests.swift */,
+				F2E243700000000000000004 /* RecoveryShowPhase.swift */,
+				F2E243700000000000000002 /* TestRecoveryProfile.swift */,
+				F2E210020000000000000001 /* LiveboardTestIdentityConfigTest.swift */,
+				5B2026102200000000000002 /* LiveboardNativeRendererUITest.swift */,
+				F2E208080000000000000002 /* LiveboardPrimaryGestureTestActions.swift */,
+				F2E209090000000000000002 /* LiveboardIncomingObservation.swift */,
+				F2E207070000000000000002 /* LiveboardActionabilityObservation.swift */,
+				DFD91B159736486013EBE60A /* LiveboardTestActions.swift */,
+				F2E211010000000000000002 /* LiveboardRequireTestActions.swift */,
+				F2E211370000000000000002 /* LiveboardSecretsNavigationTestActions.swift */,
+				19E180CF50BEE96F4BD34AAE /* LiveboardSecretTestActions.swift */,
+				C6B400020000000000000002 /* LiveboardCreateTestActions.swift */,
+				670D00CA3218D2261B52625F /* LiveboardInboxTestActions.swift */,
+				B21600000000000000000002 /* LiveboardTest16ReconnectActions.swift */,
+				6EE969ACBF7EE0AFA1B94899 /* LiveboardMemberTestActions.swift */,
+				492BEB8E50F0A507AFF9F38C /* LiveboardAuthenticationTestActions.swift */,
+				AE439DB9A4EB907FC4B40D4C /* LiveboardPrivacyTestActions.swift */,
 			);
 			path = iosAppUITests;
 			sourceTree = "<group>";
@@ -157,6 +234,8 @@
 		E56CFB542DDF64AF00D674CD /* MetaSecretCoreService */ = {
 			isa = PBXGroup;
 			children = (
+				A4B401020000000000000002 /* SwiftBridge+Liveboard.swift */,
+				F2E210010000000000000003 /* E2ETestIdentity.swift */,
 				E56CFB5F2DDFA36500D674CD /* SwiftBridge.swift */,
 				E5F5B5B72EFD8E0700F73916 /* SwiftLogger.swift */,
 			);
@@ -170,6 +249,12 @@
 				E60000050000000000000005 /* mobile_uniffi_compat.swift */,
 			);
 			path = UniffiGenerated;
+			sourceTree = "<group>";
+		};
+		A4B400060000000000000006 /* LiveboardPackageSmokeTests */ = {
+			isa = PBXGroup;
+			children = (A4B400020000000000000002 /* LiveboardPackageSmokeTest.swift */);
+			path = LiveboardPackageSmokeTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -215,6 +300,20 @@
 			productReference = 61E7A0062F30A00000A00001 /* iosAppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		A4B400070000000000000007 /* LiveboardPackageSmokeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A4B400080000000000000008 /* Build configuration list for PBXNativeTarget "LiveboardPackageSmokeTests" */;
+			buildPhases = (
+				A4B400090000000000000009 /* Sources */,
+				A4B400050000000000000005 /* Frameworks */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = LiveboardPackageSmokeTests;
+			productName = LiveboardPackageSmokeTests;
+			productReference = A4B400040000000000000004 /* LiveboardPackageSmokeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -252,6 +351,7 @@
 			targets = (
 				7555FF7A242A565900829871 /* iosApp */,
 				61E7A0052F30A00000A00001 /* iosAppUITests */,
+				A4B400070000000000000007 /* LiveboardPackageSmokeTests */,
 			);
 		};
 /* End PBXProject section */
@@ -302,6 +402,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A4B401010000000000000001 /* SwiftBridge+Liveboard.swift in Sources */,
+				F2E210010000000000000001 /* E2ETestIdentity.swift in Sources */,
 				E5F5B5B82EFD8E0700F73916 /* SwiftLogger.swift in Sources */,
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
 				E60000020000000000000002 /* mobile_uniffi.swift in Sources */,
@@ -316,10 +418,40 @@
 			buildActionMask = 2147483647;
 			files = (
 				61E7A1012F30A00000A00101 /* CaseOneJoinFromIosUITest.swift in Sources */,
+				F2E210010000000000000002 /* E2ETestIdentity.swift in Sources */,
 				61E7A1032F30A00000A00103 /* CaseTwoIosInitiatorUITest.swift in Sources */,
 				61E7A1052F30A00000A00105 /* CaseThreeIosJoinUITest.swift in Sources */,
 				61E7A1072F30A00000A00107 /* CaseFourIosConcurrentRecoveryUITest.swift in Sources */,
 				61E7A1092F30A00000A00109 /* CaseEightIosBothOfflineUITest.swift in Sources */,
+				F2E235350000000000000001 /* Test24RecoveryPhase.swift in Sources */,
+				F2E240400000000000000001 /* Test25ShowPhase.swift in Sources */,
+				F2E243700000000000000005 /* RecoveryShowPhaseTests.swift in Sources */,
+				F2E243700000000000000003 /* RecoveryShowPhase.swift in Sources */,
+				F2E243700000000000000001 /* TestRecoveryProfile.swift in Sources */,
+				F2E210020000000000000002 /* LiveboardTestIdentityConfigTest.swift in Sources */,
+				5B2026102200000000000001 /* LiveboardNativeRendererUITest.swift in Sources */,
+				F2E208080000000000000001 /* LiveboardPrimaryGestureTestActions.swift in Sources */,
+				F2E209090000000000000001 /* LiveboardIncomingObservation.swift in Sources */,
+				F2E207070000000000000001 /* LiveboardActionabilityObservation.swift in Sources */,
+				B79AA843B73AA93447B96AF9 /* LiveboardTestActions.swift in Sources */,
+				F2E211010000000000000001 /* LiveboardRequireTestActions.swift in Sources */,
+				F2E211370000000000000001 /* LiveboardSecretsNavigationTestActions.swift in Sources */,
+				671237F95DF8602CAF8FCC35 /* LiveboardSecretTestActions.swift in Sources */,
+				C6B400010000000000000001 /* LiveboardCreateTestActions.swift in Sources */,
+				F890208588BC9E006526E336 /* LiveboardInboxTestActions.swift in Sources */,
+				B21600000000000000000001 /* LiveboardTest16ReconnectActions.swift in Sources */,
+				A72A43FA5E9D5AAD866C67AE /* LiveboardMemberTestActions.swift in Sources */,
+				3406C86A81B006DC598D52AF /* LiveboardAuthenticationTestActions.swift in Sources */,
+				65757FCA1BC65029E93B6907 /* LiveboardPrivacyTestActions.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A4B400090000000000000009 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A4B400010000000000000001 /* LiveboardPackageSmokeTest.swift in Sources */,
+				A4B400030000000000000003 /* mobile_uniffi.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,6 +604,7 @@
 				);
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/iosApp/MetaSecretCoreLibrary";
 				INFOPLIST_FILE = iosApp/Info.plist;
+				METASECRET_E2E_IDENTITY_REQUIRED = NO;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -527,6 +660,7 @@
 				);
 				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/iosApp/MetaSecretCoreLibrary";
 				INFOPLIST_FILE = iosApp/Info.plist;
+				METASECRET_E2E_IDENTITY_REQUIRED = NO;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -608,6 +742,58 @@
 			};
 			name = Release;
 		};
+		A4B400100000000000000010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7RKQD29YMQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks");
+				OTHER_LDFLAGS = (
+					"$(inherited)", "-force_load",
+					"$(PROJECT_DIR)/Libs/libmetasecret_mobile-ios-simulator-arm64.a",
+					"-framework", XCTest, "-framework", Foundation,
+					"-framework", Security, "-framework", CoreFoundation,
+					"-framework", SystemConfiguration,
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(PROJECT_DIR)/iosApp/UniffiGenerated/mobile_uniffiFFI.modulemap";
+				PRODUCT_BUNDLE_IDENTIFIER = org.metasecret.vault.LiveboardPackageSmokeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = iphonesimulator;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A4B400110000000000000011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7RKQD29YMQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks");
+				OTHER_LDFLAGS = (
+					"$(inherited)", "-force_load",
+					"$(PROJECT_DIR)/Libs/libmetasecret_mobile-ios-simulator-arm64.a",
+					"-framework", XCTest, "-framework", Foundation,
+					"-framework", Security, "-framework", CoreFoundation,
+					"-framework", SystemConfiguration,
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(PROJECT_DIR)/iosApp/UniffiGenerated/mobile_uniffiFFI.modulemap";
+				PRODUCT_BUNDLE_IDENTIFIER = org.metasecret.vault.LiveboardPackageSmokeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = iphonesimulator;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -634,6 +820,15 @@
 			buildConfigurations = (
 				61E7A00D2F30A00000A00001 /* Debug */,
 				61E7A00E2F30A00000A00001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A4B400080000000000000008 /* Build configuration list for PBXNativeTarget "LiveboardPackageSmokeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A4B400100000000000000010 /* Debug */,
+				A4B400110000000000000011 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

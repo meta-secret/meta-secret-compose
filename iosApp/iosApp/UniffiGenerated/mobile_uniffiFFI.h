@@ -259,6 +259,16 @@ RustBuffer uniffi_metasecret_mobile_fn_func_clean_up_database(RustCallStatus *_N
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_CLUSTER_DISTRIBUTION_CHECKED
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_CLUSTER_DISTRIBUTION_CHECKED
+RustBuffer uniffi_metasecret_mobile_fn_func_cluster_distribution_checked(RustBuffer name, RustBuffer secret, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_CONTINUE_LOCAL_REMOVE_CHECKED
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_CONTINUE_LOCAL_REMOVE_CHECKED
+RustBuffer uniffi_metasecret_mobile_fn_func_continue_local_remove_checked(RustBuffer reference_json, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DATABASE_FILE_NAME
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DATABASE_FILE_NAME
 RustBuffer uniffi_metasecret_mobile_fn_func_database_file_name(RustBuffer master_key, RustCallStatus *_Nonnull out_status
@@ -267,6 +277,16 @@ RustBuffer uniffi_metasecret_mobile_fn_func_database_file_name(RustBuffer master
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECIDE_DELETE_SECRET
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECIDE_DELETE_SECRET
 RustBuffer uniffi_metasecret_mobile_fn_func_decide_delete_secret(RustBuffer request_json, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECIDE_JOIN_REQUEST
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECIDE_JOIN_REQUEST
+RustBuffer uniffi_metasecret_mobile_fn_func_decide_join_request(RustBuffer request_json, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECIDE_REMOVE_MEMBER
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECIDE_REMOVE_MEMBER
+RustBuffer uniffi_metasecret_mobile_fn_func_decide_remove_member(RustBuffer request_json, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DECLINE_RECOVER
@@ -282,6 +302,11 @@ RustBuffer uniffi_metasecret_mobile_fn_func_decline_remove_member(RustBuffer tar
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DELETE_SECRET
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DELETE_SECRET
 RustBuffer uniffi_metasecret_mobile_fn_func_delete_secret(RustBuffer secret_id, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DELETE_SECRET_CHECKED
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DELETE_SECRET_CHECKED
+RustBuffer uniffi_metasecret_mobile_fn_func_delete_secret_checked(RustBuffer secret_id, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_DEVICE_UI_CATEGORY_DISCRIMINANT
@@ -342,14 +367,29 @@ RustBuffer uniffi_metasecret_mobile_fn_func_join_result_auth_token(RustCallStatu
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_RECONCILE_PRODUCER_RECEIPT
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_RECONCILE_PRODUCER_RECEIPT
+RustBuffer uniffi_metasecret_mobile_fn_func_reconcile_producer_receipt(RustBuffer reference_json, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_RECOVER
 RustBuffer uniffi_metasecret_mobile_fn_func_recover(RustBuffer secret_id, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_RECOVER_CHECKED
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_RECOVER_CHECKED
+RustBuffer uniffi_metasecret_mobile_fn_func_recover_checked(RustBuffer secret_id, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_REMOVE_MEMBER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_REMOVE_MEMBER
 RustBuffer uniffi_metasecret_mobile_fn_func_remove_member(RustBuffer target_device_id, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_REMOVE_MEMBER_CHECKED
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_REMOVE_MEMBER_CHECKED
+RustBuffer uniffi_metasecret_mobile_fn_func_remove_member_checked(RustBuffer target_device_id, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_FN_FUNC_SEND_DECLINE_COMPLETION
@@ -666,6 +706,18 @@ uint16_t uniffi_metasecret_mobile_checksum_func_clean_up_database(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_CLUSTER_DISTRIBUTION_CHECKED
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_CLUSTER_DISTRIBUTION_CHECKED
+uint16_t uniffi_metasecret_mobile_checksum_func_cluster_distribution_checked(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_CONTINUE_LOCAL_REMOVE_CHECKED
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_CONTINUE_LOCAL_REMOVE_CHECKED
+uint16_t uniffi_metasecret_mobile_checksum_func_continue_local_remove_checked(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DATABASE_FILE_NAME
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DATABASE_FILE_NAME
 uint16_t uniffi_metasecret_mobile_checksum_func_database_file_name(void
@@ -675,6 +727,18 @@ uint16_t uniffi_metasecret_mobile_checksum_func_database_file_name(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECIDE_DELETE_SECRET
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECIDE_DELETE_SECRET
 uint16_t uniffi_metasecret_mobile_checksum_func_decide_delete_secret(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECIDE_JOIN_REQUEST
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECIDE_JOIN_REQUEST
+uint16_t uniffi_metasecret_mobile_checksum_func_decide_join_request(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECIDE_REMOVE_MEMBER
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DECIDE_REMOVE_MEMBER
+uint16_t uniffi_metasecret_mobile_checksum_func_decide_remove_member(void
     
 );
 #endif
@@ -693,6 +757,12 @@ uint16_t uniffi_metasecret_mobile_checksum_func_decline_remove_member(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DELETE_SECRET
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DELETE_SECRET
 uint16_t uniffi_metasecret_mobile_checksum_func_delete_secret(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DELETE_SECRET_CHECKED
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_DELETE_SECRET_CHECKED
+uint16_t uniffi_metasecret_mobile_checksum_func_delete_secret_checked(void
     
 );
 #endif
@@ -762,15 +832,33 @@ uint16_t uniffi_metasecret_mobile_checksum_func_join_result_auth_token(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_RECONCILE_PRODUCER_RECEIPT
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_RECONCILE_PRODUCER_RECEIPT
+uint16_t uniffi_metasecret_mobile_checksum_func_reconcile_producer_receipt(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_RECOVER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_RECOVER
 uint16_t uniffi_metasecret_mobile_checksum_func_recover(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_RECOVER_CHECKED
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_RECOVER_CHECKED
+uint16_t uniffi_metasecret_mobile_checksum_func_recover_checked(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_REMOVE_MEMBER
 #define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_REMOVE_MEMBER
 uint16_t uniffi_metasecret_mobile_checksum_func_remove_member(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_REMOVE_MEMBER_CHECKED
+#define UNIFFI_FFIDEF_UNIFFI_METASECRET_MOBILE_CHECKSUM_FUNC_REMOVE_MEMBER_CHECKED
+uint16_t uniffi_metasecret_mobile_checksum_func_remove_member_checked(void
     
 );
 #endif

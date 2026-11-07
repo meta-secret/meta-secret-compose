@@ -66,11 +66,13 @@ internal fun OrbitQrSheet(
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var foreground by remember { mutableStateOf(lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) }
     DisposableEffect(lifecycle) {
-        val observer = LifecycleEventObserver { _, _ -> foreground = lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) }
+        val observer = LifecycleEventObserver { _, _ -> foreground = lifecycle.currentState.isAtLeast(Lifecycle
+            .State.RESUMED) }
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
-    LaunchedEffect(Unit) { expansion.animateTo(1f, tween(T.orbitDurationQr, easing = CubicBezierEasing(.24f, .75f, .23f, 1f))) }
+    LaunchedEffect(Unit) { expansion.animateTo(1f, tween(T.orbitDurationQr, easing = CubicBezierEasing(.24f, .75f,
+        .23f, 1f))) }
     fun close(result: String? = null) {
         if (closing) return
         closing = true // Camera is removed before collapse starts.
@@ -101,28 +103,35 @@ internal fun OrbitQrSheet(
                 // Captured actual step04, already blurred by the platform adapter.
                 drawImage(backdrop, topLeft = Offset(-drawX, -drawY), colorFilter = ColorFilter.colorMatrix(
                     ColorMatrix().apply { setToSaturation(T.orbitNumberGlassSaturation) }))
-                drawRect(Brush.verticalGradient(listOf(T.orbitColorGlassTopBorder.copy(alpha = .035f), T.orbitColorGlassFill.copy(alpha = 0f))))
+                drawRect(Brush.verticalGradient(listOf(T.orbitColorGlassTopBorder.copy(alpha = .035f), T
+                    .orbitColorGlassFill.copy(alpha = 0f))))
                 drawLine(T.orbitColorGlassTopBorder.copy(alpha = .1f), Offset.Zero, Offset(size.width, 0f), 1.dp.toPx())
-                drawLine(T.orbitColorCamera.copy(alpha = .45f), Offset(0f, size.height - 2.dp.toPx()), Offset(size.width, size.height - 2.dp.toPx()), 3.dp.toPx())
-            }.background(T.orbitColorGlassFill).border(1.dp, Brush.verticalGradient(listOf(T.orbitColorGlassTopBorder, T.orbitColorGlassBorder, T.orbitColorGlassBorder)), shape)) {
+                drawLine(T.orbitColorCamera.copy(alpha = .45f), Offset(0f, size.height - 2.dp.toPx()), Offset(size
+                    .width, size.height - 2.dp.toPx()), 3.dp.toPx())
+            }.background(T.orbitColorGlassFill).border(1.dp, Brush.verticalGradient(listOf(T
+                .orbitColorGlassTopBorder, T.orbitColorGlassBorder, T.orbitColorGlassBorder)), shape)) {
             if (p > .92f) {
                 val cameraSide = (sheetWidth - T.orbitDimensionQrBodyInset * 2)
                     .coerceAtMost((sheetHeight - 168.dp).coerceAtLeast(100.dp))
                     .coerceAtMost(T.orbitDimensionQrCameraMaxSize)
                 val compact = sheetHeight <= 430.dp
                 Box(Modifier.fillMaxSize()) {
-                    Box(Modifier.align(Alignment.Center).offset(y = if (compact) (-48).dp else 0.dp).size(cameraSide).clip(RoundedCornerShape(12.dp))
+                    Box(Modifier.align(Alignment.Center).offset(y = if (compact) (-48).dp else 0.dp).size(cameraSide
+                        ).clip(RoundedCornerShape(12.dp))
                         .background(T.orbitColorCamera).testTag("orbit-camera")) {
                         if (p == 1f && foreground && !closing) {
                             if (cameraPreview != null) cameraPreview() else OrbitCamera({ raw ->
-                                if (registrationQrName(raw) != null) close(registrationQrName(raw)) else cameraError = AppString.orbitInvalidQr
+                                if (registrationQrName(raw) != null) close(registrationQrName(raw)
+                                    ) else cameraError = AppString.orbitInvalidQr
                             }, { cameraError = it })
                         }
                         CameraCorners()
                     }
                     Column(Modifier.align(Alignment.Center).offset(y = cameraSide / 2 + if (compact) 12.dp else 60.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        cameraError?.let { Text(appString(it), style = OrbitTextStyles.label(), color = T.orbitColorError) }
+                        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement
+                            .spacedBy(4.dp)) {
+                        cameraError?.let { Text(appString(it), style = OrbitTextStyles.label(), color = T
+                            .orbitColorError) }
                         OrbitActionButton(OrbitAction(OrbitGlyph.Back, AppString.orbitBack), { close() })
                     }
                 }
@@ -148,7 +157,8 @@ private fun CameraCorners() {
     Canvas(Modifier.fillMaxSize().padding(12.dp)) {
         val length = 24.dp.toPx()
         val stroke = 1.5.dp.toPx()
-        listOf(Offset.Zero, Offset(size.width, 0f), Offset(0f, size.height), Offset(size.width, size.height)).forEach { point ->
+        listOf(Offset.Zero, Offset(size.width, 0f), Offset(0f, size.height), Offset(size.width, size.height))
+            .forEach { point ->
             val sx = if (point.x == 0f) 1 else -1
             val sy = if (point.y == 0f) 1 else -1
             drawLine(T.orbitColorText, point, point + Offset(length * sx, 0f), stroke, StrokeCap.Round)

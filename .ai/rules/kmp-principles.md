@@ -13,14 +13,14 @@
 - ViewModels are injected, not created in UI
 - State flows down, events flow up
 - Modifiers for styling (no inline colors)
-- Existing screens retain their theme. New registration uses generated, versioned shared design tokens/assets and scoped components from the approved design package.
+- Unrelated legacy screens retain their theme. Approved registration and Liveboard use generated, versioned shared design tokens/assets and scoped components from the approved design package.
 - Safe area: use `WindowInsets.safeDrawing`
 
 ## iOS host integration
 
 - Shared Compose renders application screens; Swift/UIKit code hosts it and implements OS integration ports.
 - Keep Apple sign-in, biometry, camera permissions and safe-area handling behind existing platform interfaces.
-- Do not introduce a parallel SwiftUI registration implementation.
+- Do not introduce a parallel SwiftUI registration or Liveboard implementation.
 
 ## Shared Kotlin
 

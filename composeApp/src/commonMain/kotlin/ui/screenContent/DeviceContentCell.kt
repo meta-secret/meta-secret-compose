@@ -156,7 +156,8 @@ private fun DeviceRow(
                             style = AppTextStyles.ParagraphStrong().copy(color = AppColors.White)
                         )
                         Text(
-                            text = model.deviceName.ifBlank { appString(resolveDeviceCategoryLabel(model.deviceUiCategory)) },
+                            text = model.deviceName.ifBlank { appString(resolveDeviceCategoryLabel(model
+                                .deviceUiCategory)) },
                             style = AppTextStyles.Tiny().copy(color = Color(0xFF7A9ABF)),
                             modifier = if (effectiveStatus == DeviceStatus.Pending) {
                                 Modifier.testTag("pending-device-name")

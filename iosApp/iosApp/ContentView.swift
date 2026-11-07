@@ -13,14 +13,24 @@ struct ComposeView: UIViewControllerRepresentable {
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
+    @State private var wasBackground = false
+
     var body: some View {
-        ComposeView()
-                .ignoresSafeArea(.keyboard) // Compose has own keyboard handler
+        ZStack {
+            ComposeView().ignoresSafeArea(.keyboard).accessibilityHidden(scenePhase != .active)
+            if scenePhase != .active {
+                Color(red: 44.0 / 255, green: 46.0 / 255, blue: 47.0 / 255)
+                    .ignoresSafeArea().accessibilityHidden(true)
+            }
+        }
                 .onChange(of: scenePhase) { phase in
                     switch phase {
                     case .active:
-                        MainViewControllerKt.MetaSecretAppDidEnterForeground()
+                        // An OS prompt's inactive return keeps its selected auth intent/form.
+                        if wasBackground { MainViewControllerKt.MetaSecretAppDidEnterForeground() }
+                        wasBackground = false
                     case .background:
+                        wasBackground = true
                         MainViewControllerKt.MetaSecretAppDidEnterBackground()
                     default:
                         break

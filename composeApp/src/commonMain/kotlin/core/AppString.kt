@@ -1,9 +1,7 @@
 package core
 
 import androidx.compose.runtime.Composable
-import org.jetbrains.compose.resources.StringResource
 import org.koin.compose.koinInject
-import kotlinproject.composeapp.generated.resources.*
 
 enum class AppString {
     orbitBrand,
@@ -170,176 +168,77 @@ enum class AppString {
     reject_join,
     resetAllData,
     resetAllDataWarning,
-    biometric_error
-}
+    biometric_error,
+    lbHome,
+    lbSecrets,
+    LbSearchSecrets,
+    lbInvite,
+    lbStorage,
+    lbCurrent,
+    lbRemove,
+    lbConfirmRemove,
+    lbCreate,
+    lbPlain,
+    lbSeed,
+    lbName,
+    lbValue,
+    lbWords,
+    lbPaste,
+    lbShow,
+    lbHide,
+    lbCopy,
+    lbPending,
+    lbUnknown,
+    lbReset,
+    lbResetDescription,
+    lbResetConfirm,
+    lbError,
+    lbVersion,
+    lbDevices,
+    lbYourVault,
+    lbVault,
+    lbThisDevice,
+    lbNotConnected,
+    lbConnected,
+    lbIfConnected,
+    lbPreview,
+    lbTimeMachine,
+    lbStorageWhole,
+    lbStorageCopies,
+    lbStorageShares,
+    lbStorageWholeRule,
+    lbStorageCopiesRule,
+    lbStorageSharesRule,
+    lbNoActions,
+    lbNoActionsWaiting,
+    lbNotifications,
+    lbVaultDetails,
+    lbJoinRequest,
+    lbRecoverRequest,
+    lbDeleteRequest,
+    lbRemoveRequest,
+    lbApprove,
+    lbDelete,
+    lbApplication,
+    lbLocalData,
+    lbScanQr,
+    lbEnterSecret,
+    lbWordProgress,
+    lbPasteHint,
+    lbCreatingSecret,
+    lbCreatingSeed,
+    lbForecastWhole,
+    lbForecastCopies,
+    lbForecastShares,
+    lbForecastWholeRule,
+    lbForecastCopiesRule,
+    lbForecastSharesRule,
+    lbNoMatches,
+    lbSaved,
 
-fun AppString.resource(): StringResource = when (this) {
-    AppString.orbitBrand -> Res.string.orbitBrand
-    AppString.orbitTagline -> Res.string.orbitTagline
-    AppString.startupTagline -> Res.string.startupTagline
-    AppString.orbitAvailable -> Res.string.orbitAvailable
-    AppString.orbitTaken -> Res.string.orbitTaken
-    AppString.orbitChecking -> Res.string.orbitChecking
-    AppString.orbitCreating -> Res.string.orbitCreating
-    AppString.orbitJoining -> Res.string.orbitJoining
-    AppString.orbitAwaiting -> Res.string.orbitAwaiting
-    AppString.orbitSyncing -> Res.string.orbitSyncing
-    AppString.orbitDeclined -> Res.string.orbitDeclined
-    AppString.orbitNetworkError -> Res.string.orbitNetworkError
-    AppString.orbitResetFailed -> Res.string.orbitResetFailed
-    AppString.orbitProviderUnavailable -> Res.string.orbitProviderUnavailable
-    AppString.orbitInvalidEmail -> Res.string.orbitInvalidEmail
-    AppString.orbitInvalidQr -> Res.string.orbitInvalidQr
-    AppString.orbitVaultNotFound -> Res.string.orbitVaultNotFound
-    AppString.orbitCreate -> Res.string.orbitCreate
-    AppString.orbitJoin -> Res.string.orbitJoin
-    AppString.orbitEnter -> Res.string.orbitEnter
-    AppString.orbitBack -> Res.string.orbitBack
-    AppString.orbitApproved -> Res.string.orbitApproved
-    AppString.orbitRequest -> Res.string.orbitRequest
-    AppString.orbitQr -> Res.string.orbitQr
-    AppString.orbitOk -> Res.string.orbitOk
-    AppString.orbitEmailPlaceholder -> Res.string.orbitEmailPlaceholder
-    AppString.orbitApple -> Res.string.orbitApple
-    AppString.orbitGoogle -> Res.string.orbitGoogle
-    AppString.orbitCameraDenied -> Res.string.orbitCameraDenied
-    AppString.orbitCameraError -> Res.string.orbitCameraError
-
-    AppString.accept -> Res.string.accept
-    AppString.accept_request_on_other_device -> Res.string.accept_request_on_other_device
-    AppString.addDevice -> Res.string.addDevice
-    AppString.addDeviceAction -> Res.string.addDeviceAction
-    AppString.addDeviceAdvice -> Res.string.addDeviceAdvice
-    AppString.addSecret -> Res.string.addSecret
-    AppString.addSecretAction -> Res.string.addSecretAction
-    AppString.addText -> Res.string.addText
-    AppString.biometric_description -> Res.string.biometric_description
-    AppString.biometric_error_no_enrolled -> Res.string.biometric_error_no_enrolled
-    AppString.biometric_error_no_hardware -> Res.string.biometric_error_no_hardware
-    AppString.biometric_fallback -> Res.string.biometric_fallback
-    AppString.biometric_not_available -> Res.string.biometric_not_available
-    AppString.biometric_permission_required -> Res.string.biometric_permission_required
-    AppString.biometric_permission_settings -> Res.string.biometric_permission_settings
-    AppString.biometric_prompt -> Res.string.biometric_prompt
-    AppString.biometric_subtitle -> Res.string.biometric_subtitle
-    AppString.biometric_title -> Res.string.biometric_title
-    AppString.cancel -> Res.string.cancel
-    AppString.copyPhrase -> Res.string.copyPhrase
-    AppString.copySecret -> Res.string.copySecret
-    AppString.decline -> Res.string.decline
-    AppString.device -> Res.string.device
-    AppString.device_ui_category_android -> Res.string.device_ui_category_android
-    AppString.device_ui_category_cli -> Res.string.device_ui_category_cli
-    AppString.device_ui_category_desktop -> Res.string.device_ui_category_desktop
-    AppString.device_ui_category_iphone -> Res.string.device_ui_category_iphone
-    AppString.device_ui_category_other -> Res.string.device_ui_category_other
-    AppString.device_ui_category_tablet -> Res.string.device_ui_category_tablet
-    AppString.device_ui_category_unknown -> Res.string.device_ui_category_unknown
-    AppString.device_ui_category_web -> Res.string.device_ui_category_web
-    AppString.devices_4 -> Res.string.devices_4
-    AppString.devices_5 -> Res.string.devices_5
-    AppString.devicesList -> Res.string.devicesList
-    AppString.downloadMetasecret -> Res.string.downloadMetasecret
-    AppString.emailSelectionCouldNotGetEmail -> Res.string.emailSelectionCouldNotGetEmail
-    AppString.emailSelectionErrorTitle -> Res.string.emailSelectionErrorTitle
-    AppString.emailSelectionInvalidEmail -> Res.string.emailSelectionInvalidEmail
-    AppString.emailSelectionManualHint -> Res.string.emailSelectionManualHint
-    AppString.emailSelectionManualHintLine1 -> Res.string.emailSelectionManualHintLine1
-    AppString.emailSelectionManualHintLine2 -> Res.string.emailSelectionManualHintLine2
-    AppString.emailSelectionPrivateRelayMessage -> Res.string.emailSelectionPrivateRelayMessage
-    AppString.emailSelectionPrivateRelayTitle -> Res.string.emailSelectionPrivateRelayTitle
-    AppString.emailSelectionTryAgain -> Res.string.emailSelectionTryAgain
-    AppString.enable_biometric_required -> Res.string.enable_biometric_required
-    AppString.errorBiometricAuthFailed -> Res.string.errorBiometricAuthFailed
-    AppString.errorInternal -> Res.string.errorInternal
-    AppString.errorNetwork -> Res.string.errorNetwork
-    AppString.errorParse -> Res.string.errorParse
-    AppString.errorRecoverDeclined -> Res.string.errorRecoverDeclined
-    AppString.errorSecretAddFailed -> Res.string.errorSecretAddFailed
-    AppString.errorUnknownPrefix -> Res.string.errorUnknownPrefix
-    AppString.errorValidation -> Res.string.errorValidation
-    AppString.vaultDeviceLimitReached -> Res.string.vaultDeviceLimitReached
-    AppString.yes -> Res.string.yes
-    AppString.no -> Res.string.no
-    AppString.fromAllDevices -> Res.string.fromAllDevices
-    AppString.goto_devices_tab -> Res.string.goto_devices_tab
-    AppString.lackOfDevices -> Res.string.lackOfDevices
-    AppString.lackOfDevices_end -> Res.string.lackOfDevices_end
-    AppString.lackOfDevices_start -> Res.string.lackOfDevices_start
-    AppString.level_1 -> Res.string.level_1
-    AppString.level_2 -> Res.string.level_2
-    AppString.level_3 -> Res.string.level_3
-    AppString.name_occupied_join_prompt -> Res.string.name_occupied_join_prompt
-    AppString.next -> Res.string.next
-    AppString.nickname -> Res.string.nickname
-    AppString.nicknameError -> Res.string.nicknameError
-    AppString.noSecrets -> Res.string.noSecrets
-    AppString.noSecretsHeader -> Res.string.noSecretsHeader
-    AppString.ok -> Res.string.ok
-    AppString.onBoardingDescription1 -> Res.string.onBoardingDescription1
-    AppString.onBoardingDescription2 -> Res.string.onBoardingDescription2
-    AppString.onBoardingDescription3 -> Res.string.onBoardingDescription3
-    AppString.onBoardingSubTitle1 -> Res.string.onBoardingSubTitle1
-    AppString.onBoardingSubTitle2 -> Res.string.onBoardingSubTitle2
-    AppString.onBoardingSubTitle3 -> Res.string.onBoardingSubTitle3
-    AppString.onBoardingTitle1 -> Res.string.onBoardingTitle1
-    AppString.onBoardingTitle2 -> Res.string.onBoardingTitle2
-    AppString.onBoardingTitle3 -> Res.string.onBoardingTitle3
-    AppString.orUseQR -> Res.string.orUseQR
-    AppString.passwordType -> Res.string.passwordType
-    AppString.pasteSeedHint -> Res.string.pasteSeedHint
-    AppString.pasteSeedPhrase -> Res.string.pasteSeedPhrase
-    AppString.poweredBy -> Res.string.poweredBy
-    AppString.profile -> Res.string.profile
-    AppString.settings -> Res.string.settings
-    AppString.recoverPendingExists -> Res.string.recoverPendingExists
-    AppString.recoverRequestSent -> Res.string.recoverRequestSent
-    AppString.reject_join -> Res.string.reject_join
-    AppString.resetAllData -> Res.string.resetAllData
-    AppString.resetAllDataWarning -> Res.string.resetAllDataWarning
-    AppString.remove -> Res.string.remove
-    AppString.removeDevice -> Res.string.removeDevice
-    AppString.removeSecret -> Res.string.removeSecret
-    AppString.removeSecretConfirmation -> Res.string.removeSecretConfirmation
-    AppString.recoverSecret -> Res.string.recoverSecret
-    AppString.recover -> Res.string.recover
-    AppString.openRecoveryRequest -> Res.string.openRecoveryRequest
-    AppString.requestsRecovery -> Res.string.requestsRecovery
-    AppString.secret -> Res.string.secret
-    AppString.secretAdded -> Res.string.secretAdded
-    AppString.secretAddFailed -> Res.string.secretAddFailed
-    AppString.secretCapital -> Res.string.secretCapital
-    AppString.secretEncryptedSubtitle -> Res.string.secretEncryptedSubtitle
-    AppString.secretEncryptedTitle -> Res.string.secretEncryptedTitle
-    AppString.secretName -> Res.string.secretName
-    AppString.secretRemoved -> Res.string.secretRemoved
-    AppString.secrets_4 -> Res.string.secrets_4
-    AppString.secrets_5 -> Res.string.secrets_5
-    AppString.secretsHeader -> Res.string.secretsHeader
-    AppString.seedPhraseType -> Res.string.seedPhraseType
-    AppString.seedWordCount -> Res.string.seedWordCount
-    AppString.show -> Res.string.show
-    AppString.showSecret -> Res.string.showSecret
-    AppString.signOut -> Res.string.signOut
-    AppString.skip -> Res.string.skip
-    AppString.start -> Res.string.start
-    AppString.unexpected_login -> Res.string.unexpected_login
-    AppString.useMetaSecret -> Res.string.useMetaSecret
-    AppString.version -> Res.string.version
-    AppString.wanna_join -> Res.string.wanna_join
-    AppString.wanna_recover -> Res.string.wanna_recover
-    AppString.wordPlaceholder -> Res.string.wordPlaceholder
-    AppString.biometric_error -> Res.string.biometric_error
-    AppString.deletionPending -> Res.string.deletionPending
-    AppString.deletionDeclined -> Res.string.deletionDeclined
-    AppString.deletionApproval -> Res.string.deletionApproval
-    AppString.deletionRemoteRequired -> Res.string.deletionRemoteRequired
-    AppString.vaultSynchronizing -> Res.string.vaultSynchronizing
-    AppString.vaultSyncFailed -> Res.string.vaultSyncFailed
-    AppString.deletionFailed -> Res.string.deletionFailed
-    AppString.retrySync -> Res.string.retrySync
 
 }
+
 
 fun StringProviderInterface.string(key: AppString): String = getString(key)
 

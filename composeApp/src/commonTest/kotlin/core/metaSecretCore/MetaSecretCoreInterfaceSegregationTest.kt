@@ -29,6 +29,14 @@ class MetaSecretCoreInterfaceSegregationTest {
         override fun splitSecret(secretName: String, secret: String): String = "$secretName:$secret"
         override fun findClaim(secretId: String): String = secretId
         override fun recover(secretId: String): String = secretId
+        override fun clusterDistributionChecked(name: String, value: String): String = "{\"success\":false,\"errorCode\":\"OperationUnavailable\"}"
+        override fun recoverChecked(secretId: String): String = "{\"success\":false,\"errorCode\":\"OperationUnavailable\"}"
+        override fun decideJoinRequest(requestJson: String): String = "{\"success\":false,\"errorCode\":\"OperationUnavailable\"}"
+        override fun decideRemoveMember(requestJson: String): String = "{\"success\":false,\"errorCode\":\"OperationUnavailable\"}"
+        override fun deleteSecretChecked(secretId: String): String = "{\"success\":false,\"errorCode\":\"OperationUnavailable\"}"
+        override fun removeMemberChecked(targetDeviceId: String): String = "{\"success\":false,\"errorCode\":\"OperationUnavailable\"}"
+        override fun reconcileProducerReceipt(reference: String): String = "{\"success\":false,\"errorCode\":\"OperationUnavailable\"}"
+        override fun continueLocalRemoveChecked(reference: String): String = "{\"success\":false,\"errorCode\":\"OperationUnavailable\"}"
         override fun acceptRecover(claimId: String): String = claimId
         override fun declineRecover(claimId: String): String = claimId
         override fun sendDeclineCompletion(claimId: String): String = claimId

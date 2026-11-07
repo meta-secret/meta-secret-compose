@@ -7,7 +7,8 @@ import core.metaSecretCore.VaultAvailability
 import models.appInternalModels.EmailProvider
 
 enum class RegistrationScene(val step: String) { Providers("01"), Name("02"), Manual("03"), Join("04") }
-enum class RegistrationPhase { Idle, Provider, Checking, Creating, CreateError, Requesting, Pending, Syncing, Declined, Error }
+enum class RegistrationPhase { Idle, Provider, Checking, Creating, CreateError, Requesting, Pending, Syncing,
+    Declined, Error }
 
 data class RegistrationIdentity(
     val email: String = "",
@@ -23,7 +24,8 @@ data class RegistrationUiState(
     val direction: Int = 1,
 ) {
     val busy: Boolean get() = phase in setOf(
-        RegistrationPhase.Provider, RegistrationPhase.Checking, RegistrationPhase.Creating, RegistrationPhase.CreateError,
+        RegistrationPhase.Provider, RegistrationPhase.Checking, RegistrationPhase.Creating, RegistrationPhase
+            .CreateError,
         RegistrationPhase.Requesting, RegistrationPhase.Syncing,
     )
 }

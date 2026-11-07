@@ -11,9 +11,10 @@ import kotlinx.serialization.json.JsonPrimitive
 @OptIn(ExperimentalForeignApi::class)
 class MetaSecretCoreServiceIos(
     private val logger: DebugLoggerInterface,
-    private val clientDeviceInfoProvider: ClientDeviceInfoProviderInterface
-): MetaSecretCoreInterface {
-    private val swiftBridge = SwiftBridge()
+    private val clientDeviceInfoProvider: ClientDeviceInfoProviderInterface,
+    private val swiftBridge: SwiftBridge = SwiftBridge(),
+) : MetaSecretCoreInterface,
+    core.metaSecretCore.MetaSecretLiveboardOperationsInterface by IosLiveboardOperations(swiftBridge) {
 
     @OptIn(ExperimentalForeignApi::class)
     override fun generateMasterKey(): String {
@@ -59,7 +60,8 @@ class MetaSecretCoreServiceIos(
             val result = swiftBridge.getState()
             
             if (result.isEmpty()) {
-                logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "Empty response from FFI", success = false)
+                logger.log(LogTag.MetaSecretCoreService.Message.AppManagerInitError, "Empty response from FFI",
+                    success = false)
                 throw IllegalStateException("Empty response from FFI getState")
             }
             
@@ -239,7 +241,8 @@ class MetaSecretCoreServiceIos(
 
     override fun sendDeclineCompletion(claimId: String): String {
         try {
-            logger.log(LogTag.MetaSecretCoreService.Message.CallingSendDeclineCompletion, "with: $claimId", success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingSendDeclineCompletion, "with: $claimId",
+                success = true)
             val result = swiftBridge.sendDeclineCompletion(claimId)
             logger.log(LogTag.MetaSecretCoreService.Message.SendDeclineCompletionResult, success = true)
             return result
@@ -252,7 +255,8 @@ class MetaSecretCoreServiceIos(
 
     override fun showRecovered(claimId: String): String {
         try {
-            logger.log(LogTag.MetaSecretCoreService.Message.CallingShowRecovered, "with claim: $claimId", success = true)
+            logger.log(LogTag.MetaSecretCoreService.Message.CallingShowRecovered, "with claim: $claimId", success =
+                true)
             val result = swiftBridge.showRecovered(claimId)
             logger.log(LogTag.MetaSecretCoreService.Message.ShowRecoveredResult, success = true)
             return result

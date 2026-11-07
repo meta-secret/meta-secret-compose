@@ -85,13 +85,15 @@ class RegistrationScreen : Screen, ScreenTransition {
         LaunchedEffect(bounds) {
             if (backdrop != null) backdrop = blur.blur(layer.toImageBitmap(), radius)
         }
-        Box(Modifier.fillMaxSize().background(T.orbitColorBackgroundEdge).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)).imePadding().onSizeChanged { bounds = it }) {
+        Box(Modifier.fillMaxSize().background(T.orbitColorBackgroundEdge).windowInsetsPadding(WindowInsets
+            .safeDrawing.only(WindowInsetsSides.Horizontal)).imePadding().onSizeChanged { bounds = it }) {
             val backdropSemantics = if (backdrop != null) Modifier.clearAndSetSemantics {} else Modifier
             Box(Modifier.fillMaxSize().then(backdropSemantics).drawWithContent {
                 layer.record { this@drawWithContent.drawContent() }
                 drawLayer(layer)
             }) {
-                OrbitLayout(if (cameraFailure) state.copy(error = core.AppString.orbitCameraError) else state, { intent ->
+                OrbitLayout(if (cameraFailure) state.copy(error = core.AppString.orbitCameraError) else state, {
+                    intent ->
                     if (intent == RegistrationIntent.ConfirmEmail || intent == RegistrationIntent.Back) {
                         focus.clearFocus()
                         keyboard?.hide()
@@ -108,7 +110,8 @@ class RegistrationScreen : Screen, ScreenTransition {
                     }
                 })
             }
-            backdrop?.let { image -> OrbitQrSheet(image, { backdrop = null }, { vm.handle(RegistrationIntent.QrDecoded(it)) }) }
+            backdrop?.let { image -> OrbitQrSheet(image, { backdrop = null }, { vm.handle(RegistrationIntent
+                .QrDecoded(it)) }) }
         }
     }
 }
