@@ -15,8 +15,8 @@ class AppleEmailRequesterIos : AppleEmailRequesterInterface {
     override suspend fun requestAppleEmail(): AppleEmailAuthResult = withContext(Dispatchers.Default) {
         val response = runCatching {
             SwiftBridge().requestAppleEmail()
-        }.getOrElse { error ->
-            return@withContext AppleEmailAuthResult.Error(error.message ?: "Apple sign-in failed")
+        }.getOrElse {
+            return@withContext AppleEmailAuthResult.Error("Apple sign-in failed")
         }
 
         parseResponse(response)
@@ -25,12 +25,12 @@ class AppleEmailRequesterIos : AppleEmailRequesterInterface {
     private fun parseResponse(response: String): AppleEmailAuthResult {
         val payload = runCatching {
             json.parseToJsonElement(response).jsonObject
-        }.getOrElse { error ->
-            return AppleEmailAuthResult.Error(error.message ?: "Apple sign-in failed")
+        }.getOrElse {
+            return AppleEmailAuthResult.Error("Apple sign-in failed")
         }
 
         return when (payload["kind"]?.jsonPrimitive?.content) {
-            "success" -> {
+            "success", "private_relay" -> {
                 val email = payload["email"]?.jsonPrimitive?.content?.trim().orEmpty()
                 if (email.isBlank()) {
                     AppleEmailAuthResult.Error("Apple did not return an email address")
@@ -40,14 +40,6 @@ class AppleEmailRequesterIos : AppleEmailRequesterInterface {
             }
 
             "cancelled" -> AppleEmailAuthResult.Cancelled
-            "private_relay" -> {
-                val email = payload["email"]?.jsonPrimitive?.content?.trim().orEmpty()
-                AppleEmailAuthResult.Error(
-                    payload["message"]?.jsonPrimitive?.content
-                        ?: if (email.isBlank()) "Apple provided a private relay address" else "Apple provided a private relay address: $email"
-                )
-            }
-
             else -> {
                 val message = payload["message"]?.jsonPrimitive?.content
                     ?: "Apple sign-in failed"

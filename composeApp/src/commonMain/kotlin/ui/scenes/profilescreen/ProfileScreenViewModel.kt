@@ -1,9 +1,8 @@
 package ui.scenes.profilescreen
 
 import androidx.lifecycle.viewModelScope
-import core.AppStateCacheProviderInterface
 import core.DeviceInfoProviderInterface
-import core.KeyChainInterface
+import core.metaSecretCore.liveboard.NativeLocalReset
 import core.VaultStatsProviderInterface
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,9 +18,9 @@ class ProfileScreenViewModel(
     val deviceInfoProvider: DeviceInfoProviderInterface,
     private val socketHandler: MetaSecretSocketHandlerInterface,
     private val vaultStatsProvider: VaultStatsProviderInterface,
-    private val keyChainManager: KeyChainInterface,
-    private val appStateCacheProvider: AppStateCacheProviderInterface,
+    private val localReset: NativeLocalReset,
 ) : CommonViewModel() {
+    private var expectedOwner = localReset.capture()
 
     val vaultName: StateFlow<String?> = vaultStatsProvider.vaultName
     val devicesCount: StateFlow<Int> = vaultStatsProvider.devicesCount
@@ -80,9 +79,9 @@ class ProfileScreenViewModel(
     private suspend fun resetAllData() {
         logger.log(LogTag.ProfileVM.Message.ResetAllData, success = true)
         try {
-            appStateCacheProvider.clearCache()
-            val isCleared = keyChainManager.clearAll(isCleanDB = true)
-            if (isCleared) {
+            val result = localReset.reset(expectedOwner) ?: return
+            if (!result.value && localReset.isCurrent(result)) expectedOwner = result.owner
+            if (result.value && localReset.isCurrent(result)) {
                 _navigationEvent.value = ProfileNavigationEvent.NavigateToSignIn
             }
         } catch (t: Throwable) {

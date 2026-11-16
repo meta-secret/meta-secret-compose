@@ -14,10 +14,12 @@ class ErrorMapper(
                 when {
                     message.contains("network", ignoreCase = true) ||
                     message.contains("connection", ignoreCase = true) ||
-                    message.contains("timeout", ignoreCase = true) -> AppError.NetworkError(stringProvider.errorNetwork())
+                    message.contains("timeout", ignoreCase = true) -> AppError.NetworkError(stringProvider
+                        .errorNetwork())
                     message.contains("parse", ignoreCase = true) ||
                     message.contains("json", ignoreCase = true) ||
-                    message.contains("serialization", ignoreCase = true) -> AppError.ParseError(stringProvider.errorParse())
+                    message.contains("serialization", ignoreCase = true) -> AppError.ParseError(stringProvider
+                        .errorParse())
                     message.contains("ffi", ignoreCase = true) ||
                     message.contains("native", ignoreCase = true) ||
                     message.contains("jni", ignoreCase = true) -> AppError.FfiError(stringProvider.errorInternal())

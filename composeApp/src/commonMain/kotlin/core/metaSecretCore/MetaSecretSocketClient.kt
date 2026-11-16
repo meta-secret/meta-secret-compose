@@ -231,6 +231,8 @@ class MetaSecretStateEventsClient(
 
         val authorizationToken = try {
             subscription.authorizationTokenProvider()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             _joinResultEvents.emit(MetaSecretJoinResultEvent.Error(
                 "unable to authorize this pending join request: ${e.message}", terminal = true

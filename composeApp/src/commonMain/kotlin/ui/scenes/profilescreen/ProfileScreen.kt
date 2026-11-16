@@ -33,7 +33,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import ui.scenes.signinscreen.SignInScreen
+import ui.scenes.registration.RegistrationScreen
 import org.koin.compose.viewmodel.koinViewModel
 import core.AppColors
 import ui.screenContent.CommonBackground
@@ -49,7 +49,7 @@ class ProfileScreen : Screen {
         LaunchedEffect(navigationEvent) {
             when (navigationEvent) {
                 ProfileNavigationEvent.NavigateToSignIn -> {
-                    navigator.rootNavigator().replaceAll(SignInScreen())
+                    navigator.rootNavigator().replaceAll(RegistrationScreen())
                     viewModel.consumeNavigationEvent()
                 }
 

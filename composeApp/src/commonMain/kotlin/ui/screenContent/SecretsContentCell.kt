@@ -172,22 +172,26 @@ fun SecretsContent(
                     }
                     when (deletionState?.clientStatus) {
                         models.apiModels.SecretDeletionStatus.Pending -> Text(
-                            appString(AppString.deletionPending), style = AppTextStyles.Micro(), color = AppColors.White75,
+                            appString(AppString.deletionPending), style = AppTextStyles.Micro(), color = AppColors
+                                .White75,
                             modifier = Modifier.testTag("deletion-pending-${secret.secretName}"))
                         models.apiModels.SecretDeletionStatus.NeedApprove -> TextButton(
                             onClick = onOpenDeletionRequest,
                             modifier = Modifier.testTag("open-deletion-request-${secret.secretName}")) {
-                            Text(appString(AppString.deletionApproval), style = AppTextStyles.BodyStrong(), color = AppColors.RedError)
+                            Text(appString(AppString.deletionApproval), style = AppTextStyles.BodyStrong(), color =
+                                AppColors.RedError)
                         }
                         else -> TextButton(
                             enabled = deletionState != null,
                             onClick = onDelete,
                             modifier = Modifier.testTag("delete-secret-${secret.secretName}")) {
-                            Text(appString(AppString.removeSecret), style = AppTextStyles.BodyStrong(), color = AppColors.RedError)
+                            Text(appString(AppString.removeSecret), style = AppTextStyles.BodyStrong(), color =
+                                AppColors.RedError)
                         }
                     }
                     if (deletionState?.clientStatus == models.apiModels.SecretDeletionStatus.Declined) {
-                        Text(appString(AppString.deletionDeclined), style = AppTextStyles.Micro(), color = AppColors.White75)
+                        Text(appString(AppString.deletionDeclined), style = AppTextStyles.Micro(), color = AppColors
+                            .White75)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (pendingRecoveryRequests > 0) {
@@ -203,7 +207,8 @@ fun SecretsContent(
                             // Keep the card action short: the full “Recover
                             // secret” label belongs in the dialog, while the
                             // compact card must remain usable beside Open request.
-                            text = if (primaryAction == SecretPrimaryAction.Show) appString(AppString.show) else appString(AppString.recover),
+                            text = if (primaryAction == SecretPrimaryAction.Show) appString(AppString.show
+                                ) else appString(AppString.recover),
                             fillMaxWidth = false,
                             modifier = Modifier.weight(1f).testTag("secret-primary-action-${secret.secretName}"),
                         )

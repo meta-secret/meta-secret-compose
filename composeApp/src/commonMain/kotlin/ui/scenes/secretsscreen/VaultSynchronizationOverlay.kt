@@ -28,7 +28,8 @@ internal fun VaultSynchronizationOverlay(state: VaultSynchronization, onRetry: (
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             if (state.loading) {
                 CircularProgressIndicator(modifier = Modifier.testTag("vault-sync-loader"))
-                Text(appString(AppString.vaultSynchronizing), style = AppTextStyles.Paragraph(), color = AppColors.White)
+                Text(appString(AppString.vaultSynchronizing), style = AppTextStyles.Paragraph(), color = AppColors
+                    .White)
             } else {
                 Text(appString(AppString.vaultSyncFailed), style = AppTextStyles.Paragraph(), color = AppColors.White)
                 ClassicButton(action = onRetry, text = appString(AppString.retrySync),

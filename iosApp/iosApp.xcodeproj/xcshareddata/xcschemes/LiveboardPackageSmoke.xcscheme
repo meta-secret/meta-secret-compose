@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme LastUpgradeVersion="1540" version="1.7">
+   <BuildAction parallelizeBuildables="NO" buildImplicitDependencies="NO">
+      <BuildActionEntries>
+         <BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="NO">
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="A4B400070000000000000007" BuildableName="LiveboardPackageSmokeTests.xctest" BlueprintName="LiveboardPackageSmokeTests" ReferencedContainer="container:iosApp.xcodeproj"/>
+         </BuildActionEntry>
+      </BuildActionEntries>
+   </BuildAction>
+   <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="NO">
+      <Testables>
+         <TestableReference skipped="NO" parallelizable="NO">
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="A4B400070000000000000007" BuildableName="LiveboardPackageSmokeTests.xctest" BlueprintName="LiveboardPackageSmokeTests" ReferencedContainer="container:iosApp.xcodeproj"/>
+         </TestableReference>
+      </Testables>
+   </TestAction>
+</Scheme>

@@ -641,15 +641,25 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_clean_up_database(
     ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_cluster_distribution_checked(
+    ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_continue_local_remove_checked(
+    ): Int
     external fun uniffi_metasecret_mobile_checksum_func_database_file_name(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_decide_delete_secret(
+    ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_decide_join_request(
+    ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_decide_remove_member(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_decline_recover(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_decline_remove_member(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_delete_secret(
+    ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_delete_secret_checked(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_device_ui_category_discriminant(
     ): Int
@@ -673,9 +683,15 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_join_result_auth_token(
     ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_reconcile_producer_receipt(
+    ): Int
     external fun uniffi_metasecret_mobile_checksum_func_recover(
     ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_recover_checked(
+    ): Int
     external fun uniffi_metasecret_mobile_checksum_func_remove_member(
+    ): Int
+    external fun uniffi_metasecret_mobile_checksum_func_remove_member_checked(
     ): Int
     external fun uniffi_metasecret_mobile_checksum_func_send_decline_completion(
     ): Int
@@ -710,15 +726,25 @@ external fun uniffi_metasecret_mobile_fn_func_approve_remove_member(`targetDevic
 ): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_clean_up_database(uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
+external fun uniffi_metasecret_mobile_fn_func_cluster_distribution_checked(`name`: RustBuffer.ByValue,`secret`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_metasecret_mobile_fn_func_continue_local_remove_checked(`referenceJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_database_file_name(`masterKey`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_decide_delete_secret(`requestJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_metasecret_mobile_fn_func_decide_join_request(`requestJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_metasecret_mobile_fn_func_decide_remove_member(`requestJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_decline_recover(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_decline_remove_member(`targetDeviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_delete_secret(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_metasecret_mobile_fn_func_delete_secret_checked(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_device_ui_category_discriminant(`deviceType`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): Int
@@ -742,9 +768,15 @@ external fun uniffi_metasecret_mobile_fn_func_init_ios_with_device(`masterKey`: 
 ): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_join_result_auth_token(uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
+external fun uniffi_metasecret_mobile_fn_func_reconcile_producer_receipt(`referenceJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_recover(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
+external fun uniffi_metasecret_mobile_fn_func_recover_checked(`secretId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_remove_member(`targetDeviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+): RustBuffer.ByValue
+external fun uniffi_metasecret_mobile_fn_func_remove_member_checked(`targetDeviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
 external fun uniffi_metasecret_mobile_fn_func_send_decline_completion(`claimId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
 ): RustBuffer.ByValue
@@ -888,10 +920,22 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_metasecret_mobile_checksum_func_clean_up_database() != 5094) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_metasecret_mobile_checksum_func_cluster_distribution_checked() != 44741) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_metasecret_mobile_checksum_func_continue_local_remove_checked() != 14084) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_metasecret_mobile_checksum_func_database_file_name() != 39011) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_decide_delete_secret() != 31608) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_metasecret_mobile_checksum_func_decide_join_request() != 56084) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_metasecret_mobile_checksum_func_decide_remove_member() != 18531) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_decline_recover() != 6398) {
@@ -901,6 +945,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_delete_secret() != 43863) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_metasecret_mobile_checksum_func_delete_secret_checked() != 4978) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_device_ui_category_discriminant() != 50183) {
@@ -936,10 +983,19 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if (lib.uniffi_metasecret_mobile_checksum_func_join_result_auth_token() != 27009) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_metasecret_mobile_checksum_func_reconcile_producer_receipt() != 1423) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_metasecret_mobile_checksum_func_recover() != 36000) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_metasecret_mobile_checksum_func_recover_checked() != 17048) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_metasecret_mobile_checksum_func_remove_member() != 57358) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_metasecret_mobile_checksum_func_remove_member_checked() != 32234) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_metasecret_mobile_checksum_func_send_decline_completion() != 48010) {
@@ -1164,6 +1220,26 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     )
     }
     
+ fun `clusterDistributionChecked`(`name`: kotlin.String, `secret`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_cluster_distribution_checked(
+    
+        FfiConverterString.lower(`name`),FfiConverterString.lower(`secret`),_status)
+}
+    )
+    }
+    
+ fun `continueLocalRemoveChecked`(`referenceJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_continue_local_remove_checked(
+    
+        FfiConverterString.lower(`referenceJson`),_status)
+}
+    )
+    }
+    
  fun `databaseFileName`(`masterKey`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
@@ -1178,6 +1254,26 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_decide_delete_secret(
+    
+        FfiConverterString.lower(`requestJson`),_status)
+}
+    )
+    }
+    
+ fun `decideJoinRequest`(`requestJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_decide_join_request(
+    
+        FfiConverterString.lower(`requestJson`),_status)
+}
+    )
+    }
+    
+ fun `decideRemoveMember`(`requestJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_decide_remove_member(
     
         FfiConverterString.lower(`requestJson`),_status)
 }
@@ -1208,6 +1304,16 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_delete_secret(
+    
+        FfiConverterString.lower(`secretId`),_status)
+}
+    )
+    }
+    
+ fun `deleteSecretChecked`(`secretId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_delete_secret_checked(
     
         FfiConverterString.lower(`secretId`),_status)
 }
@@ -1324,6 +1430,16 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     )
     }
     
+ fun `reconcileProducerReceipt`(`referenceJson`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_reconcile_producer_receipt(
+    
+        FfiConverterString.lower(`referenceJson`),_status)
+}
+    )
+    }
+    
  fun `recover`(`secretId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
@@ -1334,10 +1450,30 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     )
     }
     
+ fun `recoverChecked`(`secretId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_recover_checked(
+    
+        FfiConverterString.lower(`secretId`),_status)
+}
+    )
+    }
+    
  fun `removeMember`(`targetDeviceId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_metasecret_mobile_fn_func_remove_member(
+    
+        FfiConverterString.lower(`targetDeviceId`),_status)
+}
+    )
+    }
+    
+ fun `removeMemberChecked`(`targetDeviceId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_metasecret_mobile_fn_func_remove_member_checked(
     
         FfiConverterString.lower(`targetDeviceId`),_status)
 }

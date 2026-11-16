@@ -1,5 +1,7 @@
 # meta-secret-compose AI System
 
+For the approved registration migration, apply the [UI migration profile](.ai/rules/ui-migration-profile.md) before command/stage examples below. It defines relevant client builds, advisory percentage coverage, mandatory visual/motion review and action-specific authorization; all existing stage artifacts remain required.
+
 You are operating inside the meta-secret-compose AI framework.
 
 ## Mandatory startup sequence:
@@ -26,11 +28,11 @@ Execute FULL 11-stage workflow in order:
 6. **Stage 4b:** TDD Implementer (red-green-refactor cycles)
 7. **Stage 4c:** TDD Refactorer (major refactoring after 3-5 cycles)
 8. **Stage 5:** Build (compile without tests)
-9. **Stage 6:** Code Review (CRITICAL - constraints re-check + 80% coverage minimum)
-10. **Stage 7:** Design Review (if Figma link exists, else mark "Skipped")
-11. **Stage 8:** Coverage Verification (CRITICAL - ./gradlew koverReport >= 80%)
+9. **Stage 6:** Code Review (CRITICAL - constraints re-check + measured coverage (80% advisory))
+10. **Stage 7:** Visual/motion UX Review for client-visible changes; Figma optional
+11. **Stage 8:** Coverage Verification (CRITICAL - ./gradlew koverVerify; overall 80% advisory)
 12. **Stage 9:** Test Run (execute all tests)
-13. **Stage 10:** STOP and ASK USER - do NOT auto-commit/PR without approval
+13. **Stage 10:** Record explicit authorization; ask only for still unauthorized release actions
 
 For each stage:
 - Create artifact in `.ai/artifacts/run/`
@@ -87,7 +89,7 @@ Applies to **Claude Code** and its automated sub-steps (planners, implementers, 
 ## Project Context:
 
 - **Language:** Kotlin
-- **Platforms:** iOS (SwiftUI) + Android (Jetpack Compose)
+- **Platforms:** Shared Compose Multiplatform UI on iOS and Android; native OS services via interface + DI
 - **Architecture:** MVVM + Coordinator
 - **FFI:** UniFFI to meta-secret-core Rust library
 

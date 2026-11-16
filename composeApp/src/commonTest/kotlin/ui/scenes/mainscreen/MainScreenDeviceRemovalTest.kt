@@ -3,10 +3,16 @@ package ui.scenes.mainscreen
 import core.AppStateCacheProviderInterface
 import core.DebugLoggerInterface
 import core.NotificationCoordinatorInterface
+import core.KeyChainInterface
+import core.metaSecretCore.liveboard.LegacyNativeReadComposition
+import core.metaSecretCore.liveboard.NativeLocalReset
+import core.metaSecretCore.liveboard.NativeReadEnvironment
+import testutils.FakeMetaSecretCore
 import core.metaSecretCore.AuthState
 import core.metaSecretCore.InitResult
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import core.metaSecretCore.liveboard.NativeReadRequirement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -16,7 +22,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -76,18 +84,21 @@ class MainScreenDeviceRemovalTest {
                 metaSecretAppManager = RemovalAppManagerFake,
                 biometricAuthenticator = FakeBiometricAuthenticator(),
                 screenMetricsProvider = FakeScreenMetricsProvider(),
-                vaultStatsProvider = FakeVaultStatsProvider(),
-                alertCoordinator = alerts,
-                keyChainManager = keyChain,
-                appStateCacheProvider = appStateCache,
+                dependencies = MainScreenDependencies(
+                    FakeVaultStatsProvider(), alerts, removalReset(keyChain, appStateCache),
+                ),
             )
             advanceUntilIdle()
 
-            socketHandler.emit(SocketActionModel.CURRENT_DEVICE_REMOVED)
-            socketHandler.emit(SocketActionModel.CURRENT_DEVICE_REMOVED)
-            withTimeout(2_000) {
-                while (viewModel.navigationEvent.value != MainNavigationEvent.NavigateToSignIn) {
-                    delay(10)
+            withContext(Dispatchers.Default) {
+                withTimeout(2_000) { socketHandler.awaitSubscription() }
+                socketHandler.emit(SocketActionModel.CURRENT_DEVICE_REMOVED)
+                socketHandler.emit(SocketActionModel.CURRENT_DEVICE_REMOVED)
+                withTimeout(2_000) {
+                    while (viewModel.navigationEvent.value != MainNavigationEvent.NavigateToSignIn) {
+                        testScheduler.runCurrent()
+                        yield()
+                    }
                 }
             }
             advanceUntilIdle()
@@ -105,6 +116,14 @@ class MainScreenDeviceRemovalTest {
         }
     }
 
+    private fun removalReset(keys: KeyChainInterface, cache: AppStateCacheProviderInterface): NativeLocalReset {
+        val composition = LegacyNativeReadComposition(
+            FakeMetaSecretCore(), cache, FakeDebugLogger(),
+            environment = NativeReadEnvironment(Dispatchers.Unconfined, Dispatchers.Unconfined),
+        )
+        return NativeLocalReset(composition.initialization, composition.keyLifecycle(keys), cache)
+    }
+
     private class RemovalSocketHandlerFake : MetaSecretSocketHandlerInterface {
         override val socketActionType: StateFlow<SocketActionModel> =
             MutableStateFlow(SocketActionModel.NONE)
@@ -113,6 +132,10 @@ class MainScreenDeviceRemovalTest {
         override val pendingRecoveryRequests: StateFlow<List<RestoreData>> =
             MutableStateFlow(emptyList())
         var onAppBackgroundCalls = 0
+
+        suspend fun awaitSubscription() {
+            mutableActions.subscriptionCount.first { it > 0 }
+        }
 
         fun emit(action: SocketActionModel) {
             mutableActions.tryEmit(action)
@@ -127,6 +150,7 @@ class MainScreenDeviceRemovalTest {
             onAppBackgroundCalls += 1
         }
         override fun refreshAppState() = Unit
+        override fun refreshAppState(required: NativeReadRequirement) = refreshAppState()
         override fun setProcessingSecretName(secretName: String) = Unit
         override fun resetReadyToRecoverDedup(claimId: String?) = Unit
         override fun resetSocketActionType(expected: SocketActionModel?) = Unit

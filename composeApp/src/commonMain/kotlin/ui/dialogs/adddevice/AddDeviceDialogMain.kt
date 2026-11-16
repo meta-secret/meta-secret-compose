@@ -1,54 +1,48 @@
 package ui.dialogs.adddevice
 
-import core.AppString
-
-import core.appString
-
-import core.AppImage
-import core.ImageProviderInterface
-
-import ui.theme.AppTextStyles
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import kotlinproject.composeapp.generated.resources.addDevice
-import kotlinproject.composeapp.generated.resources.downloadMetasecret
-import kotlinproject.composeapp.generated.resources.manrope_regular
-import kotlinproject.composeapp.generated.resources.manrope_semi_bold
-import kotlinproject.composeapp.generated.resources.orUseQR
-import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.stringResource
-import qrgenerator.qrkitpainter.rememberQrKitPainter
+import androidx.compose.ui.zIndex
 import core.AppColors
+import core.AppImage
+import core.AppString
+import core.ImageProviderInterface
 import core.ScreenMetricsProviderInterface
+import core.appString
 import org.koin.compose.koinInject
+import qrgenerator.qrkitpainter.QrPainter
+import ui.theme.AppTextStyles
 
 @Composable
 fun AddingDevice(
     screenMetricsProvider: ScreenMetricsProviderInterface,
-    mainDialogVisibility: (Boolean) -> Unit, userName: String
+    mainDialogVisibility: (Boolean) -> Unit,
+    vaultName: String,
 ) {
-    val painter = rememberQrKitPainter(userName)
+    if (vaultName.isBlank()) return
+    val painter = remember(vaultName) { runCatching { QrPainter(vaultName) }.getOrNull() }
     val imageProvider: ImageProviderInterface = koinInject()
     Dialog(
         onDismissRequest = {},
@@ -57,6 +51,7 @@ fun AddingDevice(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .testTag("add-device-dialog")
                 .background(AppColors.Black30)
                 .clickable { mainDialogVisibility(false) },
             contentAlignment = Alignment.BottomCenter
@@ -73,16 +68,20 @@ fun AddingDevice(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp)
+                        .zIndex(1f)
                 ) {
                     Image(
                         painter = imageProvider.getPainter(AppImage.Close),
-                        contentDescription = null,
+                        contentDescription = appString(AppString.cancel),
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .clickable { mainDialogVisibility(false) }
                     )
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 24.dp),
+                ) {
                     Text(
                         text = appString(AppString.addDevice),
                         style = AppTextStyles.SectionTitle(),
@@ -92,9 +91,6 @@ fun AddingDevice(
                             .padding(top = 30.dp, bottom = 24.dp)
                     )
                     Column {
-                        Row {
-                            //HorizontalPager
-                        }
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -116,7 +112,9 @@ fun AddingDevice(
                             .height(1.dp)
                     )
                     Column(
-                       verticalArrangement = Arrangement.spacedBy(24.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(
                             text = appString(AppString.orUseQR),
@@ -125,15 +123,26 @@ fun AddingDevice(
                                 .align(Alignment.CenterHorizontally)
                                 .padding(top = 10.dp)
                         )
-                        Box(
-                            modifier = Modifier
-                            .background(color = AppColors.White)
+                        Text(
+                            text = vaultName,
+                            style = AppTextStyles.Paragraph(),
+                            color = AppColors.White75,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().testTag("vault-qr-name"),
                         )
-                        {
-                            Image(
-                                painter = painter,
-                                contentDescription = null,
-                                modifier = Modifier.size(106.5.dp)
+                        if (painter != null) {
+                            Box(Modifier.background(AppColors.White).padding(32.dp)) {
+                                Image(
+                                    painter = painter,
+                                    contentDescription = appString(AppString.orbitQr),
+                                    modifier = Modifier.size(164.dp).testTag("vault-name-qr"),
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = appString(AppString.errorInternal),
+                                style = AppTextStyles.Paragraph(),
+                                color = AppColors.RedError,
                             )
                         }
                     }

@@ -64,20 +64,21 @@ internal class RecoveryUiDiagnosticProbe(private val secretName: String) {
         }
         runCatching {
             val rows = rule.onAllNodes(SemanticsMatcher("secret rows only") { node ->
-                runCatching { node.config[SemanticsProperties.TestTag].startsWith("secret-row-") }.getOrDefault(false)
+                runCatching { node.config[SemanticsProperties.TestTag].startsWith("lb-secret-name-") }.getOrDefault(false)
             }, useUnmergedTree = true).fetchSemanticsNodes()
-            val rowHashes = rows.take(12).map { hashName(it.config[SemanticsProperties.TestTag].removePrefix("secret-row-")) }
+            val rowHashes = rows.take(12).map { hashName(it.config[SemanticsProperties.TestTag].removePrefix("lb-secret-name-")) }
             Log.i("MetaSecretE2E", "$prefix composedRows=${rows.size} rowSelectorHashes=$rowHashes")
         }.onFailure {
             Log.i("MetaSecretE2E", "$prefix rowMappingUnavailable=${it.javaClass.simpleName}")
         }
-        val selectors = listOf(
-            "tab-secrets" to "tab-secrets", "tab-devices" to "tab-devices",
-            "selected-row" to "secret-row-$secretName",
-            "badge" to "recovery-request-badge-$secretName",
-            "open" to "open-recovery-request-$secretName",
-            "alert" to "alert-recovery-request",
-            "processing" to "alert-recovery-request-processing",
+        val id = rule.lbScope().secretIds[secretName]
+        val head = rule.lbVisibleIncoming()
+        val selectors = listOfNotNull(
+            "main" to "lb-home", "secrets" to "lb-secrets", "inbox" to "lb-inbox",
+            id?.let { "selected-card" to "lb-secret-$it" },
+            id?.let { "primary" to "lb-primary-$it" },
+            head?.let { "head" to "lb-inbox-head-${it.kind}-${it.requestId}" },
+            head?.let { "approve" to "lb-approve-${it.requestId}" },
         )
         for ((label, tag) in selectors) {
             runCatching {
@@ -101,8 +102,7 @@ internal fun AndroidComposeTestRule<*, *>.waitForRecoveryBadgeWithDiagnostics(
     try {
         waitUntil(timeoutMillis) {
             if (probe.hasNewPendingEvidence()) probe.capture(this, "pending-flow-observed", cycle, step)
-            onAllNodes(hasTestTag("recovery-request-badge-$secretName"), useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty()
+            lbVisibleIncoming()?.let { it.kind == "Recover" && it.subject == secretName && it.count > 0 } == true
         }
     } catch (error: Throwable) {
         probe.capture(this, "badge-gate-failed", cycle, step)

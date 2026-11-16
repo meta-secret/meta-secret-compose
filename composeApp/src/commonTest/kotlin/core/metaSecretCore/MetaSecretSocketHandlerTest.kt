@@ -1,6 +1,10 @@
 package core.metaSecretCore
 
 import core.errors.ErrorMapper
+import core.metaSecretCore.liveboard.LegacyNativeReadComposition
+import core.metaSecretCore.liveboard.NativeSocketPorts
+import core.metaSecretCore.liveboard.NativeSocketPresentation
+import core.metaSecretCore.liveboard.NativeSocketRuntime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.coroutines.CoroutineStart
@@ -87,14 +91,15 @@ class MetaSecretSocketHandlerTest {
 
     private fun newHandler(core: FakeMetaSecretCore): MetaSecretSocketHandler {
         val stringProvider = FakeStringProvider()
+        val logger = FakeDebugLogger()
+        val cache = FakeAppStateCacheProvider()
+        val composition = LegacyNativeReadComposition(core, cache, logger)
+        runBlocking { composition.initializeImplicitCore() }
         return MetaSecretSocketHandler(
-            metaSecretCore = core,
-            logger = FakeDebugLogger(),
-            notificationCoordinator = FakeNotificationCoordinator(),
-            errorMapper = ErrorMapper(stringProvider),
-            appStateCacheProvider = FakeAppStateCacheProvider(),
-            stringProvider = stringProvider,
-            uiDispatcher = kotlinx.coroutines.Dispatchers.Unconfined
+            NativeSocketPorts(core, logger, FakeNotificationCoordinator(), ErrorMapper(stringProvider)),
+            NativeSocketPresentation(cache, stringProvider),
+            NativeSocketRuntime(NoopMetaSecretSocketClient(), composition.operations, kotlinx.coroutines.Dispatchers.Unconfined),
+            composition.reads,
         )
     }
 

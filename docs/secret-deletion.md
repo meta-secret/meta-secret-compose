@@ -7,3 +7,15 @@ The shared app manager delegates `deleteSecret(opaqueSecretId)` and `decideDelet
 A startup/reconnect refresh covers the cached secret list with a loader. Synchronization failure blocks cached reveal and provides Retry. Successful canonical state reconciles the cache by opaque ID before the loader completes; deletion never optimistically edits preferences. A same-name recreated Secret has a new opaque identity. Existing reveal dialogs are covered during refresh; removal of their opaque Secret ID closes them, clears plaintext and rejects late asynchronous reveal results. A reveal’s own refresh does not restart or discard an otherwise valid reveal.
 
 See ../meta-secret-core/docs/secret-deletion.md for the protocol and atomic outcome/tombstone contract. Logical deletion cannot erase disconnected devices until they reconnect, disk-sector remnants or external backups.
+
+## Additive Liveboard binding
+
+The new typed adapter offers `deleteSecretChecked(opaqueSecretId)` and preserves
+its version1 producer receipt separately from legacy deletion responses. The
+immutable original source reference and known UUID correlate later read-only
+observations; a producer phase or disappearance alone does not prove deletion.
+No automatic continuation or legacy fallback is added. An entered mutation
+without a usable receipt returns Uncertain for the owning session to fence.
+Existing screens/app-manager paths remain legacy until the mobile Liveboard
+session and UI migration. See [native integration](liveboard.md); parser/unit
+checks do not replace real deletion UI E2E or OS-auth verification.

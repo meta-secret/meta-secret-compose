@@ -58,7 +58,8 @@ class KeyChainManagerAndroid(
                 return@withContext migrateFromLegacy(key)
             }
             val cipher = Cipher.getInstance(TRANSFORMATION)
-            cipher.init(Cipher.DECRYPT_MODE, getOrCreateKey(getKeyAlias(key)), GCMParameterSpec(GCM_TAG_LENGTH, ivFile.readBytes()))
+            cipher.init(Cipher.DECRYPT_MODE, getOrCreateKey(getKeyAlias(key)), GCMParameterSpec(GCM_TAG_LENGTH,
+                ivFile.readBytes()))
             String(cipher.doFinal(keyFile.readBytes()), Charsets.UTF_8)
         } catch (e: Exception) {
             null
@@ -125,7 +126,8 @@ class KeyChainManagerAndroid(
         } ?: return
         for (file in dbFiles) {
             val deleted = file.delete()
-            logger.log(LogTag.MetaSecretCoreService.Message.DbFileDeleted, "${file.name} deleted=$deleted", success = deleted)
+            logger.log(LogTag.MetaSecretCoreService.Message.DbFileDeleted, "${file.name} deleted=$deleted",
+                success = deleted)
         }
     }
 
@@ -163,7 +165,8 @@ class KeyChainManagerAndroid(
         if (!cached.isNullOrEmpty()) {
             saveString(key, cached)
             prefs.edit().clear().apply()
-            logger.log(LogTag.KeyChainManager.Message.StartingClearAll, "Migrated master_key from legacy cache", success = true)
+            logger.log(LogTag.KeyChainManager.Message.StartingClearAll, "Migrated master_key from legacy cache",
+                success = true)
             return cached
         }
         return null

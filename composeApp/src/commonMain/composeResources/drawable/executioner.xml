@@ -219,14 +219,14 @@
   <path
       android:pathData="M270.12,421.26L269.23,420.91L268.48,421.5L237.37,445.98L236.62,446.57L236.75,447.51L242.4,486.69L242.53,487.64L243.42,487.99L280.17,502.7L281.06,503.05L281.81,502.46L312.92,477.99L313.67,477.39L313.53,476.45L307.89,437.27L307.76,436.32L306.87,435.97L270.12,421.26Z"
       android:strokeWidth="3.31195"
-      android:fillColor="#0368FF"
+      android:fillColor="#2C2E2F"
       android:strokeColor="#ffffff"/>
   <path
       android:pathData="M279.59,431.29L307.31,442.53L311.6,472.36L288.18,490.95L260.46,479.72L256.17,449.89L279.59,431.29Z"
-      android:fillColor="#4E95FF"/>
+      android:fillColor="#555B5D"/>
   <path
       android:pathData="M289.52,439.8L307.97,447.09L310.77,466.57L295.13,478.77L276.68,471.48L273.87,452L289.52,439.8Z"
-      android:fillColor="#78AEFF"/>
+      android:fillColor="#858E91"/>
   <path
       android:pathData="M285.82,456.69a6.72,6.72 81.63,1 0,13.31 -1.92a6.72,6.72 81.63,1 0,-13.31 1.92z"
       android:fillColor="#ffffff"/>

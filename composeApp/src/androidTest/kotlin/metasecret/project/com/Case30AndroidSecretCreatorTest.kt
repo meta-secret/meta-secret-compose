@@ -24,16 +24,10 @@ class Case30AndroidSecretCreatorTest {
         val cycle = argument("cycle", "0")
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-secrets", 60_000)
-        composeRule.onNodeWithTag("tab-secrets").performClick()
-        composeRule.waitForTag("add-secret-fab", 120_000)
-        composeRule.onNodeWithTag("add-secret-fab").performClick()
-        composeRule.waitForTag("secret-name-input", 30_000)
-        composeRule.onNodeWithTag("secret-name-input").performTextInput(secretName)
-        composeRule.onNodeWithTag("secret-value-input").performTextInput(secretValue)
-        composeRule.onNodeWithTag("add-secret-submit").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
-        composeRule.waitForTagGone("secret-name-input", 30_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbSecrets()
+        composeRule.lbWaitMain(120_000)
+        composeRule.lbCreatePlain(secretName, secretValue)
 
         marker("ANDROID_TEST30_SECRET_CREATED_$cycle")
     }
@@ -46,16 +40,10 @@ class Case30AndroidSecretCreatorTest {
         val cycle = argument("cycle", "3")
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-secrets", 60_000)
-        composeRule.onNodeWithTag("tab-secrets").performClick()
-        composeRule.waitForTag("add-secret-fab", 120_000)
-        composeRule.onNodeWithTag("add-secret-fab").performClick()
-        composeRule.waitForTag("secret-name-input", 30_000)
-        composeRule.onNodeWithTag("secret-name-input").performTextInput(secretName)
-        composeRule.onNodeWithTag("secret-value-input").performTextInput(secretValue)
-        composeRule.onNodeWithTag("add-secret-submit").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
-        composeRule.waitForTagGone("secret-name-input", 30_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbSecrets()
+        composeRule.lbWaitMain(120_000)
+        composeRule.lbCreatePlain(secretName, secretValue)
 
         marker("ANDROID_TEST45_SECRET_CREATED_$cycle")
     }
@@ -68,16 +56,10 @@ class Case30AndroidSecretCreatorTest {
         val cycle = argument("cycle", "3")
 
         clickIfPresent("onboarding-skip", 10_000)
-        composeRule.waitForTag("tab-secrets", 60_000)
-        composeRule.onNodeWithTag("tab-secrets").performClick()
-        composeRule.waitForTag("add-secret-fab", 120_000)
-        composeRule.onNodeWithTag("add-secret-fab").performClick()
-        composeRule.waitForTag("secret-name-input", 30_000)
-        composeRule.onNodeWithTag("secret-name-input").performTextInput(secretName)
-        composeRule.onNodeWithTag("secret-value-input").performTextInput(secretValue)
-        composeRule.onNodeWithTag("add-secret-submit").performClick()
-        composeRule.waitForTag("secret-row-$secretName", 180_000)
-        composeRule.waitForTagGone("secret-name-input", 30_000)
+        composeRule.lbWaitMain(60_000)
+        composeRule.lbSecrets()
+        composeRule.lbWaitMain(120_000)
+        composeRule.lbCreatePlain(secretName, secretValue)
 
         marker("ANDROID_TEST49_SECRET_CREATED_$cycle")
     }
