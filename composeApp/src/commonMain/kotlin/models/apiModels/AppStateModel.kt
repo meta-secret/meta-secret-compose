@@ -9,6 +9,7 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
 
 object StateSerializer : KSerializer<State> {
@@ -236,6 +237,7 @@ data class UserMemberFullInfo(
     val ssClaims: SsClaims? = null,
     val vaultEvents: VaultEvents? = null,
     val deletionStates: List<SecretDeletionState> = emptyList(),
+    val liveboardState: JsonElement? = null,
 )
 
 @Serializable
@@ -449,9 +451,12 @@ data class AppStateModel(
     }
 
     companion object {
-        fun fromJson(jsonResponse: String, logger: core.DebugLoggerInterface? = null, logFormatter: core.LogFormatterInterface? = null): AppStateModel {
+        fun fromJson(jsonResponse: String, logger: core.DebugLoggerInterface? = null, logFormatter: core
+            .LogFormatterInterface? = null): AppStateModel {
             return try {
-                JsonConfig.json.decodeFromString<AppStateModel>(jsonResponse)
+                val unambiguous = models.apiModels.liveboard.LiveboardMetadataBoundary.isUnambiguous(jsonResponse)
+                val state = JsonConfig.json.decodeFromString<AppStateModel>(jsonResponse)
+                models.apiModels.liveboard.LiveboardMetadataBoundary.retainMetadata(state, unambiguous)
             } catch (e: Exception) {
                 val failure = "Failed to parse app state (${e::class.simpleName ?: "Exception"})"
                 logger?.log(
@@ -470,9 +475,12 @@ data class AppStateModel(
             normalized.contains("android") -> DeviceUiCategory.Android
             normalized.contains("iphone") || normalized.contains("ios") -> DeviceUiCategory.Iphone
             normalized.contains("ipad") || normalized.contains("tablet") -> DeviceUiCategory.Tablet
-            normalized.contains("web") || normalized.contains("browser") || normalized.contains("chrome") || normalized.contains("safari") || normalized.contains("firefox") -> DeviceUiCategory.Web
-            normalized.contains("cli") || normalized.contains("terminal") || normalized.contains("console") -> DeviceUiCategory.Cli
-            normalized.contains("desktop") || normalized.contains("mac") || normalized.contains("windows") || normalized.contains("linux") || normalized.contains("pc") -> DeviceUiCategory.Desktop
+            normalized.contains("web") || normalized.contains("browser") || normalized.contains("chrome") ||
+                normalized.contains("safari") || normalized.contains("firefox") -> DeviceUiCategory.Web
+            normalized.contains("cli") || normalized.contains("terminal") || normalized.contains("console") ->
+                DeviceUiCategory.Cli
+            normalized.contains("desktop") || normalized.contains("mac") || normalized.contains("windows") ||
+                normalized.contains("linux") || normalized.contains("pc") -> DeviceUiCategory.Desktop
             else -> DeviceUiCategory.Other
         }
     }

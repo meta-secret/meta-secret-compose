@@ -6,6 +6,7 @@ import core.metaSecretCore.AuthState
 import core.metaSecretCore.InitResult
 import core.metaSecretCore.MetaSecretAppManagerInterface
 import core.metaSecretCore.MetaSecretSocketHandlerInterface
+import core.metaSecretCore.liveboard.NativeReadRequirement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
@@ -93,14 +94,35 @@ class SplashScreenViewModelTest {
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `existing identity refresh failure cannot route around local unlock`() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        startKoin { modules(module {
+            single<DebugLoggerInterface> { FakeDebugLogger() }
+            single<NotificationCoordinatorInterface> { FakeNotificationCoordinator() }
+        }) }
+        try {
+            val appManager = SplashAppManagerFake().apply { auth = AuthState.NOT_YET_COMPLETED }
+            val keys = FakeKeyChain(mutableMapOf("master_key" to "existing-key"))
+            val vm = SplashScreenViewModel(FakeKeyValueStorage(), FakeBiometricAuthenticator(), appManager,
+                FakeScreenMetricsProvider(), FakeVaultStatsProvider(), FakeStringProvider(), keys, SplashSocketHandlerFake())
+            vm.handle(SplashViewEvents.ON_APPEAR)
+            advanceUntilIdle()
+            assertEquals(SplashNavigationEvent.Idle, vm.navigationEvent.value)
+            assertEquals(0, keys.clearAllCalls)
+        } finally { stopKoin(); Dispatchers.resetMain() }
+    }
+
     private class SplashAppManagerFake : MetaSecretAppManagerInterface {
         var checkAuthCalls = 0
+        var auth = AuthState.COMPLETED
 
         override suspend fun initWithSavedKey(): InitResult = error("Not used")
 
         override suspend fun checkAuth(): AuthState {
             checkAuthCalls += 1
-            return AuthState.COMPLETED
+            return auth
         }
 
         override suspend fun getStateModel(): AppStateModel? = null
@@ -146,6 +168,7 @@ class SplashScreenViewModelTest {
 
         override fun onAppBackground() = Unit
         override fun refreshAppState() = Unit
+        override fun refreshAppState(required: NativeReadRequirement) = refreshAppState()
         override fun setProcessingSecretName(secretName: String) = Unit
         override fun resetReadyToRecoverDedup(claimId: String?) = Unit
         override fun resetSocketActionType(expected: SocketActionModel?) = Unit

@@ -47,7 +47,7 @@
 - **Output:** `.ai/artifacts/run/MS-<run-id>-008-coverage.md`
 - **Status:** Pass / Fail / Skipped
 - **Required metrics:**
-  - Overall coverage >= 80%
+  - Measured overall coverage; 80% is advisory
   - Business logic >= 90% (preferred)
   - Report uncovered lines
 - **Non-negotiable:** This stage MUST be executed. Coverage < 80% = advisory warning
@@ -65,8 +65,8 @@
 
 ### Stage 10: PR Creation (USER APPROVAL REQUIRED)
 - **Agent:** `release-manager`
-- **Action:** STOP and ASK USER for approval before committing
-- **Question:** "Should we proceed to Stage 10 (Branch + Commit + PR)?"
+- **Action:** Record action-specific explicit session authorization; ask only for a still unauthorized commit/PR action
+- **Question if needed:** Request only the unauthorized action after presenting concrete reviewable results; commit permission does not imply PR/push permission.
 - **Wait for:** Explicit YES/NO response from user
 - **If YES:** Continue with commit and PR creation
 - **If NO:** Stop workflow and wait for further instructions
@@ -150,7 +150,7 @@ When executing `implement issue` command:
 2. Read `.ai/commands/implement-issue.md` SECOND
 3. Execute stages in strict order: 1 → 2 → 3 → 3.5 → 4a → 4b → 4c → 5 → 6 → 7 → 8 → 9 → 9.5 (when applicable) → 10 → 11 (CI when present)
 4. Do NOT skip stages 6, 7, 8
-5. For Stage 10, use AskUserQuestion tool to get approval before committing
+5. For Stage 10, preserve existing explicit authorization and ask only for still unauthorized actions
 6. Create artifacts for each stage in `.ai/artifacts/run/`
 7. If any stage fails, run debug-rca agent and return to Stage 3
 

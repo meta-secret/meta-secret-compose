@@ -7,6 +7,9 @@ import core.NotificationCoordinatorInterface
 import core.errors.ErrorMapper
 import core.metaSecretCore.MetaSecretAppManager
 import core.metaSecretCore.MetaSecretAppManagerInterface
+import core.metaSecretCore.liveboard.LegacyNativeReadComposition
+import core.metaSecretCore.liveboard.NativeManagerPorts
+import core.metaSecretCore.liveboard.NativeManagerPresentation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -36,9 +39,15 @@ class ShowSecretDeletionGuardTest {
         try {
             val release = CompletableDeferred<String?>()
             val started = CompletableDeferred<Unit>()
-            val base = MetaSecretAppManager(FakeMetaSecretCore(), FakeKeyChain(), FakeKeyValueStorage(),
-                FakeDebugLogger(), FakeNotificationCoordinator(), ErrorMapper(FakeStringProvider()),
-                FakeLogFormatter(), FakeAppStateCacheProvider())
+            val core = FakeMetaSecretCore()
+            val logger = FakeDebugLogger()
+            val formatter = FakeLogFormatter()
+            val cache = FakeAppStateCacheProvider()
+            val composition = LegacyNativeReadComposition(core, cache, logger, formatter)
+            val base = composition.manager(
+                NativeManagerPorts(core, FakeKeyChain(), FakeKeyValueStorage(), logger),
+                NativeManagerPresentation(FakeNotificationCoordinator(), ErrorMapper(FakeStringProvider()), formatter, cache),
+            )
             val manager = object : MetaSecretAppManagerInterface by base {
                 override suspend fun showRecovered(secretModel: SecretModel): String? {
                     started.complete(Unit)

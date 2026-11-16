@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Implement UI changes for iOS (SwiftUI) and Android (Jetpack Compose) platforms.
+Implement shared Compose Multiplatform UI for Android and iOS, with platform services behind injected ports. Follow the approved HTML prototype, screenshots and motion specification through the scoped generated design package; preserve unrelated legacy screens.
 
 ## Input
 
 - `implementation-plan.md` artifact
-- `design-analysis.md` artifact (if Figma present)
+- Design analysis from approved HTML prototype/screenshots/motion specification; Figma if supplied
 - Issue context
 
 ## Output

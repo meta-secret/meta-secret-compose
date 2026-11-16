@@ -116,7 +116,8 @@ class SecretsScreen : Screen {
                 ui.dialogs.removesecret.RemoveSecret(
                     input = ui.dialogs.removesecret.SecretDeletionDialogInput(
                         secret = target,
-                        text = androidx.compose.ui.text.AnnotatedString(target.secretName + " — " + appString(AppString.fromAllDevices)),
+                        text = androidx.compose.ui.text.AnnotatedString(target.secretName + " — " + appString(
+                            AppString.fromAllDevices)),
                         deletionState = deletionInstruction, incoming = deletionIncoming,
                     ),
                     onDismiss = { deletionTarget = null },
@@ -202,7 +203,8 @@ class SecretsScreen : Screen {
             )
         }
 
-        if (isShowSecretDialogVisible && selectedSecret != null && secretsList.any { it.secretId == selectedSecret?.secretId }) {
+        if (isShowSecretDialogVisible && selectedSecret != null && secretsList.any { it.secretId == selectedSecret
+            ?.secretId }) {
             AnimatedVisibility(
                 visible = true,
                 enter = slideInVertically(

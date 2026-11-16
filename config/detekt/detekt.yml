@@ -6,3 +6,7 @@
 
 build:
   maxIssues: 1000
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']

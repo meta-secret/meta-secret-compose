@@ -71,7 +71,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **DeviceCellModel** | Display model for a single device row in the UI | `DevicesScreen` | `DeviceCellModel.kt` |
 | **Device Limit** | Core-enforced maximum of 3 devices in one Vault | Membership | A fourth-device join returns an error |
 | **Device Removal** | Core-authorized transition of a member to `Outsider/Declined`, invalidation of active Recovery claims, and resharing for remaining members | Vault operations | `3 → 2` needs another member's approval; `2 → 1` needs only local confirmation; self-removal is forbidden |
-| **Removal Decision** | Signed terminal Core response to a pending Device Removal request: `Accepted` removes the target; `Declined` closes the request without changing membership or Key Shares | Vault operations | First valid response wins; clients only invoke Core and render the result |
+| **Removal Decision** | Signed terminal Core response: `Accepted` removes the target; `Declined` closes the request without changing membership or Key Shares. Liveboard checked/exact-decision calls bind the original exact request UUID and target | Vault operations | Checked route: exact UUID + Boolean, no target-only/first-pending fallback; existing explicit legacy wrappers stay compatible. First valid response wins; clients render Core result |
 | **Single-device Claim Canonicalization** | Core behavior after `2 → 1`: every surviving `Split` claim belongs to the sole remaining device, while its local `k=1` Key Share stays unchanged | Membership redistribution | A later Join receives every Secret even if a removed device originally created it |
 | **Removal Offline Handling** | An offline target is reset to authorization after receiving `Outsider/Declined`; an offline approver leaves removal pending and no removal command is queued | Device removal | User retries after connectivity returns |
 | **DevicesQuantity** | Enum with associated amount — number of devices in a vault | Vault stats | `DevicesQuantity.kt` |
@@ -87,7 +87,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **ClaimObject** | API claim record: id, distribution type, list of receivers, status map | API layer | `AppStateModel.kt` |
 | **ClaimModel** | Internal model: `ClaimId`, sender, distribution type, receivers, status | Internal | `ClaimModel.kt` |
 | **ClaimStatus** | Enum: `PENDING`, `SENT`, `DELIVERED`, `ACCEPTED`, `DECLINED` | Claim lifecycle | `AppStateModel.kt` |
-| **Terminal Recovery Decision** | Receiver recovery outcome that cannot return to `PENDING`: `DECLINED` or `SENT`/`DELIVERED` | Recovery race handling | Stale state must not reopen the action |
+| **Terminal Recovery Decision** | Receiver outcome for an exact Recovery Claim that cannot return to `PENDING`: `DECLINED` or `SENT`/`DELIVERED`; Core supplies actual verified responder metadata, otherwise unknown | Recovery race handling | Do not infer responder from requester/current membership; stale state must not reopen the action |
 | **First-Response-Wins** | The first receiver decision processed by the server determines the recovery result | Recovery flow | First decline blocks reveal; first approve permits reveal; late opposite action is ignored |
 | **ClaimStatusInfo** | Map of `ClaimStatus` keyed by device — per-device delivery tracking | Claims detail | `AppStateModel.kt` |
 | **SsClaims** | Map of secret-sharing claims, keyed by secret id | Vault state | `AppStateModel.kt` |
@@ -99,6 +99,12 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **RestoreData** | `ClaimId` + `SecretId` pair used to trigger recovery | Recovery flow | `SocketActionModel.kt` |
 | **Accepted recovery after relaunch** | Re-read the accepted claim from Core after app restart and pass its exact `ClaimId` to `showRecovered`; transient socket events are optional hints, not durable state | Recovery reveal | The client does not persist the reconstructed secret or rely on an in-memory event |
 | **RecoveryRequestAlertState** | Sealed UI state for recovery alerts: `Hidden`, `Visible(RestoreData)`, `Processing(RestoreData)` | Alert dialog | `AlertProvider.kt` |
+
+Core `clientStatus` is a per-device instruction, distinct from per-device delivery
+status and operation readiness. Sender Done ends the flow after persisted completion
+even when a historical operation retains waiting readiness; waiting or a checked
+receipt alone does not prove completion. See the existing [Core status contract](../../meta-secret-core/.ai/GLOSSARY.md#71-recovery-claim-client-status-contract) and the
+[client next-Recover lifecycle and current verification scope](../../UxRevolution/implementation/known-issues.md#lb009--следующий-явный-recover-после-core-done).
 
 ---
 
@@ -231,7 +237,7 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 | **ProfileScreenViewModel** | Manages profile data display and user settings | ProfileScreen | `ProfileScreenViewModel.kt` |
 | **ProfileEvents** | Sealed class of profile-related user events | Profile events | `ProfileScreenViewModel.kt` |
 | **ShowSecretViewModel** | Controls biometric gate and secret reveal for `ShowSecretDialog` | Show secret | `ShowSecretViewModel.kt` |
-| **ShowSecretEvents** | Sealed class: `ShowSecret`, `HideSecret` | Show secret events | `ShowSecretViewModel.kt` |
+| **ShowSecretEvents** | Legacy dialog event type: `ShowSecret`, `HideSecret`, handled by `ShowSecretViewModel`. Current Liveboard local Hide uses a separate Root/Session route and owner; for rendered nondeleting value it stays available independently of new Show/Recover readiness, adding no Show right or Core/auth/read | Existing Liveboard owner/privacy/Copy guards remain | `ShowSecretViewModel.kt` (legacy); [Liveboard contract](../docs/liveboard.md) |
 | **AddSecretViewModel** | Manages secret creation flow inside `AddSecretDialog` | Add secret | `AddSecretViewModel.kt` |
 | **RemoveSecretViewModel** | Manages secret deletion confirmation | Remove secret | `RemoveSecretViewModel.kt` |
 | **AddDeviceViewModel** | Manages device addition flow | Add device | `AddDeviceViewModel.kt` |
@@ -242,10 +248,10 @@ Unified vocabulary for meta-secret-compose. All communication (AI, code, docs, u
 
 | Term | Definition | Context | Example |
 |------|-----------|---------|---------|
-| **AppError** | Sealed class of typed errors: `NetworkError`, `FfiError`, `ParseError`, `ValidationError`, `UnknownError` | Error domain | `ErrorMapper.kt` |
+| **AppError** | Sealed class of typed errors: `NetworkError`, `FfiError`, `ParseError`, `ValidationError`, `UnknownError`; presentation does not replace a checked operation's exact identity/Unknown/errorCode or turn it into success/retry | Error domain | `ErrorMapper.kt`; [Core receipt contract](../../meta-secret-core/docs/liveboard-bindings.md#receipt-json) |
 | **AppErrors** | Enum of internal operation errors: `CreateLocalError`, `CredsGenerationError`, `SignUpError` | Sign-up flow | `AppErrors.kt` |
 | **InitResult** | Sealed class: `Success(result)` or `Error(message)` — outcome of `MetaSecretAppManager` initialization | App startup | `MetaSecretAppManager.kt` |
-| **ErrorMapper** | Maps raw exceptions and API error strings to `AppError` instances | Error layer | `ErrorMapper.kt` |
+| **ErrorMapper** | Maps raw exceptions and API error strings to `AppError` instances for display; mapping grants no canonical completion or automatic replacement Create/Recover | Error layer | `ErrorMapper.kt` |
 
 ---
 
@@ -360,7 +366,7 @@ MetaSecretAppManager
 | **Decline join** | `updateMembership(candidate, DECLINE)` | Membership: reject join request |
 | **Split secret** | `splitSecret(secretName, secret)` | Secret sharing: distribute to members |
 | **Request recovery** | `recover(secretId)` | Recovery: ask members to release shares |
-| **Accept recovery** | `acceptRecover(claimId)` | Recovery: release your share |
+| **Accept recovery** | `acceptRecover(claimId)` | Release your share only as the current addressed receiver when Core canApprove; requester consumption/completion and Show are separate actions |
 | **Decline recovery** | `declineRecover(claimId)` | Recovery: refuse to release share |
 | **Show recovered** | `showRecovered(claimId)` | Recovery: reveal reassembled secret for the exact accepted claim; Core derives the Pass ID |
 | **Show local secret** | `showLocalSecret(secretId)` | Replicated 1–2-device path; reveal the local distribution without a recovery claim |

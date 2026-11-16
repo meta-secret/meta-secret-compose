@@ -17,7 +17,7 @@ Execute:
 4. Execute stages in strict order: 1 → 2 → 3 → 3.5 → 4a → 4b → 4c → 5 → 6 → 7 → 8 → 9 → 9.5 (if applicable) → 10 → 11 (if CI exists)
 5. Do NOT skip stages 6, 7, 8 — they are CRITICAL
 6. Do NOT optimize away stages because task looks "simple"
-7. For Stage 10: Ask user for approval before committing and creating PR
+7. For Stage 10: Record existing explicit authorization; ask only for a still unauthorized commit/PR action
 
 ---
 

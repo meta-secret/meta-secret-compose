@@ -1,16 +1,15 @@
 package core
 
+import android.content.Context
+import android.provider.Settings
 import android.content.res.Resources
 import android.os.Build
 
-class ClientDeviceInfoProviderAndroid : ClientDeviceInfoProviderInterface {
+class ClientDeviceInfoProviderAndroid(private val context: Context) : ClientDeviceInfoProviderInterface {
     override fun current(): ClientDeviceInfo {
-        val manufacturer = Build.MANUFACTURER.orEmpty().trim()
-        val model = Build.MODEL.orEmpty().trim()
-        val displayName = listOf(manufacturer, model)
-            .filter { it.isNotBlank() }
-            .joinToString(" ")
-            .ifBlank { "Android Device" }
+        val displayName = Settings.Global.getString(context.contentResolver, "device_name")
+            ?.trim()?.takeIf { it.isNotEmpty() }
+            ?: Build.MODEL.orEmpty().trim().ifBlank { "Android Device" }
 
         val isTablet = Resources.getSystem().configuration.smallestScreenWidthDp >= 600
         val deviceType = if (isTablet) "Tablet" else "Android"

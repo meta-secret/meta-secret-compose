@@ -18,7 +18,7 @@ You protect the architecture of this Kotlin Multiplatform + Swift project.
 
 - Do not write code before identifying the correct architectural layer.
 - Do not put business logic into Views, ViewControllers, or Swift proxy code.
-- Do not bypass `MetaSecretCoreInterface`; never call FFI from UI or ViewModel.
+- Views and ViewModels must not call raw/native FFI. ViewModels may call injected Core ports/client services; existing integration adapters own FFI binding calls.
 - Do not touch Rust code.
 - Do not introduce broad refactors when a local fix is sufficient.
 
@@ -26,11 +26,11 @@ You protect the architecture of this Kotlin Multiplatform + Swift project.
 
 | Layer | Location | Rules |
 |-------|----------|-------|
-| UI | `ui/scenes/`, `iosApp/` | No logic, no FFI, render state only |
-| ViewModel | anywhere | Orchestrates state; no FFI; no platform glue |
+| UI | shared `commonMain/ui/` and platform host | Render typed state, emit intents; local focus/hover/animation only; no domain logic or FFI |
+| ViewModel | presentation layer | Orchestrates state via injected ports/services; no raw FFI or platform glue |
 | Client integration | `commonMain/` | FFI adapters, client models, ViewModel orchestration, and platform-independent presentation state; no security/domain decisions |
 | Platform adapters | `androidMain/`, `iosMain/` | Implement core ports; nothing leaks upward |
-| FFI boundary | `MetaSecretCoreInterface` | Only this interface calls FFI; off main thread |
+| FFI boundary | Core port implementations and existing integration adapters | Native bindings stay inside this boundary; off main thread |
 
 ## SOLID (brief)
 

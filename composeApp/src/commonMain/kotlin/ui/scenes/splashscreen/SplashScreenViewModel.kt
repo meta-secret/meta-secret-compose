@@ -47,9 +47,26 @@ class SplashScreenViewModel(
         if (event is SplashViewEvents) {
             when (event) {
                 SplashViewEvents.ON_APPEAR -> {
-                    authenticateWithBiometrics()
+                    checkLaunchDestination()
                 }
                 SplashViewEvents.BIOMETRIC_SUCCEEDED -> biometricSucceeded()
+            }
+        }
+    }
+
+    private fun checkLaunchDestination() {
+        viewModelScope.launch {
+            if (!keyChainManager.containsKey("master_key")) {
+                _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+            } else if (metaSecretAppManager.checkAuth() == AuthState.COMPLETED) {
+                authenticateWithBiometrics()
+            } else {
+                val snapshot = metaSecretAppManager.getStateModel()
+                if (snapshot?.success == true && snapshot.getVaultFullInfo() !is VaultFullInfo.Member) {
+                    _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
+                } else {
+                    _biometricState.value = BiometricState.Error(stringProvider.errorNetwork())
+                }
             }
         }
     }
@@ -115,9 +132,12 @@ class SplashScreenViewModel(
                             val email = keyChainManager.getString("pending_vault_email")
                             if (email != null) {
                                 val providerName = keyChainManager.getString("pending_email_provider")
-                                val provider = EmailProvider.entries.find { it.name == providerName } ?: EmailProvider.MANUAL
-                                logger.log(LogTag.SplashVM.Message.MoveToSignUp, "Resuming pending join for $email", success = true)
-                                _navigationEvent.value = SplashNavigationEvent.NavigateToEmailConfirmationPending(email, provider)
+                                val provider = EmailProvider.entries.find { it.name == providerName } ?:
+                                    EmailProvider.MANUAL
+                                logger.log(LogTag.SplashVM.Message.MoveToSignUp, "Resuming pending join for $email",
+                                    success = true)
+                                _navigationEvent.value = SplashNavigationEvent.NavigateToEmailConfirmationPending(
+                                    email, provider)
                             } else {
                                 logger.log(LogTag.SplashVM.Message.MoveToSignUp, success = true)
                                 _navigationEvent.value = SplashNavigationEvent.NavigateToSignUp
@@ -138,7 +158,8 @@ class SplashScreenViewModel(
     }
 
     private fun isOnboardingComplete(): OnboardingState {
-        return if (keyValueStorage.isOnboardingCompleted) { OnboardingState.COMPLETED } else { OnboardingState.NOT_YET_COMPLETED }
+        return if (keyValueStorage.isOnboardingCompleted) { OnboardingState.COMPLETED } else { OnboardingState
+            .NOT_YET_COMPLETED }
     }
 
     private suspend fun checkAuth(): AuthState {

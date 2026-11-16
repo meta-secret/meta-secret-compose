@@ -156,7 +156,25 @@ import Security
     }
 
     // MARK: - KeyChain
-    private let serviceName: String = "MetaSecret"
+    private static let testIdentityService: String? = {
+#if targetEnvironment(simulator)
+        let isSimulator = true
+#else
+        let isSimulator = false
+#endif
+        do {
+            return try resolveE2ETestIdentity(
+                marker: Bundle.main.object(forInfoDictionaryKey: "MetaSecretE2EIdentityRequired"),
+                namespace: ProcessInfo.processInfo.environment["METASECRET_E2E_IDENTITY_NAMESPACE"],
+                isSimulator: isSimulator
+            )
+        } catch {
+            preconditionFailure("Invalid E2E identity configuration")
+        }
+    }()
+    private var serviceName: String { SwiftBridge.testIdentityService ?? "MetaSecret" }
+
+    @objc public func e2eStorageSuiteName() -> String? { SwiftBridge.testIdentityService }
     @MainActor
     fileprivate static var appleEmailAuthDelegate: AppleEmailAuthDelegate?
     @MainActor
@@ -657,15 +675,13 @@ private final class AppleEmailAuthDelegate: NSObject, ASAuthorizationControllerD
             return
         }
 
-        let email = credential.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        // Apple may omit credential.email after the first authorization. The token's
+        // email claim supplies only a suggested Vault name; it never grants membership.
+        let credentialEmail = credential.email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let email = credentialEmail.isEmpty
+            ? Self.emailLabel(from: credential.identityToken) ?? "" : credentialEmail
         if email.isEmpty {
             completion(SwiftBridge.encodeEmailResponse(kind: "error", message: "Apple did not return an email address"))
-            SwiftBridge.appleEmailAuthDelegate = nil
-            return
-        }
-
-        if email.lowercased().hasSuffix("@privaterelay.appleid.com") {
-            completion(SwiftBridge.encodeEmailResponse(kind: "private_relay", email: email))
             SwiftBridge.appleEmailAuthDelegate = nil
             return
         }
@@ -686,6 +702,21 @@ private final class AppleEmailAuthDelegate: NSObject, ASAuthorizationControllerD
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         SwiftBridge.topMostViewController()?.view.window ?? ASPresentationAnchor()
+    }
+
+    private static func emailLabel(from token: Data?) -> String? {
+        guard let token, token.count <= 16_384,
+              let text = String(data: token, encoding: .utf8) else { return nil }
+        let parts = text.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 3 else { return nil }
+        var payload = String(parts[1]).replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        payload += String(repeating: "=", count: (4 - payload.count % 4) % 4)
+        guard let data = Data(base64Encoded: payload),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let email = object["email"] as? String else { return nil }
+        let label = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        return label.isEmpty ? nil : label
     }
 }
 

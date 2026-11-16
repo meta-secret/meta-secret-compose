@@ -1,6 +1,9 @@
 package core.metaSecretCore
 
 import core.errors.ErrorMapper
+import core.metaSecretCore.liveboard.LegacyNativeReadComposition
+import core.metaSecretCore.liveboard.NativeManagerPorts
+import core.metaSecretCore.liveboard.NativeManagerPresentation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -184,15 +187,14 @@ class MetaSecretAppManagerTest {
         keyChain: FakeKeyChain = FakeKeyChain(),
         notificationCoordinator: FakeNotificationCoordinator = FakeNotificationCoordinator(),
     ): MetaSecretAppManager {
-        return MetaSecretAppManager(
-            metaSecretCore = core,
-            keyChainInterface = keyChain,
-            keyValueStorage = FakeKeyValueStorage(),
-            logger = FakeDebugLogger(),
-            notificationCoordinator = notificationCoordinator,
-            errorMapper = ErrorMapper(FakeStringProvider()),
-            logFormatter = FakeLogFormatter(),
-            appStateCacheProvider = FakeAppStateCacheProvider(),
+        val storage = FakeKeyValueStorage()
+        val logger = FakeDebugLogger()
+        val formatter = FakeLogFormatter()
+        val cache = FakeAppStateCacheProvider()
+        val composition = LegacyNativeReadComposition(core, cache, logger, formatter)
+        return composition.manager(
+            NativeManagerPorts(core, keyChain, storage, logger),
+            NativeManagerPresentation(notificationCoordinator, ErrorMapper(FakeStringProvider()), formatter, cache),
         )
     }
 }

@@ -38,27 +38,33 @@ fun RemoveSecret(input: SecretDeletionDialogInput, onDismiss: () -> Unit) {
         titleContentColor = AppColors.White,
         textContentColor = AppColors.White75,
         onDismissRequest = { if (!busy) close() },
-        title = { Text(appString(if (incoming) AppString.deletionApproval else AppString.removeSecret) + "?", style = ui.theme.AppTextStyles.SectionTitle()) },
+        title = { Text(appString(if (incoming) AppString.deletionApproval else AppString.removeSecret) + "?",
+            style = ui.theme.AppTextStyles.SectionTitle()) },
         text = {
             Column {
                 Text(text, style = ui.theme.AppTextStyles.Paragraph())
-                if (!incoming && deletionState.requiresApproval) Text(appString(AppString.deletionRemoteRequired), style = ui.theme.AppTextStyles.Paragraph())
+                if (!incoming && deletionState.requiresApproval) Text(appString(AppString.deletionRemoteRequired),
+                    style = ui.theme.AppTextStyles.Paragraph())
                 if (busy) CircularProgressIndicator()
-                if (failed) Text(appString(AppString.deletionFailed), style = ui.theme.AppTextStyles.Paragraph(), color = AppColors.RedError)
+                if (failed) Text(appString(AppString.deletionFailed), style = ui.theme.AppTextStyles.Paragraph(),
+                    color = AppColors.RedError)
             }
         },
         confirmButton = {
             TextButton(enabled = !busy, modifier = Modifier.testTag("confirm-secret-deletion"), onClick = {
                 if (incoming) viewModel.decide(deletionState, true, close)
                 else viewModel.removeSecret(secret, close)
-            }) { Text(appString(if (incoming) AppString.accept else AppString.remove), style = ui.theme.AppTextStyles.BodyStrong(), color = AppColors.RedError) }
+            }) { Text(appString(if (incoming) AppString.accept else AppString.remove), style = ui.theme
+                .AppTextStyles.BodyStrong(), color = AppColors.RedError) }
         },
         dismissButton = {
             Column {
-                if (incoming) TextButton(enabled = !busy, modifier = Modifier.testTag("decline-secret-deletion"), onClick = {
+                if (incoming) TextButton(enabled = !busy, modifier = Modifier.testTag("decline-secret-deletion"),
+                    onClick = {
                     viewModel.decide(deletionState, false, close)
                 }) { Text(appString(AppString.decline), style = ui.theme.AppTextStyles.BodyStrong()) }
-                TextButton(enabled = !busy, onClick = close) { Text(appString(AppString.cancel), style = ui.theme.AppTextStyles.BodyStrong()) }
+                TextButton(enabled = !busy, onClick = close) { Text(appString(AppString.cancel), style = ui.theme
+                    .AppTextStyles.BodyStrong()) }
             }
         },
     )

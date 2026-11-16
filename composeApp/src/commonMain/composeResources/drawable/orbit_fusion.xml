@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+  <group android:name="dot_zero">
+    <path android:pathData="M4.75 6a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z" android:fillColor="#FFFFFFFF" android:strokeColor="#00000000" android:strokeWidth="1.25" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+  <group android:name="dot_one">
+    <path android:pathData="M10.75 6a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z" android:fillColor="#FFFFFFFF" android:strokeColor="#00000000" android:strokeWidth="1.25" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+  <group android:name="dot_two">
+    <path android:pathData="M16.75 6a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z" android:fillColor="#FFFFFFFF" android:strokeColor="#00000000" android:strokeWidth="1.25" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+  <group android:name="dot_three">
+    <path android:pathData="M4.75 12a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z" android:fillColor="#FFFFFFFF" android:strokeColor="#00000000" android:strokeWidth="1.25" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+  <group android:name="dot_four">
+    <path android:pathData="M10.75 12a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z" android:fillColor="#FFFFFFFF" android:strokeColor="#00000000" android:strokeWidth="1.25" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+  <group android:name="dot_five">
+    <path android:pathData="M16.75 12a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z" android:fillColor="#FFFFFFFF" android:strokeColor="#00000000" android:strokeWidth="1.25" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+  <group android:name="dot_six">
+    <path android:pathData="M4.75 18a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z" android:fillColor="#FFFFFFFF" android:strokeColor="#00000000" android:strokeWidth="1.25" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+  <group android:name="dot_seven">
+    <path android:pathData="M10.75 18a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z" android:fillColor="#FFFFFFFF" android:strokeColor="#00000000" android:strokeWidth="1.25" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+  <group android:name="dot_eight">
+    <path android:pathData="M16.75 18a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z" android:fillColor="#FFFFFFFF" android:strokeColor="#00000000" android:strokeWidth="1.25" android:strokeLineCap="round" android:strokeLineJoin="round"/>
+  </group>
+</vector>

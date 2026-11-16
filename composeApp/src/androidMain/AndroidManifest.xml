@@ -28,7 +28,8 @@
             android:enableOnBackInvokedCallback="true"
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
-            android:name="metasecret.project.com.MainActivity">
+            android:name="metasecret.project.com.MainActivity"
+            android:theme="@style/Theme.MetaSecret.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -42,6 +43,7 @@
 
                 <data
                     android:host="apple-auth"
+                    android:path="/callback"
                     android:scheme="metasecret" />
             </intent-filter>
         </activity>
